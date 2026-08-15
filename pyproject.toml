@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools==83.0.0", "wheel==0.47.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gamefi-roi"
+version = "0.1.0"
+description = "Strategy-specific GameFi ROI analytics platform skeleton."
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "alembic==1.14.0",
+    "fastapi==0.115.6",
+    "psycopg[binary]==3.2.3",
+    "pydantic-settings==2.7.0",
+    "SQLAlchemy==2.0.36",
+    "uvicorn[standard]==0.34.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "httpx==0.28.1",
+    "pytest==8.3.4",
+]
+
+[project.scripts]
+gamefi-doctor = "app.doctor.checks:main"
+
+[tool.setuptools]
+package-dir = {"" = "backend"}
+
+[tool.setuptools.packages.find]
+where = ["backend"]
+include = ["app*"]
+
+[tool.pytest.ini_options]
+testpaths = ["backend/tests"]
+pythonpath = ["backend"]
+addopts = "-q"

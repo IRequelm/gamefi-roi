@@ -5,19 +5,19 @@ Project version: 0.1
 
 ## Current state
 
-**ACTIVE GATE: G1 — Skeleton**
+**ACTIVE GATE: G2 — Market Data**
 
-G0 is complete and frozen in the baseline Git commit.
+G1 is complete and frozen in the G1 baseline Git commit.
 
-Do not implement beyond the active G1 scope.
+Do not implement G2 until the user explicitly asks to proceed.
 
 ## Gate board
 
 | Gate | Name | Status |
 |---|---|---|
 | G0 | Freeze | COMPLETE |
-| G1 | Skeleton | ACTIVE |
-| G2 | Market Data | NOT STARTED |
+| G1 | Skeleton | COMPLETE |
+| G2 | Market Data | ACTIVE |
 | G3 | ROI Core | NOT STARTED |
 | G4 | Adapter #1 | NOT STARTED |
 | G5 | Adapter #2 | NOT STARTED |
@@ -61,21 +61,28 @@ G0 may be marked COMPLETE only when:
 
 Create a reproducible local development skeleton with no game-specific business logic.
 
-## G1 planned acceptance criteria
+## G1 acceptance criteria
 
-Exact tool choices are decided during G1, but completion should include:
-- reproducible Python environment,
-- backend package imports cleanly,
-- PostgreSQL-compatible persistence setup,
-- migrations initialized,
-- deterministic test runner works,
-- `.env.example`,
-- no secrets committed,
-- `doctor` command exists and validates minimum environment,
-- CI/local quality commands documented,
-- one command starts required local development services or clearly documented minimal commands do,
-- all G1 tests/doctor checks green,
-- baseline Git commit for G1.
+- [x] reproducible Python environment,
+- [x] backend package imports cleanly,
+- [x] PostgreSQL-compatible persistence setup,
+- [x] migrations initialized,
+- [x] deterministic test runner works,
+- [x] `.env.example`,
+- [x] no secrets committed,
+- [x] `doctor` command exists and validates minimum environment,
+- [x] CI/local quality commands documented,
+- [x] one command starts required local development services or clearly documented minimal commands do,
+- [x] all G1 tests/doctor checks green,
+- [x] baseline Git commit for G1.
+
+## G2 objective
+
+Establish shared market-data source infrastructure without game-specific adapter logic.
+
+## G2 planned acceptance criteria
+
+G2 scope and acceptance criteria must be confirmed before implementation begins.
 
 ## Decision backlog (not blockers)
 
@@ -89,4 +96,4 @@ Exact tool choices are decided during G1, but completion should include:
 
 ## Current instruction to Codex
 
-G1 is active. Do not implement beyond G1 unless the active gate changes.
+G2 is active. Do not implement G2 until the user explicitly asks to proceed.
