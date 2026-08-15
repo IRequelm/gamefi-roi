@@ -5,11 +5,11 @@ Project version: 0.1
 
 ## Current state
 
-**ACTIVE GATE: G2 — Market Data**
+**ACTIVE GATE: G3 — ROI Core**
 
-G1 is complete and frozen in the G1 baseline Git commit.
+G2 is complete and frozen in the G2 baseline Git commit.
 
-Do not implement G2 until the user explicitly asks to proceed.
+Do not implement G3 until the user explicitly asks to proceed.
 
 ## Gate board
 
@@ -17,8 +17,8 @@ Do not implement G2 until the user explicitly asks to proceed.
 |---|---|---|
 | G0 | Freeze | COMPLETE |
 | G1 | Skeleton | COMPLETE |
-| G2 | Market Data | ACTIVE |
-| G3 | ROI Core | NOT STARTED |
+| G2 | Market Data | COMPLETE |
+| G3 | ROI Core | ACTIVE |
 | G4 | Adapter #1 | NOT STARTED |
 | G5 | Adapter #2 | NOT STARTED |
 | G6 | Adapter #3 | NOT STARTED |
@@ -80,9 +80,27 @@ Create a reproducible local development skeleton with no game-specific business 
 
 Establish shared market-data source infrastructure without game-specific adapter logic.
 
-## G2 planned acceptance criteria
+## G2 acceptance criteria
 
-G2 scope and acceptance criteria must be confirmed before implementation begins.
+- [x] provider-neutral market-data contracts live in `sources/`, not `adapters`,
+- [x] normalized `Observation` objects preserve Data Contract fields, decimal-safe values, UTC timestamps, source provenance, and freshness/status,
+- [x] source HTTP helper enforces configured timeouts, bounded retries, and structured errors,
+- [x] at least one market-data provider connector parses recorded fixtures deterministically behind the provider-neutral interface,
+- [x] PostgreSQL-compatible persistence for raw observations exists with an Alembic migration,
+- [x] doctor/import checks include market-source configuration and package health without requiring live provider calls,
+- [x] deterministic tests cover source parsing, missing/stale handling, HTTP errors/retries, persistence, and doctor behavior,
+- [x] G2 documentation explains local commands, provider configuration, dependency choices, and scope boundaries,
+- [x] no game adapter logic, ROI formulas, strategy calculations, frontend business logic, live integration tests, or provider secrets are added,
+- [x] all tests, doctor checks, dependency checks, compile checks, and whitespace checks pass,
+- [x] baseline Git commit for G2.
+
+## G3 objective
+
+Implement the generic ROI calculation core using manually verified deterministic scenarios, without live game adapters.
+
+## G3 planned acceptance criteria
+
+G3 must satisfy the G3 acceptance principle in `docs/ROI_METHODOLOGY.md` before it can be marked complete.
 
 ## Decision backlog (not blockers)
 
@@ -96,4 +114,4 @@ G2 scope and acceptance criteria must be confirmed before implementation begins.
 
 ## Current instruction to Codex
 
-G2 is active. Do not implement G2 until the user explicitly asks to proceed.
+G3 is active. Do not implement G3 until the user explicitly asks to proceed.

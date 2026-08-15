@@ -8,12 +8,12 @@ from pathlib import Path
 from typing import Callable
 
 from alembic.config import Config
+from alembic.runtime.migration import MigrationContext
 from alembic.script import ScriptDirectory
 from pydantic import ValidationError
+from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy import create_engine
-from alembic.runtime.migration import MigrationContext
 
 from app.config.runtime import current_runtime_status
 from app.config.settings import Settings, get_settings
@@ -27,7 +27,13 @@ REQUIRED_IMPORTS = (
     "app.config.settings",
     "app.storage.database",
     "app.storage.metadata",
+    "app.storage.models",
+    "app.storage.observations",
     "app.engine.decimal_context",
+    "app.sources.coingecko",
+    "app.sources.http",
+    "app.sources.market_data",
+    "app.sources.observations",
 )
 
 
@@ -95,6 +101,22 @@ def check_imports() -> CheckResult:
     return CheckResult(name="imports", ok=True, detail="Backend package imports successfully")
 
 
+def check_market_source_config(settings: Settings | None) -> CheckResult:
+    if settings is None:
+        return CheckResult(name="market-source-config", ok=False, detail="Skipped because configuration failed")
+
+    return CheckResult(
+        name="market-source-config",
+        ok=True,
+        detail=(
+            "Market source config loaded "
+            f"(timeout={settings.market_data_http_timeout_seconds}s, "
+            f"retries={settings.market_data_http_max_retries}, "
+            f"price_freshness={settings.market_data_price_freshness_seconds}s)"
+        ),
+    )
+
+
 def check_database(settings: Settings | None) -> tuple[CheckResult, Engine | None]:
     if settings is None:
         return CheckResult(name="database", ok=False, detail="Skipped because configuration failed"), None
@@ -140,6 +162,7 @@ def run_all_checks(settings_loader: Callable[[], Settings] = get_settings) -> li
     config_result, settings = check_config(settings_loader)
     results.append(config_result)
     results.append(check_imports())
+    results.append(check_market_source_config(settings))
 
     database_result, engine = check_database(settings)
     results.append(database_result)

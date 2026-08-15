@@ -8,9 +8,11 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 from app.config.settings import get_settings
+from app.storage import models
 from app.storage.metadata import Base
 
 config = context.config
+_ = models
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)

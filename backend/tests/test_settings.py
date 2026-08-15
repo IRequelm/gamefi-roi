@@ -43,3 +43,24 @@ def test_sqlite_test_override_is_accepted(monkeypatch) -> None:
     settings = get_settings()
 
     assert settings.database_backend == "sqlite"
+
+
+def test_blank_coingecko_api_key_is_not_treated_as_secret(monkeypatch) -> None:
+    monkeypatch.setenv("GAMEFI_ENVIRONMENT", "test")
+    monkeypatch.setenv("GAMEFI_DATABASE_URL", "sqlite+pysqlite:///:memory:")
+    monkeypatch.setenv("GAMEFI_ALLOW_SQLITE_FOR_TESTS", "true")
+    monkeypatch.setenv("GAMEFI_COINGECKO_API_KEY", "")
+
+    settings = get_settings()
+
+    assert settings.coingecko_api_key is None
+
+
+def test_market_source_retry_config_is_bounded(monkeypatch) -> None:
+    monkeypatch.setenv("GAMEFI_ENVIRONMENT", "test")
+    monkeypatch.setenv("GAMEFI_DATABASE_URL", "sqlite+pysqlite:///:memory:")
+    monkeypatch.setenv("GAMEFI_ALLOW_SQLITE_FOR_TESTS", "true")
+    monkeypatch.setenv("GAMEFI_MARKET_DATA_HTTP_MAX_RETRIES", "20")
+
+    with pytest.raises(ValidationError):
+        get_settings()

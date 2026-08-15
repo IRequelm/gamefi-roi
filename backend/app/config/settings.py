@@ -5,7 +5,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field, model_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 EnvironmentName = Literal["local", "test", "production"]
@@ -23,6 +23,21 @@ class Settings(BaseSettings):
     api_title: str = "GameFi ROI API"
     log_level: str = "INFO"
     allow_sqlite_for_tests: bool = False
+    market_data_http_timeout_seconds: float = Field(default=10.0, gt=0, le=60)
+    market_data_http_max_retries: int = Field(default=2, ge=0, le=5)
+    market_data_price_freshness_seconds: int = Field(default=300, gt=0, le=86_400)
+    coingecko_base_url: str = Field(
+        default="https://api.coingecko.com/api/v3",
+        min_length=1,
+    )
+    coingecko_api_key: str | None = None
+
+    @field_validator("coingecko_api_key", mode="before")
+    @classmethod
+    def blank_api_key_is_none(cls, value: object) -> object:
+        if isinstance(value, str) and value.strip() == "":
+            return None
+        return value
 
     @model_validator(mode="after")
     def validate_database_url(self) -> "Settings":

@@ -21,9 +21,10 @@ Python 3.12 is stable, available in the current Codex runtime, and remains suita
 - Alembic: standard SQLAlchemy migration tool; G1 includes an empty baseline migration.
 - psycopg 3: modern PostgreSQL driver used for real local/deployed database connections.
 - pydantic-settings: typed environment configuration with `.env` support.
+- httpx: bounded-timeout HTTP client used by source connectors, with deterministic mock transport tests.
 - pytest/httpx: deterministic backend and API tests.
 
-No market-data provider, game adapter, ROI formula, or frontend business logic is included in G1.
+No game adapter, ROI formula, or frontend business logic is included through G2.
 
 ## Local Setup
 
@@ -86,6 +87,32 @@ Health endpoint:
 ```text
 GET http://127.0.0.1:8000/health
 ```
+
+## Market Data Source Layer
+
+G2 establishes shared market-data infrastructure only:
+
+- Provider-neutral contracts live in `backend/app/sources/market_data.py`.
+- Normalized observations live in `backend/app/sources/observations.py`.
+- Source connector errors are structured in `backend/app/sources/errors.py`.
+- HTTP source calls use configured timeouts and bounded retries in `backend/app/sources/http.py`.
+- Raw observations persist through `backend/app/storage/observations.py` and the Alembic observation migration.
+- `backend/app/sources/coingecko.py` implements a CoinGecko simple-price connector behind the source interface.
+
+The CoinGecko connector is tested with recorded fixtures and mock transports. The default test suite does not make live provider calls.
+
+Source configuration:
+
+```powershell
+$env:GAMEFI_MARKET_DATA_HTTP_TIMEOUT_SECONDS = "10"
+$env:GAMEFI_MARKET_DATA_HTTP_MAX_RETRIES = "2"
+$env:GAMEFI_MARKET_DATA_PRICE_FRESHNESS_SECONDS = "300"
+$env:GAMEFI_COINGECKO_BASE_URL = "https://api.coingecko.com/api/v3"
+```
+
+`GAMEFI_COINGECKO_API_KEY` is optional and blank in `.env.example`; do not commit real provider keys.
+
+The connector currently supports token price observations. Pool state, executable sell quotes, and OHLCV are explicit unsupported capabilities until a later gate chooses providers and acceptance criteria for those capabilities.
 
 ## Test-Only Database Mode
 
