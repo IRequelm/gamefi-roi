@@ -133,6 +133,39 @@ All money crossing the engine boundary uses `Money` with a `Decimal` amount and 
 
 The engine accepts a realizable reward value that may come from a future executable quote or documented approximation. It does not implement AMM math, market-data fetching, game-specific reward logic, risk/confidence scoring, strategy optimization, or frontend presentation.
 
+## Adapter #1: DeFi Kingdoms Jeweler
+
+G4 adds the first game adapter for a single versioned strategy:
+
+```text
+DeFi Kingdoms Crystalvale Jeweler cJEWEL Max Lock, v1
+```
+
+The adapter models a player locking 1,000 JEWEL for 1,095 days in Jeweler 2.0 and claiming once per day. It uses official DFK contract data for yesterday's cJEWEL denominator and JEWEL reward pool, a configured lock strategy, and DFK wJEWEL-USDC pool reserves for derived USD valuation and slippage-aware reward/exit quotes.
+
+G4 source boundaries:
+
+- Generic EVM JSON-RPC reads live in `backend/app/sources/evm.py`.
+- Constant-product AMM quote math lives in `backend/app/sources/amm.py`.
+- DFK-specific strategy constants live in `backend/app/strategies/defi_kingdoms.py`.
+- DFK economic interpretation lives in `backend/app/adapters/defi_kingdoms_jeweler.py`.
+- The ROI engine remains generic and unchanged.
+
+The deterministic test suite uses recorded/manual fixtures only. Live probing is opt-in:
+
+```powershell
+.\.venv\Scripts\python -m app.adapters.defi_kingdoms_jeweler_probe
+```
+
+DFK source configuration:
+
+```powershell
+$env:GAMEFI_DFK_CHAIN_RPC_URL = "https://subnets.avax.network/defi-kingdoms/dfk-chain/rpc"
+$env:GAMEFI_DFK_CHAIN_OBSERVATION_FRESHNESS_SECONDS = "300"
+```
+
+No new package dependencies were added for G4; the existing `httpx` source layer is reused for JSON-RPC POSTs.
+
 ## Test-Only Database Mode
 
 Production and normal local development should use PostgreSQL. Deterministic tests may use SQLite only when both of these are set:

@@ -126,3 +126,57 @@ class SourceHttpClient:
             )
 
         return payload
+
+    def post_json(
+        self,
+        path: str,
+        *,
+        json_payload: Mapping[str, Any],
+        headers: Mapping[str, str] | None = None,
+        operation: str,
+    ) -> dict[str, Any]:
+        attempts = self.max_retries + 1
+        last_error: SourceRequestError | None = None
+
+        for attempt in range(attempts):
+            try:
+                response = self._client.post(path, json=json_payload, headers=headers)
+            except httpx.HTTPError as exc:
+                last_error = SourceRequestError(
+                    SourceErrorDetail(
+                        provider=self.provider,
+                        operation=operation,
+                        message=f"HTTP request failed: {exc}",
+                        retryable=attempt < attempts - 1,
+                    )
+                )
+            else:
+                if response.status_code < 400:
+                    return self._decode_json(response, operation)
+
+                last_error = SourceRequestError(
+                    SourceErrorDetail(
+                        provider=self.provider,
+                        operation=operation,
+                        message=f"Provider returned HTTP {response.status_code}",
+                        retryable=response.status_code >= 500 and attempt < attempts - 1,
+                        status_code=response.status_code,
+                    )
+                )
+                if response.status_code < 500:
+                    raise last_error
+
+            if attempt < attempts - 1:
+                time.sleep(min(0.25 * (attempt + 1), 1.0))
+
+        if last_error is not None:
+            raise last_error
+
+        raise SourceRequestError(
+            SourceErrorDetail(
+                provider=self.provider,
+                operation=operation,
+                message="HTTP request failed before a response was available",
+                retryable=False,
+            )
+        )

@@ -1,0 +1,34 @@
+{
+  "strategy": {
+    "locked_jewel_amount": "1000",
+    "lock_days": "1095",
+    "max_lock_days": "1095",
+    "yesterday_cjewel_balance": "100000",
+    "yesterday_reward_jewel": "500",
+    "entry_value_usd": "200.00",
+    "emergency_exit_value_usd": "99.50",
+    "jewel_reference_price_usd": "0.20",
+    "reward_realizable_value_usd": "0.995",
+    "claim_transaction_cost_usd": "0.015"
+  },
+  "manual_expected": {
+    "cjewel_received": "1000",
+    "user_reward_share": "0.01",
+    "reward_jewel_day": "5.00",
+    "gross_nominal_earnings_day": "1.0000",
+    "realizable_earnings_day": "0.995",
+    "transaction_cost_day": "0.015",
+    "net_earnings_day": "0.980",
+    "total_capital": "200.00",
+    "recoverable_capital": "99.50",
+    "capital_at_risk": "200.00",
+    "break_even_days": "204.0816326530612244897959184",
+    "roi_total_7d": "0.0343",
+    "roi_total_30d": "0.147",
+    "roi_total_90d": "0.441",
+    "roi_risk_7d": "0.0343",
+    "roi_risk_30d": "0.147",
+    "roi_risk_90d": "0.441",
+    "exit_adjusted_pnl": "-100.50"
+  }
+}

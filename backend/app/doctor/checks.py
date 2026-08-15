@@ -34,10 +34,15 @@ REQUIRED_IMPORTS = (
     "app.engine.inputs",
     "app.engine.money",
     "app.engine.results",
+    "app.adapters.defi_kingdoms_jeweler",
+    "app.adapters.defi_kingdoms_jeweler_probe",
     "app.sources.coingecko",
+    "app.sources.amm",
+    "app.sources.evm",
     "app.sources.http",
     "app.sources.market_data",
     "app.sources.observations",
+    "app.strategies.defi_kingdoms",
 )
 
 
@@ -121,6 +126,21 @@ def check_market_source_config(settings: Settings | None) -> CheckResult:
     )
 
 
+def check_adapter_source_config(settings: Settings | None) -> CheckResult:
+    if settings is None:
+        return CheckResult(name="adapter-source-config", ok=False, detail="Skipped because configuration failed")
+
+    return CheckResult(
+        name="adapter-source-config",
+        ok=True,
+        detail=(
+            "Adapter source config loaded "
+            f"(dfk_rpc_configured={bool(settings.dfk_chain_rpc_url)}, "
+            f"dfk_freshness={settings.dfk_chain_observation_freshness_seconds}s)"
+        ),
+    )
+
+
 def check_database(settings: Settings | None) -> tuple[CheckResult, Engine | None]:
     if settings is None:
         return CheckResult(name="database", ok=False, detail="Skipped because configuration failed"), None
@@ -167,6 +187,7 @@ def run_all_checks(settings_loader: Callable[[], Settings] = get_settings) -> li
     results.append(config_result)
     results.append(check_imports())
     results.append(check_market_source_config(settings))
+    results.append(check_adapter_source_config(settings))
 
     database_result, engine = check_database(settings)
     results.append(database_result)

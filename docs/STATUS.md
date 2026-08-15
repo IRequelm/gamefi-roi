@@ -5,11 +5,11 @@ Project version: 0.1
 
 ## Current state
 
-**ACTIVE GATE: G4 — Adapter #1**
+**ACTIVE GATE: G5 — Adapter #2**
 
-G3 is complete and frozen in the G3 baseline Git commit.
+G4 is complete and frozen in the G4 baseline Git commit.
 
-Do not implement G4 until the user explicitly asks to proceed.
+Do not implement G5 until the user explicitly asks to proceed.
 
 ## Gate board
 
@@ -19,8 +19,8 @@ Do not implement G4 until the user explicitly asks to proceed.
 | G1 | Skeleton | COMPLETE |
 | G2 | Market Data | COMPLETE |
 | G3 | ROI Core | COMPLETE |
-| G4 | Adapter #1 | ACTIVE |
-| G5 | Adapter #2 | NOT STARTED |
+| G4 | Adapter #1 | COMPLETE |
+| G5 | Adapter #2 | ACTIVE |
 | G6 | Adapter #3 | NOT STARTED |
 | G7 | Interface Freeze | NOT STARTED |
 | G8 | History | NOT STARTED |
@@ -116,9 +116,28 @@ Implement the generic ROI calculation core using manually verified deterministic
 
 Implement the first game adapter only after a Data Feasibility Check passes for the selected game.
 
-## G4 planned acceptance criteria
+## G4 acceptance criteria
 
-G4 scope and acceptance criteria must be confirmed before implementation begins.
+- [x] Data Feasibility Candidate Scan evaluates at least five currently active GameFi games with materially measurable earning economies,
+- [x] selected Adapter #1 candidate has a documented `GO` decision with evidence and unresolved assumptions,
+- [x] parked mRON candidate is not implemented or forced into the architecture,
+- [x] adapter implements exactly one versioned strategy definition for Adapter #1,
+- [x] provider access and HTTP/RPC behavior live in shared `sources/` connectors, not in the game adapter,
+- [x] adapter maps game-specific economics into the generic G3 ROI engine without game-specific ROI-core branches,
+- [x] adapter preserves LIVE / DERIVED / CONFIG classification for live observations, derived values, and configured assumptions,
+- [x] required missing or stale inputs fail explicitly and are never substituted with zero,
+- [x] deterministic golden fixture contains manually verified expected ROI values independent of live APIs,
+- [x] live integration/probe path exists separately from deterministic tests,
+- [x] G4 documentation explains feasibility result, modeled strategy, source boundaries, commands, and dependency choices,
+- [x] no optimization, risk/confidence scoring, history, frontend, G5 work, or unrelated game adapter is added,
+- [x] all tests, doctor checks, dependency checks, compile checks, and live probe pass,
+- [x] baseline Git commit for G4.
+
+## G4 adapter decision
+
+Adapter #1 is `dfk-crystalvale-jeweler-cjewel-max-lock` version `v1`.
+
+See `docs/DECISIONS/0001-adapter-1-feasibility-scan.md`.
 
 ## Decision backlog (not blockers)
 

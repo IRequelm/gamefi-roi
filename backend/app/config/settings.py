@@ -31,6 +31,11 @@ class Settings(BaseSettings):
         min_length=1,
     )
     coingecko_api_key: str | None = None
+    dfk_chain_rpc_url: str = Field(
+        default="https://subnets.avax.network/defi-kingdoms/dfk-chain/rpc",
+        min_length=1,
+    )
+    dfk_chain_observation_freshness_seconds: int = Field(default=300, gt=0, le=86_400)
 
     @field_validator("coingecko_api_key", mode="before")
     @classmethod
