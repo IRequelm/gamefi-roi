@@ -1,0 +1,190 @@
+{
+  "stationary_quote_with_costs_and_recoverable_asset": {
+    "notes": [
+      "Total capital = 35.00 sunk + 65.00 recoverable entry cost + 10.00 initial reserve = 110.00.",
+      "Daily net = 5.40 realizable rewards - 1.10 operating - 0.40 transaction - 0.50 other = 3.40.",
+      "Realizable reward value is an executable quote after slippage from 6.00 gross nominal value.",
+      "Exit-adjusted P&L = 41.20 cumulative net cash + 42.00 current recoverable value - 110.00 total cash invested = -26.80."
+    ],
+    "input": {
+      "strategy_id": "fixture-strategy",
+      "strategy_version": "fixture-v1",
+      "model_version": "roi-core-v1",
+      "reporting_currency": "USD",
+      "break_even_basis": "total_capital",
+      "capital": {
+        "sunk_cost": "35.00",
+        "recoverable_entry_cost": "65.00",
+        "current_recoverable_value": "42.00",
+        "initial_operating_reserve": "10.00",
+        "capital_at_risk": "70.00"
+      },
+      "rewards": {
+        "gross_nominal_value_day": "6.00",
+        "realizable_value_day": "5.40"
+      },
+      "costs": {
+        "operating_cost_day": "1.10",
+        "transaction_cost_day": "0.40",
+        "other_cost_day": "0.50"
+      },
+      "cumulative_net_cash_earnings": "41.20",
+      "total_cash_invested_to_date": "110.00",
+      "input_observation_ids": [
+        "obs-price",
+        "obs-executable-quote",
+        "obs-fee"
+      ]
+    },
+    "expected": {
+      "total_capital": "110.00",
+      "sunk_cost": "35.00",
+      "recoverable_capital": "42.00",
+      "capital_at_risk": "70.00",
+      "gross_nominal_earnings_day": "6.00",
+      "realizable_earnings_day": "5.40",
+      "operating_cost_day": "1.10",
+      "transaction_cost_day": "0.40",
+      "other_cost_day": "0.50",
+      "net_earnings_day": "3.40",
+      "break_even_days": "32.35294117647058823529411765",
+      "roi_total_7d": "0.2163636363636363636363636364",
+      "roi_total_30d": "0.9272727272727272727272727273",
+      "roi_total_90d": "2.781818181818181818181818182",
+      "roi_risk_7d": "0.34",
+      "roi_risk_30d": "1.457142857142857142857142857",
+      "roi_risk_90d": "4.371428571428571428571428571",
+      "exit_adjusted_pnl": "-26.80"
+    }
+  },
+  "zero_net_no_break_even": {
+    "notes": [
+      "Daily net = 2.00 - 1.00 - 0.75 - 0.25 = 0.00.",
+      "Break-even is not computable because net earnings are not positive.",
+      "ROI is computable and equals zero because the denominator is positive."
+    ],
+    "input": {
+      "strategy_id": "fixture-zero-net",
+      "strategy_version": "fixture-v1",
+      "model_version": "roi-core-v1",
+      "reporting_currency": "USD",
+      "break_even_basis": "total_capital",
+      "capital": {
+        "sunk_cost": "35.00",
+        "recoverable_entry_cost": "65.00",
+        "current_recoverable_value": "42.00",
+        "initial_operating_reserve": "10.00",
+        "capital_at_risk": "70.00"
+      },
+      "rewards": {
+        "gross_nominal_value_day": "2.00",
+        "realizable_value_day": "2.00"
+      },
+      "costs": {
+        "operating_cost_day": "1.00",
+        "transaction_cost_day": "0.75",
+        "other_cost_day": "0.25"
+      },
+      "cumulative_net_cash_earnings": "0.00",
+      "total_cash_invested_to_date": "110.00",
+      "input_observation_ids": [
+        "obs-zero-net"
+      ]
+    },
+    "expected": {
+      "net_earnings_day": "0.00",
+      "break_even_status": "not_computable",
+      "roi_total_7d": "0.00"
+    }
+  },
+  "negative_net_no_break_even": {
+    "notes": [
+      "Daily net = 1.00 - 1.10 - 0.40 - 0.50 = -1.00.",
+      "Break-even is not computable, but ROI remains a negative ratio."
+    ],
+    "input": {
+      "strategy_id": "fixture-negative-net",
+      "strategy_version": "fixture-v1",
+      "model_version": "roi-core-v1",
+      "reporting_currency": "USD",
+      "break_even_basis": "total_capital",
+      "capital": {
+        "sunk_cost": "35.00",
+        "recoverable_entry_cost": "65.00",
+        "current_recoverable_value": "42.00",
+        "initial_operating_reserve": "10.00",
+        "capital_at_risk": "70.00"
+      },
+      "rewards": {
+        "gross_nominal_value_day": "2.00",
+        "realizable_value_day": "1.00"
+      },
+      "costs": {
+        "operating_cost_day": "1.10",
+        "transaction_cost_day": "0.40",
+        "other_cost_day": "0.50"
+      },
+      "cumulative_net_cash_earnings": "-5.00",
+      "total_cash_invested_to_date": "110.00",
+      "input_observation_ids": [
+        "obs-negative-net"
+      ]
+    },
+    "expected": {
+      "net_earnings_day": "-1.00",
+      "break_even_status": "not_computable",
+      "roi_total_7d": "-0.06363636363636363636363636364"
+    }
+  },
+  "zero_total_capital_with_risk_roi": {
+    "notes": [
+      "Total capital = 0 + 0 + 0 = 0, so total-capital ROI is not computable.",
+      "Capital-at-risk ROI is still computable: 3.40 * 7 / 25.00 = 0.952."
+    ],
+    "input": {
+      "strategy_id": "fixture-zero-total",
+      "strategy_version": "fixture-v1",
+      "model_version": "roi-core-v1",
+      "reporting_currency": "USD",
+      "break_even_basis": "capital_at_risk",
+      "capital": {
+        "sunk_cost": "0",
+        "recoverable_entry_cost": "0",
+        "current_recoverable_value": "0",
+        "initial_operating_reserve": "0",
+        "capital_at_risk": "25.00"
+      },
+      "rewards": {
+        "gross_nominal_value_day": "6.00",
+        "realizable_value_day": "5.40"
+      },
+      "costs": {
+        "operating_cost_day": "1.10",
+        "transaction_cost_day": "0.40",
+        "other_cost_day": "0.50"
+      },
+      "cumulative_net_cash_earnings": "0.00",
+      "total_cash_invested_to_date": "0.00",
+      "input_observation_ids": [
+        "obs-zero-total"
+      ]
+    },
+    "expected": {
+      "total_capital": "0",
+      "roi_total_7d_status": "not_computable",
+      "roi_risk_7d": "0.952"
+    }
+  },
+  "missing_transaction_cost_error": {
+    "notes": [
+      "Missing required transaction cost must raise an explicit EngineInputError and must never become zero."
+    ],
+    "input": {
+      "operating_cost_day": "1.00",
+      "other_cost_day": "0.00"
+    },
+    "expected": {
+      "error": "costs.transaction_cost_day is required"
+    }
+  }
+}

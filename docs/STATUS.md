@@ -5,11 +5,11 @@ Project version: 0.1
 
 ## Current state
 
-**ACTIVE GATE: G3 — ROI Core**
+**ACTIVE GATE: G4 — Adapter #1**
 
-G2 is complete and frozen in the G2 baseline Git commit.
+G3 is complete and frozen in the G3 baseline Git commit.
 
-Do not implement G3 until the user explicitly asks to proceed.
+Do not implement G4 until the user explicitly asks to proceed.
 
 ## Gate board
 
@@ -18,8 +18,8 @@ Do not implement G3 until the user explicitly asks to proceed.
 | G0 | Freeze | COMPLETE |
 | G1 | Skeleton | COMPLETE |
 | G2 | Market Data | COMPLETE |
-| G3 | ROI Core | ACTIVE |
-| G4 | Adapter #1 | NOT STARTED |
+| G3 | ROI Core | COMPLETE |
+| G4 | Adapter #1 | ACTIVE |
 | G5 | Adapter #2 | NOT STARTED |
 | G6 | Adapter #3 | NOT STARTED |
 | G7 | Interface Freeze | NOT STARTED |
@@ -100,7 +100,25 @@ Implement the generic ROI calculation core using manually verified deterministic
 
 ## G3 planned acceptance criteria
 
-G3 must satisfy the G3 acceptance principle in `docs/ROI_METHODOLOGY.md` before it can be marked complete.
+- [x] generic ROI engine lives in `engine/` and contains no game-specific checks,
+- [x] money and ratio calculations are deterministic and Decimal-safe with explicit currencies,
+- [x] engine input contract distinguishes sunk cost, recoverable entry cost, current recoverable value, initial operating reserve, capital at risk, rewards, recurring costs, transaction costs, and other costs,
+- [x] engine calculates total capital, recoverable capital, capital at risk, gross nominal earnings, realizable earnings, operating/transaction/other costs, net earnings, break-even, 7D/30D/90D ROI on total capital, 7D/30D/90D ROI on capital at risk, and exit-adjusted P&L,
+- [x] break-even basis is explicit and supports total capital, sunk cost, and capital-at-risk recovery targets,
+- [x] required missing inputs fail explicitly and are never treated as zero,
+- [x] deterministic manually-verifiable fixtures cover simple reward, transaction fee, recurring cost, slippage/executable quote, recoverable entry asset, break-even, exit-adjusted P&L, zero/negative earnings behavior, and missing input failure behavior,
+- [x] G3 documentation explains engine scope, formulas implemented, and boundaries,
+- [x] no game adapter logic, market provider changes, risk/confidence scoring, optimization, frontend business logic, or live integration tests are added,
+- [x] all tests, doctor checks, dependency checks, compile checks, and whitespace checks pass,
+- [x] baseline Git commit for G3.
+
+## G4 objective
+
+Implement the first game adapter only after a Data Feasibility Check passes for the selected game.
+
+## G4 planned acceptance criteria
+
+G4 scope and acceptance criteria must be confirmed before implementation begins.
 
 ## Decision backlog (not blockers)
 
@@ -114,4 +132,4 @@ G3 must satisfy the G3 acceptance principle in `docs/ROI_METHODOLOGY.md` before 
 
 ## Current instruction to Codex
 
-G3 is active. Do not implement G3 until the user explicitly asks to proceed.
+G4 is active. Do not implement G4 until the user explicitly asks to proceed.

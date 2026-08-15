@@ -24,7 +24,7 @@ Python 3.12 is stable, available in the current Codex runtime, and remains suita
 - httpx: bounded-timeout HTTP client used by source connectors, with deterministic mock transport tests.
 - pytest/httpx: deterministic backend and API tests.
 
-No game adapter, ROI formula, or frontend business logic is included through G2.
+No game adapter, risk/confidence scoring, optimization, or frontend business logic is included through G3.
 
 ## Local Setup
 
@@ -113,6 +113,25 @@ $env:GAMEFI_COINGECKO_BASE_URL = "https://api.coingecko.com/api/v3"
 `GAMEFI_COINGECKO_API_KEY` is optional and blank in `.env.example`; do not commit real provider keys.
 
 The connector currently supports token price observations. Pool state, executable sell quotes, and OHLCV are explicit unsupported capabilities until a later gate chooses providers and acceptance criteria for those capabilities.
+
+## ROI Core
+
+G3 establishes the generic ROI calculation core in `backend/app/engine/`.
+
+Implemented formulas:
+
+- `total_capital = sunk_cost + recoverable_entry_cost + initial_operating_reserve`
+- `net_earnings_day = realizable_value_day - operating_cost_day - transaction_cost_day - other_cost_day`
+- `break_even_days = recovery_target / net_earnings_day`
+- `roi_total_N = (N * net_earnings_day) / total_capital`
+- `roi_risk_N = (N * net_earnings_day) / capital_at_risk`
+- `exit_adjusted_pnl = cumulative_net_cash_earnings + current_recoverable_value - total_cash_invested_to_date`
+
+Break-even basis is explicit: `total_capital`, `sunk_cost`, or `capital_at_risk`.
+
+All money crossing the engine boundary uses `Money` with a `Decimal` amount and explicit currency. Required inputs fail with `EngineInputError`; they are never silently treated as zero. Zero-cost or no-cost cases must pass `Money.zero(...)` explicitly.
+
+The engine accepts a realizable reward value that may come from a future executable quote or documented approximation. It does not implement AMM math, market-data fetching, game-specific reward logic, risk/confidence scoring, strategy optimization, or frontend presentation.
 
 ## Test-Only Database Mode
 
