@@ -36,6 +36,10 @@ REQUIRED_IMPORTS = (
     "app.engine.results",
     "app.adapters.defi_kingdoms_jeweler",
     "app.adapters.defi_kingdoms_jeweler_probe",
+    "app.adapters.farmers_world",
+    "app.adapters.farmers_world_probe",
+    "app.sources.alcor",
+    "app.sources.atomicassets",
     "app.sources.coingecko",
     "app.sources.amm",
     "app.sources.evm",
@@ -43,6 +47,7 @@ REQUIRED_IMPORTS = (
     "app.sources.market_data",
     "app.sources.observations",
     "app.strategies.defi_kingdoms",
+    "app.strategies.farmers_world",
 )
 
 
@@ -136,7 +141,10 @@ def check_adapter_source_config(settings: Settings | None) -> CheckResult:
         detail=(
             "Adapter source config loaded "
             f"(dfk_rpc_configured={bool(settings.dfk_chain_rpc_url)}, "
-            f"dfk_freshness={settings.dfk_chain_observation_freshness_seconds}s)"
+            f"dfk_freshness={settings.dfk_chain_observation_freshness_seconds}s, "
+            f"alcor_configured={bool(settings.alcor_base_url)}, "
+            f"atomicassets_configured={bool(settings.atomicassets_base_url)}, "
+            f"wax_market_freshness={settings.wax_market_observation_freshness_seconds}s)"
         ),
     )
 

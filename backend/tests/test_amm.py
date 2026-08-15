@@ -4,7 +4,7 @@ from decimal import Decimal
 
 import pytest
 
-from app.sources.amm import ConstantProductPool, quote_exact_input, spot_price
+from app.sources.amm import ConstantProductPool, quote_exact_input, quote_exact_output, spot_price
 
 
 def test_constant_product_quote_is_decimal_safe() -> None:
@@ -20,6 +20,9 @@ def test_constant_product_quote_is_decimal_safe() -> None:
     assert quote_exact_input(pool, input_token_id="JEWEL", input_amount=Decimal("5")) == Decimal(
         "0.9960069810399032164931563231"
     )
+    assert quote_exact_output(pool, output_token_id="JEWEL", output_amount=Decimal("5")) == Decimal(
+        "1.004013040121365096289870613"
+    )
 
 
 def test_constant_product_quote_rejects_unknown_token() -> None:
@@ -33,3 +36,6 @@ def test_constant_product_quote_rejects_unknown_token() -> None:
 
     with pytest.raises(ValueError, match="not in the pool"):
         quote_exact_input(pool, input_token_id="CRYSTAL", input_amount=Decimal("1"))
+
+    with pytest.raises(ValueError, match="not in the pool"):
+        quote_exact_output(pool, output_token_id="CRYSTAL", output_amount=Decimal("1"))

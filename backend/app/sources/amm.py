@@ -48,6 +48,34 @@ def quote_exact_input(pool: ConstantProductPool, *, input_token_id: str, input_a
     return FINANCIAL_DECIMAL_CONTEXT.divide(numerator, denominator)
 
 
+def quote_exact_output(pool: ConstantProductPool, *, output_token_id: str, output_amount: Decimal) -> Decimal:
+    if not isinstance(output_amount, Decimal):
+        raise TypeError("output_amount must be Decimal")
+    if output_amount <= Decimal("0"):
+        raise ValueError("output_amount must be positive")
+
+    if output_token_id == pool.token0_id:
+        input_reserve = pool.reserve1
+        output_reserve = pool.reserve0
+    elif output_token_id == pool.token1_id:
+        input_reserve = pool.reserve0
+        output_reserve = pool.reserve1
+    else:
+        raise ValueError(f"output token {output_token_id} is not in the pool")
+
+    if output_amount >= output_reserve:
+        raise ValueError("output_amount must be smaller than output reserve")
+
+    fee_multiplier = FINANCIAL_DECIMAL_CONTEXT.divide(
+        decimal_from_int(10_000 - pool.fee_bps),
+        decimal_from_int(10_000),
+    )
+    numerator = FINANCIAL_DECIMAL_CONTEXT.multiply(input_reserve, output_amount)
+    output_after_swap = FINANCIAL_DECIMAL_CONTEXT.subtract(output_reserve, output_amount)
+    denominator = FINANCIAL_DECIMAL_CONTEXT.multiply(output_after_swap, fee_multiplier)
+    return FINANCIAL_DECIMAL_CONTEXT.divide(numerator, denominator)
+
+
 def spot_price(pool: ConstantProductPool, *, base_token_id: str) -> Decimal:
     if base_token_id == pool.token0_id:
         return FINANCIAL_DECIMAL_CONTEXT.divide(pool.reserve1, pool.reserve0)

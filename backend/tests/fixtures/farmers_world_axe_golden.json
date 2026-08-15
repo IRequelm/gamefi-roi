@@ -1,0 +1,38 @@
+{
+  "strategy": {
+    "tool_count": "1",
+    "cycles_per_day": "12",
+    "cycle_hours": "1",
+    "fww_output_per_cycle": "5",
+    "fwf_input_per_cycle": "2",
+    "fwg_input_per_cycle": "1",
+    "entry_value_usd": "10.00",
+    "exit_value_usd": "9.50",
+    "fww_reference_price_usd": "0.02",
+    "fww_realizable_value_day_usd": "1.17",
+    "fwf_operating_cost_day_usd": "0.24",
+    "fwg_operating_cost_day_usd": "0.18",
+    "transaction_cost_day_usd": "0.02"
+  },
+  "manual_expected": {
+    "fww_output_day": "60",
+    "fwf_input_day": "24",
+    "fwg_input_day": "12",
+    "gross_nominal_earnings_day": "1.20",
+    "realizable_earnings_day": "1.17",
+    "operating_cost_day": "0.42",
+    "transaction_cost_day": "0.02",
+    "net_earnings_day": "0.73",
+    "total_capital": "10.00",
+    "recoverable_capital": "9.50",
+    "capital_at_risk": "10.00",
+    "break_even_days": "13.69863013698630136986301370",
+    "roi_total_7d": "0.511",
+    "roi_total_30d": "2.19",
+    "roi_total_90d": "6.57",
+    "roi_risk_7d": "0.511",
+    "roi_risk_30d": "2.19",
+    "roi_risk_90d": "6.57",
+    "exit_adjusted_pnl": "-0.50"
+  }
+}

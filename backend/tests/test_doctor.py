@@ -67,3 +67,6 @@ def test_doctor_includes_adapter_source_config(monkeypatch, tmp_path) -> None:
     assert "adapter-source-config" in names
     assert adapter_source_config.ok is True
     assert "dfk_freshness=300s" in adapter_source_config.detail
+    assert "alcor_configured=True" in adapter_source_config.detail
+    assert "atomicassets_configured=True" in adapter_source_config.detail
+    assert "wax_market_freshness=300s" in adapter_source_config.detail

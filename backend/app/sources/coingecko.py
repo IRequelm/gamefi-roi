@@ -123,7 +123,7 @@ class CoinGeckoMarketDataSource(UnsupportedMarketDataSource):
             retrieved_at=retrieved_at,
             fresh_until=fresh_until,
             status=ObservationStatus.FRESH,
-            metadata={"provider_asset_id": provider_asset_id},
+            metadata={"classification": "LIVE", "provider_asset_id": provider_asset_id},
         )
 
     def _missing_observation(

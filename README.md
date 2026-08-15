@@ -166,6 +166,56 @@ $env:GAMEFI_DFK_CHAIN_OBSERVATION_FRESHNESS_SECONDS = "300"
 
 No new package dependencies were added for G4; the existing `httpx` source layer is reused for JSON-RPC POSTs.
 
+## Adapter #2: Farmers World Axe Wood Production
+
+G5 adds a materially different economy type: resource production with input-resource costs, NFT entry/exit pricing, DEX realization, and player-market liquidity.
+
+The implemented strategy is:
+
+```text
+Farmers World Axe Wood Production, v1
+```
+
+The adapter models 1 Farmers World Axe NFT producing wood for 12 one-hour cycles per day. Each cycle is configured to produce 5 FWW and consume 2 FWF plus 1 FWG. The adapter maps these economics into the generic ROI engine; no ROI-core game branches were added.
+
+G5 source boundaries:
+
+- Alcor WAX market observations live in `backend/app/sources/alcor.py`.
+- AtomicAssets WAX NFT floor observations live in `backend/app/sources/atomicassets.py`.
+- Generic constant-product sell and buy quote math lives in `backend/app/sources/amm.py`.
+- Farmers World strategy constants live in `backend/app/strategies/farmers_world.py`.
+- Farmers World economic interpretation lives in `backend/app/adapters/farmers_world.py`.
+
+LIVE values:
+
+- FWW/WAX, FWF/WAX, and FWG/WAX ticker/liquidity/fee/frozen observations from Alcor.
+- Axe template floor listing and collection fee from AtomicAssets.
+- WAX/USD from CoinGecko.
+
+CONFIG values:
+
+- Tool count, cycle count, cycle length, production per cycle, resource input costs per cycle, and zero WAX transaction/resource cost assumption.
+
+DERIVED values:
+
+- Entry value USD, exit value USD, FWW reference price USD, realizable FWW reward value USD, FWF/FWG operating costs USD, and ROI engine outputs.
+
+The deterministic test suite uses recorded/manual fixtures only. Live probing is opt-in:
+
+```powershell
+.\.venv\Scripts\python -m app.adapters.farmers_world_probe
+```
+
+Farmers World source configuration:
+
+```powershell
+$env:GAMEFI_ALCOR_BASE_URL = "https://wax.alcor.exchange/api/v2"
+$env:GAMEFI_ATOMICASSETS_BASE_URL = "https://wax.api.atomicassets.io"
+$env:GAMEFI_WAX_MARKET_OBSERVATION_FRESHNESS_SECONDS = "300"
+```
+
+No new package dependencies were added for G5; the existing `httpx` source layer is reused for public WAX market APIs.
+
 ## Test-Only Database Mode
 
 Production and normal local development should use PostgreSQL. Deterministic tests may use SQLite only when both of these are set:

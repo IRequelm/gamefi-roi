@@ -31,6 +31,15 @@ class Settings(BaseSettings):
         min_length=1,
     )
     coingecko_api_key: str | None = None
+    alcor_base_url: str = Field(
+        default="https://wax.alcor.exchange/api/v2",
+        min_length=1,
+    )
+    atomicassets_base_url: str = Field(
+        default="https://wax.api.atomicassets.io",
+        min_length=1,
+    )
+    wax_market_observation_freshness_seconds: int = Field(default=300, gt=0, le=86_400)
     dfk_chain_rpc_url: str = Field(
         default="https://subnets.avax.network/defi-kingdoms/dfk-chain/rpc",
         min_length=1,

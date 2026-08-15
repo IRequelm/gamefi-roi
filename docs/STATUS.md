@@ -5,11 +5,11 @@ Project version: 0.1
 
 ## Current state
 
-**ACTIVE GATE: G5 — Adapter #2**
+**ACTIVE GATE: G6 — Adapter #3**
 
-G4 is complete and frozen in the G4 baseline Git commit.
+G5 is complete and frozen in the G5 baseline Git commit.
 
-Do not implement G5 until the user explicitly asks to proceed.
+Do not implement G6 until the user explicitly asks to proceed.
 
 ## Gate board
 
@@ -20,8 +20,8 @@ Do not implement G5 until the user explicitly asks to proceed.
 | G2 | Market Data | COMPLETE |
 | G3 | ROI Core | COMPLETE |
 | G4 | Adapter #1 | COMPLETE |
-| G5 | Adapter #2 | ACTIVE |
-| G6 | Adapter #3 | NOT STARTED |
+| G5 | Adapter #2 | COMPLETE |
+| G6 | Adapter #3 | ACTIVE |
 | G7 | Interface Freeze | NOT STARTED |
 | G8 | History | NOT STARTED |
 | G9 | Risk / Confidence | NOT STARTED |
@@ -139,6 +139,35 @@ Adapter #1 is `dfk-crystalvale-jeweler-cjewel-max-lock` version `v1`.
 
 See `docs/DECISIONS/0001-adapter-1-feasibility-scan.md`.
 
+## G5 objective
+
+Implement a second game adapter for a materially different economy from DeFi Kingdoms Jeweler, focused on resource production, resource inputs/outputs, conversion/crafting economics, player-market realizable value, operating/transaction costs, entry capital, and exit value.
+
+## G5 acceptance criteria
+
+- [x] Data Feasibility Candidate Scan evaluates at least five active resource-production/crafting/conversion/player-market games,
+- [x] Craft World is included in the scan and is not forced when required production/crafting data is not reliably machine-readable,
+- [x] selected Adapter #2 candidate has a documented `GO` decision with evidence and unresolved assumptions,
+- [x] Adapter #2 represents a materially different economy from DFK Jeweler,
+- [x] adapter implements exactly one versioned strategy definition for Adapter #2,
+- [x] provider access and HTTP behavior live in shared `sources/` connectors, not in the game adapter,
+- [x] adapter maps game-specific economics into the generic G3 ROI engine without game-specific ROI-core branches,
+- [x] any new capability is generic and outside the ROI core unless a documented architectural gap requires stopping,
+- [x] adapter preserves LIVE / DERIVED / CONFIG classification for live observations, derived values, and configured assumptions,
+- [x] required missing or stale inputs fail explicitly and are never substituted with zero,
+- [x] deterministic golden fixture contains manually verified expected ROI values independent of live APIs,
+- [x] live integration/probe path exists separately from deterministic tests,
+- [x] G5 documentation explains feasibility result, modeled strategy, source boundaries, commands, dependency choices, and assumptions,
+- [x] no optimization, risk/confidence scoring, history, frontend, G6 work, or unrelated game adapter is added,
+- [x] all tests, doctor checks, dependency checks, compile checks, whitespace checks, and live probe pass,
+- [x] baseline Git commit for G5.
+
+## G5 adapter decision
+
+Adapter #2 is `farmers-world-axe-wood-production` version `v1`.
+
+See `docs/DECISIONS/0002-adapter-2-feasibility-scan.md`.
+
 ## Decision backlog (not blockers)
 
 - product/brand name,
@@ -151,4 +180,4 @@ See `docs/DECISIONS/0001-adapter-1-feasibility-scan.md`.
 
 ## Current instruction to Codex
 
-G4 is active. Do not implement G4 until the user explicitly asks to proceed.
+G6 is active. Do not implement G6 until the user explicitly asks to proceed.
