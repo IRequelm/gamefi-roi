@@ -76,3 +76,14 @@ def test_wax_market_source_config_defaults_are_present(monkeypatch) -> None:
     assert settings.alcor_base_url == "https://wax.alcor.exchange/api/v2"
     assert settings.atomicassets_base_url == "https://wax.api.atomicassets.io"
     assert settings.wax_market_observation_freshness_seconds == 300
+
+
+def test_splinterlands_source_config_defaults_are_present(monkeypatch) -> None:
+    monkeypatch.setenv("GAMEFI_ENVIRONMENT", "test")
+    monkeypatch.setenv("GAMEFI_DATABASE_URL", "sqlite+pysqlite:///:memory:")
+    monkeypatch.setenv("GAMEFI_ALLOW_SQLITE_FOR_TESTS", "true")
+
+    settings = get_settings()
+
+    assert settings.splinterlands_base_url == "https://api.splinterlands.com"
+    assert settings.splinterlands_observation_freshness_seconds == 300

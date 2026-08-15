@@ -45,6 +45,11 @@ class Settings(BaseSettings):
         min_length=1,
     )
     dfk_chain_observation_freshness_seconds: int = Field(default=300, gt=0, le=86_400)
+    splinterlands_base_url: str = Field(
+        default="https://api.splinterlands.com",
+        min_length=1,
+    )
+    splinterlands_observation_freshness_seconds: int = Field(default=300, gt=0, le=86_400)
 
     @field_validator("coingecko_api_key", mode="before")
     @classmethod

@@ -38,6 +38,8 @@ REQUIRED_IMPORTS = (
     "app.adapters.defi_kingdoms_jeweler_probe",
     "app.adapters.farmers_world",
     "app.adapters.farmers_world_probe",
+    "app.adapters.splinterlands",
+    "app.adapters.splinterlands_probe",
     "app.sources.alcor",
     "app.sources.atomicassets",
     "app.sources.coingecko",
@@ -46,8 +48,10 @@ REQUIRED_IMPORTS = (
     "app.sources.http",
     "app.sources.market_data",
     "app.sources.observations",
+    "app.sources.splinterlands",
     "app.strategies.defi_kingdoms",
     "app.strategies.farmers_world",
+    "app.strategies.splinterlands",
 )
 
 
@@ -144,7 +148,9 @@ def check_adapter_source_config(settings: Settings | None) -> CheckResult:
             f"dfk_freshness={settings.dfk_chain_observation_freshness_seconds}s, "
             f"alcor_configured={bool(settings.alcor_base_url)}, "
             f"atomicassets_configured={bool(settings.atomicassets_base_url)}, "
-            f"wax_market_freshness={settings.wax_market_observation_freshness_seconds}s)"
+            f"wax_market_freshness={settings.wax_market_observation_freshness_seconds}s, "
+            f"splinterlands_configured={bool(settings.splinterlands_base_url)}, "
+            f"splinterlands_freshness={settings.splinterlands_observation_freshness_seconds}s)"
         ),
     )
 

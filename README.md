@@ -216,6 +216,54 @@ $env:GAMEFI_WAX_MARKET_OBSERVATION_FRESHNESS_SECONDS = "300"
 
 No new package dependencies were added for G5; the existing `httpx` source layer is reused for public WAX market APIs.
 
+## Adapter #3: Splinterlands Modern Ranked SPS Expected Value
+
+G6 adds a materially different economy type: performance-dependent PvP combat rewards with explicit uncertainty.
+
+The implemented strategy is:
+
+```text
+Splinterlands Modern Ranked SPS Expected Value, v1
+```
+
+The adapter models a player with a Summoner's Spellbook playing 20 Modern Ranked battles per day with a configured 55% expected win probability and 45%-65% uncertainty range. Expected wins are converted into expected SPS/day using a configured representative SPS reward per win, then valued with live SPS/USD pricing and a configured realization haircut.
+
+G6 source boundaries:
+
+- Splinterlands official settings and season observations live in `backend/app/sources/splinterlands.py`.
+- SPS/USD pricing uses the existing CoinGecko source connector.
+- Splinterlands strategy constants live in `backend/app/strategies/splinterlands.py`.
+- Splinterlands economic interpretation lives in `backend/app/adapters/splinterlands.py`.
+- The ROI engine remains generic and unchanged.
+
+LIVE values:
+
+- Spellbook/starter pack price, season id/end, energy max, and energy regeneration from Splinterlands official API.
+- SPS/USD from CoinGecko.
+
+CONFIG values:
+
+- Battles/day, win-probability range, representative SPS reward per win, rental cost, transaction cost, and realization haircut.
+
+DERIVED values:
+
+- Sustainable energy/day, expected wins/day, expected SPS/day, low/high reward range, realizable value, low/high net range, and ROI engine outputs.
+
+The deterministic test suite uses recorded/manual fixtures only. Live probing is opt-in:
+
+```powershell
+.\.venv\Scripts\python -m app.adapters.splinterlands_probe
+```
+
+Splinterlands source configuration:
+
+```powershell
+$env:GAMEFI_SPLINTERLANDS_BASE_URL = "https://api.splinterlands.com"
+$env:GAMEFI_SPLINTERLANDS_OBSERVATION_FRESHNESS_SECONDS = "300"
+```
+
+No new package dependencies were added for G6; the existing `httpx` source layer is reused for public official API calls.
+
 ## Test-Only Database Mode
 
 Production and normal local development should use PostgreSQL. Deterministic tests may use SQLite only when both of these are set:

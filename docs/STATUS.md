@@ -5,11 +5,11 @@ Project version: 0.1
 
 ## Current state
 
-**ACTIVE GATE: G6 — Adapter #3**
+**ACTIVE GATE: G7 — Interface Freeze**
 
-G5 is complete and frozen in the G5 baseline Git commit.
+G6 is complete and frozen in the G6 baseline Git commit.
 
-Do not implement G6 until the user explicitly asks to proceed.
+Do not implement G7 until the user explicitly asks to proceed.
 
 ## Gate board
 
@@ -21,8 +21,8 @@ Do not implement G6 until the user explicitly asks to proceed.
 | G3 | ROI Core | COMPLETE |
 | G4 | Adapter #1 | COMPLETE |
 | G5 | Adapter #2 | COMPLETE |
-| G6 | Adapter #3 | ACTIVE |
-| G7 | Interface Freeze | NOT STARTED |
+| G6 | Adapter #3 | COMPLETE |
+| G7 | Interface Freeze | ACTIVE |
 | G8 | History | NOT STARTED |
 | G9 | Risk / Confidence | NOT STARTED |
 | G10 | API | NOT STARTED |
@@ -168,16 +168,47 @@ Adapter #2 is `farmers-world-axe-wood-production` version `v1`.
 
 See `docs/DECISIONS/0002-adapter-2-feasibility-scan.md`.
 
+## G6 objective
+
+Implement a third game adapter for a materially different economy from DeFi Kingdoms Jeweler and Farmers World, focused on seasonal, probabilistic, performance-dependent, leaderboard, combat, quest, or similar reward economics.
+
+## G6 acceptance criteria
+
+- [x] Data Feasibility Candidate Scan evaluates at least five active GameFi candidates in the target economy class,
+- [x] selected Adapter #3 candidate has a documented `GO` decision with evidence and unresolved assumptions,
+- [x] Adapter #3 represents a materially different economy from DFK Jeweler and Farmers World,
+- [x] adapter implements exactly one versioned strategy definition for Adapter #3,
+- [x] provider access and HTTP behavior live in shared `sources/` connectors, not in the game adapter,
+- [x] adapter maps uncertainty/time-dependent game economics into the generic G3 ROI engine without game-specific ROI-core branches,
+- [x] if rewards are probabilistic or performance-dependent, expected value is used only under explicit assumptions and uncertainty is exposed,
+- [x] adapter preserves LIVE / DERIVED / CONFIG classification for live observations, derived values, and configured assumptions,
+- [x] required missing or stale inputs fail explicitly and are never substituted with zero,
+- [x] deterministic golden fixture contains manually verified expected ROI values independent of live APIs,
+- [x] live integration/probe path exists separately from deterministic tests,
+- [x] G6 documentation explains feasibility result, modeled strategy, source boundaries, commands, dependency choices, and assumptions,
+- [x] no optimization, risk/confidence scoring, history, frontend, G7 work, or unrelated game adapter is added,
+- [x] all tests, doctor checks, dependency checks, compile checks, whitespace checks, and live probe pass,
+- [x] baseline Git commit for G6.
+
+## G6 adapter decision
+
+Adapter #3 is `splinterlands-modern-ranked-sps-ev` version `v1`.
+
+See `docs/DECISIONS/0003-adapter-3-feasibility-scan.md`.
+
 ## Decision backlog (not blockers)
 
 - product/brand name,
 - production hosting vendor,
 - production market-data subscription/provider,
 - final frontend framework,
-- first three exact game adapters (must pass feasibility checks),
 - monetization pricing,
 - legal/commercial launch review.
 
+## G7 objective
+
+Freeze Adapter Contract v1 by reviewing patterns from the first three materially different adapters and documenting the stable adapter/source/strategy boundaries for future gates.
+
 ## Current instruction to Codex
 
-G6 is active. Do not implement G6 until the user explicitly asks to proceed.
+G7 is active. Do not implement G7 until the user explicitly asks to proceed.
