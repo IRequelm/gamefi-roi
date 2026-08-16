@@ -1,0 +1,2 @@
+"""Independent MVP validation helpers."""
+

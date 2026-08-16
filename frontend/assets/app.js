@@ -564,7 +564,7 @@ export function formatRatio(metric) {
   if (!metric || metric.value === null || metric.value === undefined) {
     return `<span class="muted">${escapeHtml(metric?.reason || "Unavailable")}</span>`;
   }
-  return `${escapeHtml(decimalStringToPercent(metric.value))}`;
+  return `${escapeHtml(String(metric.value))}`;
 }
 
 export function formatBreakEven(metric) {
@@ -572,38 +572,6 @@ export function formatBreakEven(metric) {
     return `<span class="muted">${escapeHtml(metric?.reason || "Unavailable")}</span>`;
   }
   return `${escapeHtml(String(metric.days))} days`;
-}
-
-export function decimalStringToPercent(value) {
-  return `${trimDecimalString(shiftDecimal(String(value), 2))}%`;
-}
-
-export function shiftDecimal(value, places) {
-  const negative = value.startsWith("-");
-  const unsigned = negative ? value.slice(1) : value;
-  const [whole, fraction = ""] = unsigned.split(".");
-  const digits = `${whole}${fraction}` || "0";
-  const point = whole.length + places;
-  let shifted;
-  if (point <= 0) {
-    shifted = `0.${"0".repeat(Math.abs(point))}${digits}`;
-  } else if (point >= digits.length) {
-    shifted = `${digits}${"0".repeat(point - digits.length)}`;
-  } else {
-    shifted = `${digits.slice(0, point)}.${digits.slice(point)}`;
-  }
-  shifted = shifted.replace(/^0+(?=\d)/, "");
-  if (shifted.startsWith(".")) {
-    shifted = `0${shifted}`;
-  }
-  return `${negative ? "-" : ""}${shifted}`;
-}
-
-export function trimDecimalString(value) {
-  if (!value.includes(".")) {
-    return value;
-  }
-  return value.replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "");
 }
 
 export function renderScoreBadge(score, kind) {

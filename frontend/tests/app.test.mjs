@@ -4,7 +4,6 @@ import assert from "node:assert/strict";
 import {
   ApiError,
   buildRankingsPath,
-  decimalStringToPercent,
   formatMoney,
   formatRatio,
   renderError,
@@ -28,7 +27,7 @@ test("rankings rendering includes required columns and stored API values", () =>
   assert.match(html, /Risk/);
   assert.match(html, /250.00 USD/);
   assert.match(html, /0.4885 USD/);
-  assert.match(html, /5.862%/);
+  assert.match(html, /0.05862/);
 });
 
 test("finder filters build supported rankings query only", () => {
@@ -62,6 +61,8 @@ test("strategy detail renders capital, earnings, scores, classification, warning
   assert.match(html, /Adapter contract/);
   assert.match(html, /roi-core-v1/);
   assert.match(html, /2 snapshots/);
+  assert.match(html, /0.05862/);
+  assert.doesNotMatch(html, /5.862%/);
 });
 
 test("risk and confidence badges preserve unavailable scores", () => {
@@ -105,9 +106,9 @@ test("history no-history state is explicit", () => {
   assert.doesNotMatch(html, /snapshots<\/span>/);
 });
 
-test("decimal percent formatting shifts strings without binary float math", () => {
-  assert.equal(decimalStringToPercent("0.05862"), "5.862%");
-  assert.equal(decimalStringToPercent("0.84"), "84%");
+test("financial formatting preserves exact API Decimal strings", () => {
+  assert.equal(formatRatio({ value: "0.05862", status: "available", reason: null }), "0.05862");
+  assert.equal(formatRatio({ value: "0.84", status: "available", reason: null }), "0.84");
   assert.equal(formatMoney({ amount: "0.0317954339244676", currency: "USD" }), "0.0317954339244676 USD");
 });
 
@@ -177,7 +178,7 @@ function snapshotPayload() {
       total_capital: { amount: "250.00", currency: "USD" },
       sunk_cost: { amount: "0", currency: "USD" },
       recoverable_capital: { amount: "125.00", currency: "USD" },
-      capital_at_risk: { amount: "125.00", currency: "USD" },
+      capital_at_risk: { amount: "250.00", currency: "USD" },
     },
     earnings: {
       gross_nominal_earnings_day: { amount: "0.50", currency: "USD" },
@@ -198,9 +199,9 @@ function snapshotPayload() {
       roi_total_7d: { value: "0.013678", status: "available", reason: null },
       roi_total_30d: { value: "0.05862", status: "available", reason: null },
       roi_total_90d: { value: "0.17586", status: "available", reason: null },
-      roi_risk_7d: { value: "0.027356", status: "available", reason: null },
-      roi_risk_30d: { value: "0.11724", status: "available", reason: null },
-      roi_risk_90d: { value: "0.35172", status: "available", reason: null },
+      roi_risk_7d: { value: "0.013678", status: "available", reason: null },
+      roi_risk_30d: { value: "0.05862", status: "available", reason: null },
+      roi_risk_90d: { value: "0.17586", status: "available", reason: null },
       exit_adjusted_pnl: { amount: "-125.00", currency: "USD" },
     },
     confidence: {

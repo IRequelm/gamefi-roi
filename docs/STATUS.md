@@ -5,11 +5,11 @@ Project version: 0.1
 
 ## Current state
 
-**ACTIVE GATE: G12 — Validation**
+**ACTIVE GATE: G13 — Production**
 
-G11 is complete and frozen in the G11 baseline Git commit.
+G12 is complete and frozen in the G12 baseline Git commit.
 
-Do not implement G12 until the user explicitly asks to proceed.
+Do not implement G13 until the user explicitly asks to proceed.
 
 ## Gate board
 
@@ -27,8 +27,8 @@ Do not implement G12 until the user explicitly asks to proceed.
 | G9 | Risk / Confidence | COMPLETE |
 | G10 | API | COMPLETE |
 | G11 | Web MVP | COMPLETE |
-| G12 | Validation | ACTIVE |
-| G13 | Production | NOT STARTED |
+| G12 | Validation | COMPLETE |
+| G13 | Production | ACTIVE |
 | G14 | Scale | NOT STARTED |
 
 ## G0 objective
@@ -382,6 +382,50 @@ The frontend route shell is `frontend/index.html`; browser logic is `frontend/as
 
 The web client only calls `/api/v1`. It renders API-provided strings and metadata, including the classification summary added to snapshot payloads for LIVE / CONFIG / DERIVED display.
 
+## G12 objective
+
+Validate the entire MVP end-to-end against source data and independently reproducible calculations before production work begins.
+
+## G12 acceptance criteria
+
+- [x] DFK Jeweler, Farmers World, and Splinterlands strategies are validated independently,
+- [x] entry capital source, reward formula, LIVE inputs, CONFIG assumptions, DERIVED outputs, exit path, slippage treatment, costs, recoverable capital, net/day, break-even, 30D ROI, exit-adjusted P&L, confidence, and risk are reviewed for each strategy,
+- [x] each strategy is recomputed with an independent Decimal-safe validation module that does not call the ROI engine implementation,
+- [x] source fixture/probe values are compared through adapter inputs, engine outputs, persisted snapshots, API responses, and web display behavior,
+- [x] deterministic validation uses exact Decimal equality and live probes are documented as point-in-time freshness/provenance checks,
+- [x] weak assumptions for DFK gas/lock behavior, Farmers World zero WAX cost and liquidity, and Splinterlands expected-value assumptions are classified for public beta,
+- [x] stale and missing required data behavior is validated and does not produce fake zero-valued ROI,
+- [x] risk/confidence explanations are validated against stored evidence,
+- [x] history ordering, snapshot versions, provenance references, no-overwrite behavior, and methodology/model version preservation are validated,
+- [x] API/web financial display consistency is validated; a G12 web ratio formatting drift was fixed so ROI ratios render exact API strings,
+- [x] adversarial edge cases cover zero liquidity, extreme slippage, token price collapse, missing entry price, stale provider data, negative net earnings, zero/negative denominator, recoverable value collapse, tiny-capital high ROI, and unavailable optional history,
+- [x] validation report is recorded in `docs/VALIDATION_REPORT.md` with per-strategy result, assumption matrix, manual-vs-engine comparison, public-beta blockers, required warnings, limitations, strategy recommendations, and overall recommendation,
+- [x] no production deployment, new adapters, monetization, portfolio, alerts, auth, AI, optimization, or major UI redesign is added,
+- [x] full pytest suite, frontend tests, doctor, compileall, pip check, API probe, web probe, validation probe, live adapter probes, and `git diff --check` pass,
+- [x] baseline Git commit for G12.
+
+## G12 validation decision
+
+Overall recommendation is CONDITIONAL PASS with no public-beta-blocking correctness issues.
+
+G12 found and fixed one correctness issue: the web UI converted API ROI ratio strings into percentages. The web client now renders ratio metrics as exact API strings and regression tests enforce that the frontend does not parse or recompute financial metrics.
+
+Validation artifacts:
+
+- Independent validation module: `backend/app/validation/e2e.py`
+- Validation tests: `backend/tests/test_g12_validation.py`
+- Validation report: `docs/VALIDATION_REPORT.md`
+
+Per-strategy validation status:
+
+| Strategy | G12 result |
+|---|---|
+| DFK Jeweler | CONDITIONAL PASS |
+| Farmers World | CONDITIONAL PASS |
+| Splinterlands | CONDITIONAL PASS |
+
+Conditional status means the calculations are reproducible and product surfaces are consistent, while public beta must continue to show assumptions, warnings, freshness, confidence/risk explanations, and LIVE / CONFIG / DERIVED classifications.
+
 ## Current instruction to Codex
 
-G12 is active. Do not implement G12 until the user explicitly asks to proceed.
+G13 is active. Do not implement G13 until the user explicitly asks to proceed.
