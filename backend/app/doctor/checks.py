@@ -29,8 +29,10 @@ REQUIRED_IMPORTS = (
     "app.storage.history",
     "app.storage.metadata",
     "app.storage.models",
+    "app.storage.models.scoring",
     "app.storage.models.strategy_history",
     "app.storage.observations",
+    "app.storage.scoring",
     "app.engine.decimal_context",
     "app.engine.calculator",
     "app.engine.inputs",
@@ -57,6 +59,9 @@ REQUIRED_IMPORTS = (
     "app.strategies.splinterlands",
     "app.jobs.recalculation",
     "app.jobs.history_probe",
+    "app.risk.results",
+    "app.risk.scoring",
+    "app.risk.scoring_probe",
 )
 
 

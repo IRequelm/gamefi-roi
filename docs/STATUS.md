@@ -5,11 +5,11 @@ Project version: 0.1
 
 ## Current state
 
-**ACTIVE GATE: G9 — Risk / Confidence**
+**ACTIVE GATE: G10 — API**
 
-G8 is complete and frozen in the G8 baseline Git commit.
+G9 is complete and frozen in the G9 baseline Git commit.
 
-Do not implement G9 until the user explicitly asks to proceed.
+Do not implement G10 until the user explicitly asks to proceed.
 
 ## Gate board
 
@@ -24,8 +24,8 @@ Do not implement G9 until the user explicitly asks to proceed.
 | G6 | Adapter #3 | COMPLETE |
 | G7 | Interface Freeze | COMPLETE |
 | G8 | History | COMPLETE |
-| G9 | Risk / Confidence | ACTIVE |
-| G10 | API | NOT STARTED |
+| G9 | Risk / Confidence | COMPLETE |
+| G10 | API | ACTIVE |
 | G11 | Web MVP | NOT STARTED |
 | G12 | Validation | NOT STARTED |
 | G13 | Production | NOT STARTED |
@@ -259,6 +259,45 @@ Successful calculations are stored in `strategy_snapshots`; failures are stored 
 
 See `docs/DATA_CONTRACT.md`.
 
+## G9 objective
+
+Implement independent, transparent confidence and risk scoring for historical strategy snapshots.
+
+## G9 acceptance criteria
+
+- [x] confidence and risk are implemented as independent concepts and are not merged into one score,
+- [x] confidence scores measure calculation/data trust on a 0-100 scale where higher is more trustworthy,
+- [x] risk scores measure economic downside/instability on a 0-100 scale where higher is more risky,
+- [x] confidence labels are documented as LOW, MODERATE, and HIGH,
+- [x] risk labels are documented as LOW, MEDIUM, HIGH, and VERY HIGH,
+- [x] scoring thresholds and weights are documented in `docs/ROI_METHODOLOGY.md`,
+- [x] score results are decomposable into factor-level point contributions with evidence and explanations,
+- [x] factors without stored evidence are marked unavailable instead of guessed,
+- [x] G8 history is used for trend risk only when at least three comparable snapshots exist,
+- [x] confidence penalizes CONFIG-heavy strategies separately from engine correctness,
+- [x] risk captures supported evidence for lock/exit penalties, thin liquidity/slippage, probabilistic uncertainty, weak yield, recoverable exit loss, and adapter warnings,
+- [x] versioned scoring results are persisted in `strategy_snapshot_scores` linked to historical snapshots,
+- [x] scoring methodology version is preserved as `risk-confidence-v1`,
+- [x] deterministic tests cover high-confidence/low-risk, high-confidence/high-risk, low confidence, stale data, missing optional history, heavy CONFIG dependence, poor liquidity/slippage, lock/exit penalty, probabilistic uncertainty, score explanations/contributions, methodology versioning, and the three existing adapters,
+- [x] local scoring probe runs against the existing DFK Jeweler, Farmers World, and Splinterlands adapters,
+- [x] no API product endpoints, frontend, optimization, new adapters, portfolio features, or production deployment are added,
+- [x] all tests, doctor checks, dependency checks, compile checks, whitespace checks, history probe, and scoring probe pass,
+- [x] baseline Git commit for G9.
+
+## G9 scoring decision
+
+Scoring methodology version is `risk-confidence-v1`.
+
+Scores are stored separately from snapshots in `strategy_snapshot_scores`, uniquely by `snapshot_id` and `methodology_version`.
+
+Current deterministic probe scores:
+
+| Strategy | Confidence | Risk |
+|---|---:|---:|
+| `dfk-crystalvale-jeweler-cjewel-max-lock` | 82 HIGH | 79 VERY HIGH |
+| `farmers-world-axe-wood-production` | 77 MODERATE | 31 MEDIUM |
+| `splinterlands-modern-ranked-sps-ev` | 39 LOW | 100 VERY HIGH |
+
 ## Current instruction to Codex
 
-G9 is active. Do not implement G9 until the user explicitly asks to proceed.
+G10 is active. Do not implement G10 until the user explicitly asks to proceed.

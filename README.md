@@ -301,6 +301,37 @@ Run the deterministic local history probe:
 
 The probe runs the existing DFK Jeweler, Farmers World, and Splinterlands adapters through the history pipeline using local deterministic observations. It does not call live provider APIs.
 
+## Risk And Confidence
+
+G9 adds independent, explainable risk and confidence scoring for historical snapshots.
+
+Methodology version:
+
+```text
+risk-confidence-v1
+```
+
+Confidence starts at 100 and loses points for data/model trust issues. Risk starts at 0 and gains points for economic downside/instability. Each score persists with factor-level contributions and unavailable factors under `strategy_snapshot_scores`; scores are linked to immutable historical snapshots.
+
+Labels:
+
+- Confidence: `LOW` 0-49, `MODERATE` 50-79, `HIGH` 80-100
+- Risk: `LOW` 0-24, `MEDIUM` 25-49, `HIGH` 50-74, `VERY HIGH` 75-100
+
+Run the deterministic local scoring probe:
+
+```powershell
+.\.venv\Scripts\python -m app.risk.scoring_probe
+```
+
+Current deterministic probe scores:
+
+| Strategy | Confidence | Risk |
+|---|---:|---:|
+| DFK Jeweler cJEWEL Max Lock | 82 HIGH | 79 VERY HIGH |
+| Farmers World Axe Wood Production | 77 MODERATE | 31 MEDIUM |
+| Splinterlands Modern Ranked SPS EV | 39 LOW | 100 VERY HIGH |
+
 ## Test-Only Database Mode
 
 Production and normal local development should use PostgreSQL. Deterministic tests may use SQLite only when both of these are set:

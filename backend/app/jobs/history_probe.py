@@ -122,11 +122,35 @@ def _dfk_observations(active_time: datetime) -> tuple[Observation, ...]:
         _live(YESTERDAY_REWARD_JEWEL, "500", "JEWEL", active_time, SourceType.ONCHAIN, "dfk-chain"),
     )
     derived = (
-        _derived(strategy_id, ENTRY_VALUE_USD, "250.00", active_time),
-        _derived(strategy_id, EMERGENCY_EXIT_VALUE_USD, "125.00", active_time),
-        _derived(strategy_id, JEWEL_REFERENCE_PRICE_USD, "0.25", active_time),
-        _derived(strategy_id, REWARD_REALIZABLE_VALUE_USD, "0.4985", active_time),
-        _derived(strategy_id, CLAIM_TRANSACTION_COST_USD, "0.01", active_time),
+        _derived(strategy_id, ENTRY_VALUE_USD, "250.00", active_time, source_locator="amm:dfk-wjewel-usdc:spot"),
+        _derived(
+            strategy_id,
+            EMERGENCY_EXIT_VALUE_USD,
+            "125.00",
+            active_time,
+            source_locator="amm:dfk-wjewel-usdc:quote_exact_input",
+        ),
+        _derived(
+            strategy_id,
+            JEWEL_REFERENCE_PRICE_USD,
+            "0.25",
+            active_time,
+            source_locator="amm:dfk-wjewel-usdc:spot",
+        ),
+        _derived(
+            strategy_id,
+            REWARD_REALIZABLE_VALUE_USD,
+            "0.4985",
+            active_time,
+            source_locator="amm:dfk-wjewel-usdc:quote_exact_input",
+        ),
+        _derived(
+            strategy_id,
+            CLAIM_TRANSACTION_COST_USD,
+            "0.01",
+            active_time,
+            source_locator="dfk-chain-rpc:eth_gasPrice + configured gas units",
+        ),
     )
     return (*configs, *live, *derived)
 
@@ -142,13 +166,49 @@ def _farmers_world_observations(active_time: datetime) -> tuple[Observation, ...
         _config(strategy_id, FWG_INPUT_PER_CYCLE, FARMERS_WORLD_AXE_WOOD_V1.fwg_input_per_cycle, "FWG", active_time),
     )
     derived = (
-        _derived(strategy_id, FARMERS_ENTRY_VALUE_USD, "1.80", active_time),
-        _derived(strategy_id, FARMERS_EXIT_VALUE_USD, "1.70", active_time),
-        _derived(strategy_id, FWW_REFERENCE_PRICE_USD, "0.001", active_time),
-        _derived(strategy_id, FWW_REALIZABLE_VALUE_DAY_USD, "0.0594", active_time),
-        _derived(strategy_id, FWF_OPERATING_COST_DAY_USD, "0.006", active_time),
-        _derived(strategy_id, FWG_OPERATING_COST_DAY_USD, "0.003", active_time),
-        _derived(strategy_id, FARMERS_TRANSACTION_COST_DAY_USD, "0", active_time),
+        _derived(strategy_id, FARMERS_ENTRY_VALUE_USD, "1.80", active_time, source_locator="atomicassets floor * WAX/USD"),
+        _derived(
+            strategy_id,
+            FARMERS_EXIT_VALUE_USD,
+            "1.70",
+            active_time,
+            source_locator="AtomicAssets floor net marketplace fee * WAX/USD",
+        ),
+        _derived(
+            strategy_id,
+            FWW_REFERENCE_PRICE_USD,
+            "0.001",
+            active_time,
+            source_locator="Alcor FWW/WAX spot * WAX/USD",
+        ),
+        _derived(
+            strategy_id,
+            FWW_REALIZABLE_VALUE_DAY_USD,
+            "0.0594",
+            active_time,
+            source_locator="Alcor FWW/WAX quote_exact_input * WAX/USD",
+        ),
+        _derived(
+            strategy_id,
+            FWF_OPERATING_COST_DAY_USD,
+            "0.006",
+            active_time,
+            source_locator="Alcor FWF/WAX quote_exact_output * WAX/USD",
+        ),
+        _derived(
+            strategy_id,
+            FWG_OPERATING_COST_DAY_USD,
+            "0.003",
+            active_time,
+            source_locator="Alcor FWG/WAX quote_exact_output * WAX/USD",
+        ),
+        _derived(
+            strategy_id,
+            FARMERS_TRANSACTION_COST_DAY_USD,
+            "0",
+            active_time,
+            source_locator="configured WAX transaction/resource assumption * WAX/USD",
+        ),
     )
     return (*configs, *derived)
 
@@ -254,7 +314,14 @@ def _live(
     )
 
 
-def _derived(strategy_id: str, metric: str, value: str, active_time: datetime) -> Observation:
+def _derived(
+    strategy_id: str,
+    metric: str,
+    value: str,
+    active_time: datetime,
+    *,
+    source_locator: str,
+) -> Observation:
     return derived_observation(
         provider="probe-derived",
         entity_type="strategy",
@@ -262,7 +329,7 @@ def _derived(strategy_id: str, metric: str, value: str, active_time: datetime) -
         metric=metric,
         value=Decimal(value),
         unit="USD",
-        source_locator="probe:history",
+        source_locator=source_locator,
         input_observation_ids=("probe-input",),
         retrieved_at=active_time,
     )

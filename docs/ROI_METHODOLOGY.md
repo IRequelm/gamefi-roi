@@ -176,6 +176,33 @@ Candidate components:
 
 A high-confidence strategy may still be extremely risky.
 
+### G9 confidence methodology
+
+Methodology version: `risk-confidence-v1`.
+
+Confidence is scored from 0 to 100, where higher means the calculation/data is more trustworthy. The score starts at 100 and loses transparent points only for factors supported by snapshot evidence.
+
+Labels:
+
+- `HIGH`: 80-100
+- `MODERATE`: 50-79
+- `LOW`: 0-49
+
+Point losses:
+
+| Factor | Max loss | Evidence used |
+|---|---:|---|
+| Freshness | 40 | stale inputs lose 8 each; invalid/missing inputs lose 20 each |
+| Provenance completeness | 25 | missing observation references or missing source/value/unit/timestamp/status fields |
+| Source authority | 20 | average input source quality: on-chain 1.00, official API 0.95, market API 0.90, derived provider data 0.75, official docs 0.70, verified config 0.65 |
+| CONFIG dependence | 25 | required input observations sourced from `verified_config` |
+| Valuation quality | 12 | approximation, haircut, spot/reference valuation, or absent executable quote evidence |
+| Model uncertainty | 15 | uncertainty ranges, probability/expected-value language, non-guaranteed reward warnings |
+| Warnings | 25 | adapter warnings by severity: critical 20, warning 8, info 3 |
+| Explicit zero-cost assumption | 5 | configured zero transaction/operating cost where the snapshot says it is an assumption |
+
+Unavailable optional factors are recorded as unavailable and do not silently change the score.
+
 ## 14. Risk
 
 Risk measures economic/game/market uncertainty and downside.
@@ -191,6 +218,34 @@ Candidate factors:
 - game/developer operational signals where sourceable.
 
 Risk methodology will be formalized at G9 after real observations exist.
+
+### G9 risk methodology
+
+Methodology version: `risk-confidence-v1`.
+
+Risk is scored from 0 to 100, where higher means more economic downside/instability. The score starts at 0 and gains transparent points only for factors supported by snapshot or sufficient history evidence.
+
+Labels:
+
+- `LOW`: 0-24
+- `MEDIUM`: 25-49
+- `HIGH`: 50-74
+- `VERY HIGH`: 75-100
+
+Point additions:
+
+| Factor | Max add | Evidence used |
+|---|---:|---|
+| Liquidity / exit quality | 35 | realized-vs-gross haircut, thin-liquidity assumption text, stored 24h market volume |
+| Lock / exit penalty | 35 | lock-day observations and early-exit penalty bps |
+| Probabilistic uncertainty | 30 | uncertainty ranges, probability/expected-value assumptions, non-guaranteed reward warnings |
+| CONFIG dependence | 20 | required input observations sourced from `verified_config` |
+| Yield weakness | 30 | non-positive net earnings, long break-even, weak 30-day ROI |
+| Recoverable exit loss | 20 | current recoverable value materially below total capital |
+| Warnings | 20 | adapter warnings by severity: critical 20, warning 8, info 2 |
+| ROI/yield deterioration trend | 25 | requires at least three comparable same-strategy/version/model snapshots |
+
+Trend risk is unavailable until at least three comparable snapshots exist. Token volatility/trend, reward instability, and concentration are also unavailable until the stored observations/history contain enough evidence to measure them.
 
 ## 15. Model ranges
 

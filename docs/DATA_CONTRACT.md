@@ -360,6 +360,56 @@ The local probe command is:
 
 Run it against a migrated local/test database. It uses deterministic existing-adapter observations and writes idempotent hourly snapshots.
 
+### G9 scoring result
+
+G9 persists independent confidence and risk scoring through:
+
+```text
+backend/app/risk/scoring.py
+backend/app/storage/scoring.py
+strategy_snapshot_scores
+```
+
+`strategy_snapshot_scores` is linked to `strategy_snapshots.snapshot_id`. Scores are versioned by `methodology_version`, so a later methodology can coexist with old historical scores.
+
+Fields:
+
+```text
+score_id
+snapshot_id
+strategy_id
+strategy_version
+methodology_version
+scored_at
+confidence_score
+confidence_label
+confidence_contributions
+risk_score
+risk_label
+risk_contributions
+unavailable_factors
+created_at
+```
+
+Current methodology version:
+
+```text
+risk-confidence-v1
+```
+
+Confidence and Risk are independent:
+
+- Confidence starts at 100 and loses points for evidence quality/model trust issues.
+- Risk starts at 0 and gains points for economic downside/instability.
+
+Each contribution records the factor name, point impact, reason, and evidence. Factors without enough stored evidence are recorded in `unavailable_factors`; unavailable factors must not be guessed or treated as zero risk.
+
+The local deterministic scoring probe is:
+
+```powershell
+.\.venv\Scripts\python -m app.risk.scoring_probe
+```
+
 ## 9. Provenance
 
 Every snapshot must be reproducible enough to answer:
