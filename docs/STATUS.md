@@ -1,15 +1,15 @@
 # GameFi ROI — Project Status
 
-Updated: 2026-08-15
+Updated: 2026-08-16
 Project version: 0.1
 
 ## Current state
 
-**ACTIVE GATE: G7 — Interface Freeze**
+**ACTIVE GATE: G8 — History**
 
-G6 is complete and frozen in the G6 baseline Git commit.
+G7 is complete and frozen in the G7 baseline Git commit.
 
-Do not implement G7 until the user explicitly asks to proceed.
+Do not implement G8 until the user explicitly asks to proceed.
 
 ## Gate board
 
@@ -22,8 +22,8 @@ Do not implement G7 until the user explicitly asks to proceed.
 | G4 | Adapter #1 | COMPLETE |
 | G5 | Adapter #2 | COMPLETE |
 | G6 | Adapter #3 | COMPLETE |
-| G7 | Interface Freeze | ACTIVE |
-| G8 | History | NOT STARTED |
+| G7 | Interface Freeze | COMPLETE |
+| G8 | History | ACTIVE |
 | G9 | Risk / Confidence | NOT STARTED |
 | G10 | API | NOT STARTED |
 | G11 | Web MVP | NOT STARTED |
@@ -209,6 +209,30 @@ See `docs/DECISIONS/0003-adapter-3-feasibility-scan.md`.
 
 Freeze Adapter Contract v1 by reviewing patterns from the first three materially different adapters and documenting the stable adapter/source/strategy boundaries for future gates.
 
+## G7 acceptance criteria
+
+- [x] DFK Jeweler, Farmers World, and Splinterlands adapters are compared for generic inputs, generic outputs, game-specific mechanics, duplicated patterns, and accidental engine assumptions,
+- [x] Adapter Contract v1 is defined and supports all three completed adapters without game-name conditionals in the ROI core,
+- [x] contract explicitly covers strategy identity/version, capital decomposition, recoverable assets/value, deterministic or expected reward flows, uncertainty ranges, recurring costs, transaction costs, timing assumptions, realizable exit value, required observations, LIVE / CONFIG / DERIVED provenance, and warnings/limitations,
+- [x] necessary shared contract/helpers are implemented without aesthetic-only refactors,
+- [x] existing golden fixture ROI outputs remain backward-equivalent,
+- [x] contract-level tests prove all three adapters conform to Adapter Contract v1,
+- [x] `docs/DATA_CONTRACT.md` is updated with frozen Adapter Contract v1 and versioning rules,
+- [x] future Adapter #4 process is documented without requiring ROI-core modification,
+- [x] no new game adapter, history, risk/confidence, API, frontend, optimization, or new product feature is added,
+- [x] all tests, doctor checks, dependency checks, compile checks, and whitespace checks pass,
+- [x] baseline Git commit for G7.
+
+## G7 adapter contract decision
+
+Adapter Contract v1 is `adapter-contract-v1`.
+
+The code anchor is `backend/app/adapters/contract.py`. The authoritative documentation is `docs/DATA_CONTRACT.md`.
+
+## G8 objective
+
+Add historical strategy snapshot persistence and retrieval using the frozen Adapter Contract v1 outputs, without changing adapter economics.
+
 ## Current instruction to Codex
 
-G7 is active. Do not implement G7 until the user explicitly asks to proceed.
+G8 is active. Do not implement G8 until the user explicitly asks to proceed.

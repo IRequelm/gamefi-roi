@@ -34,6 +34,7 @@ REQUIRED_IMPORTS = (
     "app.engine.inputs",
     "app.engine.money",
     "app.engine.results",
+    "app.adapters.contract",
     "app.adapters.defi_kingdoms_jeweler",
     "app.adapters.defi_kingdoms_jeweler_probe",
     "app.adapters.farmers_world",

@@ -264,6 +264,21 @@ $env:GAMEFI_SPLINTERLANDS_OBSERVATION_FRESHNESS_SECONDS = "300"
 
 No new package dependencies were added for G6; the existing `httpx` source layer is reused for public official API calls.
 
+## Adapter Contract v1
+
+G7 freezes `adapter-contract-v1` in `backend/app/adapters/contract.py` and `docs/DATA_CONTRACT.md`.
+
+All future adapters must:
+
+- keep provider access in `sources/`,
+- keep game-specific mechanics in `adapters/`,
+- define explicit versioned strategies in `strategies/`,
+- return `AdapterResultV1`,
+- pass contract-conformance tests,
+- avoid ROI-core game branches.
+
+Adapter #4 should be added by following the checklist in `docs/DATA_CONTRACT.md`; if the economy needs a genuinely new generic capability, document the gap before touching `engine/`.
+
 ## Test-Only Database Mode
 
 Production and normal local development should use PostgreSQL. Deterministic tests may use SQLite only when both of these are set:

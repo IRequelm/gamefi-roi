@@ -3,18 +3,34 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
+from datetime import datetime
 from decimal import Decimal
-from enum import StrEnum
 from types import MappingProxyType
-from typing import Any
-from uuid import NAMESPACE_URL, uuid5
 
+from app.adapters.contract import (
+    AdapterInputError,
+    AdapterMetricRange,
+    AdapterResultV1,
+    AdapterWarning,
+    ValueClassification,
+    classify_observation,
+    index_required_observations,
+    live_observation,
+    normalize_utc,
+    observation_decimal_value,
+    require_bps,
+    require_non_negative,
+    require_positive,
+    require_probability,
+    unix_seconds,
+    utc_now,
+    verified_config_observation,
+)
 from app.engine.calculator import MODEL_VERSION
-from app.engine.decimal_context import FINANCIAL_DECIMAL_CONTEXT, decimal_from_int, decimal_from_text
+from app.engine.decimal_context import FINANCIAL_DECIMAL_CONTEXT, decimal_from_int
 from app.engine.inputs import BreakEvenBasis, CapitalInput, CostInput, RewardInput, StrategyEconomicsInput
 from app.engine.money import Money
-from app.sources.observations import Observation, ObservationStatus, SourceType
+from app.sources.observations import Observation
 from app.sources.splinterlands import (
     SETTINGS_ENERGY_MAX,
     SETTINGS_ENERGY_REGEN_PER_HOUR,
@@ -25,21 +41,7 @@ from app.sources.splinterlands import (
 from app.strategies.splinterlands import SplinterlandsModernRankedStrategyDefinition
 
 
-class ValueClassification(StrEnum):
-    LIVE = "LIVE"
-    DERIVED = "DERIVED"
-    CONFIG = "CONFIG"
-
-
-class AdapterInputError(ValueError):
-    """Raised when Splinterlands adapter inputs cannot safely produce ROI inputs."""
-
-
-@dataclass(frozen=True)
-class SplinterlandsAdapterResult:
-    economics_input: StrategyEconomicsInput
-    classifications: MappingProxyType[str, ValueClassification]
-    derived_values: MappingProxyType[str, Decimal]
+SplinterlandsAdapterResult = AdapterResultV1
 
 
 SPELLBOOK_COST_USD = SETTINGS_STARTER_PACK_PRICE_USD
@@ -85,7 +87,7 @@ class SplinterlandsModernRankedAdapter:
         *,
         calculated_at: datetime | None = None,
     ) -> SplinterlandsAdapterResult:
-        active_time = _utc_now() if calculated_at is None else _normalize_utc(calculated_at)
+        active_time = utc_now() if calculated_at is None else normalize_utc(calculated_at)
         by_metric = _index_required_observations(observations, active_time)
 
         spellbook_cost_usd = _value(by_metric[SPELLBOOK_COST_USD])
@@ -102,20 +104,20 @@ class SplinterlandsModernRankedAdapter:
         card_rental_cost_day_usd = _value(by_metric[CARD_RENTAL_COST_DAY_USD])
         transaction_cost_day_usd = _value(by_metric[TRANSACTION_COST_DAY_USD])
 
-        _require_positive(spellbook_cost_usd, SPELLBOOK_COST_USD)
-        _require_positive(energy_max, ENERGY_MAX)
-        _require_positive(energy_regen_per_hour, ENERGY_REGEN_PER_HOUR)
-        _require_positive(battles_per_day, BATTLES_PER_DAY)
-        _require_probability(win_probability, WIN_PROBABILITY)
-        _require_probability(win_probability_low, WIN_PROBABILITY_LOW)
-        _require_probability(win_probability_high, WIN_PROBABILITY_HIGH)
+        require_positive(spellbook_cost_usd, SPELLBOOK_COST_USD)
+        require_positive(energy_max, ENERGY_MAX)
+        require_positive(energy_regen_per_hour, ENERGY_REGEN_PER_HOUR)
+        require_positive(battles_per_day, BATTLES_PER_DAY)
+        require_probability(win_probability, WIN_PROBABILITY)
+        require_probability(win_probability_low, WIN_PROBABILITY_LOW)
+        require_probability(win_probability_high, WIN_PROBABILITY_HIGH)
         if not win_probability_low <= win_probability <= win_probability_high:
             raise AdapterInputError("Win probability must be inside the configured low/high range")
-        _require_positive(sps_reward_per_win, SPS_REWARD_PER_WIN)
-        _require_positive(sps_reference_price_usd, SPS_REFERENCE_PRICE_USD)
-        _require_bps(realization_haircut_bps, REALIZATION_HAIRCUT_BPS)
-        _require_non_negative(card_rental_cost_day_usd, CARD_RENTAL_COST_DAY_USD)
-        _require_non_negative(transaction_cost_day_usd, TRANSACTION_COST_DAY_USD)
+        require_positive(sps_reward_per_win, SPS_REWARD_PER_WIN)
+        require_positive(sps_reference_price_usd, SPS_REFERENCE_PRICE_USD)
+        require_bps(realization_haircut_bps, REALIZATION_HAIRCUT_BPS)
+        require_non_negative(card_rental_cost_day_usd, CARD_RENTAL_COST_DAY_USD)
+        require_non_negative(transaction_cost_day_usd, TRANSACTION_COST_DAY_USD)
         _require_active_season(season_end_unix, active_time)
 
         sustainable_energy_day = FINANCIAL_DECIMAL_CONTEXT.multiply(energy_regen_per_hour, decimal_from_int(24))
@@ -176,7 +178,7 @@ class SplinterlandsModernRankedAdapter:
             ),
         )
 
-        return SplinterlandsAdapterResult(
+        return AdapterResultV1(
             economics_input=economics_input,
             classifications=MappingProxyType(
                 {metric: _classification(by_metric[metric]) for metric in REQUIRED_METRICS}
@@ -191,6 +193,7 @@ class SplinterlandsModernRankedAdapter:
                     "splinterlands.modern_ranked.realizable_value_day_usd": ValueClassification.DERIVED,
                     "splinterlands.modern_ranked.realizable_value_day_usd_low": ValueClassification.DERIVED,
                     "splinterlands.modern_ranked.realizable_value_day_usd_high": ValueClassification.DERIVED,
+                    "splinterlands.modern_ranked.net_earnings_day_usd": ValueClassification.DERIVED,
                     "splinterlands.modern_ranked.net_earnings_day_usd_low": ValueClassification.DERIVED,
                     "splinterlands.modern_ranked.net_earnings_day_usd_high": ValueClassification.DERIVED,
                     "splinterlands.modern_ranked.sustainable_energy_day": ValueClassification.DERIVED,
@@ -208,9 +211,49 @@ class SplinterlandsModernRankedAdapter:
                     "splinterlands.modern_ranked.realizable_value_day_usd": expected.realizable_value_day_usd,
                     "splinterlands.modern_ranked.realizable_value_day_usd_low": expected.realizable_value_day_usd_low,
                     "splinterlands.modern_ranked.realizable_value_day_usd_high": expected.realizable_value_day_usd_high,
+                    "splinterlands.modern_ranked.net_earnings_day_usd": expected.net_earnings_day_usd,
                     "splinterlands.modern_ranked.net_earnings_day_usd_low": expected.net_earnings_day_usd_low,
                     "splinterlands.modern_ranked.net_earnings_day_usd_high": expected.net_earnings_day_usd_high,
                     "splinterlands.modern_ranked.sustainable_energy_day": sustainable_energy_day,
+                }
+            ),
+            warnings=(
+                AdapterWarning(
+                    code="expected_value_not_guaranteed",
+                    message="Performance-dependent SPS rewards are modeled as expected value, not guaranteed earnings.",
+                ),
+                AdapterWarning(
+                    code="configured_reward_per_win",
+                    message="Representative SPS per win is a configured strategy input until live battle-result sampling is reliable.",
+                    severity="info",
+                ),
+            ),
+            uncertainty_ranges=MappingProxyType(
+                {
+                    "splinterlands.modern_ranked.expected_sps_day": AdapterMetricRange(
+                        metric="splinterlands.modern_ranked.expected_sps_day",
+                        low_metric="splinterlands.modern_ranked.expected_sps_day_low",
+                        base_metric="splinterlands.modern_ranked.expected_sps_day",
+                        high_metric="splinterlands.modern_ranked.expected_sps_day_high",
+                        unit="SPS/day",
+                        description="Expected SPS/day range from configured low/base/high win probabilities.",
+                    ),
+                    "splinterlands.modern_ranked.realizable_value_day_usd": AdapterMetricRange(
+                        metric="splinterlands.modern_ranked.realizable_value_day_usd",
+                        low_metric="splinterlands.modern_ranked.realizable_value_day_usd_low",
+                        base_metric="splinterlands.modern_ranked.realizable_value_day_usd",
+                        high_metric="splinterlands.modern_ranked.realizable_value_day_usd_high",
+                        unit=self.strategy.reporting_currency,
+                        description="Realizable reward value range from configured low/base/high win probabilities.",
+                    ),
+                    "splinterlands.modern_ranked.net_earnings_day_usd": AdapterMetricRange(
+                        metric="splinterlands.modern_ranked.net_earnings_day_usd",
+                        low_metric="splinterlands.modern_ranked.net_earnings_day_usd_low",
+                        base_metric="splinterlands.modern_ranked.net_earnings_day_usd",
+                        high_metric="splinterlands.modern_ranked.net_earnings_day_usd_high",
+                        unit=self.strategy.reporting_currency,
+                        description="Net earnings range after configured operating and transaction costs.",
+                    ),
                 }
             ),
         )
@@ -228,6 +271,7 @@ class SplinterlandsExpectedValues:
     realizable_value_day_usd: Decimal
     realizable_value_day_usd_low: Decimal
     realizable_value_day_usd_high: Decimal
+    net_earnings_day_usd: Decimal
     net_earnings_day_usd_low: Decimal
     net_earnings_day_usd_high: Decimal
 
@@ -271,74 +315,9 @@ def calculate_modern_ranked_expected_values(
         realizable_value_day_usd=realizable_value_day_usd,
         realizable_value_day_usd_low=realizable_value_day_usd_low,
         realizable_value_day_usd_high=realizable_value_day_usd_high,
+        net_earnings_day_usd=FINANCIAL_DECIMAL_CONTEXT.subtract(realizable_value_day_usd, daily_cost),
         net_earnings_day_usd_low=FINANCIAL_DECIMAL_CONTEXT.subtract(realizable_value_day_usd_low, daily_cost),
         net_earnings_day_usd_high=FINANCIAL_DECIMAL_CONTEXT.subtract(realizable_value_day_usd_high, daily_cost),
-    )
-
-
-def verified_config_observation(
-    *,
-    strategy_id: str,
-    metric: str,
-    value: str,
-    unit: str,
-    source_locator: str,
-    retrieved_at: datetime | None = None,
-    metadata: dict[str, Any] | None = None,
-) -> Observation:
-    active_time = _utc_now() if retrieved_at is None else _normalize_utc(retrieved_at)
-    return Observation(
-        observation_id=_observation_id("verified-config", strategy_id, metric, active_time),
-        entity_type="strategy",
-        entity_id=strategy_id,
-        metric=metric,
-        value=decimal_from_text(value),
-        unit=unit,
-        quote_currency="USD" if unit.upper() == "USD" else None,
-        source_provider="verified-config",
-        source_type=SourceType.VERIFIED_CONFIG,
-        source_locator=source_locator,
-        observed_at=active_time,
-        retrieved_at=active_time,
-        fresh_until=active_time + timedelta(days=365),
-        status=ObservationStatus.FRESH,
-        metadata={"classification": ValueClassification.CONFIG.value, **(metadata or {})},
-    )
-
-
-def live_observation(
-    *,
-    provider: str,
-    entity_type: str,
-    entity_id: str,
-    metric: str,
-    value: Decimal,
-    unit: str,
-    source_locator: str,
-    source_type: SourceType,
-    retrieved_at: datetime | None = None,
-    observed_at: datetime | None = None,
-    freshness: timedelta = timedelta(minutes=5),
-    metadata: dict[str, Any] | None = None,
-) -> Observation:
-    active_time = _utc_now() if retrieved_at is None else _normalize_utc(retrieved_at)
-    observed_time = active_time if observed_at is None else _normalize_utc(observed_at)
-    return Observation(
-        observation_id=_observation_id(provider, entity_id, metric, observed_time),
-        entity_type=entity_type,
-        entity_id=entity_id,
-        metric=metric,
-        value=value,
-        unit=unit,
-        quote_currency="USD" if unit.upper() == "USD" else None,
-        source_provider=provider,
-        source_type=source_type,
-        source_locator=source_locator,
-        observed_at=observed_time,
-        retrieved_at=active_time,
-        fresh_until=active_time + freshness,
-        status=ObservationStatus.FRESH,
-        metadata={"classification": ValueClassification.LIVE.value, **(metadata or {})},
     )
 
 
@@ -350,77 +329,22 @@ def _realizable(expected_sps: Decimal, price_usd: Decimal, multiplier: Decimal) 
 
 
 def _index_required_observations(observations: tuple[Observation, ...], active_time: datetime) -> dict[str, Observation]:
-    by_metric = {observation.metric: observation for observation in observations}
-    missing = [metric for metric in REQUIRED_METRICS if metric not in by_metric]
-    if missing:
-        raise AdapterInputError(f"Missing required Splinterlands observations: {', '.join(missing)}")
-    for metric in REQUIRED_METRICS:
-        observation = by_metric[metric]
-        if observation.status_at(active_time) != ObservationStatus.FRESH:
-            raise AdapterInputError(f"Required Splinterlands observation is not fresh: {metric}")
-        if observation.value is None:
-            raise AdapterInputError(f"Required Splinterlands observation has no value: {metric}")
-    return {metric: by_metric[metric] for metric in REQUIRED_METRICS}
+    return index_required_observations(
+        observations,
+        active_time,
+        required_metrics=REQUIRED_METRICS,
+        adapter_name="Splinterlands",
+    )
 
 
 def _value(observation: Observation) -> Decimal:
-    if observation.value is None:
-        raise AdapterInputError(f"Observation {observation.metric} has no value")
-    return observation.value
+    return observation_decimal_value(observation)
 
 
 def _classification(observation: Observation) -> ValueClassification:
-    raw = observation.metadata.get("classification")
-    if raw is None:
-        if observation.source_type in {SourceType.MARKET_API, SourceType.ONCHAIN, SourceType.OFFICIAL_API}:
-            return ValueClassification.LIVE
-        if observation.source_type == SourceType.VERIFIED_CONFIG:
-            return ValueClassification.CONFIG
-        if observation.source_type == SourceType.DERIVED_PROVIDER_DATA:
-            return ValueClassification.DERIVED
-        raise AdapterInputError(f"Observation {observation.metric} is missing classification metadata")
-    return ValueClassification(raw)
+    return classify_observation(observation)
 
 
 def _require_active_season(season_end_unix: Decimal, active_time: datetime) -> None:
-    if season_end_unix <= decimal_from_int(_unix_seconds(active_time)):
+    if season_end_unix <= decimal_from_int(unix_seconds(active_time)):
         raise AdapterInputError("Splinterlands season end is not in the future for the calculation timestamp")
-
-
-def _require_probability(value: Decimal, field_name: str) -> None:
-    if value < Decimal("0") or value > Decimal("1"):
-        raise AdapterInputError(f"{field_name} must be between 0 and 1")
-
-
-def _require_positive(value: Decimal, field_name: str) -> None:
-    if value <= Decimal("0"):
-        raise AdapterInputError(f"{field_name} must be positive")
-
-
-def _require_non_negative(value: Decimal, field_name: str) -> None:
-    if value < Decimal("0"):
-        raise AdapterInputError(f"{field_name} must be non-negative")
-
-
-def _require_bps(value: Decimal, field_name: str) -> None:
-    if value < Decimal("0") or value > decimal_from_int(10_000):
-        raise AdapterInputError(f"{field_name} must be between 0 and 10000")
-
-
-def _normalize_utc(value: datetime) -> datetime:
-    if value.tzinfo is None or value.utcoffset() is None:
-        raise AdapterInputError("Adapter timestamps must be timezone-aware UTC values")
-    return value.astimezone(UTC)
-
-
-def _utc_now() -> datetime:
-    return datetime.now(UTC)
-
-
-def _unix_seconds(value: datetime) -> int:
-    return int(value.timestamp())
-
-
-def _observation_id(provider: str, entity_id: str, metric: str, observed_at: datetime) -> str:
-    key = f"{provider}|{entity_id}|{metric}|{observed_at.isoformat()}"
-    return str(uuid5(NAMESPACE_URL, key))

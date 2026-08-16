@@ -252,7 +252,7 @@ Do not design the system around unlimited public RPC/API access.
 
 ## 10. Adapter interface freeze
 
-The universal adapter contract is **not frozen at G0**.
+The universal adapter contract is **not frozen at G0**. Adapter Contract v1 is frozen at G7 in `docs/DATA_CONTRACT.md` and implemented in `backend/app/adapters/contract.py`.
 
 Process:
 - build adapter #1,
