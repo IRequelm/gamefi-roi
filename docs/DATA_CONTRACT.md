@@ -284,6 +284,82 @@ warnings
 
 Not all values are mandatory for every economy type; unavailable metrics must be explicit, not fake zeros.
 
+### G8 persistence contract
+
+G8 persists historical calculation output through:
+
+```text
+backend/app/storage/history.py
+backend/app/storage/models/strategy_history.py
+strategy_snapshots
+strategy_calculation_failures
+```
+
+`strategy_snapshots` records successful `AdapterResultV1` + ROI engine outputs. Each snapshot stores:
+
+- strategy id and version,
+- adapter contract version,
+- model/engine version,
+- calculated-at UTC timestamp,
+- intended calculation window,
+- reporting currency,
+- capital metrics,
+- earnings/cost metrics,
+- ROI, break-even, and exit-adjusted P&L outputs,
+- adapter derived values,
+- uncertainty range metadata,
+- warnings,
+- LIVE / CONFIG / DERIVED classification summary,
+- input observation ids,
+- input observation references,
+- freshness summary,
+- assumptions.
+
+Decimal financial values are serialized as exact decimal strings in JSON payloads rather than binary floats or truncated database numeric scales.
+
+`strategy_calculation_failures` records failed calculation windows without fake numeric outputs. A stale, missing, invalid, or provider-failed input must create a failure record/log entry, not a fabricated snapshot.
+
+### Snapshot idempotency
+
+G8 idempotency key:
+
+```text
+sha256(
+  strategy_id |
+  strategy_version |
+  adapter_contract_version |
+  model_version |
+  intended_window_start |
+  intended_window_end
+)
+```
+
+Repeated execution for the same strategy/version/model/contract/window returns the existing snapshot or failure record. A new strategy version, model version, adapter contract version, or calculation window creates a new historical record. Historical snapshots are append-only for new windows/versions and are not overwritten to backfill changed assumptions.
+
+### History query surface
+
+`HistoryRepository` supports:
+
+- latest successful snapshot for a strategy,
+- successful snapshots over an inclusive UTC time range,
+- ordered time series,
+- strategy/model/adapter-contract version summaries,
+- recorded calculation failures.
+
+This is a storage/query layer only. Product API endpoints, charts, risk/confidence scoring, and frontend history views are deferred to later gates.
+
+### Scheduled recalculation surface
+
+`ScheduledRecalculator` in `backend/app/jobs/recalculation.py` is the G8 scheduled recalculation boundary. It accepts versioned strategy calculation tasks, loads observations, calls the adapter, runs the generic ROI engine, and persists history. Each task is isolated: one failed adapter/provider records a failure and does not stop other strategy tasks in the same run.
+
+The local probe command is:
+
+```powershell
+.\.venv\Scripts\python -m app.jobs.history_probe
+```
+
+Run it against a migrated local/test database. It uses deterministic existing-adapter observations and writes idempotent hourly snapshots.
+
 ## 9. Provenance
 
 Every snapshot must be reproducible enough to answer:

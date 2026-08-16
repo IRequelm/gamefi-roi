@@ -26,8 +26,10 @@ REQUIRED_IMPORTS = (
     "app.api.app",
     "app.config.settings",
     "app.storage.database",
+    "app.storage.history",
     "app.storage.metadata",
     "app.storage.models",
+    "app.storage.models.strategy_history",
     "app.storage.observations",
     "app.engine.decimal_context",
     "app.engine.calculator",
@@ -53,6 +55,8 @@ REQUIRED_IMPORTS = (
     "app.strategies.defi_kingdoms",
     "app.strategies.farmers_world",
     "app.strategies.splinterlands",
+    "app.jobs.recalculation",
+    "app.jobs.history_probe",
 )
 
 

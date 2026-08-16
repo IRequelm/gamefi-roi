@@ -5,11 +5,11 @@ Project version: 0.1
 
 ## Current state
 
-**ACTIVE GATE: G8 — History**
+**ACTIVE GATE: G9 — Risk / Confidence**
 
-G7 is complete and frozen in the G7 baseline Git commit.
+G8 is complete and frozen in the G8 baseline Git commit.
 
-Do not implement G8 until the user explicitly asks to proceed.
+Do not implement G9 until the user explicitly asks to proceed.
 
 ## Gate board
 
@@ -23,8 +23,8 @@ Do not implement G8 until the user explicitly asks to proceed.
 | G5 | Adapter #2 | COMPLETE |
 | G6 | Adapter #3 | COMPLETE |
 | G7 | Interface Freeze | COMPLETE |
-| G8 | History | ACTIVE |
-| G9 | Risk / Confidence | NOT STARTED |
+| G8 | History | COMPLETE |
+| G9 | Risk / Confidence | ACTIVE |
 | G10 | API | NOT STARTED |
 | G11 | Web MVP | NOT STARTED |
 | G12 | Validation | NOT STARTED |
@@ -233,6 +233,32 @@ The code anchor is `backend/app/adapters/contract.py`. The authoritative documen
 
 Add historical strategy snapshot persistence and retrieval using the frozen Adapter Contract v1 outputs, without changing adapter economics.
 
+## G8 acceptance criteria
+
+- [x] successful `AdapterResultV1` + ROI engine outputs persist as historical strategy snapshots,
+- [x] snapshots include strategy id/version, adapter contract version, model/engine version, calculated-at UTC timestamp, intended calculation window, capital metrics, earnings/cost metrics, ROI/break-even/exit-adjusted outputs, uncertainty range metadata, warnings, classification summary, input observation references, and freshness summary,
+- [x] historical records preserve enough observations, assumptions, classifications, warnings, versions, timestamps, and Decimal-safe outputs to explain why a result was published at that time,
+- [x] PostgreSQL-compatible history schema exists with an Alembic migration,
+- [x] repository/query layer retrieves latest snapshot, time-range snapshots, ordered time series, and strategy/model version information,
+- [x] scheduled recalculation runner exists for the modular monolith without distributed queues or microservices,
+- [x] failed adapter/provider calculations are isolated, logged as failures, and do not create fake numeric snapshots,
+- [x] stale or missing required inputs fail explicitly and are not substituted with zero,
+- [x] repeated execution for the same strategy/version/model/contract/window is idempotent and does not create duplicate snapshots,
+- [x] historical snapshots are retained across strategy/model version changes,
+- [x] deterministic tests cover persistence, latest snapshot, ordered history, version changes, provenance, duplicate/idempotency behavior, failure isolation, stale input behavior, and uncertainty metadata,
+- [x] local history/scheduler probe runs with the existing adapters,
+- [x] no risk/confidence scoring, product API endpoints, frontend, optimization, or new game adapters are added,
+- [x] all tests, doctor checks, dependency checks, compile checks, whitespace checks, and the history probe pass,
+- [x] baseline Git commit for G8.
+
+## G8 history decision
+
+Historical snapshot idempotency is keyed by `strategy_id`, `strategy_version`, `adapter_contract_version`, `model_version`, `intended_window_start`, and `intended_window_end`.
+
+Successful calculations are stored in `strategy_snapshots`; failures are stored separately in `strategy_calculation_failures` without numeric ROI output.
+
+See `docs/DATA_CONTRACT.md`.
+
 ## Current instruction to Codex
 
-G8 is active. Do not implement G8 until the user explicitly asks to proceed.
+G9 is active. Do not implement G9 until the user explicitly asks to proceed.

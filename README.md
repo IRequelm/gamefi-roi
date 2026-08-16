@@ -279,6 +279,28 @@ All future adapters must:
 
 Adapter #4 should be added by following the checklist in `docs/DATA_CONTRACT.md`; if the economy needs a genuinely new generic capability, document the gap before touching `engine/`.
 
+## Historical Snapshots
+
+G8 adds historical snapshot persistence and a simple scheduled recalculation runner.
+
+Successful strategy calculations are stored in `strategy_snapshots`; failed calculation windows are stored in `strategy_calculation_failures` without numeric ROI output. Snapshot numeric values are serialized as exact Decimal strings, and each snapshot preserves adapter contract version, model version, strategy version, input observation references, freshness summary, LIVE / CONFIG / DERIVED classification summary, assumptions, warnings, and uncertainty ranges.
+
+Idempotency is per `(strategy_id, strategy_version, adapter_contract_version, model_version, intended_window_start, intended_window_end)`. Re-running the same intended window returns the existing snapshot/failure; new windows or versions create new history.
+
+Run migrations before using history locally:
+
+```powershell
+.\.venv\Scripts\python -m alembic -c backend/alembic.ini upgrade head
+```
+
+Run the deterministic local history probe:
+
+```powershell
+.\.venv\Scripts\python -m app.jobs.history_probe
+```
+
+The probe runs the existing DFK Jeweler, Farmers World, and Splinterlands adapters through the history pipeline using local deterministic observations. It does not call live provider APIs.
+
 ## Test-Only Database Mode
 
 Production and normal local development should use PostgreSQL. Deterministic tests may use SQLite only when both of these are set:
