@@ -229,6 +229,19 @@ class HistoryRepository:
             record = session.scalars(stmt).first()
             return None if record is None else _snapshot_from_record(record)
 
+    def latest_snapshots(self) -> list[StrategySnapshot]:
+        stmt = select(StrategySnapshotRecord).order_by(
+            StrategySnapshotRecord.strategy_id,
+            desc(StrategySnapshotRecord.calculated_at),
+            desc(StrategySnapshotRecord.created_at),
+        )
+        latest_by_strategy: dict[str, StrategySnapshot] = {}
+        with Session(self.engine) as session:
+            for record in session.scalars(stmt).all():
+                if record.strategy_id not in latest_by_strategy:
+                    latest_by_strategy[record.strategy_id] = _snapshot_from_record(record)
+        return [latest_by_strategy[strategy_id] for strategy_id in sorted(latest_by_strategy)]
+
     def snapshots_in_range(
         self,
         strategy_id: str,

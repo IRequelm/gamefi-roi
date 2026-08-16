@@ -198,6 +198,12 @@ API reads stored snapshots.
 
 Website requests should not trigger live blockchain/API calls synchronously in the normal path.
 
+### G10 API boundary
+
+The G10 product API is versioned under `/api/v1` and is read-oriented. It serves catalog, latest snapshot, historical snapshot, risk/confidence, and ranking data from persisted `strategy_snapshots` and `strategy_snapshot_scores` records.
+
+Normal API requests must not call source providers, blockchain RPCs, adapters, or recalculation jobs. Snapshot creation remains the responsibility of the scheduled recalculation/history pipeline.
+
 ## 5. Provider abstraction
 
 No provider-specific URL should be embedded inside an adapter.

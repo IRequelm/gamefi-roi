@@ -79,6 +79,23 @@ class ScoringRepository:
             )
             return None if record is None else _score_from_record(record)
 
+    def get_scores_for_snapshots(
+        self,
+        snapshot_ids: tuple[str, ...],
+        *,
+        methodology_version: str = METHODOLOGY_VERSION,
+    ) -> dict[str, SnapshotScoreResult]:
+        if not snapshot_ids:
+            return {}
+        with Session(self.engine) as session:
+            records = session.scalars(
+                select(StrategySnapshotScoreRecord).where(
+                    StrategySnapshotScoreRecord.snapshot_id.in_(snapshot_ids),
+                    StrategySnapshotScoreRecord.methodology_version == methodology_version,
+                )
+            ).all()
+        return {record.snapshot_id: _score_from_record(record) for record in records}
+
 
 def _validate_score(score: SnapshotScoreResult) -> None:
     if not score.snapshot_id:

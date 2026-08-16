@@ -88,6 +88,12 @@ Health endpoint:
 GET http://127.0.0.1:8000/health
 ```
 
+Versioned API health endpoint:
+
+```text
+GET http://127.0.0.1:8000/api/v1/health
+```
+
 ## Market Data Source Layer
 
 G2 establishes shared market-data infrastructure only:
@@ -331,6 +337,43 @@ Current deterministic probe scores:
 | DFK Jeweler cJEWEL Max Lock | 82 HIGH | 79 VERY HIGH |
 | Farmers World Axe Wood Production | 77 MODERATE | 31 MEDIUM |
 | Splinterlands Modern Ranked SPS EV | 39 LOW | 100 VERY HIGH |
+
+## Product API v1
+
+G10 exposes a stable read-oriented API under `/api/v1`. Normal API requests read stored history and scoring rows only; they do not trigger live provider, blockchain, adapter, or recalculation work.
+
+Endpoints:
+
+- `GET /api/v1/health`
+- `GET /api/v1/games`
+- `GET /api/v1/games/{game_id}`
+- `GET /api/v1/strategies`
+- `GET /api/v1/strategies/{strategy_id}`
+- `GET /api/v1/strategies/{strategy_id}/latest`
+- `GET /api/v1/strategies/{strategy_id}/history`
+- `GET /api/v1/rankings`
+
+Lists use `limit` and `offset` pagination. Rankings support only currently modeled filters: `capital_min`, `capital_max`, `confidence_min`, `risk_max`, `game_id`, `chain`, and `economy_type`.
+
+Ranking order is deterministic:
+
+```text
+roi_total_30d desc
+confidence_score desc
+risk_score asc
+calculated_at desc
+strategy_id asc
+```
+
+Decimal policy: monetary amounts, ratios, break-even days, and range values are serialized as exact JSON strings. Unavailable values are `null` with explicit status/reason fields; missing persisted risk/confidence scores return `available=false` instead of a numeric zero.
+
+Run the deterministic local API probe after migrations:
+
+```powershell
+.\.venv\Scripts\python -m app.api.v1_probe
+```
+
+The probe creates deterministic sample snapshots/scores only if the database has no snapshots, then reads the API surface through FastAPI's local test client.
 
 ## Test-Only Database Mode
 

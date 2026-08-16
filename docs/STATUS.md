@@ -5,11 +5,11 @@ Project version: 0.1
 
 ## Current state
 
-**ACTIVE GATE: G10 — API**
+**ACTIVE GATE: G11 — Web MVP**
 
-G9 is complete and frozen in the G9 baseline Git commit.
+G10 is complete and frozen in the G10 baseline Git commit.
 
-Do not implement G10 until the user explicitly asks to proceed.
+Do not implement G11 until the user explicitly asks to proceed.
 
 ## Gate board
 
@@ -25,8 +25,8 @@ Do not implement G10 until the user explicitly asks to proceed.
 | G7 | Interface Freeze | COMPLETE |
 | G8 | History | COMPLETE |
 | G9 | Risk / Confidence | COMPLETE |
-| G10 | API | ACTIVE |
-| G11 | Web MVP | NOT STARTED |
+| G10 | API | COMPLETE |
+| G11 | Web MVP | ACTIVE |
 | G12 | Validation | NOT STARTED |
 | G13 | Production | NOT STARTED |
 | G14 | Scale | NOT STARTED |
@@ -298,6 +298,49 @@ Current deterministic probe scores:
 | `farmers-world-axe-wood-production` | 77 MODERATE | 31 MEDIUM |
 | `splinterlands-modern-ranked-sps-ev` | 39 LOW | 100 VERY HIGH |
 
+## G10 objective
+
+Expose existing strategy/history/risk-confidence data through a stable read-oriented product API.
+
+## G10 acceptance criteria
+
+- [x] API routes are versioned under `/api/v1`,
+- [x] minimum endpoints exist for health, games, game detail, strategies, strategy detail, latest snapshot, history, and rankings,
+- [x] rankings support only modeled filters: capital minimum/maximum, confidence minimum, risk maximum, game, chain, and economy type,
+- [x] responses include strategy identity/version, game identity, capital, net daily earnings, break-even, ROI metrics, confidence score/label, risk score/label, warnings, freshness/last-calculated data, methodology/model versions, and uncertainty ranges where available,
+- [x] Decimal-sensitive financial values are serialized as exact strings and are never converted through binary float internally,
+- [x] list and history endpoints include `limit`/`offset` pagination,
+- [x] ranking order and tie-break policy are deterministic and documented,
+- [x] stale/partial behavior distinguishes unavailable values from zero and does not present failed calculations as valid snapshots,
+- [x] response schemas and generated OpenAPI documentation cover the API surface,
+- [x] deterministic tests cover normal strategy detail, ranking order, filters, pagination, history ordering, unavailable optional fields, stale data, invalid IDs, validation errors, Decimal serialization, risk/confidence inclusion, and API version path,
+- [x] normal API requests read persisted results and do not trigger live provider/blockchain calls,
+- [x] local API probe demonstrates stored sample/current strategy outputs,
+- [x] authentication remains out of scope for the public read-only MVP,
+- [x] no frontend, optimization, new game adapters, portfolio features, production deployment, or monetization features are added,
+- [x] all tests, doctor checks, dependency checks, compile checks, whitespace checks, and API probe pass,
+- [x] baseline Git commit for G10.
+
+## G10 API decision
+
+API contract version is `api-v1`.
+
+Routes are implemented in `backend/app/api/v1/routes.py`, response schemas in `backend/app/api/v1/schemas.py`, and the read service in `backend/app/api/v1/service.py`.
+
+Normal API requests read persisted `strategy_snapshots` and `strategy_snapshot_scores` records only. They do not call adapters, source providers, blockchain RPCs, or scheduled recalculation jobs.
+
+Ranking tie-break policy:
+
+```text
+roi_total_30d desc
+confidence_score desc
+risk_score asc
+calculated_at desc
+strategy_id asc
+```
+
+JSON financial serialization uses exact decimal strings. Unavailable optional values are `null` with explicit status/reason metadata, and unavailable risk/confidence scores return `available=false`.
+
 ## Current instruction to Codex
 
-G10 is active. Do not implement G10 until the user explicitly asks to proceed.
+G11 is active. Do not implement G11 until the user explicitly asks to proceed.

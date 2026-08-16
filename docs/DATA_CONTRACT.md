@@ -410,6 +410,66 @@ The local deterministic scoring probe is:
 .\.venv\Scripts\python -m app.risk.scoring_probe
 ```
 
+### G10 API v1 response contract
+
+G10 exposes a read-only product API under `/api/v1`. The API serves catalog, history, ranking, and score data from persisted snapshots and persisted scoring results.
+
+Routes:
+
+```text
+GET /api/v1/health
+GET /api/v1/games
+GET /api/v1/games/{game_id}
+GET /api/v1/strategies
+GET /api/v1/strategies/{strategy_id}
+GET /api/v1/strategies/{strategy_id}/latest
+GET /api/v1/strategies/{strategy_id}/history
+GET /api/v1/rankings
+```
+
+Snapshot payloads include:
+
+- strategy id and version,
+- game id, game name, chain, and economy type,
+- capital metrics,
+- daily earnings and cost metrics,
+- break-even, ROI, and exit-adjusted P&L outputs,
+- independent confidence and risk score payloads,
+- warnings,
+- freshness and last-calculated timestamp,
+- adapter contract, ROI model, and scoring methodology versions,
+- uncertainty ranges when present.
+
+JSON serialization policy:
+
+- monetary values are `{ "amount": "<decimal-string>", "currency": "<unit>" }`,
+- ratios and break-even days are exact decimal strings or `null`,
+- unavailable optional values must include explicit availability/status/reason metadata,
+- unavailable scores use `available=false` and `score=null`,
+- monetary/financial values must not be serialized through binary floating-point.
+
+Ranking filters are limited to modeled fields:
+
+- `capital_min`,
+- `capital_max`,
+- `confidence_min`,
+- `risk_max`,
+- `game_id`,
+- `chain`,
+- `economy_type`.
+
+Ranking order is deterministic:
+
+```text
+roi_total_30d desc
+confidence_score desc
+risk_score asc
+calculated_at desc
+strategy_id asc
+```
+
+Failed calculations from `strategy_calculation_failures` are not exposed as valid snapshots. Staleness is exposed in each snapshot's freshness payload; stale or unavailable values must never be converted to numeric zero.
+
 ## 9. Provenance
 
 Every snapshot must be reproducible enough to answer:
