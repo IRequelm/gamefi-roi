@@ -5,11 +5,11 @@ Project version: 0.1
 
 ## Current state
 
-**ACTIVE GATE: G11 — Web MVP**
+**ACTIVE GATE: G12 — Validation**
 
-G10 is complete and frozen in the G10 baseline Git commit.
+G11 is complete and frozen in the G11 baseline Git commit.
 
-Do not implement G11 until the user explicitly asks to proceed.
+Do not implement G12 until the user explicitly asks to proceed.
 
 ## Gate board
 
@@ -26,8 +26,8 @@ Do not implement G11 until the user explicitly asks to proceed.
 | G8 | History | COMPLETE |
 | G9 | Risk / Confidence | COMPLETE |
 | G10 | API | COMPLETE |
-| G11 | Web MVP | ACTIVE |
-| G12 | Validation | NOT STARTED |
+| G11 | Web MVP | COMPLETE |
+| G12 | Validation | ACTIVE |
 | G13 | Production | NOT STARTED |
 | G14 | Scale | NOT STARTED |
 
@@ -341,6 +341,47 @@ strategy_id asc
 
 JSON financial serialization uses exact decimal strings. Unavailable optional values are `null` with explicit status/reason metadata, and unavailable risk/confidence scores return `available=false`.
 
+## G11 objective
+
+Build the minimal public web interface for the existing read-only API.
+
+## G11 acceptance criteria
+
+- [x] frontend consumes `/api/v1` only and does not duplicate ROI/risk/confidence business logic,
+- [x] minimum pages exist for Home / ROI Finder, Rankings, Game Detail, Strategy Detail, and Methodology,
+- [x] ROI Finder supports API-modeled filters for capital budget, maximum risk, minimum confidence, game, and economy type,
+- [x] Rankings show game, strategy, capital, net/day, 30D ROI, break-even, confidence score/label, risk score/label, last calculated/freshness, and warnings indicator,
+- [x] Strategy Detail shows exact strategy/version, capital breakdown, gross/realizable/net earnings, costs, break-even, ROI metrics, exit-adjusted P&L, uncertainty ranges where present, confidence/risk contributors, LIVE / CONFIG / DERIVED explanation, warnings, freshness, and methodology/model versions,
+- [x] History view shows an ordered table where at least two snapshots exist and an explicit insufficient-history state otherwise,
+- [x] Methodology page explains strategy-specific ROI, realizable earnings, slippage, total vs at-risk capital, confidence vs risk, LIVE / CONFIG / DERIVED, and no guaranteed returns,
+- [x] UX is responsive, fast-loading, typography-forward, restrained, and trust/data clarity oriented,
+- [x] stale and low-confidence states are visibly called out,
+- [x] frontend treats Decimal-sensitive API values as exact strings and does not introduce binary-float financial calculations,
+- [x] error/loading/empty states cover API unavailable, no matching rankings, strategy not found, stale data, missing optional fields, and insufficient history,
+- [x] frontend tests cover rankings rendering, filters/query behavior, strategy detail, risk/confidence display, unavailable/null handling, stale warnings, error state, and history/no-history state,
+- [x] local backend + frontend workflow and web smoke probe are documented,
+- [x] no production deployment, auth, portfolio, alerts, monetization, optimization, new adapters, AI chat, native mobile work, or branding/domain optimization is added,
+- [x] all backend tests, frontend tests, doctor checks, dependency checks, compile checks, whitespace checks, API probe, and web probe pass,
+- [x] baseline Git commit for G11.
+
+## G11 web decision
+
+Frontend stack is dependency-free static HTML/CSS/JavaScript served by the FastAPI modular monolith.
+
+Routes:
+
+```text
+/
+/rankings
+/games/{game_id}
+/strategies/{strategy_id}
+/methodology
+```
+
+The frontend route shell is `frontend/index.html`; browser logic is `frontend/assets/app.js`; styling is `frontend/assets/styles.css`; serving lives in `backend/app/web/routes.py`.
+
+The web client only calls `/api/v1`. It renders API-provided strings and metadata, including the classification summary added to snapshot payloads for LIVE / CONFIG / DERIVED display.
+
 ## Current instruction to Codex
 
-G11 is active. Do not implement G11 until the user explicitly asks to proceed.
+G12 is active. Do not implement G12 until the user explicitly asks to proceed.

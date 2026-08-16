@@ -12,6 +12,7 @@ from sqlalchemy import Engine
 from app.api.v1.schemas import (
     BreakEvenMetric,
     CapitalMetrics,
+    ClassificationSummaryPayload,
     EarningsMetrics,
     FreshnessPayload,
     GameDetail,
@@ -264,6 +265,7 @@ def snapshot_payload(
             scoring_methodology_version=scoring_methodology_version,
         ),
         uncertainty_ranges=_uncertainty_ranges(snapshot),
+        classification_summary=_classification_summary(snapshot),
     )
 
 
@@ -406,6 +408,13 @@ def _uncertainty_ranges(snapshot: StrategySnapshot) -> list[UncertaintyRangePayl
             )
         )
     return ranges
+
+
+def _classification_summary(snapshot: StrategySnapshot) -> ClassificationSummaryPayload:
+    summary = dict(snapshot.classification_summary)
+    counts = {key: int(value) for key, value in dict(summary.get("counts", {})).items()}
+    metrics = {str(key): str(value) for key, value in dict(summary.get("metrics", {})).items()}
+    return ClassificationSummaryPayload(counts=counts, metrics=metrics)
 
 
 def _overall_freshness(counts: dict[str, int]) -> str:

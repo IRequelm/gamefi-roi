@@ -204,6 +204,12 @@ The G10 product API is versioned under `/api/v1` and is read-oriented. It serves
 
 Normal API requests must not call source providers, blockchain RPCs, adapters, or recalculation jobs. Snapshot creation remains the responsibility of the scheduled recalculation/history pipeline.
 
+### G11 web boundary
+
+The G11 web MVP is a static browser client served by the FastAPI modular monolith. It consumes `/api/v1` only and does not duplicate ROI, risk, confidence, adapter, provider, or optimization logic.
+
+The web routes are public read-only pages for ROI Finder, Rankings, Game Detail, Strategy Detail, and Methodology. Authentication, portfolio tracking, alerts, production deployment, monetization, AI chat, and native mobile surfaces remain out of scope.
+
 ## 5. Provider abstraction
 
 No provider-specific URL should be embedded inside an adapter.

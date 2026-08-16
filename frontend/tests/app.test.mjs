@@ -1,0 +1,244 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+
+import {
+  ApiError,
+  buildRankingsPath,
+  decimalStringToPercent,
+  formatMoney,
+  formatRatio,
+  renderError,
+  renderFreshnessAlert,
+  renderHistory,
+  renderRankingsTable,
+  renderScoreBadge,
+  renderStrategyDetail,
+} from "../assets/app.js";
+
+test("rankings rendering includes required columns and stored API values", () => {
+  const html = renderRankingsTable(rankingPayload());
+
+  assert.match(html, /Game/);
+  assert.match(html, /Strategy/);
+  assert.match(html, /Capital/);
+  assert.match(html, /Net\/day/);
+  assert.match(html, /30D ROI/);
+  assert.match(html, /Break-even/);
+  assert.match(html, /Confidence/);
+  assert.match(html, /Risk/);
+  assert.match(html, /250.00 USD/);
+  assert.match(html, /0.4885 USD/);
+  assert.match(html, /5.862%/);
+});
+
+test("finder filters build supported rankings query only", () => {
+  const path = buildRankingsPath({
+    capitalMax: "20.00",
+    riskMax: "50",
+    confidenceMin: "70",
+    gameId: "farmers-world",
+    economyType: "resource-production",
+    playtime: "unsupported",
+  });
+
+  assert.equal(
+    path,
+    "/rankings?capital_max=20.00&confidence_min=70&risk_max=50&game_id=farmers-world&economy_type=resource-production",
+  );
+  assert.doesNotMatch(path, /playtime/);
+});
+
+test("strategy detail renders capital, earnings, scores, classification, warnings, and versions", () => {
+  const html = renderStrategyDetail(strategyPayload(), historyPayload([snapshotPayload(), secondSnapshot()]));
+
+  assert.match(html, /dfk-crystalvale-jeweler-cjewel-max-lock/);
+  assert.match(html, /Capital Breakdown/);
+  assert.match(html, /Earnings and Costs/);
+  assert.match(html, /Return Metrics/);
+  assert.match(html, /Exit-adjusted P&amp;L/);
+  assert.match(html, /Confidence/);
+  assert.match(html, /Risk/);
+  assert.match(html, /LIVE \/ CONFIG \/ DERIVED/);
+  assert.match(html, /Adapter contract/);
+  assert.match(html, /roi-core-v1/);
+  assert.match(html, /2 snapshots/);
+});
+
+test("risk and confidence badges preserve unavailable scores", () => {
+  const unavailable = {
+    available: false,
+    score: null,
+    label: null,
+    unavailable_factors: [{ factor: "score", reason: "No persisted score exists." }],
+  };
+
+  assert.match(renderScoreBadge(unavailable, "confidence"), /Unavailable/);
+});
+
+test("unavailable and null ratio values do not become zero", () => {
+  const html = formatRatio({ value: null, status: "not_computable", reason: "No positive net earnings." });
+
+  assert.match(html, /No positive net earnings/);
+  assert.doesNotMatch(html, />0%/);
+});
+
+test("stale freshness and low confidence produce a visible warning", () => {
+  const snapshot = snapshotPayload();
+  snapshot.freshness.overall_status = "stale";
+  snapshot.confidence.label = "LOW";
+
+  const html = renderFreshnessAlert(snapshot);
+
+  assert.match(html, /Freshness status is stale/);
+  assert.match(html, /Confidence is LOW/);
+});
+
+test("error state distinguishes not found from API unavailable", () => {
+  assert.match(renderError(new ApiError(404, "Unknown strategy")), /Not found/);
+  assert.match(renderError(new Error("Database unavailable")), /Data unavailable/);
+});
+
+test("history no-history state is explicit", () => {
+  const html = renderHistory(historyPayload([snapshotPayload()]));
+
+  assert.match(html, /Insufficient history/);
+  assert.doesNotMatch(html, /snapshots<\/span>/);
+});
+
+test("decimal percent formatting shifts strings without binary float math", () => {
+  assert.equal(decimalStringToPercent("0.05862"), "5.862%");
+  assert.equal(decimalStringToPercent("0.84"), "84%");
+  assert.equal(formatMoney({ amount: "0.0317954339244676", currency: "USD" }), "0.0317954339244676 USD");
+});
+
+function rankingPayload() {
+  return {
+    items: [
+      {
+        rank: 1,
+        strategy: {
+          strategy_id: "dfk-crystalvale-jeweler-cjewel-max-lock",
+          strategy_version: "v1",
+          game_id: "defi-kingdoms",
+          game_name: "DeFi Kingdoms",
+          name: "DFK Jeweler cJEWEL Max Lock",
+          chain: "dfk-chain",
+          economy_type: "locked-yield-reward",
+          description: "Lock strategy.",
+        },
+        latest_snapshot: snapshotPayload(),
+      },
+    ],
+    page: { limit: 50, offset: 0, total: 1 },
+    ordering: ["roi_total_30d desc"],
+  };
+}
+
+function strategyPayload() {
+  return {
+    strategy_id: "dfk-crystalvale-jeweler-cjewel-max-lock",
+    strategy_version: "v1",
+    game_id: "defi-kingdoms",
+    game_name: "DeFi Kingdoms",
+    name: "DFK Jeweler cJEWEL Max Lock",
+    chain: "dfk-chain",
+    economy_type: "locked-yield-reward",
+    description: "cJEWEL max-lock strategy.",
+    latest_snapshot: snapshotPayload(),
+  };
+}
+
+function historyPayload(items) {
+  return {
+    items,
+    page: { limit: 50, offset: 0, total: items.length },
+  };
+}
+
+function secondSnapshot() {
+  const snapshot = snapshotPayload();
+  snapshot.snapshot_id = "snapshot-2";
+  snapshot.calculated_at = "2026-08-16T13:00:00Z";
+  snapshot.roi.roi_total_30d.value = "0.06000";
+  return snapshot;
+}
+
+function snapshotPayload() {
+  return {
+    snapshot_id: "snapshot-1",
+    strategy_id: "dfk-crystalvale-jeweler-cjewel-max-lock",
+    strategy_version: "v1",
+    game_id: "defi-kingdoms",
+    game_name: "DeFi Kingdoms",
+    chain: "dfk-chain",
+    economy_type: "locked-yield-reward",
+    calculated_at: "2026-08-16T12:00:00Z",
+    capital: {
+      total_capital: { amount: "250.00", currency: "USD" },
+      sunk_cost: { amount: "0", currency: "USD" },
+      recoverable_capital: { amount: "125.00", currency: "USD" },
+      capital_at_risk: { amount: "125.00", currency: "USD" },
+    },
+    earnings: {
+      gross_nominal_earnings_day: { amount: "0.50", currency: "USD" },
+      realizable_earnings_day: { amount: "0.4985", currency: "USD" },
+      operating_cost_day: { amount: "0", currency: "USD" },
+      transaction_cost_day: { amount: "0.01", currency: "USD" },
+      other_cost_day: { amount: "0", currency: "USD" },
+      net_earnings_day: { amount: "0.4885", currency: "USD" },
+    },
+    roi: {
+      break_even: {
+        basis: "total_capital",
+        recovery_target: { amount: "250.00", currency: "USD" },
+        days: "511.7707",
+        status: "available",
+        reason: null,
+      },
+      roi_total_7d: { value: "0.013678", status: "available", reason: null },
+      roi_total_30d: { value: "0.05862", status: "available", reason: null },
+      roi_total_90d: { value: "0.17586", status: "available", reason: null },
+      roi_risk_7d: { value: "0.027356", status: "available", reason: null },
+      roi_risk_30d: { value: "0.11724", status: "available", reason: null },
+      roi_risk_90d: { value: "0.35172", status: "available", reason: null },
+      exit_adjusted_pnl: { amount: "-125.00", currency: "USD" },
+    },
+    confidence: {
+      available: true,
+      score: 82,
+      label: "HIGH",
+      methodology_version: "risk-confidence-v1",
+      contributions: [{ factor: "valuation_quality", points: 6, reason: "Executable quote available.", evidence: { source: "quote" } }],
+      unavailable_factors: [],
+    },
+    risk: {
+      available: true,
+      score: 79,
+      label: "VERY HIGH",
+      methodology_version: "risk-confidence-v1",
+      contributions: [{ factor: "lock_exit_penalty", points: 35, reason: "Long lock and exit penalty.", evidence: { lock_days: 1095 } }],
+      unavailable_factors: [],
+    },
+    warnings: [{ code: "long_lock", message: "Long lock period.", severity: "warning" }],
+    freshness: {
+      overall_status: "fresh",
+      calculated_at: "2026-08-16T12:00:00Z",
+      status_counts: { fresh: 5, stale: 0, invalid: 0, missing: 0 },
+      input_count: 5,
+    },
+    versions: {
+      adapter_contract_version: "adapter-contract-v1",
+      model_version: "roi-core-v1",
+      scoring_methodology_version: "risk-confidence-v1",
+    },
+    uncertainty_ranges: [],
+    classification_summary: {
+      counts: { LIVE: 2, CONFIG: 3, DERIVED: 4 },
+      metrics: {
+        "dfk.reward": "LIVE",
+        "dfk.lock_days": "CONFIG",
+        "dfk.realizable_value": "DERIVED",
+      },
+    },
+  };
+}

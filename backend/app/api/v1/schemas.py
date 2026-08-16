@@ -113,6 +113,11 @@ class UncertaintyRangePayload(BaseModel):
     values: dict[str, str | None] = Field(default_factory=dict)
 
 
+class ClassificationSummaryPayload(BaseModel):
+    counts: dict[str, int]
+    metrics: dict[str, str]
+
+
 class StrategySnapshotPayload(BaseModel):
     snapshot_id: str
     strategy_id: str
@@ -131,6 +136,7 @@ class StrategySnapshotPayload(BaseModel):
     freshness: FreshnessPayload
     versions: VersionPayload
     uncertainty_ranges: list[UncertaintyRangePayload]
+    classification_summary: ClassificationSummaryPayload
 
 
 class GameSummary(BaseModel):

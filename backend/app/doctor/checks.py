@@ -68,6 +68,8 @@ REQUIRED_IMPORTS = (
     "app.risk.results",
     "app.risk.scoring",
     "app.risk.scoring_probe",
+    "app.web.routes",
+    "app.web_probe",
 )
 
 

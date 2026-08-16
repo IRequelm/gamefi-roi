@@ -65,6 +65,9 @@ def test_strategy_detail_includes_latest_snapshot_risk_and_confidence(monkeypatc
     assert latest["versions"]["adapter_contract_version"] == "adapter-contract-v1"
     assert latest["versions"]["model_version"] == "roi-core-v1"
     assert latest["versions"]["scoring_methodology_version"] == "risk-confidence-v1"
+    assert latest["classification_summary"]["counts"]["LIVE"] == 2
+    assert latest["classification_summary"]["counts"]["CONFIG"] == 3
+    assert latest["classification_summary"]["counts"]["DERIVED"] >= 4
 
 
 def test_rankings_order_and_tie_breaking_policy(monkeypatch, tmp_path) -> None:

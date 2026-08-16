@@ -13,12 +13,13 @@ from app.risk.scoring import SnapshotScorer
 from app.storage.database import create_database_engine
 from app.storage.history import HistoryRepository
 from app.storage.scoring import ScoringRepository
+from app.strategies.catalog import list_strategies
 
 
 def main() -> int:
     engine = create_database_engine()
     try:
-        _ensure_sample_snapshots(engine)
+        ensure_sample_snapshots(engine)
     finally:
         engine.dispose()
 
@@ -54,9 +55,9 @@ def main() -> int:
     return 0
 
 
-def _ensure_sample_snapshots(engine) -> None:
+def ensure_sample_snapshots(engine) -> None:
     history_repository = HistoryRepository(engine)
-    if history_repository.latest_snapshots():
+    if _has_all_sample_snapshots(history_repository):
         return
 
     scoring_repository = ScoringRepository(engine)
@@ -67,6 +68,8 @@ def _ensure_sample_snapshots(engine) -> None:
         calculated_at=calculated_at,
     )
     if run.failures:
+        if _has_all_sample_snapshots(history_repository):
+            return
         for failure in run.failures:
             print(f"[FAILURE] {failure.strategy_id}@{failure.strategy_version} {failure.error_type}: {failure.error_message}")
         raise RuntimeError("API probe sample snapshot creation failed")
@@ -81,6 +84,12 @@ def _ensure_sample_snapshots(engine) -> None:
             model_version=snapshot.model_version,
         )
         scoring_repository.save_score(scorer.score(snapshot, history=history, scored_at=calculated_at))
+
+
+def _has_all_sample_snapshots(history_repository: HistoryRepository) -> bool:
+    expected = {strategy.strategy_id for strategy in list_strategies()}
+    actual = {snapshot.strategy_id for snapshot in history_repository.latest_snapshots()}
+    return expected.issubset(actual)
 
 
 if __name__ == "__main__":

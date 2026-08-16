@@ -74,6 +74,7 @@ Run these before committing backend changes:
 .\.venv\Scripts\python -m pip check
 .\.venv\Scripts\python -m compileall -q backend
 .\.venv\Scripts\python -m app.doctor
+node --test frontend/tests/app.test.mjs
 ```
 
 Run the API locally:
@@ -374,6 +375,54 @@ Run the deterministic local API probe after migrations:
 ```
 
 The probe creates deterministic sample snapshots/scores only if the database has no snapshots, then reads the API surface through FastAPI's local test client.
+
+## Web MVP
+
+G11 adds a minimal public web interface served by the existing FastAPI app. The frontend is plain HTML/CSS/JavaScript with no npm package dependencies and no build step. This keeps the first web surface reproducible while the product is still validating the data model.
+
+Routes:
+
+- `/` ROI Finder
+- `/rankings`
+- `/games/{game_id}`
+- `/strategies/{strategy_id}`
+- `/methodology`
+
+Frontend boundary:
+
+- Browser data access goes through `/api/v1` only.
+- The UI displays stored API values and does not call adapters, providers, blockchain RPCs, or recalculation jobs.
+- Monetary amounts, ROI ratios, break-even days, and uncertainty values are treated as exact strings from the API. The UI does not use binary-float financial calculations.
+- Missing scores and unavailable optional values remain visibly unavailable instead of becoming zero.
+
+Run backend and frontend together locally:
+
+```powershell
+docker compose up -d db
+.\.venv\Scripts\python -m alembic -c backend/alembic.ini upgrade head
+.\.venv\Scripts\python -m app.api.v1_probe
+.\.venv\Scripts\python -m uvicorn app.main:app --reload
+```
+
+Then open:
+
+```text
+http://127.0.0.1:8000/
+```
+
+Run the deterministic web smoke probe:
+
+```powershell
+.\.venv\Scripts\python -m app.web_probe
+```
+
+Frontend tests use Node's built-in test runner and have no package install step:
+
+```powershell
+node --test frontend/tests/app.test.mjs
+```
+
+If `node` is not on PATH in the Codex desktop environment, use the bundled Node path reported by the workspace dependency loader.
 
 ## Test-Only Database Mode
 

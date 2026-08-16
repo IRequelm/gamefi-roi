@@ -438,7 +438,8 @@ Snapshot payloads include:
 - warnings,
 - freshness and last-calculated timestamp,
 - adapter contract, ROI model, and scoring methodology versions,
-- uncertainty ranges when present.
+- uncertainty ranges when present,
+- LIVE / CONFIG / DERIVED classification summary.
 
 JSON serialization policy:
 
@@ -469,6 +470,18 @@ strategy_id asc
 ```
 
 Failed calculations from `strategy_calculation_failures` are not exposed as valid snapshots. Staleness is exposed in each snapshot's freshness payload; stale or unavailable values must never be converted to numeric zero.
+
+### G11 web consumption contract
+
+The public web MVP is a client of `/api/v1`, not a second calculation layer.
+
+Frontend rules:
+
+- construct supported ranking filters and pass them to `/api/v1/rankings`,
+- display returned strategy, capital, earnings, ROI, freshness, warning, risk, confidence, uncertainty, and version fields,
+- show insufficient-history and unavailable-value states explicitly,
+- treat Decimal-sensitive strings as display data rather than binary-float calculation inputs,
+- do not call provider URLs, blockchain RPCs, adapters, scheduler jobs, or storage internals.
 
 ## 9. Provenance
 
