@@ -1,0 +1,135 @@
+# Paid production Render Blueprint.
+#
+# This preserves the production-grade G13 architecture for upgrade from
+# low-cost public beta: paid web service, paid Render Postgres with backups/PITR,
+# and a Render Cron Job with platform single-run guarantee.
+services:
+  - type: web
+    name: gamefi-roi-web
+    runtime: python
+    plan: starter
+    region: ohio
+    buildCommand: "python -m pip install --upgrade pip && python -m pip install -r requirements.txt"
+    preDeployCommand: "python -m alembic -c backend/alembic.ini upgrade head"
+    startCommand: "python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    healthCheckPath: /api/v1/ops/status
+    autoDeployTrigger: off
+    envVars:
+      - key: GAMEFI_ENVIRONMENT
+        value: production
+      - key: GAMEFI_DATABASE_URL
+        fromDatabase:
+          name: gamefi-roi-db
+          property: connectionString
+      - key: GAMEFI_API_TITLE
+        value: GameFi ROI API
+      - key: GAMEFI_LOG_LEVEL
+        value: INFO
+      - key: GAMEFI_ALLOW_SQLITE_FOR_TESTS
+        value: "false"
+      - key: GAMEFI_DATABASE_POOL_SIZE
+        value: "3"
+      - key: GAMEFI_DATABASE_MAX_OVERFLOW
+        value: "2"
+      - key: GAMEFI_DATABASE_POOL_TIMEOUT_SECONDS
+        value: "30"
+      - key: GAMEFI_DATABASE_POOL_RECYCLE_SECONDS
+        value: "1800"
+      - key: GAMEFI_SECURITY_HEADERS_ENABLED
+        value: "true"
+      - key: GAMEFI_SCHEDULER_CADENCE_MINUTES
+        value: "30"
+      - key: GAMEFI_PRODUCTION_HARD_STALE_SECONDS
+        value: "1800"
+      - key: GAMEFI_MARKET_DATA_HTTP_TIMEOUT_SECONDS
+        value: "10"
+      - key: GAMEFI_MARKET_DATA_HTTP_MAX_RETRIES
+        value: "2"
+      - key: GAMEFI_MARKET_DATA_PRICE_FRESHNESS_SECONDS
+        value: "300"
+      - key: GAMEFI_COINGECKO_BASE_URL
+        value: https://api.coingecko.com/api/v3
+      - key: GAMEFI_COINGECKO_API_KEY
+        sync: false
+      - key: GAMEFI_ALCOR_BASE_URL
+        value: https://wax.alcor.exchange/api/v2
+      - key: GAMEFI_ATOMICASSETS_BASE_URL
+        value: https://wax.api.atomicassets.io
+      - key: GAMEFI_WAX_MARKET_OBSERVATION_FRESHNESS_SECONDS
+        value: "300"
+      - key: GAMEFI_DFK_CHAIN_RPC_URL
+        sync: false
+      - key: GAMEFI_DFK_CHAIN_OBSERVATION_FRESHNESS_SECONDS
+        value: "300"
+      - key: GAMEFI_SPLINTERLANDS_BASE_URL
+        value: https://api.splinterlands.com
+      - key: GAMEFI_SPLINTERLANDS_OBSERVATION_FRESHNESS_SECONDS
+        value: "300"
+
+  - type: cron
+    name: gamefi-roi-recalculation
+    runtime: python
+    plan: starter
+    region: ohio
+    buildCommand: "python -m pip install --upgrade pip && python -m pip install -r requirements.txt"
+    startCommand: "python -m app.jobs.production_recalculation"
+    schedule: "*/30 * * * *"
+    autoDeployTrigger: off
+    envVars:
+      - key: GAMEFI_ENVIRONMENT
+        value: production
+      - key: GAMEFI_DATABASE_URL
+        fromDatabase:
+          name: gamefi-roi-db
+          property: connectionString
+      - key: GAMEFI_API_TITLE
+        value: GameFi ROI API
+      - key: GAMEFI_LOG_LEVEL
+        value: INFO
+      - key: GAMEFI_ALLOW_SQLITE_FOR_TESTS
+        value: "false"
+      - key: GAMEFI_DATABASE_POOL_SIZE
+        value: "2"
+      - key: GAMEFI_DATABASE_MAX_OVERFLOW
+        value: "1"
+      - key: GAMEFI_DATABASE_POOL_TIMEOUT_SECONDS
+        value: "30"
+      - key: GAMEFI_DATABASE_POOL_RECYCLE_SECONDS
+        value: "1800"
+      - key: GAMEFI_SECURITY_HEADERS_ENABLED
+        value: "true"
+      - key: GAMEFI_SCHEDULER_CADENCE_MINUTES
+        value: "30"
+      - key: GAMEFI_PRODUCTION_HARD_STALE_SECONDS
+        value: "1800"
+      - key: GAMEFI_MARKET_DATA_HTTP_TIMEOUT_SECONDS
+        value: "10"
+      - key: GAMEFI_MARKET_DATA_HTTP_MAX_RETRIES
+        value: "2"
+      - key: GAMEFI_MARKET_DATA_PRICE_FRESHNESS_SECONDS
+        value: "300"
+      - key: GAMEFI_COINGECKO_BASE_URL
+        value: https://api.coingecko.com/api/v3
+      - key: GAMEFI_COINGECKO_API_KEY
+        sync: false
+      - key: GAMEFI_ALCOR_BASE_URL
+        value: https://wax.alcor.exchange/api/v2
+      - key: GAMEFI_ATOMICASSETS_BASE_URL
+        value: https://wax.api.atomicassets.io
+      - key: GAMEFI_WAX_MARKET_OBSERVATION_FRESHNESS_SECONDS
+        value: "300"
+      - key: GAMEFI_DFK_CHAIN_RPC_URL
+        sync: false
+      - key: GAMEFI_DFK_CHAIN_OBSERVATION_FRESHNESS_SECONDS
+        value: "300"
+      - key: GAMEFI_SPLINTERLANDS_BASE_URL
+        value: https://api.splinterlands.com
+      - key: GAMEFI_SPLINTERLANDS_OBSERVATION_FRESHNESS_SECONDS
+        value: "300"
+
+databases:
+  - name: gamefi-roi-db
+    plan: basic-256mb
+    region: ohio
+    postgresMajorVersion: "17"
+    diskSizeGB: 1

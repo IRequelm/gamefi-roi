@@ -1,23 +1,43 @@
 # GameFi ROI Production Runbook
 
-Updated: 2026-08-16
+Updated: 2026-08-22
 Gate: G13 - Production
 
 ## Architecture
 
 Production target: Render.
 
-Services:
+Default public beta Blueprint:
 
 - `gamefi-roi-web`: FastAPI modular monolith serving `/api/v1` and the existing Web MVP.
-- `gamefi-roi-recalculation`: Render cron job running scheduled live recalculation and snapshot scoring.
-- `gamefi-roi-db`: Render Postgres, PostgreSQL 17.
+- `gamefi-roi-db`: Free Render Postgres, PostgreSQL 17.
+- `.github/workflows/render-beta-recalculation.yml`: GitHub Actions scheduled recalculation every 30 minutes.
 
-The repository contains `render.yaml` so the deploy shape is reproducible. Normal API and web requests read persisted snapshots and scores only; they do not call CoinGecko, DFK RPC, Alcor, AtomicAssets, or Splinterlands.
+The repository contains `render.yaml` for the low-cost public beta shape. Normal API and web requests read persisted snapshots and scores only; they do not call CoinGecko, DFK RPC, Alcor, AtomicAssets, Splinterlands, or scheduled recalculation jobs.
+
+Paid production upgrade Blueprint:
+
+- `render.production.yaml` preserves the production-grade G13 architecture: paid web service, paid Render Postgres, and Render Cron Job.
+- Use this file when backups/PITR, Render Cron single-run scheduling, and always-on web behavior are required.
 
 ## Platform Decision
 
-Render is selected over Railway for the first public beta because it supports the required FastAPI web service, managed Postgres, cron service, env secrets, custom domains/HTTPS, HTTP health checks, logs, and backups in one Blueprint. Railway is viable, but its documented health checks are deployment-gating rather than continuous monitoring, and its cron skips later executions when a previous run is active. Render cron delays the next run while an existing run is still active.
+Render remains selected for the first public beta because it supports the required FastAPI web service, managed Postgres, env secrets, custom domains/HTTPS, HTTP health checks, and logs in one Blueprint.
+
+Cost-minimized beta decision:
+
+- `render.yaml` uses a Free Web Service and Free Render Postgres.
+- The paid Render Cron Job is removed from the beta Blueprint because Render Cron Jobs have paid billing.
+- Scheduled recalculation moves to GitHub Actions for beta.
+- GitHub Actions runs the existing `python -m app.jobs.production_recalculation` command, so application-level PostgreSQL advisory locking, G8 snapshot idempotency, hard-stale checks, and per-strategy failure isolation remain unchanged.
+
+Free-tier limitations:
+
+- Free web services can spin down after inactivity and restart on the next request.
+- Free Render Postgres expires 30 days after creation, with a 14-day upgrade grace period before deletion.
+- Free Render Postgres has a 1 GB limit.
+- Free Render Postgres has no Render-managed backups, no PITR, no logical backups, and no managed connection pooling.
+- Free beta is not backup-capable production. It is acceptable only for short-lived public-beta validation when this limitation is visible and accepted.
 
 Decision record: `docs/DECISIONS/0004-production-platform.md`.
 
@@ -46,7 +66,7 @@ Rate and retry defaults:
 
 ## Environment Variables
 
-Core:
+Render web service:
 
 - `GAMEFI_ENVIRONMENT=production`
 - `GAMEFI_DATABASE_URL`: from Render Postgres `connectionString`.
@@ -54,10 +74,10 @@ Core:
 - `GAMEFI_LOG_LEVEL=INFO`
 - `GAMEFI_ALLOW_SQLITE_FOR_TESTS=false`
 
-Database pool:
+Render web database pool:
 
-- `GAMEFI_DATABASE_POOL_SIZE=3` for web, `2` for cron.
-- `GAMEFI_DATABASE_MAX_OVERFLOW=2` for web, `1` for cron.
+- `GAMEFI_DATABASE_POOL_SIZE=2`
+- `GAMEFI_DATABASE_MAX_OVERFLOW=1`
 - `GAMEFI_DATABASE_POOL_TIMEOUT_SECONDS=30`
 - `GAMEFI_DATABASE_POOL_RECYCLE_SECONDS=1800`
 
@@ -74,20 +94,45 @@ Freshness:
 - `GAMEFI_SPLINTERLANDS_OBSERVATION_FRESHNESS_SECONDS=300`
 - `GAMEFI_PRODUCTION_HARD_STALE_SECONDS=1800`
 
+GitHub Actions beta scheduler secrets:
+
+- `GAMEFI_BETA_DATABASE_URL`: the external Render Postgres URL for the beta database. Do not use the private/internal Render URL from `fromDatabase.connectionString`; GitHub Actions runs outside Render.
+- `GAMEFI_COINGECKO_API_KEY`: same production CoinGecko key used by Render.
+- `GAMEFI_DFK_CHAIN_RPC_URL`: same dedicated DFK Chain RPC provider URL used by Render.
+
+GitHub Actions beta scheduler non-secret env:
+
+- defined in `.github/workflows/render-beta-recalculation.yml`,
+- pool size is `1`, max overflow is `0`,
+- cadence is `30` minutes.
+
 ## Deploy Procedure
 
 1. Push the verified repository state to the branch Render will deploy.
 2. In Render, create or sync a Blueprint from `render.yaml`.
 3. When prompted, enter secret values for `GAMEFI_COINGECKO_API_KEY` and `GAMEFI_DFK_CHAIN_RPC_URL`.
-4. Confirm the database is created on the paid `basic-256mb` plan so backups/PITR are available.
+4. Confirm the web service is created on the Free plan and the database is created on the Free plan.
 5. Confirm the web service deploy runs:
    - build: `python -m pip install --upgrade pip && python -m pip install -r requirements.txt`
    - pre-deploy migration: `python -m alembic -c backend/alembic.ini upgrade head`
    - start: `python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-6. Confirm the cron service command:
-   - `python -m app.jobs.production_recalculation`
-   - schedule: `*/30 * * * *`
-7. Trigger one manual cron run after the first web deploy.
+6. After the database exists, copy the database's external URL into the GitHub repository secret `GAMEFI_BETA_DATABASE_URL`.
+7. Add GitHub repository secrets for `GAMEFI_COINGECKO_API_KEY` and `GAMEFI_DFK_CHAIN_RPC_URL`.
+8. Run the GitHub Actions workflow `Render Beta Recalculation` manually once.
+9. Confirm the workflow writes a new snapshot and persisted risk/confidence score.
+
+Do not paste provider keys, database URLs, GitHub tokens, or Render secrets into chat or commit them to Git.
+
+## Paid Production Upgrade Procedure
+
+Upgrade from low-cost beta when real production reliability is required:
+
+1. In Render, upgrade `gamefi-roi-db` from Free to a paid Postgres instance, or create a new paid database and restore/migrate data into it.
+2. Sync a Blueprint using `render.production.yaml` instead of `render.yaml`.
+3. Confirm `gamefi-roi-recalculation` exists as a Render Cron Job with schedule `*/30 * * * *`.
+4. Disable the GitHub Actions `Render Beta Recalculation` workflow to avoid duplicate scheduler runs.
+5. Confirm paid Postgres PITR/logical backup capability.
+6. Perform restore verification before marking G13 complete.
 
 ## Migration Procedure
 
@@ -106,17 +151,20 @@ Before destructive schema changes in future gates:
 
 ## Scheduler
 
-Production command:
+Shared recalculation command:
 
 ```bash
 python -m app.jobs.production_recalculation
 ```
 
-Cadence: every 30 minutes UTC.
+Beta cadence: every 30 minutes UTC through GitHub Actions schedule `*/30 * * * *`.
+
+Paid production cadence: every 30 minutes UTC through Render Cron.
 
 Overlap prevention:
 
-- Render cron provides a single-run guarantee.
+- Beta GitHub Actions uses workflow-level concurrency with `cancel-in-progress: false`.
+- Paid Render cron provides a platform single-run guarantee.
 - The application also acquires a PostgreSQL advisory lock before recalculation.
 
 Idempotency:
@@ -130,9 +178,23 @@ Failure isolation:
 - One failed adapter/provider records a failure and does not create fake numeric snapshots.
 - Other strategies can still persist valid snapshots and scores.
 
+Beta limitation:
+
+- GitHub Actions schedules can be delayed by GitHub platform availability.
+- Free Render web service sleep does not affect the GitHub Actions scheduler because recalculation connects directly to Postgres and providers.
+- The workflow must use the database external URL because GitHub Actions is outside Render's private network.
+
 ## Backups And Restore
 
-Backup policy:
+Low-cost beta backup policy:
+
+- Free Render Postgres expires 30 days after creation.
+- Free Render Postgres has no Render-managed backups, no PITR, and no Render-created logical backups.
+- If beta data must be retained before expiry, run a manual `pg_dump` from a trusted local machine using the external database URL and store the dump outside Git.
+- No secret-bearing database dump may be committed.
+- G13 cannot be marked complete on the free database unless the backup/restore acceptance criterion is explicitly re-scoped by the user.
+
+Paid production backup policy:
 
 - Use paid Render Postgres so PITR and logical backups are available.
 - Keep Render-managed PITR enabled.
@@ -153,7 +215,7 @@ python -m app.web_probe
 4. Verify `/api/v1/ops/status`, `/api/v1/rankings`, and all three strategy latest endpoints.
 5. Delete the restore instance only after verification.
 
-G13 status note: no restore verification has been performed from this Codex environment because no Render workspace/database is connected.
+G13 status note: no restore verification has been performed from this Codex environment because no Render workspace/database is connected. The low-cost beta path documents Free Postgres backup limitations and therefore does not by itself satisfy the production backup/restore acceptance criterion.
 
 ## Monitoring
 
@@ -170,7 +232,7 @@ Minimum fields to monitor:
 - Last successful snapshot per strategy: `/api/v1/ops/status` `scheduler.last_successful_snapshot_per_strategy`.
 - Failed calculation count: `/api/v1/ops/status` `failed_calculation_count`.
 - Stale strategy count: `/api/v1/ops/status` `stale_strategy_count`.
-- Provider errors: `/api/v1/ops/status` `provider_errors` plus Render cron logs.
+- Provider errors: `/api/v1/ops/status` `provider_errors` plus GitHub Actions beta logs or Render cron logs after paid upgrade.
 - Application errors: Render web service logs.
 
 Recommended alert thresholds:
@@ -196,7 +258,7 @@ Production controls in code/config:
 
 Render controls:
 
-- Store secrets only in Render env/secrets.
+- Store secrets only in Render env/secrets and GitHub Actions repository secrets.
 - Use the internal Postgres URL for Render services.
 - Keep custom domain HTTPS enabled; Render terminates TLS and redirects HTTP to HTTPS.
 
@@ -252,7 +314,7 @@ Required checks:
 - Risk/confidence displays on strategy detail.
 - Stale/warning state is visible where present.
 - API values match web displayed values exactly.
-- Manual cron run creates a new snapshot.
+- Manual GitHub Actions beta scheduler run or paid Render cron run creates a new snapshot.
 - History retains older snapshots.
 - Simulated provider failure records a calculation failure and does not bring down the app.
 
@@ -261,41 +323,43 @@ Required checks:
 Provider outage:
 
 1. Confirm `/api/v1/ops/status` provider error/failure count.
-2. Check Render cron logs.
+2. Check GitHub Actions beta scheduler logs or Render cron logs after paid upgrade.
 3. Do not edit snapshots manually.
 4. Let stale state remain visible until fresh observations return.
 
 Database issue:
 
 1. Check Render Postgres metrics/logs.
-2. Run `python -m app.doctor` from a one-off shell if available.
+2. Run `python -m app.doctor` from a one-off shell if available, or from a trusted local machine using the same env values.
 3. Restore to a new database if corruption or bad migration is confirmed.
 4. Point services to the verified restore instance.
 
 Bad deploy:
 
 1. Roll back web service to prior Render deploy.
-2. If a migration caused data corruption, restore database to a new instance.
-3. Re-run G12 validation and production validation before resuming cron.
+2. If a migration caused data corruption on Free Postgres, there is no Render PITR; restore only from a separately created `pg_dump` if one exists.
+3. If a migration caused data corruption on paid Postgres, restore database to a new instance.
+4. Re-run G12 validation and production validation before resuming scheduler runs.
 
 ## Rollback
 
 Application rollback:
 
 - Use Render's service rollback to redeploy the previous working version.
-- Keep cron paused if the failure can write bad snapshots.
+- Keep the GitHub Actions beta workflow disabled, or paid cron paused, if the failure can write bad snapshots.
 
 Database rollback:
 
-- Prefer restore-to-new-instance over in-place mutation.
+- On Free Postgres, restore-to-new-instance is only possible from a manual external dump; otherwise upgrade/recreate and reseed.
+- On paid Postgres, prefer restore-to-new-instance over in-place mutation.
 - Switch `GAMEFI_DATABASE_URL` only after staging validation succeeds against the restored database.
 
 ## Secret Rotation
 
 1. Create the new provider key/URL at the provider.
-2. Update Render environment variable.
-3. Redeploy the web and cron services.
-4. Trigger a manual cron run.
+2. Update Render environment variable and GitHub Actions repository secret.
+3. Redeploy the web service.
+4. Trigger a manual GitHub Actions beta run or paid cron run.
 5. Confirm `/api/v1/ops/status` and Render logs.
 6. Revoke the old key.
 
@@ -303,4 +367,4 @@ Database rollback:
 
 Public URL: pending.
 
-This repository is prepared for Render deployment, but G13 cannot be marked complete until a Render workspace, production provider secrets, production database, actual deployed URL, scheduler run, backup/restore verification, and external production validation are completed.
+This repository is prepared for low-cost Render beta deployment, but G13 cannot be marked complete until a Render workspace, production provider secrets, production database or accepted beta database scope, actual deployed URL, scheduler run, history retention, stale/failure verification, backup/restore verification or explicit re-scope, and external production validation are completed.

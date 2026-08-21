@@ -465,7 +465,14 @@ Decision record: `docs/DECISIONS/0004-production-platform.md`.
 
 Runbook: `docs/PRODUCTION_RUNBOOK.md`.
 
-Current blocker: actual public deployment requires a Render workspace/link, production provider secrets, and a production database that are not available in this Codex environment.
+Low-cost beta deployment configuration:
+
+- default Blueprint `render.yaml` uses Free Web Service and Free Render Postgres where supported,
+- paid production upgrade Blueprint `render.production.yaml` preserves paid web + paid Postgres + Render Cron,
+- beta scheduled recalculation uses GitHub Actions workflow `.github/workflows/render-beta-recalculation.yml`,
+- Free Render Postgres expires after 30 days and has no Render-managed backups/PITR/logical backups.
+
+Current blocker: actual public deployment requires a Render workspace/link, production provider secrets, GitHub Actions beta scheduler secrets, and a Render database that are not available in this Codex environment.
 
 ## G14 objective
 

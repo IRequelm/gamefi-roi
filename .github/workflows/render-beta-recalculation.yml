@@ -1,0 +1,58 @@
+name: Render Beta Recalculation
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: gamefi-roi-beta-recalculation
+  cancel-in-progress: false
+
+jobs:
+  recalculate:
+    name: Recalculate beta snapshots
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      GAMEFI_ENVIRONMENT: production
+      GAMEFI_DATABASE_URL: ${{ secrets.GAMEFI_BETA_DATABASE_URL }}
+      GAMEFI_API_TITLE: GameFi ROI API
+      GAMEFI_LOG_LEVEL: INFO
+      GAMEFI_ALLOW_SQLITE_FOR_TESTS: "false"
+      GAMEFI_DATABASE_POOL_SIZE: "1"
+      GAMEFI_DATABASE_MAX_OVERFLOW: "0"
+      GAMEFI_DATABASE_POOL_TIMEOUT_SECONDS: "30"
+      GAMEFI_DATABASE_POOL_RECYCLE_SECONDS: "1800"
+      GAMEFI_SECURITY_HEADERS_ENABLED: "true"
+      GAMEFI_SCHEDULER_CADENCE_MINUTES: "30"
+      GAMEFI_PRODUCTION_HARD_STALE_SECONDS: "1800"
+      GAMEFI_MARKET_DATA_HTTP_TIMEOUT_SECONDS: "10"
+      GAMEFI_MARKET_DATA_HTTP_MAX_RETRIES: "2"
+      GAMEFI_MARKET_DATA_PRICE_FRESHNESS_SECONDS: "300"
+      GAMEFI_COINGECKO_BASE_URL: https://api.coingecko.com/api/v3
+      GAMEFI_COINGECKO_API_KEY: ${{ secrets.GAMEFI_COINGECKO_API_KEY }}
+      GAMEFI_ALCOR_BASE_URL: https://wax.alcor.exchange/api/v2
+      GAMEFI_ATOMICASSETS_BASE_URL: https://wax.api.atomicassets.io
+      GAMEFI_WAX_MARKET_OBSERVATION_FRESHNESS_SECONDS: "300"
+      GAMEFI_DFK_CHAIN_RPC_URL: ${{ secrets.GAMEFI_DFK_CHAIN_RPC_URL }}
+      GAMEFI_DFK_CHAIN_OBSERVATION_FRESHNESS_SECONDS: "300"
+      GAMEFI_SPLINTERLANDS_BASE_URL: https://api.splinterlands.com
+      GAMEFI_SPLINTERLANDS_OBSERVATION_FRESHNESS_SECONDS: "300"
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Run scheduled recalculation
+        run: python -m app.jobs.production_recalculation
