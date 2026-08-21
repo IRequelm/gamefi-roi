@@ -30,6 +30,40 @@ def test_api_versioned_health(monkeypatch, tmp_path) -> None:
 
     assert response.status_code == 200
     assert response.json()["api_version"] == "v1"
+    assert response.headers["x-content-type-options"] == "nosniff"
+
+
+def test_ops_status_exposes_database_scheduler_and_strategy_health(monkeypatch, tmp_path) -> None:
+    client, _engine = _seeded_client(monkeypatch, tmp_path, "ops.db")
+
+    response = client.get("/api/v1/ops/status")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "ok"
+    assert payload["database"] == {"status": "ok"}
+    assert payload["failed_calculation_count"] == 0
+    assert payload["stale_strategy_count"] == 0
+    assert payload["scheduler"]["cadence_minutes"] == 30
+    assert payload["scheduler"]["last_successful_run_at"] == NOW.isoformat().replace("+00:00", "Z")
+    assert {item["strategy_id"] for item in payload["strategies"]} == {
+        DFK_CJEWEL_MAX_LOCK_V1.strategy_id,
+        FARMERS_WORLD_AXE_WOOD_V1.strategy_id,
+        SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1.strategy_id,
+    }
+
+
+def test_production_security_headers_are_enabled(monkeypatch) -> None:
+    monkeypatch.setenv("GAMEFI_ENVIRONMENT", "production")
+    monkeypatch.setenv("GAMEFI_DATABASE_URL", "postgresql+psycopg://user:pass@host:5432/gamefi")
+    monkeypatch.setenv("GAMEFI_COINGECKO_API_KEY", "secret-test-key")
+    monkeypatch.setenv("GAMEFI_DFK_CHAIN_RPC_URL", "https://dedicated-rpc.example/dfk")
+
+    response = TestClient(create_app()).get("/api/v1/health")
+
+    assert response.status_code == 200
+    assert response.headers["strict-transport-security"] == "max-age=31536000; includeSubDomains"
+    assert response.headers["x-frame-options"] == "DENY"
 
 
 def test_openapi_documents_api_v1_routes(monkeypatch, tmp_path) -> None:

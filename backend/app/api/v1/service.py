@@ -8,6 +8,8 @@ from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import Engine
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.api.v1.schemas import (
     BreakEvenMetric,
@@ -20,6 +22,7 @@ from app.api.v1.schemas import (
     HealthPayload,
     HistoryPage,
     MoneyAmount,
+    OpsStatusPayload,
     PageMeta,
     RankingItem,
     RankingsPage,
@@ -29,14 +32,16 @@ from app.api.v1.schemas import (
     ScorePayload,
     StrategiesPage,
     StrategySnapshotPayload,
+    StrategyOpsStatusPayload,
     StrategySummary,
     UnavailableFactorPayload,
     UncertaintyRangePayload,
     VersionPayload,
     WarningPayload,
 )
+from app.config.settings import Settings
 from app.risk.results import METHODOLOGY_VERSION, SnapshotScoreResult
-from app.storage.history import HistoryRepository, StrategySnapshot
+from app.storage.history import HistoryRepository, StrategyCalculationFailure, StrategySnapshot
 from app.storage.scoring import ScoringRepository
 from app.strategies.catalog import GameCatalogEntry, StrategyCatalogEntry, get_game, get_strategy, list_games, list_strategies
 
@@ -277,6 +282,95 @@ def health_payload(*, service: str, environment: str, version: str) -> HealthPay
         version=version,
         api_version="v1",
     )
+
+
+def ops_status_payload(*, engine: Engine, settings: Settings) -> OpsStatusPayload:
+    generated_at = datetime.now(UTC)
+    database_status = _database_status(engine)
+    if database_status["status"] != "ok":
+        return OpsStatusPayload(
+            status="unhealthy",
+            generated_at=generated_at,
+            database=database_status,
+            scheduler={"cadence_minutes": settings.scheduler_cadence_minutes, "last_successful_run_at": None},
+            strategies=[],
+            failed_calculation_count=0,
+            stale_strategy_count=0,
+            provider_errors={},
+            application_errors={"available": False, "reason": "Database unavailable; application logs are on the platform."},
+        )
+
+    history = HistoryRepository(engine)
+    latest_snapshots = {snapshot.strategy_id: snapshot for snapshot in history.latest_snapshots()}
+    failures = history.list_failures()
+    strategies: list[StrategyOpsStatusPayload] = []
+    stale_count = 0
+    last_successful_run_at: datetime | None = None
+    for strategy in list_strategies():
+        snapshot = latest_snapshots.get(strategy.strategy_id)
+        freshness_status = None
+        if snapshot is not None:
+            last_successful_run_at = (
+                snapshot.calculated_at
+                if last_successful_run_at is None
+                else max(last_successful_run_at, snapshot.calculated_at)
+            )
+            freshness_status = _overall_freshness(
+                {key: int(value) for key, value in dict(snapshot.freshness_summary.get("status_counts", {})).items()}
+            )
+            if freshness_status != "fresh":
+                stale_count += 1
+        strategies.append(
+            StrategyOpsStatusPayload(
+                strategy_id=strategy.strategy_id,
+                strategy_version=strategy.strategy_version,
+                latest_snapshot_id=snapshot.snapshot_id if snapshot is not None else None,
+                latest_calculated_at=snapshot.calculated_at if snapshot is not None else None,
+                freshness_status=freshness_status,
+            )
+        )
+
+    return OpsStatusPayload(
+        status="ok",
+        generated_at=generated_at,
+        database=database_status,
+        scheduler={
+            "cadence_minutes": settings.scheduler_cadence_minutes,
+            "last_successful_run_at": last_successful_run_at,
+            "last_successful_snapshot_per_strategy": {
+                strategy.strategy_id: (
+                    latest_snapshots[strategy.strategy_id].calculated_at
+                    if strategy.strategy_id in latest_snapshots
+                    else None
+                )
+                for strategy in list_strategies()
+            },
+        },
+        strategies=strategies,
+        failed_calculation_count=len(failures),
+        stale_strategy_count=stale_count,
+        provider_errors=_failure_counts(failures),
+        application_errors={
+            "available": False,
+            "reason": "Application errors are emitted to platform logs; no separate error sink is configured in G13.",
+        },
+    )
+
+
+def _database_status(engine: Engine) -> dict[str, Any]:
+    try:
+        with engine.connect() as connection:
+            connection.execute(text("select 1"))
+    except SQLAlchemyError as exc:
+        return {"status": "error", "detail": str(exc)}
+    return {"status": "ok"}
+
+
+def _failure_counts(failures: Sequence[StrategyCalculationFailure]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for failure in failures:
+        counts[failure.error_type] = counts.get(failure.error_type, 0) + 1
+    return counts
 
 
 def _score_payloads(score: SnapshotScoreResult | None) -> tuple[ScorePayload, ScorePayload, str | None]:

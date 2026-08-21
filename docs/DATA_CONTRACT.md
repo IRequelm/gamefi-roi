@@ -483,6 +483,77 @@ Frontend rules:
 - treat Decimal-sensitive strings as display data rather than binary-float calculation inputs,
 - do not call provider URLs, blockchain RPCs, adapters, scheduler jobs, or storage internals.
 
+### G14 outbound/referral metadata contract
+
+G14 may introduce structured outbound destination metadata and a first-party redirect layer.
+
+Conceptual `OutboundDestination` fields:
+
+```text
+destination_id
+destination_slug
+game_id
+strategy_id (optional)
+destination_type
+label
+target_url
+status
+is_affiliate
+affiliate_program_id (optional)
+commercial_relationship
+disclosure_text
+source_reference
+reviewed_at
+expires_at (optional)
+allowed_surfaces
+```
+
+`destination_type` examples:
+
+- official_site,
+- play,
+- marketplace,
+- docs,
+- community,
+- referral.
+
+`commercial_relationship` examples:
+
+- none,
+- affiliate,
+- sponsor,
+- partner.
+
+The first-party redirect route should be shaped as:
+
+```text
+GET /go/{destination_slug}
+```
+
+Redirect requirements:
+
+- resolve only allowlisted active `OutboundDestination` records,
+- fail closed for missing, disabled, expired, malformed, or unreviewed destinations,
+- never accept arbitrary user-supplied target URLs,
+- preserve required disclosure metadata for API/web consumers,
+- avoid committing secrets or private partner tokens.
+
+Outbound/referral metadata is not a strategy observation, not an adapter input, not a derived ROI value, and not a score factor.
+
+### G15 monetization data boundary
+
+G15 may add affiliate attribution/reporting, sponsored placements, and commercial analytics.
+
+Commercial entities such as campaigns, sponsors, clicks, conversions, and revenue must be stored and queried separately from:
+
+- `strategy_snapshots`,
+- `strategy_snapshot_scores`,
+- adapter observations,
+- ROI engine inputs/outputs,
+- organic ranking inputs.
+
+Affiliate/sponsor relationships must never affect ROI, Risk, Confidence, historical strategy snapshots, validation results, or organic ranking order. Sponsored placements must be explicit commercial surfaces, not modified organic results.
+
 ## 9. Provenance
 
 Every snapshot must be reproducible enough to answer:

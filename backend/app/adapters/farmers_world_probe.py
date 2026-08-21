@@ -39,6 +39,33 @@ from app.strategies.farmers_world import FARMERS_WORLD_AXE_WOOD_V1
 
 
 def run_probe() -> dict[str, Any]:
+    strategy = FARMERS_WORLD_AXE_WOOD_V1
+    observations = load_live_observations()
+    adapter_result = FarmersWorldAxeAdapter(strategy).build_engine_input(observations)
+    roi = calculate_strategy_roi(adapter_result.economics_input)
+    return {
+        "status": "ok",
+        "strategy_id": strategy.strategy_id,
+        "strategy_version": strategy.strategy_version,
+        "observations": [_observation_payload(observation) for observation in observations],
+        "classifications": {key: value.value for key, value in adapter_result.classifications.items()},
+        "derived_values": {key: str(value) for key, value in adapter_result.derived_values.items()},
+        "roi": {
+            "total_capital_usd": str(roi.total_capital.amount),
+            "recoverable_capital_usd": str(roi.recoverable_capital.amount),
+            "gross_nominal_earnings_day_usd": str(roi.gross_nominal_earnings_day.amount),
+            "realizable_earnings_day_usd": str(roi.realizable_earnings_day.amount),
+            "operating_cost_day_usd": str(roi.operating_cost_day.amount),
+            "transaction_cost_day_usd": str(roi.transaction_cost_day.amount),
+            "net_earnings_day_usd": str(roi.net_earnings_day.amount),
+            "break_even_days": str(roi.break_even.days) if roi.break_even.days is not None else None,
+            "roi_total_30d": str(roi.roi_total_30d.value) if roi.roi_total_30d.value is not None else None,
+            "exit_adjusted_pnl_usd": str(roi.exit_adjusted_pnl.amount),
+        },
+    }
+
+
+def load_live_observations(active_time: datetime | None = None) -> tuple[Observation, ...]:
     settings = get_settings()
     strategy = FARMERS_WORLD_AXE_WOOD_V1
     market_freshness = timedelta(seconds=settings.wax_market_observation_freshness_seconds)
@@ -83,29 +110,9 @@ def run_probe() -> dict[str, Any]:
             fwg_ticker=fwg_ticker,
             floor=floor,
             wax_price=wax_price,
+            retrieved_at=active_time,
         )
-        adapter_result = FarmersWorldAxeAdapter(strategy).build_engine_input(observations)
-        roi = calculate_strategy_roi(adapter_result.economics_input)
-        return {
-            "status": "ok",
-            "strategy_id": strategy.strategy_id,
-            "strategy_version": strategy.strategy_version,
-            "observations": [_observation_payload(observation) for observation in observations],
-            "classifications": {key: value.value for key, value in adapter_result.classifications.items()},
-            "derived_values": {key: str(value) for key, value in adapter_result.derived_values.items()},
-            "roi": {
-                "total_capital_usd": str(roi.total_capital.amount),
-                "recoverable_capital_usd": str(roi.recoverable_capital.amount),
-                "gross_nominal_earnings_day_usd": str(roi.gross_nominal_earnings_day.amount),
-                "realizable_earnings_day_usd": str(roi.realizable_earnings_day.amount),
-                "operating_cost_day_usd": str(roi.operating_cost_day.amount),
-                "transaction_cost_day_usd": str(roi.transaction_cost_day.amount),
-                "net_earnings_day_usd": str(roi.net_earnings_day.amount),
-                "break_even_days": str(roi.break_even.days) if roi.break_even.days is not None else None,
-                "roi_total_30d": str(roi.roi_total_30d.value) if roi.roi_total_30d.value is not None else None,
-                "exit_adjusted_pnl_usd": str(roi.exit_adjusted_pnl.amount),
-            },
-        }
+        return observations
     finally:
         alcor.close()
         atomicassets.close()
@@ -120,8 +127,9 @@ def _build_probe_observations(
     fwg_ticker: tuple[Observation, ...],
     floor: tuple[Observation, ...],
     wax_price: tuple[Observation, ...],
+    retrieved_at: datetime | None = None,
 ) -> tuple[Observation, ...]:
-    retrieved_at = datetime.now(UTC)
+    retrieved_at = datetime.now(UTC) if retrieved_at is None else retrieved_at.astimezone(UTC)
     _require_fresh_values((*fww_ticker, *fwf_ticker, *fwg_ticker, *floor, *wax_price), retrieved_at)
     _require_market_open(fww_ticker, strategy.fww_wax_ticker_id)
     _require_market_open(fwf_ticker, strategy.fwf_wax_ticker_id)

@@ -65,6 +65,7 @@ REQUIRED_IMPORTS = (
     "app.strategies.catalog",
     "app.jobs.recalculation",
     "app.jobs.history_probe",
+    "app.jobs.production_recalculation",
     "app.risk.results",
     "app.risk.scoring",
     "app.risk.scoring_probe",
@@ -82,7 +83,7 @@ class CheckResult:
 
 def build_alembic_config(settings: Settings) -> Config:
     config = Config(str(ALEMBIC_INI))
-    config.set_main_option("sqlalchemy.url", settings.database_url.replace("%", "%%"))
+    config.set_main_option("sqlalchemy.url", settings.sqlalchemy_database_url.replace("%", "%%"))
     return config
 
 
@@ -177,7 +178,7 @@ def check_database(settings: Settings | None) -> tuple[CheckResult, Engine | Non
     if settings is None:
         return CheckResult(name="database", ok=False, detail="Skipped because configuration failed"), None
 
-    engine = create_engine(settings.database_url, pool_pre_ping=True)
+    engine = create_engine(settings.sqlalchemy_database_url, pool_pre_ping=True)
     try:
         check_connectivity(engine)
     except SQLAlchemyError as exc:

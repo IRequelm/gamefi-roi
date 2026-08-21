@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from typing import Any
 
@@ -37,6 +37,43 @@ from app.strategies.splinterlands import SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1
 
 
 def run_probe() -> dict[str, Any]:
+    strategy = SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1
+    observations, season_observations = load_live_observations_with_season_probe()
+    adapter_result = SplinterlandsModernRankedAdapter(strategy).build_engine_input(observations)
+    roi = calculate_strategy_roi(adapter_result.economics_input)
+    return {
+        "status": "ok",
+        "strategy_id": strategy.strategy_id,
+        "strategy_version": strategy.strategy_version,
+        "observations": [_observation_payload(observation) for observation in observations],
+        "classifications": {key: value.value for key, value in adapter_result.classifications.items()},
+        "derived_values": {key: str(value) for key, value in adapter_result.derived_values.items()},
+        "season_probe": [_observation_payload(observation) for observation in season_observations],
+        "roi": {
+            "total_capital_usd": str(roi.total_capital.amount),
+            "sunk_cost_usd": str(roi.sunk_cost.amount),
+            "recoverable_capital_usd": str(roi.recoverable_capital.amount),
+            "capital_at_risk_usd": str(roi.capital_at_risk.amount),
+            "gross_nominal_earnings_day_usd": str(roi.gross_nominal_earnings_day.amount),
+            "realizable_earnings_day_usd": str(roi.realizable_earnings_day.amount),
+            "operating_cost_day_usd": str(roi.operating_cost_day.amount),
+            "transaction_cost_day_usd": str(roi.transaction_cost_day.amount),
+            "net_earnings_day_usd": str(roi.net_earnings_day.amount),
+            "break_even_days": str(roi.break_even.days) if roi.break_even.days is not None else None,
+            "roi_total_30d": str(roi.roi_total_30d.value) if roi.roi_total_30d.value is not None else None,
+            "exit_adjusted_pnl_usd": str(roi.exit_adjusted_pnl.amount),
+        },
+    }
+
+
+def load_live_observations(active_time: datetime | None = None) -> tuple[Observation, ...]:
+    observations, _season_observations = load_live_observations_with_season_probe(active_time)
+    return observations
+
+
+def load_live_observations_with_season_probe(
+    active_time: datetime | None = None,
+) -> tuple[tuple[Observation, ...], tuple[Observation, ...]]:
     settings = get_settings()
     strategy = SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1
     game_freshness = timedelta(seconds=settings.splinterlands_observation_freshness_seconds)
@@ -67,32 +104,9 @@ def run_probe() -> dict[str, Any]:
             settings_observations=settings_observations,
             season_observations=season_observations,
             sps_price=sps_price,
+            retrieved_at=active_time,
         )
-        adapter_result = SplinterlandsModernRankedAdapter(strategy).build_engine_input(observations)
-        roi = calculate_strategy_roi(adapter_result.economics_input)
-        return {
-            "status": "ok",
-            "strategy_id": strategy.strategy_id,
-            "strategy_version": strategy.strategy_version,
-            "observations": [_observation_payload(observation) for observation in observations],
-            "classifications": {key: value.value for key, value in adapter_result.classifications.items()},
-            "derived_values": {key: str(value) for key, value in adapter_result.derived_values.items()},
-            "season_probe": [_observation_payload(observation) for observation in season_observations],
-            "roi": {
-                "total_capital_usd": str(roi.total_capital.amount),
-                "sunk_cost_usd": str(roi.sunk_cost.amount),
-                "recoverable_capital_usd": str(roi.recoverable_capital.amount),
-                "capital_at_risk_usd": str(roi.capital_at_risk.amount),
-                "gross_nominal_earnings_day_usd": str(roi.gross_nominal_earnings_day.amount),
-                "realizable_earnings_day_usd": str(roi.realizable_earnings_day.amount),
-                "operating_cost_day_usd": str(roi.operating_cost_day.amount),
-                "transaction_cost_day_usd": str(roi.transaction_cost_day.amount),
-                "net_earnings_day_usd": str(roi.net_earnings_day.amount),
-                "break_even_days": str(roi.break_even.days) if roi.break_even.days is not None else None,
-                "roi_total_30d": str(roi.roi_total_30d.value) if roi.roi_total_30d.value is not None else None,
-                "exit_adjusted_pnl_usd": str(roi.exit_adjusted_pnl.amount),
-            },
-        }
+        return observations, season_observations
     finally:
         splinterlands.close()
         coingecko.close()
@@ -104,7 +118,9 @@ def _build_probe_observations(
     settings_observations: tuple[Observation, ...],
     season_observations: tuple[Observation, ...],
     sps_price: tuple[Observation, ...],
+    retrieved_at: datetime | None = None,
 ) -> tuple[Observation, ...]:
+    retrieved_at = datetime.now(UTC) if retrieved_at is None else retrieved_at.astimezone(UTC)
     _require_fresh_values((*settings_observations, *season_observations, *sps_price))
     _require_metric(season_observations, SEASON_ID)
     price = _require_metric(sps_price, "token.price")
@@ -136,6 +152,7 @@ def _build_probe_observations(
             value=strategy.battles_per_day,
             unit="battle/day",
             source_locator=source_locator,
+            retrieved_at=retrieved_at,
         ),
         verified_config_observation(
             strategy_id=strategy.strategy_id,
@@ -143,6 +160,7 @@ def _build_probe_observations(
             value=strategy.win_probability,
             unit="probability",
             source_locator=source_locator,
+            retrieved_at=retrieved_at,
         ),
         verified_config_observation(
             strategy_id=strategy.strategy_id,
@@ -150,6 +168,7 @@ def _build_probe_observations(
             value=strategy.win_probability_low,
             unit="probability",
             source_locator=source_locator,
+            retrieved_at=retrieved_at,
         ),
         verified_config_observation(
             strategy_id=strategy.strategy_id,
@@ -157,6 +176,7 @@ def _build_probe_observations(
             value=strategy.win_probability_high,
             unit="probability",
             source_locator=source_locator,
+            retrieved_at=retrieved_at,
         ),
         verified_config_observation(
             strategy_id=strategy.strategy_id,
@@ -164,6 +184,7 @@ def _build_probe_observations(
             value=strategy.expected_sps_reward_per_win,
             unit=strategy.reward_token_symbol,
             source_locator=source_locator,
+            retrieved_at=retrieved_at,
             metadata={"basis": "representative observed ranked SPS reward per win"},
         ),
         verified_config_observation(
@@ -172,6 +193,7 @@ def _build_probe_observations(
             value=strategy.realization_haircut_bps,
             unit="basis_point",
             source_locator=source_locator,
+            retrieved_at=retrieved_at,
         ),
         verified_config_observation(
             strategy_id=strategy.strategy_id,
@@ -179,6 +201,7 @@ def _build_probe_observations(
             value=strategy.card_rental_cost_day_usd,
             unit="USD",
             source_locator=source_locator,
+            retrieved_at=retrieved_at,
             metadata={"basis": "minimum viable daily real-card rental operating assumption"},
         ),
         verified_config_observation(
@@ -187,6 +210,7 @@ def _build_probe_observations(
             value=strategy.transaction_cost_day_usd,
             unit="USD",
             source_locator=source_locator,
+            retrieved_at=retrieved_at,
             metadata={"basis": "SPS reward realization modeled off-platform; no claim gas in baseline"},
         ),
     )

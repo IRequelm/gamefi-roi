@@ -1,6 +1,6 @@
 # GameFi ROI — Project Status
 
-Updated: 2026-08-16
+Updated: 2026-08-22
 Project version: 0.1
 
 ## Current state
@@ -9,7 +9,7 @@ Project version: 0.1
 
 G12 is complete and frozen in the G12 baseline Git commit.
 
-Do not implement G13 until the user explicitly asks to proceed.
+G13 implementation is in progress after the user explicitly asked to proceed. G13 must remain ACTIVE until an actual public deployment is reachable and externally verified.
 
 ## Gate board
 
@@ -29,7 +29,8 @@ Do not implement G13 until the user explicitly asks to proceed.
 | G11 | Web MVP | COMPLETE |
 | G12 | Validation | COMPLETE |
 | G13 | Production | ACTIVE |
-| G14 | Scale | NOT STARTED |
+| G14 | Scale / Referral Foundation | NOT STARTED |
+| G15 | Monetization | NOT STARTED |
 
 ## G0 objective
 
@@ -426,6 +427,102 @@ Per-strategy validation status:
 
 Conditional status means the calculations are reproducible and product surfaces are consistent, while public beta must continue to show assumptions, warnings, freshness, confidence/risk explanations, and LIVE / CONFIG / DERIVED classifications.
 
+## G13 objective
+
+Deploy the validated MVP as a reliable public beta with production PostgreSQL, scheduled recalculation, monitoring, backups, HTTPS, and production-safe external provider configuration.
+
+## G13 acceptance criteria
+
+- [x] short production-platform decision review compares Render and Railway using current official documentation,
+- [x] simplest managed production architecture is selected and documented,
+- [x] repository contains reproducible deployment configuration without committed secrets,
+- [x] production settings reject SQLite and unsafe provider defaults,
+- [x] production database connection uses PostgreSQL with conservative SQLAlchemy pooling,
+- [x] Alembic migration command is configured for production deploys,
+- [x] scheduled recalculation command exists for live adapter snapshots and persisted risk/confidence scoring,
+- [x] scheduler preserves G8 idempotency and failure isolation,
+- [x] provider source calls retain bounded retries and provider-failure logging,
+- [x] production freshness thresholds and hard-stale policy are documented,
+- [x] HTTP security headers and safe CORS policy are configured,
+- [x] operations status endpoint exposes database, scheduler, stale-strategy, provider-failure, and calculation-failure status without live provider calls,
+- [x] production runbook documents architecture, provider configuration, environment variables, deploy, migrations, scheduler, backups/restore, monitoring, incident recovery, rollback, and secret rotation,
+- [ ] production PostgreSQL database exists on the selected platform,
+- [ ] all Alembic migrations have run against production/staging PostgreSQL,
+- [ ] production provider secrets are configured through platform secret management,
+- [ ] HTTPS public web/API URL is reachable outside the local machine,
+- [ ] scheduled recalculation has run in production and created a new valid snapshot,
+- [ ] history retains an older production snapshot after the scheduler run,
+- [ ] backup/restore verification has been performed or reproduced where the platform allows it,
+- [ ] production validation verifies `/api/v1/health`, rankings, all five web pages, all three strategies, risk/confidence display, stale/warning behavior, API/web exact-value consistency, scheduler behavior, history retention, and provider-failure isolation,
+- [x] local pre-deploy verification passes after final production changes: pytest, frontend tests, G12 validation, doctor, compileall, pip check, API probe, web probe, and `git diff --check`,
+- [ ] baseline Git commit for G13.
+
+## G13 production decision
+
+Selected platform: Render.
+
+Decision record: `docs/DECISIONS/0004-production-platform.md`.
+
+Runbook: `docs/PRODUCTION_RUNBOOK.md`.
+
+Current blocker: actual public deployment requires a Render workspace/link, production provider secrets, and a production database that are not available in this Codex environment.
+
+## G14 objective
+
+Scale the public beta foundation after G13 production is complete, including the first referral/outbound foundation without implementing affiliate attribution/reporting or sponsored placements.
+
+G14 must include:
+
+- structured game/strategy outbound destination metadata,
+- structured referral/affiliate metadata where a destination has a commercial relationship,
+- a first-party `/go/...` redirect layer for outbound game links,
+- explicit user-facing disclosure metadata for affiliate/referral links,
+- redirect safety controls that prevent open redirects and unreviewed destinations,
+- tests proving outbound/referral metadata never affects ROI, Risk, Confidence, or organic rankings.
+
+G14 must not implement G15 monetization analytics, sponsored placement inventory, paid ranking, portfolio features, auth, alerts, optimization, or new game adapters unless separately scoped.
+
+## G14 planned acceptance criteria
+
+- [ ] outbound destination metadata exists for modeled games/strategies with stable ids/slugs, destination type, target URL, status, ownership/commercial relationship, disclosure text, source/provenance, review timestamp, and allowed use,
+- [ ] referral/affiliate metadata is structured separately from ROI/risk/confidence model inputs,
+- [ ] first-party `/go/{destination_slug}` redirect route resolves only allowlisted active destinations,
+- [ ] redirect route fails closed for missing, disabled, malformed, or unreviewed destinations,
+- [ ] web/API can expose outbound destination metadata needed for links and disclosure without exposing secrets,
+- [ ] affiliate/referral status is clearly disclosed where links are shown,
+- [ ] tests prove affiliate/sponsor/referral metadata cannot change ROI, Risk, Confidence, history snapshots, or organic ranking order,
+- [ ] no affiliate attribution/reporting, sponsored placement ranking, commercial analytics, or paid promotion surfaces are implemented,
+- [ ] documentation explains how future commercial relationships are represented without contaminating economic calculations,
+- [ ] all required tests, doctor checks, probes, and whitespace checks pass,
+- [ ] baseline Git commit for G14.
+
+## G15 objective
+
+Implement monetization features on top of the G14 referral foundation while preserving product integrity.
+
+G15 may include:
+
+- affiliate attribution and reporting,
+- outbound/referral click and conversion reporting where lawfully sourceable,
+- sponsored placement inventory and rendering,
+- commercial analytics for partner performance,
+- disclosure and audit tooling for monetized surfaces.
+
+Affiliate/sponsor relationships must never affect ROI, Risk, Confidence, strategy snapshots, validation results, or organic rankings. Sponsored placements must be separate, explicitly labeled surfaces with deterministic separation from organic results.
+
+## G15 planned acceptance criteria
+
+- [ ] affiliate attribution/reporting is implemented only from `/go/...` outbound events and approved partner data,
+- [ ] commercial analytics are stored separately from strategy snapshots, ROI outputs, risk/confidence scores, and organic ranking inputs,
+- [ ] sponsored placement data model exists with explicit labeling, campaign status, placement surface, disclosure text, and audit trail,
+- [ ] sponsored placements cannot alter organic ranking order or analytical metrics,
+- [ ] API/web responses distinguish organic ranking results from sponsored placements,
+- [ ] tests prove changing affiliate/sponsor/commercial metadata does not change ROI, Risk, Confidence, or organic rankings,
+- [ ] legal/compliance review requirements for disclosures, tracking, and partner data usage are documented before public monetized launch,
+- [ ] reporting clearly separates clicks, conversions, revenue, and partner campaign metrics from user-facing economic strategy metrics,
+- [ ] all required tests, doctor checks, probes, and whitespace checks pass,
+- [ ] baseline Git commit for G15.
+
 ## Current instruction to Codex
 
-G13 is active. Do not implement G13 until the user explicitly asks to proceed.
+G13 is active. Continue only production-scope work. Do not implement G14 or G15.

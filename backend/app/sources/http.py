@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import time
 from collections.abc import Mapping
 from decimal import Decimal
@@ -12,6 +13,8 @@ from urllib.parse import urlencode, urljoin
 import httpx
 
 from app.sources.errors import SourceErrorDetail, SourceParseError, SourceRequestError
+
+logger = logging.getLogger(__name__)
 
 
 class SourceHttpClient:
@@ -78,12 +81,15 @@ class SourceHttpClient:
                     )
                 )
                 if response.status_code < 500:
+                    _log_failure(last_error)
                     raise last_error
 
             if attempt < attempts - 1:
-                time.sleep(min(0.25 * (attempt + 1), 1.0))
+                _log_retry(last_error, attempt=attempt, attempts=attempts)
+                time.sleep(_retry_sleep_seconds(attempt))
 
         if last_error is not None:
+            _log_failure(last_error)
             raise last_error
 
         raise SourceRequestError(
@@ -164,12 +170,15 @@ class SourceHttpClient:
                     )
                 )
                 if response.status_code < 500:
+                    _log_failure(last_error)
                     raise last_error
 
             if attempt < attempts - 1:
-                time.sleep(min(0.25 * (attempt + 1), 1.0))
+                _log_retry(last_error, attempt=attempt, attempts=attempts)
+                time.sleep(_retry_sleep_seconds(attempt))
 
         if last_error is not None:
+            _log_failure(last_error)
             raise last_error
 
         raise SourceRequestError(
@@ -180,3 +189,35 @@ class SourceHttpClient:
                 retryable=False,
             )
         )
+
+
+def _retry_sleep_seconds(attempt: int) -> float:
+    return min(0.25 * (2**attempt), 2.0)
+
+
+def _log_retry(error: SourceRequestError | None, *, attempt: int, attempts: int) -> None:
+    if error is None:
+        return
+    detail = error.detail
+    logger.warning(
+        "provider_retry provider=%s operation=%s attempt=%s/%s status_code=%s retryable=%s message=%s",
+        detail.provider,
+        detail.operation,
+        attempt + 1,
+        attempts,
+        detail.status_code,
+        detail.retryable,
+        detail.message,
+    )
+
+
+def _log_failure(error: SourceRequestError) -> None:
+    detail = error.detail
+    logger.error(
+        "provider_failure provider=%s operation=%s status_code=%s retryable=%s message=%s",
+        detail.provider,
+        detail.operation,
+        detail.status_code,
+        detail.retryable,
+        detail.message,
+    )

@@ -41,6 +41,32 @@ WEI_PER_TOKEN = Decimal("1000000000000000000")
 
 
 def run_probe() -> dict[str, Any]:
+    strategy = DFK_CJEWEL_MAX_LOCK_V1
+    observations = load_live_observations()
+    adapter_result = DfkJewelerAdapter(strategy).build_engine_input(observations)
+    roi = calculate_strategy_roi(adapter_result.economics_input)
+    return {
+        "status": "ok",
+        "strategy_id": strategy.strategy_id,
+        "strategy_version": strategy.strategy_version,
+        "observations": [_observation_payload(observation) for observation in observations],
+        "classifications": {key: value.value for key, value in adapter_result.classifications.items()},
+        "derived_values": {key: str(value) for key, value in adapter_result.derived_values.items()},
+        "roi": {
+            "total_capital_usd": str(roi.total_capital.amount),
+            "recoverable_capital_usd": str(roi.recoverable_capital.amount),
+            "gross_nominal_earnings_day_usd": str(roi.gross_nominal_earnings_day.amount),
+            "realizable_earnings_day_usd": str(roi.realizable_earnings_day.amount),
+            "transaction_cost_day_usd": str(roi.transaction_cost_day.amount),
+            "net_earnings_day_usd": str(roi.net_earnings_day.amount),
+            "break_even_days": str(roi.break_even.days) if roi.break_even.days is not None else None,
+            "roi_total_30d": str(roi.roi_total_30d.value) if roi.roi_total_30d.value is not None else None,
+            "exit_adjusted_pnl_usd": str(roi.exit_adjusted_pnl.amount),
+        },
+    }
+
+
+def load_live_observations(active_time: datetime | None = None) -> tuple[Observation, ...]:
     settings = get_settings()
     strategy = DFK_CJEWEL_MAX_LOCK_V1
     freshness_window = timedelta(seconds=settings.dfk_chain_observation_freshness_seconds)
@@ -135,28 +161,9 @@ def run_probe() -> dict[str, Any]:
             gas_price=gas_price,
             raw_apr=raw_apr,
             pair_state=pair_state,
+            retrieved_at=active_time,
         )
-        adapter_result = DfkJewelerAdapter(strategy).build_engine_input(observations)
-        roi = calculate_strategy_roi(adapter_result.economics_input)
-        return {
-            "status": "ok",
-            "strategy_id": strategy.strategy_id,
-            "strategy_version": strategy.strategy_version,
-            "observations": [_observation_payload(observation) for observation in observations],
-            "classifications": {key: value.value for key, value in adapter_result.classifications.items()},
-            "derived_values": {key: str(value) for key, value in adapter_result.derived_values.items()},
-            "roi": {
-                "total_capital_usd": str(roi.total_capital.amount),
-                "recoverable_capital_usd": str(roi.recoverable_capital.amount),
-                "gross_nominal_earnings_day_usd": str(roi.gross_nominal_earnings_day.amount),
-                "realizable_earnings_day_usd": str(roi.realizable_earnings_day.amount),
-                "transaction_cost_day_usd": str(roi.transaction_cost_day.amount),
-                "net_earnings_day_usd": str(roi.net_earnings_day.amount),
-                "break_even_days": str(roi.break_even.days) if roi.break_even.days is not None else None,
-                "roi_total_30d": str(roi.roi_total_30d.value) if roi.roi_total_30d.value is not None else None,
-                "exit_adjusted_pnl_usd": str(roi.exit_adjusted_pnl.amount),
-            },
-        }
+        return observations
     finally:
         source.close()
 
@@ -168,8 +175,9 @@ def _build_probe_observations(
     gas_price: Observation,
     raw_apr: tuple[Observation, ...],
     pair_state: tuple[Observation, ...],
+    retrieved_at: datetime | None = None,
 ) -> tuple[Observation, ...]:
-    retrieved_at = datetime.now(UTC)
+    retrieved_at = datetime.now(UTC) if retrieved_at is None else retrieved_at.astimezone(UTC)
     locked_jewel = decimal_from_text(strategy.locked_jewel_amount)
     lock_days = Decimal(strategy.lock_days)
     max_lock_days = Decimal(strategy.max_lock_days)
@@ -212,7 +220,7 @@ def _build_probe_observations(
         input_amount=reward_projection.reward_jewel_day,
     )
     claim_cost_jewel = FINANCIAL_DECIMAL_CONTEXT.divide(
-        FINANCIAL_DECIMAL_CONTEXT.multiply(gas_price.value or Decimal("0"), Decimal(strategy.claim_reward_gas_units)),
+        FINANCIAL_DECIMAL_CONTEXT.multiply(_require_decimal_value(gas_price), Decimal(strategy.claim_reward_gas_units)),
         WEI_PER_TOKEN,
     )
     claim_cost_usd = FINANCIAL_DECIMAL_CONTEXT.multiply(claim_cost_jewel, price)
@@ -369,6 +377,12 @@ def _wei_to_token(value: Decimal | None) -> Decimal:
     if value is None:
         raise RuntimeError("Expected on-chain wei observation value")
     return FINANCIAL_DECIMAL_CONTEXT.divide(value, WEI_PER_TOKEN)
+
+
+def _require_decimal_value(observation: Observation) -> Decimal:
+    if observation.value is None:
+        raise RuntimeError(f"Expected observation value for {observation.metric}")
+    return observation.value
 
 
 def _observation_id(provider: str, entity_id: str, metric: str, observed_at: datetime) -> str:

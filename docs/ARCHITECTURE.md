@@ -210,6 +210,23 @@ The G11 web MVP is a static browser client served by the FastAPI modular monolit
 
 The web routes are public read-only pages for ROI Finder, Rankings, Game Detail, Strategy Detail, and Methodology. Authentication, portfolio tracking, alerts, production deployment, monetization, AI chat, and native mobile surfaces remain out of scope.
 
+### G14/G15 outbound and monetization boundary
+
+Outbound/referral metadata is product metadata, not ROI model input.
+
+G14 may add structured game/strategy outbound destination metadata and a first-party `/go/...` redirect layer. The redirect layer must resolve only allowlisted reviewed destinations and fail closed for unknown or disabled destinations.
+
+G15 may add affiliate attribution/reporting, sponsored placements, and commercial analytics on top of the G14 foundation.
+
+Commercial data must remain separated from:
+- adapter observations,
+- ROI engine inputs/outputs,
+- risk/confidence scoring inputs/outputs,
+- historical strategy snapshots,
+- organic ranking inputs and ordering.
+
+Affiliate/sponsor relationships must never affect ROI, Risk, Confidence, or organic rankings. Sponsored placements must be separately modeled, explicitly labeled, and served outside organic ranking order.
+
 ## 5. Provider abstraction
 
 No provider-specific URL should be embedded inside an adapter.

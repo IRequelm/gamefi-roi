@@ -101,7 +101,8 @@ Derived metrics must preserve references to the input observation set/model vers
 - `confidence` means confidence in the model/data.
 - `risk` means economic/market/game risk.
 - Confidence and risk are independent.
-- Sponsor/affiliate status must never affect ROI, risk, confidence, or rankings unless the user explicitly selects a sponsored view.
+- Affiliate/sponsor relationships must never affect ROI, Risk, Confidence, or organic rankings.
+- Sponsored placements, if implemented, must be explicitly labeled and separated from organic ranking order and analytical metrics.
 - Do not imply guaranteed returns or investment advice.
 
 ## 8. Security rules

@@ -16,12 +16,13 @@ from app.api.v1.schemas import (
     GamesPage,
     HealthPayload,
     HistoryPage,
+    OpsStatusPayload,
     RankingsPage,
     StrategiesPage,
     StrategySnapshotPayload,
     StrategySummary,
 )
-from app.api.v1.service import ApiDataService, health_payload
+from app.api.v1.service import ApiDataService, health_payload, ops_status_payload
 from app.config.settings import Settings, get_settings
 
 router = APIRouter(prefix="/api/v1", tags=["api-v1"])
@@ -40,6 +41,19 @@ ScoreFilter = Annotated[int | None, Query(ge=0, le=100)]
 )
 def health_v1(settings: Settings = Depends(get_settings)) -> HealthPayload:
     return health_payload(service=settings.api_title, environment=settings.environment, version=__version__)
+
+
+@router.get(
+    "/ops/status",
+    response_model=OpsStatusPayload,
+    summary="Production operations status",
+    description="Returns database-backed operational status without touching live providers.",
+)
+def ops_status(
+    settings: Settings = Depends(get_settings),
+    engine: Engine = Depends(get_database_engine),
+) -> OpsStatusPayload:
+    return ops_status_payload(engine=engine, settings=settings)
 
 
 @router.get(

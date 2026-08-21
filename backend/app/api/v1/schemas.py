@@ -199,6 +199,26 @@ class HealthPayload(BaseModel):
     api_version: str
 
 
+class StrategyOpsStatusPayload(BaseModel):
+    strategy_id: str
+    strategy_version: str
+    latest_snapshot_id: str | None = None
+    latest_calculated_at: datetime | None = None
+    freshness_status: str | None = None
+
+
+class OpsStatusPayload(BaseModel):
+    status: str
+    generated_at: datetime
+    database: dict[str, Any]
+    scheduler: dict[str, Any]
+    strategies: list[StrategyOpsStatusPayload]
+    failed_calculation_count: int
+    stale_strategy_count: int
+    provider_errors: dict[str, int]
+    application_errors: dict[str, Any]
+
+
 class ErrorPayload(BaseModel):
     model_config = ConfigDict(extra="allow")
 

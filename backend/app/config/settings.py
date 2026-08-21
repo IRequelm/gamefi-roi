@@ -9,6 +9,7 @@ from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 EnvironmentName = Literal["local", "test", "production"]
+DEFAULT_PUBLIC_DFK_CHAIN_RPC_URL = "https://subnets.avax.network/defi-kingdoms/dfk-chain/rpc"
 
 
 class Settings(BaseSettings):
@@ -23,6 +24,14 @@ class Settings(BaseSettings):
     api_title: str = "GameFi ROI API"
     log_level: str = "INFO"
     allow_sqlite_for_tests: bool = False
+    database_pool_size: int = Field(default=5, ge=1, le=20)
+    database_max_overflow: int = Field(default=2, ge=0, le=20)
+    database_pool_timeout_seconds: int = Field(default=30, gt=0, le=120)
+    database_pool_recycle_seconds: int = Field(default=1800, ge=300, le=86_400)
+    allowed_cors_origins: str = ""
+    security_headers_enabled: bool = True
+    scheduler_cadence_minutes: int = Field(default=30, ge=5, le=1_440)
+    production_hard_stale_seconds: int = Field(default=1800, ge=300, le=86_400)
     market_data_http_timeout_seconds: float = Field(default=10.0, gt=0, le=60)
     market_data_http_max_retries: int = Field(default=2, ge=0, le=5)
     market_data_price_freshness_seconds: int = Field(default=300, gt=0, le=86_400)
@@ -40,10 +49,7 @@ class Settings(BaseSettings):
         min_length=1,
     )
     wax_market_observation_freshness_seconds: int = Field(default=300, gt=0, le=86_400)
-    dfk_chain_rpc_url: str = Field(
-        default="https://subnets.avax.network/defi-kingdoms/dfk-chain/rpc",
-        min_length=1,
-    )
+    dfk_chain_rpc_url: str = Field(default=DEFAULT_PUBLIC_DFK_CHAIN_RPC_URL, min_length=1)
     dfk_chain_observation_freshness_seconds: int = Field(default=300, gt=0, le=86_400)
     splinterlands_base_url: str = Field(
         default="https://api.splinterlands.com",
@@ -59,15 +65,17 @@ class Settings(BaseSettings):
         return value
 
     @model_validator(mode="after")
-    def validate_database_url(self) -> "Settings":
+    def validate_runtime_configuration(self) -> "Settings":
         normalized = self.database_url.lower()
         is_postgresql = normalized.startswith(("postgresql://", "postgresql+psycopg://"))
         is_sqlite = normalized.startswith("sqlite")
 
         if is_postgresql:
+            self._validate_production_settings()
             return self
 
         if is_sqlite and self.environment == "test" and self.allow_sqlite_for_tests:
+            self._validate_production_settings()
             return self
 
         raise ValueError(
@@ -75,11 +83,39 @@ class Settings(BaseSettings):
             "SQLite is allowed only for deterministic tests."
         )
 
+    def _validate_production_settings(self) -> None:
+        if self.environment != "production":
+            return
+
+        if not self.coingecko_api_key:
+            raise ValueError("GAMEFI_COINGECKO_API_KEY is required in production")
+
+        if self.dfk_chain_rpc_url.rstrip("/") == DEFAULT_PUBLIC_DFK_CHAIN_RPC_URL.rstrip("/"):
+            raise ValueError("GAMEFI_DFK_CHAIN_RPC_URL must use a production RPC provider, not the public default")
+
+        if "*" in self.allowed_cors_origin_values:
+            raise ValueError("GAMEFI_ALLOWED_CORS_ORIGINS cannot contain '*' in production")
+
+        if not self.security_headers_enabled:
+            raise ValueError("GAMEFI_SECURITY_HEADERS_ENABLED must remain true in production")
+
     @property
     def database_backend(self) -> str:
         if self.database_url.lower().startswith("sqlite"):
             return "sqlite"
         return "postgresql"
+
+    @property
+    def sqlalchemy_database_url(self) -> str:
+        if self.database_url.startswith("postgresql://"):
+            return self.database_url.replace("postgresql://", "postgresql+psycopg://", 1)
+        return self.database_url
+
+    @property
+    def allowed_cors_origin_values(self) -> tuple[str, ...]:
+        if self.allowed_cors_origins.strip() == "":
+            return ()
+        return tuple(origin.strip() for origin in self.allowed_cors_origins.split(",") if origin.strip())
 
 
 @lru_cache

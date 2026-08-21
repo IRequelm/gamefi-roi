@@ -21,7 +21,7 @@ target_metadata = Base.metadata
 
 
 def _database_url() -> str:
-    return get_settings().database_url.replace("%", "%%")
+    return get_settings().sqlalchemy_database_url.replace("%", "%%")
 
 
 def run_migrations_offline() -> None:

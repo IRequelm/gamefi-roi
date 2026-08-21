@@ -56,6 +56,56 @@ def test_blank_coingecko_api_key_is_not_treated_as_secret(monkeypatch) -> None:
     assert settings.coingecko_api_key is None
 
 
+def test_render_postgresql_url_is_normalized_to_psycopg_driver(monkeypatch) -> None:
+    monkeypatch.setenv("GAMEFI_ENVIRONMENT", "local")
+    monkeypatch.setenv("GAMEFI_DATABASE_URL", "postgresql://user:pass@host:5432/gamefi")
+
+    settings = get_settings()
+
+    assert settings.database_backend == "postgresql"
+    assert settings.sqlalchemy_database_url == "postgresql+psycopg://user:pass@host:5432/gamefi"
+
+
+def test_production_requires_market_key_and_dedicated_dfk_rpc(monkeypatch) -> None:
+    monkeypatch.setenv("GAMEFI_ENVIRONMENT", "production")
+    monkeypatch.setenv("GAMEFI_DATABASE_URL", "postgresql+psycopg://user:pass@host:5432/gamefi")
+    monkeypatch.setenv("GAMEFI_DFK_CHAIN_RPC_URL", "https://dedicated-rpc.example/dfk")
+    monkeypatch.setenv("GAMEFI_COINGECKO_API_KEY", "")
+
+    with pytest.raises(ValidationError):
+        get_settings()
+
+
+def test_production_rejects_public_dfk_rpc_default(monkeypatch) -> None:
+    monkeypatch.setenv("GAMEFI_ENVIRONMENT", "production")
+    monkeypatch.setenv("GAMEFI_DATABASE_URL", "postgresql+psycopg://user:pass@host:5432/gamefi")
+    monkeypatch.setenv("GAMEFI_COINGECKO_API_KEY", "secret-test-key")
+
+    with pytest.raises(ValidationError):
+        get_settings()
+
+
+def test_cors_origins_parse_and_wildcard_is_not_allowed_in_production(monkeypatch) -> None:
+    monkeypatch.setenv("GAMEFI_ENVIRONMENT", "local")
+    monkeypatch.setenv("GAMEFI_DATABASE_URL", "postgresql+psycopg://user:pass@host:5432/gamefi")
+    monkeypatch.setenv("GAMEFI_ALLOWED_CORS_ORIGINS", "https://app.example, https://beta.example")
+
+    settings = get_settings()
+
+    assert settings.allowed_cors_origin_values == ("https://app.example", "https://beta.example")
+
+    from app.config.settings import clear_settings_cache
+
+    clear_settings_cache()
+    monkeypatch.setenv("GAMEFI_ENVIRONMENT", "production")
+    monkeypatch.setenv("GAMEFI_COINGECKO_API_KEY", "secret-test-key")
+    monkeypatch.setenv("GAMEFI_DFK_CHAIN_RPC_URL", "https://dedicated-rpc.example/dfk")
+    monkeypatch.setenv("GAMEFI_ALLOWED_CORS_ORIGINS", "*")
+
+    with pytest.raises(ValidationError):
+        get_settings()
+
+
 def test_market_source_retry_config_is_bounded(monkeypatch) -> None:
     monkeypatch.setenv("GAMEFI_ENVIRONMENT", "test")
     monkeypatch.setenv("GAMEFI_DATABASE_URL", "sqlite+pysqlite:///:memory:")

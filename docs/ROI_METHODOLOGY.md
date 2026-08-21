@@ -272,6 +272,9 @@ The system does not:
 - guarantee future token prices,
 - assume historical yield persists,
 - treat referral/promotional bonuses as normal baseline yield unless explicitly modeled.
+- allow affiliate/sponsor relationships to affect ROI, Risk, Confidence, or organic rankings.
+
+Commercial monetization metadata, affiliate attribution, sponsored placement data, and referral destination metadata are not ROI inputs. If a game-native referral reward is ever modeled as an economic strategy, it must be explicit strategy/config evidence and must not be introduced because of a commercial relationship with GameFi ROI.
 
 ## 18. G3 acceptance principle
 

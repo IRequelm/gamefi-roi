@@ -153,6 +153,8 @@ Initial intended classes:
 Do not implement in early gates:
 - user portfolio tracking,
 - paid subscriptions,
+- affiliate attribution/reporting before G15,
+- sponsored placements before G15,
 - Telegram/Discord bots,
 - developer self-service onboarding,
 - mobile native apps,
@@ -185,13 +187,18 @@ No hidden assumptions.
 ## 10. Monetization hypothesis (post-validation)
 
 Potential monetization:
-1. affiliate/referral links,
-2. clearly marked sponsored placement,
-3. premium alerts/history/portfolio/tools,
-4. B2B/API access,
-5. developer integrations.
+1. first-party outbound/referral links,
+2. affiliate attribution/reporting,
+3. clearly marked sponsored placement,
+4. premium alerts/history/portfolio/tools,
+5. B2B/API access,
+6. developer integrations.
 
-Advertising/sponsorship must never alter analytical scores.
+Roadmap:
+- G14 introduces the referral foundation only: structured outbound/referral metadata and a first-party `/go/...` redirect layer.
+- G15 introduces monetization: affiliate attribution/reporting, sponsored placements, and commercial analytics.
+
+Affiliate/sponsor relationships must never affect ROI, Risk, Confidence, strategy snapshots, validation results, or organic rankings. Sponsored placements must be clearly labeled and separated from organic ranking order and analytical metrics.
 
 ## 11. Validation philosophy
 
