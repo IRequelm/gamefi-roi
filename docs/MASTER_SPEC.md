@@ -5,13 +5,13 @@ Date: 2026-08-15
 
 ## 1. Product thesis
 
-GameFi ROI is a data and analytics product that estimates the real, strategy-specific economic return of blockchain games using live market/on-chain/game data where available.
+GameFi ROI is a data and analytics product that estimates the real, strategy-specific economic return of blockchain games and adjacent on-chain/off-chain reward opportunities using live market/on-chain/official data where available.
 
 The product is **not primarily a game directory**.
 
 Its core question is:
 
-> Given my capital, available playtime, device/platform constraints, and risk tolerance, which GameFi strategy is economically most attractive right now, under transparent assumptions?
+> Given my capital, available playtime, device/platform constraints, and risk tolerance, which modeled strategy is economically most attractive right now, under transparent assumptions?
 
 The website is one client of the underlying data/ROI platform.
 
@@ -41,8 +41,18 @@ A game does not have one universal ROI.
 
 ROI depends on configuration and behavior.
 
+G14 expands the catalog model from `Game` to a backward-compatible `Opportunity` supertype.
+
+An `Opportunity` is a modeled economic context that can contain one or more strategies. Initial opportunity types:
+
+- `GAME`: blockchain game, GameFi, or play-to-earn economy.
+- `DEPIN_NODE`: node/bandwidth/compute/storage/resource-contribution network.
+- `POINTS`: points or pre-token reward program where financial value may be unavailable until a lawful realizable claim or market route exists.
+
+Existing GameFi entries remain `GAME` opportunities. Existing `game_id` fields and `/api/v1/games` behavior must remain backward compatible while new code may introduce canonical `opportunity_id` and `opportunity_type` fields.
+
 A `Strategy` may include:
-- game,
+- opportunity/game,
 - entry asset/NFT/token configuration,
 - required account/subscription state,
 - capital required,
@@ -58,6 +68,9 @@ Examples:
 - “mRON: 2 Yellow miners, 12h claim interval”
 - “Craft World: $25 capital, production path X, Pro account assumption”
 - “Game X: free-to-play seasonal reward strategy”
+- “Grass: desktop node, 24h uptime, points-only no-financial-ROI strategy”
+- “Teneo: Community Node heartbeat/data-signal points strategy”
+- “ARO: Testnet S2 node Jade points strategy”
 
 ## 4. Product outputs
 
@@ -115,6 +128,7 @@ Primary:
 - low-to-medium capital GameFi users,
 - idle/resource/P2E users,
 - users comparing opportunities across chains/games.
+- users comparing DePIN/node/points opportunities where rewards and costs can be modeled transparently.
 
 Secondary:
 - content creators,
@@ -147,6 +161,8 @@ Initial intended classes:
 1. deterministic miner/production economy,
 2. resource/crafting/market economy,
 3. a materially different reward economy (seasonal/staking/combat/etc.).
+
+Post-MVP scaling may include non-game opportunities only when the model distinguishes financial ROI from non-financial points production. Grass, Teneo, and ARO are the first non-game feasibility candidates for G14 planning, not approved ROI adapters.
 
 ## 8. Out of scope for initial MVP
 
@@ -195,7 +211,7 @@ Potential monetization:
 6. developer integrations.
 
 Roadmap:
-- G14 introduces the referral foundation only: structured outbound/referral metadata and a first-party `/go/...` redirect layer.
+- G14 introduces the Opportunity catalog foundation and referral foundation: backward-compatible `Game` to `Opportunity` model expansion, structured outbound/referral metadata, and a first-party `/go/...` redirect layer.
 - G15 introduces monetization: affiliate attribution/reporting, sponsored placements, and commercial analytics.
 
 Affiliate/sponsor relationships must never affect ROI, Risk, Confidence, strategy snapshots, validation results, or organic rankings. Sponsored placements must be clearly labeled and separated from organic ranking order and analytical metrics.
@@ -206,7 +222,7 @@ Game play is for model validation, not primary data acquisition.
 
 The project should scale through:
 - reusable source connectors,
-- game adapters,
+- opportunity adapters,
 - standardized strategy contracts,
 - economic-model templates where evidence supports them.
 
@@ -214,7 +230,7 @@ The project should scale through:
 
 ### Technical proof
 - three different economy types work through the same core system,
-- new games can be added through adapters without modifying core ROI math for game-specific quirks,
+- new games or adjacent opportunities can be added through adapters without modifying core ROI math for opportunity-specific quirks,
 - deterministic test fixtures match manual calculations,
 - stale/missing data is safely surfaced,
 - historical snapshots are retained.

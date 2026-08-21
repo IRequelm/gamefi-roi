@@ -29,7 +29,7 @@ G13 implementation is in progress after the user explicitly asked to proceed. G1
 | G11 | Web MVP | COMPLETE |
 | G12 | Validation | COMPLETE |
 | G13 | Production | ACTIVE |
-| G14 | Scale / Referral Foundation | NOT STARTED |
+| G14 | Scale / Opportunity + Referral Foundation | NOT STARTED |
 | G15 | Monetization | NOT STARTED |
 
 ## G0 objective
@@ -469,22 +469,43 @@ Current blocker: actual public deployment requires a Render workspace/link, prod
 
 ## G14 objective
 
-Scale the public beta foundation after G13 production is complete, including the first referral/outbound foundation without implementing affiliate attribution/reporting or sponsored placements.
+Scale the public beta foundation after G13 production is complete by expanding the current Game catalog into a backward-compatible Opportunity model and adding the first referral/outbound foundation without implementing affiliate attribution/reporting or sponsored placements.
+
+G14 is not merely "add more games." It must make the model capable of representing:
+
+- `GAME` opportunities,
+- `DEPIN_NODE` opportunities,
+- `POINTS` opportunities.
+
+Existing GameFi adapters, strategy ids, strategy versions, historical snapshots, API behavior, and web routes must remain backward compatible.
+
+The first non-game feasibility candidates are Grass, Teneo, and ARO. These candidates are not approved ROI adapters by default; they must pass the expanded Data Feasibility Check before any financial ROI is published.
 
 G14 must include:
 
-- structured game/strategy outbound destination metadata,
+- a documented backward-compatible feasibility plan for expanding `Game` to canonical `Opportunity`,
+- canonical opportunity identity fields and opportunity type rules,
+- compatibility behavior for existing `game_id` fields and `/api/v1/games`,
+- structured opportunity/game/strategy outbound destination metadata,
 - structured referral/affiliate metadata where a destination has a commercial relationship,
-- a first-party `/go/...` redirect layer for outbound game links,
+- a first-party `/go/...` redirect layer for outbound opportunity/game links,
 - explicit user-facing disclosure metadata for affiliate/referral links,
 - redirect safety controls that prevent open redirects and unreviewed destinations,
 - tests proving outbound/referral metadata never affects ROI, Risk, Confidence, or organic rankings.
 
-G14 must not implement G15 monetization analytics, sponsored placement inventory, paid ranking, portfolio features, auth, alerts, optimization, or new game adapters unless separately scoped.
+G14 must not implement G15 monetization analytics, sponsored placement inventory, paid ranking, portfolio features, auth, alerts, optimization, or new game/opportunity adapters unless separately scoped.
+
+G14 must not assign financial value to points-only opportunities unless a lawful, reproducible, realizable value route exists. Points-only outputs must show ROI unavailable rather than zero.
 
 ## G14 planned acceptance criteria
 
-- [ ] outbound destination metadata exists for modeled games/strategies with stable ids/slugs, destination type, target URL, status, ownership/commercial relationship, disclosure text, source/provenance, review timestamp, and allowed use,
+- [ ] `Game` to `Opportunity` backward-compatibility feasibility is documented and approved before code changes,
+- [ ] canonical `Opportunity` model supports `GAME`, `DEPIN_NODE`, and `POINTS`,
+- [ ] existing DeFi Kingdoms, Farmers World, and Splinterlands adapter outputs remain backward-equivalent,
+- [ ] existing `game_id` values and `/api/v1/games` behavior remain compatible for current clients,
+- [ ] new opportunity metadata does not require ROI core changes or game/opportunity type branches in the ROI engine,
+- [ ] Grass, Teneo, and ARO have recorded candidate feasibility notes before any adapter work,
+- [ ] outbound destination metadata exists for modeled opportunities/games/strategies with stable ids/slugs, destination type, target URL, status, ownership/commercial relationship, disclosure text, source/provenance, review timestamp, and allowed use,
 - [ ] referral/affiliate metadata is structured separately from ROI/risk/confidence model inputs,
 - [ ] first-party `/go/{destination_slug}` redirect route resolves only allowlisted active destinations,
 - [ ] redirect route fails closed for missing, disabled, malformed, or unreviewed destinations,
@@ -493,6 +514,7 @@ G14 must not implement G15 monetization analytics, sponsored placement inventory
 - [ ] tests prove affiliate/sponsor/referral metadata cannot change ROI, Risk, Confidence, history snapshots, or organic ranking order,
 - [ ] no affiliate attribution/reporting, sponsored placement ranking, commercial analytics, or paid promotion surfaces are implemented,
 - [ ] documentation explains how future commercial relationships are represented without contaminating economic calculations,
+- [ ] documentation explains that native referral/points rewards are separate from GameFi ROI commercial referral metadata,
 - [ ] all required tests, doctor checks, probes, and whitespace checks pass,
 - [ ] baseline Git commit for G14.
 
@@ -525,4 +547,4 @@ Affiliate/sponsor relationships must never affect ROI, Risk, Confidence, strateg
 
 ## Current instruction to Codex
 
-G13 is active. Continue only production-scope work. Do not implement G14 or G15.
+G13 is active. Continue only production-scope work unless the user explicitly asks for future-gate planning updates. Do not implement G14 or G15.

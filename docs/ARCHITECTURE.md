@@ -13,7 +13,7 @@ Logical flow:
 External Sources
 → Source Connectors
 → Raw Observations
-→ Game Adapters
+→ Opportunity Adapters
 → Strategy Inputs
 → ROI Engine
 → Risk / Confidence
@@ -51,7 +51,7 @@ gamefi-roi/
 │   └── tests/
 ├── frontend/
 ├── config/
-│   └── games/
+│   └── opportunities/
 └── scripts/
 ```
 
@@ -77,16 +77,16 @@ Responsibilities:
 - mapping provider response to raw normalized observations,
 - rate-limit/error reporting.
 
-Game logic does not belong here.
+Game/opportunity logic does not belong here.
 
 ### `adapters/`
-Game-specific economic interpretation.
+Opportunity-specific economic interpretation.
 
 Responsibilities:
 - identify which assets/data sources matter,
 - transform observations/config into strategy inputs,
-- validate game-specific prerequisites,
-- represent game mechanics that cannot be generic.
+- validate opportunity-specific prerequisites,
+- represent game, node, points, or program mechanics that cannot be generic.
 
 Adapters must not own generic ROI formulas.
 
@@ -115,6 +115,7 @@ Responsibilities:
 - comparative strategy calculation.
 
 The engine should not contain `if game == "Craft World"` logic.
+The engine should also not contain `if opportunity_type == "DEPIN_NODE"` or points-program-specific logic.
 
 ### `risk/`
 Generic risk/confidence logic.
@@ -136,6 +137,7 @@ Risk:
 Persistence and query abstractions.
 
 Expected persistent entities:
+- opportunities,
 - games,
 - chains,
 - assets,
@@ -214,7 +216,23 @@ The web routes are public read-only pages for ROI Finder, Rankings, Game Detail,
 
 Outbound/referral metadata is product metadata, not ROI model input.
 
-G14 may add structured game/strategy outbound destination metadata and a first-party `/go/...` redirect layer. The redirect layer must resolve only allowlisted reviewed destinations and fail closed for unknown or disabled destinations.
+G14 may add a canonical `Opportunity` catalog while keeping the existing `Game` model as a compatibility view over `Opportunity` records where `opportunity_type = GAME`.
+
+Backward-compatibility rules:
+
+- existing `game_id` values for DeFi Kingdoms, Farmers World, and Splinterlands remain stable,
+- existing GameFi adapters and strategy definitions are not renamed merely for taxonomy cleanup,
+- `/api/v1/games` remains available as a GAME-only compatibility surface,
+- new canonical opportunity surfaces may be additive, for example `/api/v1/opportunities`,
+- old API fields may be deprecated only after new `opportunity_id` / `opportunity_type` fields exist and tests prove old clients still work.
+
+Supported planned opportunity types:
+
+- `GAME`,
+- `DEPIN_NODE`,
+- `POINTS`.
+
+G14 may add structured opportunity/strategy outbound destination metadata and a first-party `/go/...` redirect layer. The redirect layer must resolve only allowlisted reviewed destinations and fail closed for unknown or disabled destinations.
 
 G15 may add affiliate attribution/reporting, sponsored placements, and commercial analytics on top of the G14 foundation.
 
@@ -226,6 +244,8 @@ Commercial data must remain separated from:
 - organic ranking inputs and ordering.
 
 Affiliate/sponsor relationships must never affect ROI, Risk, Confidence, or organic rankings. Sponsored placements must be separately modeled, explicitly labeled, and served outside organic ranking order.
+
+Points-only opportunities must not publish financial ROI until a lawful, reproducible, realizable value route exists. The platform may show points production, capital/cost burden, warnings, and confidence/risk context with ROI marked unavailable rather than zero.
 
 ## 5. Provider abstraction
 

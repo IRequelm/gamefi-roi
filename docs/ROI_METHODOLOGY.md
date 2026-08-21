@@ -4,9 +4,11 @@ Status: BASELINE FOR IMPLEMENTATION
 
 ## 1. Principle
 
-A GameFi opportunity is modeled as a **strategy under explicit assumptions**.
+An opportunity is modeled as a **strategy under explicit assumptions**.
 
-Do not calculate or publish a context-free “game ROI”.
+Do not calculate or publish a context-free “game ROI” or “opportunity ROI”.
+
+G14 expands the catalog from games to opportunities. Supported planned opportunity types are `GAME`, `DEPIN_NODE`, and `POINTS`, but the financial formulas remain strategy-specific and generic.
 
 ## 2. Capital definitions
 
@@ -55,12 +57,15 @@ If an exact executable quote cannot be obtained:
 - lower model confidence,
 - label the limitation.
 
+If a reward is points-only, non-transferable, discretionary, or dependent on a future airdrop/claim, do not invent a USD value. Financial ROI is unavailable until a lawful and reproducible realizable value route exists. Unavailable value is not zero.
+
 ## 5. Time normalization
 
 Daily values must reflect the strategy's assumptions:
 - reward/production rate,
 - uptime,
 - active playtime constraints,
+- uptime or device/resource contribution constraints,
 - claim interval,
 - daily/weekly caps,
 - season constraints.
@@ -140,7 +145,23 @@ For random/seasonal reward models:
 
 Expected reward is not guaranteed reward.
 
-## 11. Historical ROI
+## 11. Points and pre-token rewards
+
+Points, credits, badges, fragments, Jade, or similar pre-token rewards can be tracked as production metrics only when sourceable and lawful to collect.
+
+Financial ROI may be calculated only when all of the following are available:
+
+- reward identity,
+- earned amount or expected amount,
+- claim/vesting eligibility,
+- transferable asset or cash-equivalent claim route,
+- realizable market/settlement value,
+- costs and timing,
+- legal/ToS feasibility for automated data collection.
+
+If any required value-realization input is missing, the strategy may still show points/day, costs/day, warnings, confidence, and risk context, but ROI, break-even, and exit-adjusted P&L must be unavailable rather than zero.
+
+## 12. Historical ROI
 
 Historical ROI snapshots must preserve:
 - model version,
@@ -150,7 +171,7 @@ Historical ROI snapshots must preserve:
 
 Historical charts should compare like-for-like strategy versions where possible and disclose material rule changes.
 
-## 12. ROI trend
+## 13. ROI trend
 
 Potential classifications:
 - improving,
@@ -161,7 +182,7 @@ Potential classifications:
 
 Thresholds are a later empirical decision; do not hard-code arbitrary marketing labels in G3.
 
-## 13. Confidence
+## 14. Confidence
 
 Confidence measures trust in the **calculation/data**, not safety.
 
@@ -173,6 +194,7 @@ Candidate components:
 - direct executable quote vs price approximation,
 - asset valuation quality,
 - probability-model certainty.
+- points/value-realization certainty for points-based opportunities.
 
 A high-confidence strategy may still be extremely risky.
 
@@ -203,7 +225,7 @@ Point losses:
 
 Unavailable optional factors are recorded as unavailable and do not silently change the score.
 
-## 14. Risk
+## 15. Risk
 
 Risk measures economic/game/market uncertainty and downside.
 
@@ -216,6 +238,7 @@ Candidate factors:
 - asset exit liquidity,
 - rule/season horizon,
 - game/developer operational signals where sourceable.
+- program rule changes, account eligibility, and non-transferable points for points-based opportunities.
 
 Risk methodology will be formalized at G9 after real observations exist.
 
@@ -247,7 +270,7 @@ Point additions:
 
 Trend risk is unavailable until at least three comparable snapshots exist. Token volatility/trend, reward instability, and concentration are also unavailable until the stored observations/history contain enough evidence to measure them.
 
-## 15. Model ranges
+## 16. Model ranges
 
 Where input uncertainty is meaningful, prefer a range:
 
@@ -257,13 +280,13 @@ over fake precision such as `$0.517392/day`.
 
 The calculation engine may remain precise internally; presentation reflects uncertainty.
 
-## 16. Reporting currency
+## 17. Reporting currency
 
 USD is the initial reference reporting currency unless product requirements change.
 
 Native/token denominated results should remain traceable.
 
-## 17. Non-goals
+## 18. Non-goals
 
 The system does not:
 - promise profit,
@@ -273,10 +296,11 @@ The system does not:
 - assume historical yield persists,
 - treat referral/promotional bonuses as normal baseline yield unless explicitly modeled.
 - allow affiliate/sponsor relationships to affect ROI, Risk, Confidence, or organic rankings.
+- assign a financial value to points, badges, or pre-token rewards without a lawful realizable route.
 
 Commercial monetization metadata, affiliate attribution, sponsored placement data, and referral destination metadata are not ROI inputs. If a game-native referral reward is ever modeled as an economic strategy, it must be explicit strategy/config evidence and must not be introduced because of a commercial relationship with GameFi ROI.
 
-## 18. G3 acceptance principle
+## 19. G3 acceptance principle
 
 Before any live game adapter can be trusted, the generic engine must pass manually verified fixed scenarios covering:
 - simple deterministic reward,

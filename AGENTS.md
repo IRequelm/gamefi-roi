@@ -88,6 +88,7 @@ Derived metrics must preserve references to the input observation set/model vers
 ## 7. Product integrity rules
 
 - The primary modeled object is a **strategy**, not merely a game.
+- A game is one type of modeled **opportunity**. Future opportunity types may include GameFi games, DePIN/node operations, and points-based programs, but every modeled result must still be strategy-specific.
 - Never label a game's single value as “the ROI” without strategy/assumption context.
 - Distinguish:
   - total capital,
@@ -103,6 +104,7 @@ Derived metrics must preserve references to the input observation set/model vers
 - Confidence and risk are independent.
 - Affiliate/sponsor relationships must never affect ROI, Risk, Confidence, or organic rankings.
 - Sponsored placements, if implemented, must be explicitly labeled and separated from organic ranking order and analytical metrics.
+- Points, referral bonuses, airdrops, or program rewards with no executable value must not be converted into financial ROI unless a lawful, reproducible, realizable value route exists.
 - Do not imply guaranteed returns or investment advice.
 
 ## 8. Security rules

@@ -4,7 +4,7 @@ Status: BASELINE; ADAPTER CONTRACT V1 FROZEN AT G7
 
 ## 1. Purpose
 
-Define a stable language between external data acquisition, game-specific interpretation, generic ROI calculation, and product output.
+Define a stable language between external data acquisition, opportunity-specific interpretation, generic ROI calculation, and product output.
 
 This document will evolve through G4–G7. Adapter Contract v1 freezes at G7.
 
@@ -66,7 +66,44 @@ For blockchain assets, prefer:
 
 Symbols alone are not unique identifiers.
 
-## 5. Game identity
+## 5. Opportunity identity
+
+G14 will introduce `Opportunity` as the canonical catalog entity. A game is one opportunity type.
+
+Conceptual fields:
+
+- opportunity id/slug,
+- opportunity type,
+- official name,
+- supported platforms/devices,
+- chain(s) when applicable,
+- official source references,
+- status (candidate/active/parked/rejected),
+- adapter version when an adapter exists,
+- compatibility game id when `opportunity_type = GAME`.
+
+Planned opportunity types:
+
+- `GAME`: blockchain game, GameFi, or play-to-earn economy.
+- `DEPIN_NODE`: node, bandwidth, compute, storage, or resource-contribution network.
+- `POINTS`: points/pre-token/reward-credit program where financial value may be unavailable.
+
+### Game identity compatibility
+
+Existing GameFi catalog records remain valid and must not be renamed during the G14 model expansion.
+
+For `GAME` opportunities:
+
+- `game_id` remains the stable backward-compatible alias of `opportunity_id`,
+- existing `/api/v1/games` responses remain a filtered GAME-only compatibility view,
+- existing strategy ids and versions remain unchanged unless the modeled strategy itself changes.
+
+For non-game opportunities:
+
+- new code should use `opportunity_id` and `opportunity_type`,
+- `game_id` must not be treated as a semantic requirement by the ROI engine, risk/confidence scoring, history, or adapters.
+
+## 6. Legacy game identity
 
 Conceptual fields:
 - game id/slug,
@@ -77,13 +114,15 @@ Conceptual fields:
 - status (candidate/active/parked/rejected),
 - adapter version.
 
-## 6. StrategyDefinition
+## 7. StrategyDefinition
 
 Conceptual fields:
 
 ```text
 strategy_id
 strategy_version
+opportunity_id
+opportunity_type
 game_id
 name
 description
@@ -100,7 +139,9 @@ config_dependencies
 
 Strategies are versioned because game rules and modeling assumptions change.
 
-## 7. Adapter Contract v1
+`game_id` is required for existing GAME strategies for backward compatibility. New non-game strategies should use `opportunity_id` and `opportunity_type`; any legacy `game_id` alias must be documented and must not leak into the ROI engine as business logic.
+
+## 8. Adapter Contract v1
 
 Adapter Contract v1 is frozen at G7.
 
@@ -121,7 +162,7 @@ build_engine_input(
 ) -> AdapterResultV1
 ```
 
-The adapter is responsible for game-specific interpretation and must fail explicitly if required inputs are missing, stale, invalid, or economically unsafe to model.
+The adapter is responsible for opportunity-specific interpretation and must fail explicitly if required inputs are missing, stale, invalid, or economically unsafe to model.
 
 ### AdapterResultV1
 
@@ -240,9 +281,9 @@ Shared v1 helpers live in `app.adapters.contract`:
 - `classify_observation`,
 - Decimal validation helpers.
 
-Adapters may add game-specific validation, but should not reimplement the shared provenance envelope or classification rules.
+Adapters may add opportunity-specific validation, but should not reimplement the shared provenance envelope or classification rules.
 
-## 8. StrategySnapshot
+## 9. StrategySnapshot
 
 A calculated result at time `t`.
 
@@ -483,7 +524,36 @@ Frontend rules:
 - treat Decimal-sensitive strings as display data rather than binary-float calculation inputs,
 - do not call provider URLs, blockchain RPCs, adapters, scheduler jobs, or storage internals.
 
-### G14 outbound/referral metadata contract
+### G14 Opportunity model and outbound/referral metadata contract
+
+G14 must expand the catalog model from `Game` to `Opportunity` without breaking existing adapters or API clients.
+
+Conceptual `OpportunityCatalogEntry` fields:
+
+```text
+opportunity_id
+opportunity_type
+name
+status
+platforms
+chains
+economy_types
+reward_asset_or_points_type
+value_realization_status
+official_source_references
+data_feasibility_status
+strategy_ids
+legacy_game_id (optional)
+```
+
+`value_realization_status` examples:
+
+- `realizable`: reward has a lawful executable claim/market route,
+- `non_transferable_points`: points have no current realizable financial value,
+- `future_airdrop_claim`: possible future reward exists but value/timing is not deterministic,
+- `unknown`: value route is not sufficiently documented.
+
+Points-only opportunities may produce points/day or contribution metrics, but financial ROI fields must be unavailable unless a lawful, reproducible, realizable value route exists. Missing realizable value must not become zero.
 
 G14 may introduce structured outbound destination metadata and a first-party redirect layer.
 
@@ -492,7 +562,9 @@ Conceptual `OutboundDestination` fields:
 ```text
 destination_id
 destination_slug
-game_id
+opportunity_id
+opportunity_type
+game_id (optional compatibility alias)
 strategy_id (optional)
 destination_type
 label
@@ -540,6 +612,8 @@ Redirect requirements:
 
 Outbound/referral metadata is not a strategy observation, not an adapter input, not a derived ROI value, and not a score factor.
 
+Native program referral rewards, such as a DePIN network awarding points for referred users, are distinct from GameFi ROI commercial referral metadata. Native referral economics may only be modeled as part of a strategy when evidence is public/authorized, versioned, and disclosed. A GameFi ROI affiliate relationship must never cause a native referral bonus to be added to ROI.
+
 ### G15 monetization data boundary
 
 G15 may add affiliate attribution/reporting, sponsored placements, and commercial analytics.
@@ -554,7 +628,7 @@ Commercial entities such as campaigns, sponsors, clicks, conversions, and revenu
 
 Affiliate/sponsor relationships must never affect ROI, Risk, Confidence, historical strategy snapshots, validation results, or organic ranking order. Sponsored placements must be explicit commercial surfaces, not modified organic results.
 
-## 9. Provenance
+## 10. Provenance
 
 Every snapshot must be reproducible enough to answer:
 
@@ -566,7 +640,7 @@ Therefore retain:
 - input observations/config versions,
 - relevant assumptions.
 
-## 10. Units
+## 11. Units
 
 Never pass naked numbers across module boundaries.
 
@@ -578,7 +652,7 @@ Examples:
 
 Implementation may use typed models rather than literal unit objects, but the semantic contract must remain explicit.
 
-## 11. Freshness
+## 12. Freshness
 
 Each metric/source may have different freshness requirements.
 
@@ -591,9 +665,9 @@ Examples:
 
 Freshness policy belongs to source/config definition, not arbitrary frontend logic.
 
-## 12. Data Feasibility Check
+## 13. Data Feasibility Check
 
-Before implementing a new game adapter, record whether the following can be obtained reliably enough:
+Before implementing a new opportunity adapter, record whether the following can be obtained reliably enough:
 
 - reward formula/rate,
 - entry requirements,
@@ -608,15 +682,27 @@ Before implementing a new game adapter, record whether the following can be obta
 - update/change detection,
 - historical availability or ability to snapshot forward.
 
+For `DEPIN_NODE` or `POINTS` opportunities, also record:
+
+- node/device/account requirements,
+- uptime, bandwidth, compute, storage, or data-signal measurement rules,
+- points identity and whether points are transferable,
+- points-to-token/USDC/claim conversion evidence, if any,
+- whether points have no monetary value under official terms,
+- dashboard/API machine-readability and whether automated collection is permitted,
+- device/network operating costs and user-borne resource costs,
+- jurisdiction, KYC, sanctions, or eligibility restrictions,
+- native referral reward rules separated from GameFi ROI commercial referral metadata.
+
 Result:
 - `GO`
 - `PARTIAL`
 - `PARKED`
 - `REJECTED`
 
-A game may proceed with `PARTIAL` only when missing data can be modeled transparently and confidence reflects the limitation.
+An opportunity may proceed with `PARTIAL` only when missing data can be modeled transparently and confidence reflects the limitation. A points-only opportunity with no realizable value route may not publish financial ROI; it may only publish non-financial production metrics and warnings until value evidence exists.
 
-## 13. Live / Derived / Config presentation
+## 14. Live / Derived / Config presentation
 
 For user-facing trust, metrics should be traceable to:
 - `LIVE`: directly current observation,
@@ -625,7 +711,7 @@ For user-facing trust, metrics should be traceable to:
 
 This is presentation metadata; underlying source provenance remains more detailed.
 
-## 14. Error handling
+## 15. Error handling
 
 Connector/adapters return structured errors.
 
@@ -634,14 +720,14 @@ Do not:
 - substitute yesterday's value without stale status,
 - infer contract identity from ticker symbol only.
 
-## 15. Contract freeze process
+## 16. Contract freeze process
 
 G4: observe requirements from economy type 1.
 G5: adapt for economy type 2 without contaminating core.
 G6: validate against economy type 3.
 G7: Adapter Contract v1 is frozen.
 
-## 16. Adapter versioning rules
+## 17. Adapter versioning rules
 
 Adapter Contract v1 is identified by:
 
@@ -655,29 +741,29 @@ Backward-compatible changes allowed within v1:
 - adding optional derived metrics,
 - adding optional uncertainty ranges,
 - adding new source connectors,
-- adding new game-specific strategy definitions and adapters that produce `AdapterResultV1`.
+- adding new game-specific or opportunity-specific strategy definitions and adapters that produce `AdapterResultV1`.
 
 Breaking changes require Adapter Contract v2:
 
 - removing or renaming `AdapterResultV1` fields,
 - changing `StrategyEconomicsInput` semantics,
 - changing LIVE / CONFIG / DERIVED meanings,
-- requiring the ROI engine to know game ids or adapter types,
+- requiring the ROI engine to know game ids, opportunity ids, opportunity types, or adapter types,
 - changing required behavior for missing/stale observations,
 - making low/base/high range output mandatory for deterministic strategies.
 
 Existing adapters must keep their strategy ids and strategy versions stable unless the modeled game strategy itself changes.
 
-## 17. Adding Adapter #4
+## 18. Adding a future adapter
 
-Future Adapter #4 must be added without modifying the ROI core.
+A future game, DePIN/node, or points opportunity adapter must be added without modifying the ROI core.
 
 Required process:
 
-1. Perform and document the Data Feasibility Check.
+1. Perform and document the Data Feasibility Check for the opportunity type.
 2. Add shared provider access under `sources/`; do not put provider URLs or HTTP/RPC logic in the adapter.
 3. Add an explicit versioned strategy definition under `strategies/`.
-4. Implement game-specific economic interpretation under `adapters/`.
+4. Implement opportunity-specific economic interpretation under `adapters/`.
 5. Return `AdapterResultV1` with `StrategyEconomicsInput`, classifications, derived values, warnings, and uncertainty ranges where applicable.
 6. Use shared adapter-contract helpers for config/derived/live observations and freshness checks.
 7. Add a deterministic golden fixture with manually verified ROI.
@@ -685,4 +771,4 @@ Required process:
 9. Add a separate live probe if live sources are used.
 10. Stop and document an architectural gap if the economy cannot be represented as generic capital, reward, cost, timing, realizable value, and optional uncertainty metadata.
 
-Do not modify `engine/` for game-specific mechanics. A core change is allowed only for a genuinely generic financial capability that is documented before implementation.
+Do not modify `engine/` for game-specific, node-specific, or points-program-specific mechanics. A core change is allowed only for a genuinely generic financial capability that is documented before implementation.
