@@ -13,6 +13,8 @@ def test_default_render_blueprint_uses_free_beta_resources_without_cron() -> Non
     assert "name: gamefi-roi-db" in blueprint
     assert "type: cron" not in blueprint
     assert "name: gamefi-roi-recalculation" not in blueprint
+    assert "preDeployCommand" not in blueprint
+    assert "python -m alembic -c backend/alembic.ini upgrade head && python -m uvicorn app.main:app" in blueprint
     assert "GAMEFI_COINGECKO_API_KEY" in blueprint
     assert "GAMEFI_DFK_CHAIN_RPC_URL" in blueprint
     assert "sync: false" in blueprint
@@ -25,6 +27,7 @@ def test_paid_render_blueprint_preserves_production_cron_and_paid_database() -> 
     assert "name: gamefi-roi-recalculation" in blueprint
     assert "plan: basic-256mb" in blueprint
     assert "schedule: \"*/30 * * * *\"" in blueprint
+    assert "preDeployCommand" in blueprint
     assert "python -m app.jobs.production_recalculation" in blueprint
 
 

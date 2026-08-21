@@ -16,8 +16,7 @@ services:
     plan: free
     region: ohio
     buildCommand: "python -m pip install --upgrade pip && python -m pip install -r requirements.txt"
-    preDeployCommand: "python -m alembic -c backend/alembic.ini upgrade head"
-    startCommand: "python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    startCommand: "python -m alembic -c backend/alembic.ini upgrade head && python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT"
     healthCheckPath: /api/v1/ops/status
     autoDeployTrigger: off
     envVars:

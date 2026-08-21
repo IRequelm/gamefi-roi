@@ -114,8 +114,8 @@ GitHub Actions beta scheduler non-secret env:
 4. Confirm the web service is created on the Free plan and the database is created on the Free plan.
 5. Confirm the web service deploy runs:
    - build: `python -m pip install --upgrade pip && python -m pip install -r requirements.txt`
-   - pre-deploy migration: `python -m alembic -c backend/alembic.ini upgrade head`
-   - start: `python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+   - migration plus start: `python -m alembic -c backend/alembic.ini upgrade head && python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+   - no `preDeployCommand`, because Render Free Web Services do not support pre-deploy commands
 6. After the database exists, copy the database's external URL into the GitHub repository secret `GAMEFI_BETA_DATABASE_URL`.
 7. Add GitHub repository secrets for `GAMEFI_COINGECKO_API_KEY` and `GAMEFI_DFK_CHAIN_RPC_URL`.
 8. Run the GitHub Actions workflow `Render Beta Recalculation` manually once.
@@ -136,7 +136,15 @@ Upgrade from low-cost beta when real production reliability is required:
 
 ## Migration Procedure
 
-Render web service pre-deploy command:
+Free beta migration command:
+
+```bash
+python -m alembic -c backend/alembic.ini upgrade head && python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT
+```
+
+For the Free Web Service beta, Alembic runs at the beginning of `startCommand`. If migration fails, the app server does not start, so the deploy fails closed instead of serving an outdated schema. Alembic migrations remain idempotent and reproducible; rerunning the same start command must leave an already-current schema unchanged.
+
+For paid production, `render.production.yaml` keeps the Render web service `preDeployCommand`:
 
 ```bash
 python -m alembic -c backend/alembic.ini upgrade head
