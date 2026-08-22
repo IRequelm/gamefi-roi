@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 
 import {
   ApiError,
@@ -48,10 +49,34 @@ test("home renders results as cards before filters without table ranking markup"
     opportunityPayload(),
   ]);
 
-  assert.match(html, /Top current ranking/);
+  assert.match(html, /GamCryp public beta/);
+  assert.match(html, /Find Web3 earning opportunities/);
+  assert.match(html, /Risk and confidence separated/);
+  assert.match(html, /Top current modeled result/);
   assert.match(html, /ranking-card-grid/);
   assert.match(html, /finder-results/);
   assert.doesNotMatch(html, /<table/);
+});
+
+test("static shell uses GamCryp brand lockup without a fabricated logo image", () => {
+  const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+
+  assert.match(html, /GamCryp \| Web3 Opportunity Intelligence/);
+  assert.match(html, /brand-lockup/);
+  assert.match(html, /data-logo-placeholder="\/assets\/brand\/gamcryp-logo\.png"/);
+  assert.doesNotMatch(html, /brand-mark/);
+  assert.doesNotMatch(html, /<img[^>]+gamcryp/i);
+});
+
+test("GamCryp brand stylesheet uses dark navy base and restrained accent palette", () => {
+  const css = readFileSync(new URL("../assets/styles.css", import.meta.url), "utf8");
+
+  assert.match(css, /--bg:\s*#020711/);
+  assert.match(css, /--cyan:\s*#20f6ff/);
+  assert.match(css, /--blue:\s*#2682ff/);
+  assert.match(css, /--violet:\s*#9b4dff/);
+  assert.match(css, /overflow-x:\s*hidden/);
+  assert.doesNotMatch(css, /#f6f7f2|#fff5e6|#e9f5ed|#edf4fb/);
 });
 
 test("finder filters build supported rankings query only", () => {

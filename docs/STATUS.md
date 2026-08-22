@@ -15,6 +15,8 @@ G14 is complete in the repository. It adds the backward-compatible Opportunity c
 
 G14 post-deployment UI acceptance follow-up: the first deployed G14 UI still looked too much like an internal analytics/debug surface on the public Home/ROI Finder. A corrective G14 fix was added before any G15 monetization work to make the public beta user-readable: responsive strategy cards replace ranking tables, Decimal API strings remain authoritative but are formatted for display, tiny/scientific values are readable, confidence/risk/freshness interpretation is explicit, and opportunity cards show unavailable ROI for non-financial candidates instead of zero.
 
+G14 post-deployment brand/UI refinement: before G15 monetization work, the public beta received a GamCryp visual pass based on the supplied visual references. This is presentation-only: backend logic, ROI calculations, ranking logic, adapters, API contracts, referral logic, and opportunity modeling remain unchanged. The live structure stays card-based while the visual language moves to dark navy surfaces with restrained cyan/blue/violet accents and semantic risk/confidence colors preserved.
+
 ## Gate board
 
 | Gate | Name | Status |
@@ -603,6 +605,14 @@ Post-deployment UI acceptance fix:
 - Opportunity cards use the same visual system for `GAME`, `DEPIN_NODE`, and `POINTS`; non-financial candidates expose ROI as unavailable, reward type, opportunity type, Start/Open CTA, and the reason financial ROI is unavailable.
 - Strategy detail keeps API values authoritative but formats capital, earnings, ROI, break-even, history rows, confidence/risk, LIVE/CONFIG/DERIVED, warnings, and freshness for human scanning.
 - Frontend regression tests cover exact API value retention, human-readable formatting, negative ROI, tiny values, unavailable ROI, long strategy names, no table-based ranking markup, responsive card structure, risk/confidence labels, and CTA behavior.
+
+Post-deployment GamCryp brand/UI refinement:
+
+- Header uses the GamCryp text lockup with "Web3 Opportunity Intelligence" as the product descriptor.
+- The official logo has not been redrawn from screenshots; the intended repository path for a future approved source logo asset is `frontend/assets/brand/gamcryp-logo.png`.
+- The warm beige visual system was replaced with a deep navy/midnight base, dark elevated cards, restrained cyan/electric-blue/violet accents, and subtle ambient/grid texture.
+- The ranking card structure, opportunity watchlist, Start/Open CTAs, risk/confidence labels, and unavailable ROI states remain the same product surfaces with updated brand styling only.
+- Affiliate/sponsor/referral metadata remains excluded from ROI, Risk, Confidence, history snapshots, validation, and organic ranking order.
 
 Outbound/referral metadata is implemented as reviewed product metadata. Current destinations use official URL fallback and have no configured affiliate relationship. `/go/{destination_slug}` accepts no arbitrary target parameter, redirects only active verified destinations, and logs only a minimal aggregate event without cookies or per-user attribution.
 

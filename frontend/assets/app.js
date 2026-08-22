@@ -48,9 +48,14 @@ export function renderHomeShell(games = [], rankings = { items: [], page: { tota
   return `
     <div class="page-shell">
       <section class="page-head">
-        <p class="eyebrow">Public beta</p>
-        <h1>Compare the current modeled strategies.</h1>
-        <p class="lede">Results use stored API snapshots. Candidate opportunities without lawful, reproducible financial value stay visible, with ROI marked unavailable.</p>
+        <p class="eyebrow">GamCryp public beta</p>
+        <h1>Find Web3 earning opportunities worth modeling.</h1>
+        <p class="lede">See modeled ROI where reproducible, risk/confidence, and freshness across GAME, DEPIN_NODE, and POINTS opportunities.</p>
+        <div class="hero-proof-points" aria-label="GamCryp data principles">
+          <span>Modeled ROI where reproducible</span>
+          <span>Risk and confidence separated</span>
+          <span>Freshness stays visible</span>
+        </div>
       </section>
       ${renderTopRankingSummary(rankings)}
       <section class="finder-grid" aria-label="ROI finder">
@@ -120,7 +125,7 @@ export function renderTopRankingSummary(rankings = { items: [] }) {
   return `
     <section class="choice-strip" aria-label="Top ranked strategy">
       <div>
-        <span class="eyebrow">Top current ranking</span>
+        <span class="eyebrow">Top current modeled result</span>
         <strong>${escapeHtml(snapshot.game_name)} · ${escapeHtml(top.strategy.name)}</strong>
       </div>
       <div class="choice-metrics">
@@ -136,9 +141,9 @@ export function renderRankingsPage(rankings) {
   return `
     <div class="page-shell">
       <section class="page-head">
-        <p class="eyebrow">Rankings</p>
-        <h1>Stored strategy rankings</h1>
-        <p class="lede">The order is supplied by the API: 30D ROI, confidence, risk, last calculation time, then strategy id.</p>
+        <p class="eyebrow">Organic rankings</p>
+        <h1>Current strategy cards</h1>
+        <p class="lede">The order is supplied by the API: 30D ROI, confidence, risk, last calculation time, then strategy id. Brand or referral metadata never changes this order.</p>
       </section>
       ${renderRankingsTable(rankings)}
     </div>
@@ -149,9 +154,9 @@ export function renderOpportunitiesPage(opportunitiesPage = { items: [], page: {
   return `
     <div class="page-shell">
       <section class="page-head">
-        <p class="eyebrow">Opportunities</p>
+        <p class="eyebrow">Opportunity radar</p>
         <h1>Games, nodes, and points programs under review.</h1>
-        <p class="lede">Only opportunities with valid stored strategy snapshots appear in ROI rankings. Points-only or future-claim programs stay marked unavailable until value is lawful and reproducible.</p>
+        <p class="lede">GamCryp keeps modeled strategies and watchlist candidates in one taxonomy. Points-only or future-claim programs stay marked unavailable until value is lawful and reproducible.</p>
       </section>
       ${renderOpportunityList(opportunitiesPage.items || [])}
     </div>
@@ -669,7 +674,7 @@ export function renderMethodologyPage() {
     <div class="page-shell">
       <section class="page-head">
         <p class="eyebrow">Methodology</p>
-        <h1>How GameFi ROI reads strategy economics</h1>
+        <h1>How GamCryp reads Web3 opportunity economics</h1>
         <p class="lede">The model emphasizes explainable assumptions, realizable values, and source quality over hype.</p>
       </section>
       <section class="method-grid">

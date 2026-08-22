@@ -19,7 +19,7 @@ def test_web_mvp_pages_are_served_by_fastapi(monkeypatch, tmp_path) -> None:
         response = client.get(path)
 
         assert response.status_code == 200
-        assert "GameFi ROI" in response.text
+        assert "GamCryp" in response.text
         assert "/assets/app.js" in response.text
 
 
