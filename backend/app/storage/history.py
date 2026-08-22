@@ -13,6 +13,7 @@ from typing import Any
 from uuid import NAMESPACE_URL, uuid5
 
 from sqlalchemy import Engine, desc, select
+from sqlalchemy.engine import Connection
 from sqlalchemy.orm import Session
 
 from app.adapters.contract import ADAPTER_CONTRACT_VERSION, AdapterResultV1
@@ -96,8 +97,8 @@ class StrategyVersionInfo:
 
 
 class HistoryRepository:
-    def __init__(self, engine: Engine) -> None:
-        self.engine = engine
+    def __init__(self, bind: Engine | Connection) -> None:
+        self.engine = bind
 
     def save_snapshot(
         self,

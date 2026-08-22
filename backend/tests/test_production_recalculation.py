@@ -1,14 +1,19 @@
 from __future__ import annotations
 
+from contextlib import contextmanager
 from datetime import UTC, datetime, timedelta
 
 import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.pool import QueuePool
 
 from app.adapters.contract import live_observation
 from app.adapters.defi_kingdoms_jeweler import DfkJewelerAdapter
+from app.jobs import production_recalculation
 from app.jobs.history_probe import build_history_probe_tasks
 from app.jobs.production_recalculation import (
     HardStaleInputError,
+    SchedulerLockLease,
     cadence_window,
     enforce_hard_stale_inputs,
     run_recalculation_tasks,
@@ -65,6 +70,42 @@ def test_production_recalculation_is_idempotent_per_window(monkeypatch, tmp_path
 
     assert duplicate.snapshot_ids == first.snapshot_ids
     assert len(HistoryRepository(engine).ordered_time_series(DFK_CJEWEL_MAX_LOCK_V1.strategy_id, start=first.intended_window.start, end=first.intended_window.end)) == 1
+
+
+def test_production_recalculation_reuses_lock_connection_with_constrained_pool(monkeypatch, tmp_path) -> None:
+    setup_engine = _migrated_engine(monkeypatch, tmp_path, "production-constrained-pool.db")
+    database_url = str(setup_engine.url)
+    setup_engine.dispose()
+    engine = create_engine(
+        database_url,
+        poolclass=QueuePool,
+        pool_size=1,
+        max_overflow=0,
+        pool_timeout=0.1,
+    )
+    task = build_history_probe_tasks()[0]
+
+    @contextmanager
+    def same_pool_lock(active_engine):
+        connection = active_engine.connect()
+        try:
+            yield SchedulerLockLease(acquired=True, bind=connection)
+        finally:
+            connection.close()
+
+    monkeypatch.setattr(production_recalculation, "scheduler_lock", same_pool_lock)
+
+    summary = run_recalculation_tasks(
+        engine=engine,
+        tasks=(task,),
+        calculated_at=NOW,
+        cadence_minutes=30,
+    )
+
+    assert len(summary.snapshot_ids) == 1
+    assert summary.score_count == 1
+    assert HistoryRepository(engine).latest_snapshot(DFK_CJEWEL_MAX_LOCK_V1.strategy_id) is not None
+    assert ScoringRepository(engine).get_score(summary.snapshot_ids[0]) is not None
 
 
 def test_hard_stale_live_inputs_fail_explicitly() -> None:

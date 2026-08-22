@@ -7,6 +7,7 @@ from types import MappingProxyType
 from uuid import NAMESPACE_URL, uuid5
 
 from sqlalchemy import Engine, select
+from sqlalchemy.engine import Connection
 from sqlalchemy.orm import Session
 
 from app.risk.results import (
@@ -27,8 +28,8 @@ class ScoringPersistenceError(ValueError):
 
 
 class ScoringRepository:
-    def __init__(self, engine: Engine) -> None:
-        self.engine = engine
+    def __init__(self, bind: Engine | Connection) -> None:
+        self.engine = bind
 
     def save_score(self, score: SnapshotScoreResult) -> SnapshotScoreResult:
         _validate_score(score)

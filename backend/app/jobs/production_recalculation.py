@@ -11,6 +11,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from sqlalchemy import Engine, text
+from sqlalchemy.engine import Connection
 
 from app.adapters.defi_kingdoms_jeweler import DfkJewelerAdapter
 from app.adapters.defi_kingdoms_jeweler_probe import load_live_observations as load_dfk_observations
@@ -41,6 +42,12 @@ class ProductionRecalculationSummary:
     snapshot_ids: tuple[str, ...]
     failure_ids: tuple[str, ...]
     score_count: int
+
+
+@dataclass(frozen=True)
+class SchedulerLockLease:
+    acquired: bool
+    bind: Engine | Connection
 
 
 class HardStaleInputError(RuntimeError):
@@ -99,8 +106,8 @@ def run_recalculation_tasks(
 ) -> ProductionRecalculationSummary:
     active_time = _normalize_utc(datetime.now(UTC) if calculated_at is None else calculated_at)
     intended_window = cadence_window(active_time, cadence_minutes=cadence_minutes)
-    with scheduler_lock(engine) as acquired:
-        if not acquired:
+    with scheduler_lock(engine) as lock:
+        if not lock.acquired:
             logger.info("scheduler_lock_busy window_start=%s", intended_window.start.isoformat())
             return ProductionRecalculationSummary(
                 status="skipped_lock_busy",
@@ -111,13 +118,13 @@ def run_recalculation_tasks(
                 score_count=0,
             )
 
-        repository = HistoryRepository(engine)
+        repository = HistoryRepository(lock.bind)
         run = ScheduledRecalculator(repository).run_once(
             tasks,
             intended_window=intended_window,
             calculated_at=active_time,
         )
-        score_count = _persist_scores(engine=engine, snapshots=run.snapshots, scored_at=run.calculated_at)
+        score_count = _persist_scores(bind=lock.bind, snapshots=run.snapshots, scored_at=run.calculated_at)
         _log_run_result(run, score_count=score_count)
         return ProductionRecalculationSummary(
             status="ok" if run.snapshots else "failed",
@@ -169,27 +176,30 @@ def enforce_hard_stale_inputs(
 
 
 @contextmanager
-def scheduler_lock(engine: Engine) -> Iterator[bool]:
+def scheduler_lock(engine: Engine) -> Iterator[SchedulerLockLease]:
     if engine.dialect.name != "postgresql":
-        yield True
+        yield SchedulerLockLease(acquired=True, bind=engine)
         return
 
     connection = engine.connect()
     acquired = False
     try:
         acquired = bool(connection.execute(text("select pg_try_advisory_lock(:key)"), {"key": SCHEDULER_LOCK_KEY}).scalar())
-        yield acquired
+        _commit_if_active(connection)
+        yield SchedulerLockLease(acquired=acquired, bind=connection)
     finally:
         if acquired:
+            _rollback_if_active(connection)
             connection.execute(text("select pg_advisory_unlock(:key)"), {"key": SCHEDULER_LOCK_KEY})
+            _commit_if_active(connection)
         connection.close()
 
 
-def _persist_scores(*, engine: Engine, snapshots: tuple[StrategySnapshot, ...], scored_at: datetime) -> int:
+def _persist_scores(*, bind: Engine | Connection, snapshots: tuple[StrategySnapshot, ...], scored_at: datetime) -> int:
     if not snapshots:
         return 0
-    history_repository = HistoryRepository(engine)
-    scoring_repository = ScoringRepository(engine)
+    history_repository = HistoryRepository(bind)
+    scoring_repository = ScoringRepository(bind)
     scorer = SnapshotScorer()
     saved = 0
     for snapshot in snapshots:
@@ -203,6 +213,16 @@ def _persist_scores(*, engine: Engine, snapshots: tuple[StrategySnapshot, ...], 
         scoring_repository.save_score(scorer.score(snapshot, history=history, scored_at=scored_at))
         saved += 1
     return saved
+
+
+def _commit_if_active(connection: Connection) -> None:
+    if connection.in_transaction():
+        connection.commit()
+
+
+def _rollback_if_active(connection: Connection) -> None:
+    if connection.in_transaction():
+        connection.rollback()
 
 
 def _log_run_result(run: RecalculationRunResult, *, score_count: int) -> None:
