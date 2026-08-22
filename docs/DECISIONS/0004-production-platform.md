@@ -1,7 +1,7 @@
 # Decision 0004: Production Platform
 
 Date: 2026-08-16
-Updated: 2026-08-22
+Updated: 2026-08-23
 Gate: G13 - Production
 Decision: Select Render for the public beta deployment target, with a low-cost beta Blueprint and a paid production upgrade Blueprint.
 
@@ -49,7 +49,7 @@ Low-cost public beta architecture:
 - The GitHub Actions job uses repository secrets for the external Render Postgres URL and provider credentials.
 - The paid Render Cron + paid Postgres architecture is preserved in `render.production.yaml` for upgrade.
 
-This beta shape avoids requiring paid Render instances where technically possible, but it does not satisfy backup-capable production requirements by itself.
+This beta shape avoids requiring paid Render instances where technically possible, but it is not backup/PITR-grade production by itself. For G13 public beta, the user explicitly accepted Free Render limitations as public-beta limitations rather than production-grade guarantees.
 
 ## Key Constraints
 
@@ -59,7 +59,7 @@ This beta shape avoids requiring paid Render instances where technically possibl
 - The application uses SQLAlchemy's conservative local pool settings first. Render PgBouncer is not enabled initially because the scheduler uses a PostgreSQL advisory lock, and Render's PgBouncer runs in transaction mode.
 - Beta GitHub Actions workflow concurrency and the app-level advisory lock prevent overlapping recalculation.
 - Paid Render's platform single-run guarantee is supplemented by the app-level advisory lock.
-- Free Render Postgres expires 30 days after creation and has no Render-managed backups/PITR/logical backups. Use paid Postgres for real production and before marking G13 complete unless the acceptance criteria are explicitly re-scoped.
+- Free Render Postgres expires 30 days after creation and has no Render-managed backups/PITR/logical backups. Use paid Postgres plus restore verification before claiming backup/PITR-grade production.
 
 ## Evidence
 
@@ -80,4 +80,4 @@ This beta shape avoids requiring paid Render instances where technically possibl
 
 ## Status
 
-The low-cost beta deployment configuration is prepared. Actual public deployment still requires a Render workspace, linked repository, production provider secrets, GitHub Actions beta scheduler secrets, and a deployed URL to verify. G13 remains active until the public deployment and all non-re-scoped acceptance criteria are satisfied.
+The low-cost public beta is deployed at `https://gamefi-roi-web.onrender.com` and G13 is complete under the accepted public-beta limitations. The paid production upgrade path remains documented through `render.production.yaml`, paid Render Postgres, Render Cron, and restore verification.

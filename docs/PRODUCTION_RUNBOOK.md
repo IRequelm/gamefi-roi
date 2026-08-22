@@ -1,7 +1,7 @@
 # GameFi ROI Production Runbook
 
-Updated: 2026-08-22
-Gate: G13 - Production
+Updated: 2026-08-23
+Gate: G13 - Production public beta
 
 ## Architecture
 
@@ -37,7 +37,7 @@ Free-tier limitations:
 - Free Render Postgres expires 30 days after creation, with a 14-day upgrade grace period before deletion.
 - Free Render Postgres has a 1 GB limit.
 - Free Render Postgres has no Render-managed backups, no PITR, no logical backups, and no managed connection pooling.
-- Free beta is not backup-capable production. It is acceptable only for short-lived public-beta validation when this limitation is visible and accepted.
+- Free beta is not backup-capable production. For G13 public beta, this limitation is explicitly accepted and must remain visible in product/ops reporting and handoff notes.
 
 Decision record: `docs/DECISIONS/0004-production-platform.md`.
 
@@ -132,7 +132,7 @@ Upgrade from low-cost beta when real production reliability is required:
 3. Confirm `gamefi-roi-recalculation` exists as a Render Cron Job with schedule `*/30 * * * *`.
 4. Disable the GitHub Actions `Render Beta Recalculation` workflow to avoid duplicate scheduler runs.
 5. Confirm paid Postgres PITR/logical backup capability.
-6. Perform restore verification before marking G13 complete.
+6. Perform restore verification before treating the service as backup/PITR-grade production.
 
 ## Migration Procedure
 
@@ -200,7 +200,8 @@ Low-cost beta backup policy:
 - Free Render Postgres has no Render-managed backups, no PITR, and no Render-created logical backups.
 - If beta data must be retained before expiry, run a manual `pg_dump` from a trusted local machine using the external database URL and store the dump outside Git.
 - No secret-bearing database dump may be committed.
-- G13 cannot be marked complete on the free database unless the backup/restore acceptance criterion is explicitly re-scoped by the user.
+- G13 public beta treats this as an accepted limitation, not a production-grade backup guarantee.
+- Paid Postgres plus restore verification remains required before claiming backup/PITR-grade production.
 
 Paid production backup policy:
 
@@ -223,7 +224,7 @@ python -m app.web_probe
 4. Verify `/api/v1/ops/status`, `/api/v1/rankings`, and all three strategy latest endpoints.
 5. Delete the restore instance only after verification.
 
-G13 status note: no restore verification has been performed from this Codex environment because no Render workspace/database is connected. The low-cost beta path documents Free Postgres backup limitations and therefore does not by itself satisfy the production backup/restore acceptance criterion.
+G13 public-beta status note: no Render-managed restore verification is available on Free Postgres. The accepted beta scope documents the limitation explicitly and keeps the paid upgrade path below as the route to backup/PITR-grade production.
 
 ## Monitoring
 
@@ -373,6 +374,13 @@ Database rollback:
 
 ## Current Deployment Status
 
-Public URL: pending.
+Public URL: `https://gamefi-roi-web.onrender.com`.
 
-This repository is prepared for low-cost Render beta deployment, but G13 cannot be marked complete until a Render workspace, production provider secrets, production database or accepted beta database scope, actual deployed URL, scheduler run, history retention, stale/failure verification, backup/restore verification or explicit re-scope, and external production validation are completed.
+G13 public beta is complete with accepted free-tier limitations:
+
+- Render Free Web Service may cold start after inactivity.
+- Free Render Postgres expires after 30 days and has no production-grade backup/PITR.
+- GitHub Actions provides the beta recalculation schedule because Render Cron Jobs are paid.
+- The paid upgrade path remains `render.production.yaml`, paid Render Postgres, Render Cron, and restore verification before backup/PITR-grade production claims.
+
+Final public validation verified `/api/v1/health`, `/api/v1/ops/status`, `/api/v1/rankings`, all three strategy latest/history endpoints, all five web pages, exact API/web Decimal-string rendering, scheduler history retention, and duplicate-window idempotency.

@@ -1,15 +1,15 @@
 # GameFi ROI — Project Status
 
-Updated: 2026-08-22
+Updated: 2026-08-23
 Project version: 0.1
 
 ## Current state
 
-**ACTIVE GATE: G13 — Production**
+**ACTIVE GATE: G14 — Scale / Opportunity + Referral Foundation**
 
 G12 is complete and frozen in the G12 baseline Git commit.
 
-G13 implementation is in progress after the user explicitly asked to proceed. G13 must remain ACTIVE until an actual public deployment is reachable and externally verified.
+G13 is complete for the accepted public beta deployment. The beta is live on Render Free Web Service + Free Render Postgres, with GitHub Actions scheduled recalculation. Free-tier limits are accepted public-beta limitations, not production-grade guarantees.
 
 ## Gate board
 
@@ -28,8 +28,8 @@ G13 implementation is in progress after the user explicitly asked to proceed. G1
 | G10 | API | COMPLETE |
 | G11 | Web MVP | COMPLETE |
 | G12 | Validation | COMPLETE |
-| G13 | Production | ACTIVE |
-| G14 | Scale / Opportunity + Referral Foundation | NOT STARTED |
+| G13 | Production | COMPLETE |
+| G14 | Scale / Opportunity + Referral Foundation | ACTIVE |
 | G15 | Monetization | NOT STARTED |
 
 ## G0 objective
@@ -446,16 +446,16 @@ Deploy the validated MVP as a reliable public beta with production PostgreSQL, s
 - [x] HTTP security headers and safe CORS policy are configured,
 - [x] operations status endpoint exposes database, scheduler, stale-strategy, provider-failure, and calculation-failure status without live provider calls,
 - [x] production runbook documents architecture, provider configuration, environment variables, deploy, migrations, scheduler, backups/restore, monitoring, incident recovery, rollback, and secret rotation,
-- [ ] production PostgreSQL database exists on the selected platform,
-- [ ] all Alembic migrations have run against production/staging PostgreSQL,
-- [ ] production provider secrets are configured through platform secret management,
-- [ ] HTTPS public web/API URL is reachable outside the local machine,
-- [ ] scheduled recalculation has run in production and created a new valid snapshot,
-- [ ] history retains an older production snapshot after the scheduler run,
-- [ ] backup/restore verification has been performed or reproduced where the platform allows it,
-- [ ] production validation verifies `/api/v1/health`, rankings, all five web pages, all three strategies, risk/confidence display, stale/warning behavior, API/web exact-value consistency, scheduler behavior, history retention, and provider-failure isolation,
+- [x] production PostgreSQL database exists on the selected platform,
+- [x] all Alembic migrations have run against production/staging PostgreSQL,
+- [x] production provider secrets are configured through platform secret management,
+- [x] HTTPS public web/API URL is reachable outside the local machine,
+- [x] scheduled recalculation has run in production and created a new valid snapshot,
+- [x] history retains an older production snapshot after the scheduler run,
+- [x] public-beta database limitation is explicitly accepted: Free Render Postgres expires, has no production-grade backup/PITR, and requires paid upgrade for backup/restore-grade production,
+- [x] production validation verifies `/api/v1/health`, rankings, all five web pages, all three strategies, risk/confidence display, stale/warning behavior, API/web exact-value consistency, scheduler behavior, history retention, and provider-failure isolation,
 - [x] local pre-deploy verification passes after final production changes: pytest, frontend tests, G12 validation, doctor, compileall, pip check, API probe, web probe, and `git diff --check`,
-- [ ] baseline Git commit for G13.
+- [x] baseline Git commit for G13.
 
 ## G13 production decision
 
@@ -470,16 +470,20 @@ Low-cost beta deployment configuration:
 - default Blueprint `render.yaml` uses Free Web Service and Free Render Postgres where supported,
 - paid production upgrade Blueprint `render.production.yaml` preserves paid web + paid Postgres + Render Cron,
 - beta scheduled recalculation uses GitHub Actions workflow `.github/workflows/render-beta-recalculation.yml`,
-- Free Render Postgres expires after 30 days and has no Render-managed backups/PITR/logical backups.
+- Free Render Postgres expires after 30 days and has no Render-managed backups/PITR/logical backups,
+- Free Web Service may cold start after inactivity.
 
-Current production validation status:
+Final public-beta production validation status:
 
 - public beta URL is reachable at `https://gamefi-roi-web.onrender.com`,
-- GitHub Actions beta recalculation reaches Render Postgres and creates successful snapshots for Farmers World and Splinterlands,
-- DFK Jeweler is currently absent from rankings because production has no successful DFK snapshot,
-- local DFK live probe succeeds through live DFK inputs -> adapter -> ROI engine, narrowing the production issue to the production DFK RPC/source request path,
-- a G13 fix preserves query parameters in managed EVM RPC URLs while redacting sensitive query values from observation provenance,
-- G13 must remain ACTIVE until the fix is deployed, at least two consecutive production recalculation runs are verified, DFK has either a valid production snapshot or a documented fail-closed production data-source reason, and the remaining production validation checks pass.
+- GitHub Actions beta recalculation reaches Render Postgres and has completed consecutive successful runs,
+- DFK Jeweler, Farmers World, and Splinterlands all have valid fresh latest production snapshots and appear in `/api/v1/rankings`,
+- immediate duplicate-window recalculation did not create duplicate snapshots for the same intended window,
+- Farmers World and Splinterlands retain multiple historical snapshots across different calculation windows,
+- public `/api/v1/ops/status` reports database health, scheduler last-success state, all three latest strategy snapshots, and zero stale strategies,
+- historical provider failures remain visible as old failure counts, but they are not blocking current publication because all current latest snapshots are fresh,
+- public web routes and API responses are reachable over HTTPS, and the deployed web renderer displays exact API Decimal strings without frontend financial recomputation,
+- Free Render Postgres expiry/no-backup/no-PITR and Free Web Service cold starts are accepted public-beta limitations; `render.production.yaml` remains the paid upgrade path for production-grade backups, Render Cron, and always-on behavior.
 
 ## Post-G13 UI/UX backlog
 
@@ -573,4 +577,4 @@ Affiliate/sponsor relationships must never affect ROI, Risk, Confidence, strateg
 
 ## Current instruction to Codex
 
-G13 is active. Continue only production-scope work unless the user explicitly asks for future-gate planning updates. Do not implement G14 or G15.
+G14 is active after G13 public-beta closure. Do not implement G14 or G15 until the user explicitly asks to proceed.
