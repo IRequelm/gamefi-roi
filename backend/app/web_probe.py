@@ -21,6 +21,8 @@ def main() -> int:
     paths = (
         "/",
         "/rankings",
+        "/opportunities",
+        "/opportunities/grass",
         "/games/farmers-world",
         f"/strategies/{DFK_CJEWEL_MAX_LOCK_V1.strategy_id}",
         "/methodology",
@@ -36,7 +38,8 @@ def main() -> int:
             return 1
 
     rankings = client.get("/api/v1/rankings").json()
-    print(f"web probe pages=5 assets=2 strategies={rankings['page']['total']}")
+    opportunities = client.get("/api/v1/opportunities").json()
+    print(f"web probe pages=7 assets=2 opportunities={opportunities['page']['total']} strategies={rankings['page']['total']}")
     return 0
 
 

@@ -17,6 +17,8 @@ from app.api.v1.schemas import (
     HealthPayload,
     HistoryPage,
     OpsStatusPayload,
+    OpportunitiesPage,
+    OpportunityDetail,
     RankingsPage,
     StrategiesPage,
     StrategySnapshotPayload,
@@ -68,6 +70,34 @@ def list_games(limit: Limit = 50, offset: Offset = 0, engine: Engine = Depends(g
 
 
 @router.get(
+    "/opportunities",
+    response_model=OpportunitiesPage,
+    summary="List modeled opportunities and candidates",
+    description="Returns the canonical opportunity catalog, including GAME, DEPIN_NODE, and POINTS records.",
+)
+def list_opportunities(
+    limit: Limit = 50,
+    offset: Offset = 0,
+    engine: Engine = Depends(get_database_engine),
+) -> OpportunitiesPage:
+    items, total = ApiDataService(engine).opportunities_page(limit=limit, offset=offset)
+    return OpportunitiesPage(items=items, page={"limit": limit, "offset": offset, "total": total})
+
+
+@router.get(
+    "/opportunities/{opportunity_id}",
+    response_model=OpportunityDetail,
+    summary="Get opportunity",
+    description="Returns opportunity metadata, feasibility notes, outbound destinations, and modeled strategies if any.",
+)
+def get_opportunity(opportunity_id: str, engine: Engine = Depends(get_database_engine)) -> OpportunityDetail:
+    detail = ApiDataService(engine).opportunity_detail(opportunity_id)
+    if detail is None:
+        raise HTTPException(status_code=404, detail=f"Unknown opportunity_id: {opportunity_id}")
+    return detail
+
+
+@router.get(
     "/games/{game_id}",
     response_model=GameDetail,
     summary="Get modeled game",
@@ -90,6 +120,8 @@ def list_strategies(
     limit: Limit = 50,
     offset: Offset = 0,
     game_id: str | None = Query(None, description="Filter by modeled game id."),
+    opportunity_id: str | None = Query(None, description="Filter by canonical opportunity id."),
+    opportunity_type: str | None = Query(None, description="Filter by canonical opportunity type."),
     chain: str | None = Query(None, description="Filter by modeled chain."),
     economy_type: str | None = Query(None, description="Filter by modeled economy type."),
     engine: Engine = Depends(get_database_engine),
@@ -98,6 +130,8 @@ def list_strategies(
         limit=limit,
         offset=offset,
         game_id=game_id,
+        opportunity_id=opportunity_id,
+        opportunity_type=opportunity_type,
         chain=chain,
         economy_type=economy_type,
     )
@@ -178,6 +212,8 @@ def get_rankings(
     confidence_min: ScoreFilter = None,
     risk_max: ScoreFilter = None,
     game_id: str | None = Query(None, description="Filter by modeled game id."),
+    opportunity_id: str | None = Query(None, description="Filter by canonical opportunity id."),
+    opportunity_type: str | None = Query(None, description="Filter by canonical opportunity type."),
     chain: str | None = Query(None, description="Filter by modeled chain."),
     economy_type: str | None = Query(None, description="Filter by modeled economy type."),
     engine: Engine = Depends(get_database_engine),
@@ -192,6 +228,8 @@ def get_rankings(
         confidence_min=confidence_min,
         risk_max=risk_max,
         game_id=game_id,
+        opportunity_id=opportunity_id,
+        opportunity_type=opportunity_type,
         chain=chain,
         economy_type=economy_type,
     )

@@ -614,6 +614,51 @@ Outbound/referral metadata is not a strategy observation, not an adapter input, 
 
 Native program referral rewards, such as a DePIN network awarding points for referred users, are distinct from GameFi ROI commercial referral metadata. Native referral economics may only be modeled as part of a strategy when evidence is public/authorized, versioned, and disclosed. A GameFi ROI affiliate relationship must never cause a native referral bonus to be added to ROI.
 
+### G14 API implementation
+
+G14 adds these read-only API routes without changing the G10 compatibility routes:
+
+```text
+GET /api/v1/opportunities
+GET /api/v1/opportunities/{opportunity_id}
+```
+
+`/api/v1/games` remains a GAME-only compatibility view. Existing strategy ids, strategy versions, `game_id` values, and snapshot payload semantics remain stable.
+
+Opportunity and strategy payloads may include outbound destination metadata. The exposed destination payload includes:
+
+- `destination_id`,
+- `destination_slug`,
+- `opportunity_id`,
+- `opportunity_type`,
+- optional `game_id`,
+- optional `strategy_id`,
+- `destination_type`,
+- `label`,
+- first-party `redirect_url`,
+- reviewed `official_url`,
+- optional `referral_url`,
+- optional `referral_code`,
+- optional `affiliate_program`,
+- `status`,
+- `is_affiliate`,
+- `commercial_relationship`,
+- `disclosure_text`,
+- `source_reference`,
+- `reviewed_at`,
+- `verification_status`,
+- `allowed_surfaces`.
+
+The public web must use the first-party `redirect_url` for Start/Play/Open calls. It may display disclosure text and commercial relationship status, but must not use those fields to recalculate ROI, score confidence/risk, create snapshots, or reorder organic rankings.
+
+G14 redirect behavior:
+
+- `GET /go/{destination_slug}` resolves only active, verified, allowlisted destination records,
+- missing, disabled, expired, malformed, non-HTTPS, or unreviewed destinations return an error instead of redirecting,
+- no arbitrary target URL query parameter is accepted,
+- G14 logs only a minimal aggregate redirect event and does not set tracking cookies or store per-user click records,
+- affiliate attribution/reporting, conversion tracking, sponsored placements, and commercial analytics remain G15.
+
 ### G15 monetization data boundary
 
 G15 may add affiliate attribution/reporting, sponsored placements, and commercial analytics.

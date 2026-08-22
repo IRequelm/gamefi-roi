@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
@@ -15,6 +16,7 @@ from app.risk.scoring import SnapshotScorer
 from app.storage.history import CalculationWindow, HistoryRepository
 from app.storage.models import StrategySnapshotRecord, StrategySnapshotScoreRecord
 from app.storage.scoring import ScoringRepository
+from app.strategies import catalog
 from app.strategies.defi_kingdoms import DFK_CJEWEL_MAX_LOCK_V1
 from app.strategies.farmers_world import FARMERS_WORLD_AXE_WOOD_V1
 from app.strategies.splinterlands import SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1
@@ -75,6 +77,7 @@ def test_openapi_documents_api_v1_routes(monkeypatch, tmp_path) -> None:
     paths = response.json()["paths"]
     assert "/api/v1/strategies/{strategy_id}/latest" in paths
     assert "/api/v1/rankings" in paths
+    assert "/api/v1/opportunities" in paths
     assert paths["/api/v1/rankings"]["get"]["responses"]["200"]["content"]["application/json"]["schema"]["$ref"].endswith(
         "/RankingsPage"
     )
@@ -89,7 +92,12 @@ def test_strategy_detail_includes_latest_snapshot_risk_and_confidence(monkeypatc
     payload = response.json()
     latest = payload["latest_snapshot"]
     assert payload["game_id"] == "defi-kingdoms"
+    assert payload["opportunity_id"] == "defi-kingdoms"
+    assert payload["opportunity_type"] == "GAME"
+    assert payload["primary_destination"]["redirect_url"] == "/go/defi-kingdoms-play"
     assert latest["strategy_version"] == "v1"
+    assert latest["opportunity_id"] == "defi-kingdoms"
+    assert latest["opportunity_type"] == "GAME"
     assert latest["capital"]["total_capital"] == {"amount": "250.00", "currency": "USD"}
     assert latest["earnings"]["net_earnings_day"]["amount"] == "0.4885"
     assert latest["confidence"]["score"] == 82
@@ -126,6 +134,15 @@ def test_rankings_filters_use_only_modeled_fields(monkeypatch, tmp_path) -> None
     assert _ranking_ids(client, "/api/v1/rankings?risk_max=50") == [FARMERS_WORLD_AXE_WOOD_V1.strategy_id]
     assert _ranking_ids(client, "/api/v1/rankings?confidence_min=80") == [DFK_CJEWEL_MAX_LOCK_V1.strategy_id]
     assert _ranking_ids(client, "/api/v1/rankings?game_id=farmers-world") == [FARMERS_WORLD_AXE_WOOD_V1.strategy_id]
+    assert _ranking_ids(client, "/api/v1/rankings?opportunity_id=farmers-world") == [
+        FARMERS_WORLD_AXE_WOOD_V1.strategy_id
+    ]
+    assert _ranking_ids(client, "/api/v1/rankings?opportunity_type=GAME") == [
+        FARMERS_WORLD_AXE_WOOD_V1.strategy_id,
+        DFK_CJEWEL_MAX_LOCK_V1.strategy_id,
+        SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1.strategy_id,
+    ]
+    assert _ranking_ids(client, "/api/v1/rankings?opportunity_type=DEPIN_NODE") == []
     assert _ranking_ids(client, "/api/v1/rankings?chain=wax") == [FARMERS_WORLD_AXE_WOOD_V1.strategy_id]
     assert _ranking_ids(client, "/api/v1/rankings?economy_type=resource-production") == [
         FARMERS_WORLD_AXE_WOOD_V1.strategy_id
@@ -207,6 +224,7 @@ def test_invalid_ids_return_404(monkeypatch, tmp_path) -> None:
     client, _engine = _seeded_client(monkeypatch, tmp_path, "invalid.db")
 
     assert client.get("/api/v1/games/not-a-game").status_code == 404
+    assert client.get("/api/v1/opportunities/not-an-opportunity").status_code == 404
     assert client.get("/api/v1/strategies/not-a-strategy").status_code == 404
     assert client.get("/api/v1/strategies/not-a-strategy/latest").status_code == 404
 
@@ -235,8 +253,76 @@ def test_games_endpoints_include_strategy_catalog(monkeypatch, tmp_path) -> None
         "farmers-world",
         "splinterlands",
     ]
+    assert {item["opportunity_type"] for item in list_response.json()["items"]} == {"GAME"}
     assert detail_response.status_code == 200
     assert detail_response.json()["strategies"][0]["strategy_id"] == SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1.strategy_id
+    assert detail_response.json()["primary_destination"]["redirect_url"] == "/go/splinterlands-play"
+
+
+def test_opportunities_catalog_includes_non_game_candidates_without_financial_snapshots(monkeypatch, tmp_path) -> None:
+    client, _engine = _seeded_client(monkeypatch, tmp_path, "opportunities.db")
+
+    list_response = client.get("/api/v1/opportunities")
+    grass_response = client.get("/api/v1/opportunities/grass")
+    teneo_response = client.get("/api/v1/opportunities/teneo")
+    aro_response = client.get("/api/v1/opportunities/aro-network")
+
+    assert list_response.status_code == 200
+    payload = list_response.json()
+    assert payload["page"]["total"] == 10
+    assert {item["opportunity_type"] for item in payload["items"]} == {"GAME", "DEPIN_NODE", "POINTS"}
+    assert {item["opportunity_id"] for item in payload["items"]} >= {"grass", "teneo", "aro-network"}
+    assert grass_response.status_code == 200
+    grass = grass_response.json()
+    assert grass["opportunity_type"] == "DEPIN_NODE"
+    assert grass["data_feasibility_status"] == "PARTIAL"
+    assert grass["value_realization_status"] == "non_transferable_points"
+    assert grass["strategies"] == []
+    assert teneo_response.json()["data_feasibility_status"] == "PARTIAL"
+    assert aro_response.json()["value_realization_status"] == "future_airdrop_claim"
+
+
+def test_referral_metadata_cannot_change_rankings_or_scores(monkeypatch, tmp_path) -> None:
+    client, _engine = _seeded_client(monkeypatch, tmp_path, "commercial-boundary.db")
+    before = client.get("/api/v1/rankings").json()
+    before_ids = [item["strategy"]["strategy_id"] for item in before["items"]]
+    before_scores = {
+        item["strategy"]["strategy_id"]: (
+            item["latest_snapshot"]["confidence"]["score"],
+            item["latest_snapshot"]["risk"]["score"],
+            item["latest_snapshot"]["roi"]["roi_total_30d"]["value"],
+        )
+        for item in before["items"]
+    }
+
+    mutated_destinations = tuple(
+        replace(
+            destination,
+            referral_url="https://farmersworld.io/?ref=gamefi-roi-test",
+            referral_code="gamefi-roi-test",
+            affiliate_program="test-affiliate",
+            is_affiliate=True,
+            commercial_relationship="affiliate",
+            disclosure_text="Test affiliate metadata; must not affect organic analytics.",
+        )
+        if destination.destination_slug == "farmers-world-play"
+        else destination
+        for destination in catalog.OUTBOUND_DESTINATIONS
+    )
+    monkeypatch.setattr(catalog, "OUTBOUND_DESTINATIONS", mutated_destinations)
+
+    after = client.get("/api/v1/rankings").json()
+
+    assert [item["strategy"]["strategy_id"] for item in after["items"]] == before_ids
+    assert {
+        item["strategy"]["strategy_id"]: (
+            item["latest_snapshot"]["confidence"]["score"],
+            item["latest_snapshot"]["risk"]["score"],
+            item["latest_snapshot"]["roi"]["roi_total_30d"]["value"],
+        )
+        for item in after["items"]
+    } == before_scores
+    assert after["items"][0]["latest_snapshot"].get("affiliate_program") is None
 
 
 def _seeded_client(monkeypatch, tmp_path, database_name: str) -> tuple[TestClient, object]:

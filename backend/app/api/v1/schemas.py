@@ -118,10 +118,64 @@ class ClassificationSummaryPayload(BaseModel):
     metrics: dict[str, str]
 
 
+class SourceReferencePayload(BaseModel):
+    label: str
+    url: str
+
+
+class OutboundDestinationPayload(BaseModel):
+    destination_id: str
+    destination_slug: str
+    opportunity_id: str
+    opportunity_type: str
+    game_id: str | None = None
+    strategy_id: str | None = None
+    destination_type: str
+    label: str
+    redirect_url: str
+    official_url: str
+    referral_url: str | None = None
+    referral_code: str | None = None
+    status: str
+    is_affiliate: bool
+    affiliate_program: str | None = None
+    commercial_relationship: str
+    disclosure_text: str
+    source_reference: SourceReferencePayload
+    reviewed_at: datetime
+    verification_status: str
+    allowed_surfaces: list[str]
+
+
+class OpportunitySummary(BaseModel):
+    opportunity_id: str
+    opportunity_type: str
+    name: str
+    status: str
+    platforms: list[str]
+    chains: list[str]
+    economy_types: list[str]
+    reward_asset_or_points_type: list[str]
+    value_realization_status: str
+    data_feasibility_status: str
+    strategy_count: int
+    legacy_game_id: str | None = None
+    primary_destination: OutboundDestinationPayload | None = None
+
+
+class OpportunityDetail(OpportunitySummary):
+    feasibility_summary: str
+    official_source_references: list[SourceReferencePayload]
+    outbound_destinations: list[OutboundDestinationPayload]
+    strategies: list["StrategySummary"]
+
+
 class StrategySnapshotPayload(BaseModel):
     snapshot_id: str
     strategy_id: str
     strategy_version: str
+    opportunity_id: str
+    opportunity_type: str
     game_id: str
     game_name: str
     chain: str
@@ -141,31 +195,44 @@ class StrategySnapshotPayload(BaseModel):
 
 class GameSummary(BaseModel):
     game_id: str
+    opportunity_id: str
+    opportunity_type: str
     name: str
     chains: list[str]
     economy_types: list[str]
     status: str
     strategy_count: int
+    primary_destination: OutboundDestinationPayload | None = None
 
 
 class GameDetail(GameSummary):
     strategies: list["StrategySummary"]
+    outbound_destinations: list[OutboundDestinationPayload]
 
 
 class StrategySummary(BaseModel):
     strategy_id: str
     strategy_version: str
+    opportunity_id: str
+    opportunity_type: str
     game_id: str
     game_name: str
     name: str
     chain: str
     economy_type: str
     description: str
+    outbound_destinations: list[OutboundDestinationPayload] = Field(default_factory=list)
+    primary_destination: OutboundDestinationPayload | None = None
     latest_snapshot: StrategySnapshotPayload | None = None
 
 
 class GamesPage(BaseModel):
     items: list[GameSummary]
+    page: PageMeta
+
+
+class OpportunitiesPage(BaseModel):
+    items: list[OpportunitySummary]
     page: PageMeta
 
 
@@ -226,3 +293,4 @@ class ErrorPayload(BaseModel):
 
 
 GameDetail.model_rebuild()
+OpportunityDetail.model_rebuild()

@@ -26,6 +26,8 @@ def main() -> int:
     client = TestClient(create_app())
     paths = (
         "/api/v1/health",
+        "/api/v1/opportunities",
+        "/api/v1/opportunities/grass",
         "/api/v1/games",
         "/api/v1/strategies",
         "/api/v1/rankings",
@@ -38,8 +40,10 @@ def main() -> int:
             return 1
 
     rankings = client.get("/api/v1/rankings").json()
+    opportunities = client.get("/api/v1/opportunities").json()
     print(
         "api probe "
+        f"opportunities={opportunities['page']['total']} "
         f"strategies={rankings['page']['total']} "
         f"ordering={','.join(rankings['ordering'])}"
     )

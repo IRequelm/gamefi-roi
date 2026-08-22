@@ -346,6 +346,8 @@ G10 exposes a stable read-oriented API under `/api/v1`. Normal API requests read
 Endpoints:
 
 - `GET /api/v1/health`
+- `GET /api/v1/opportunities`
+- `GET /api/v1/opportunities/{opportunity_id}`
 - `GET /api/v1/games`
 - `GET /api/v1/games/{game_id}`
 - `GET /api/v1/strategies`
@@ -354,7 +356,7 @@ Endpoints:
 - `GET /api/v1/strategies/{strategy_id}/history`
 - `GET /api/v1/rankings`
 
-Lists use `limit` and `offset` pagination. Rankings support only currently modeled filters: `capital_min`, `capital_max`, `confidence_min`, `risk_max`, `game_id`, `chain`, and `economy_type`.
+Lists use `limit` and `offset` pagination. Rankings support only currently modeled filters: `capital_min`, `capital_max`, `confidence_min`, `risk_max`, `game_id`, `opportunity_id`, `opportunity_type`, `chain`, and `economy_type`.
 
 Ranking order is deterministic:
 
@@ -380,20 +382,27 @@ The probe creates deterministic sample snapshots/scores only if the database has
 
 G11 adds a minimal public web interface served by the existing FastAPI app. The frontend is plain HTML/CSS/JavaScript with no npm package dependencies and no build step. This keeps the first web surface reproducible while the product is still validating the data model.
 
+G14 expands the public interface to show a backward-compatible Opportunity catalog and a first-party outbound redirect layer. Opportunity candidates with no lawful, reproducible financial value show ROI unavailable rather than zero.
+
 Routes:
 
 - `/` ROI Finder
 - `/rankings`
+- `/opportunities`
+- `/opportunities/{opportunity_id}`
 - `/games/{game_id}`
 - `/strategies/{strategy_id}`
 - `/methodology`
+- `/go/{destination_slug}` reviewed outbound redirect
 
 Frontend boundary:
 
 - Browser data access goes through `/api/v1` only.
 - The UI displays stored API values and does not call adapters, providers, blockchain RPCs, or recalculation jobs.
 - Monetary amounts, ROI ratios, break-even days, and uncertainty values are treated as exact strings from the API. The UI does not use binary-float financial calculations.
+- Money, ROI, and break-even may be formatted for readability, but exact API strings remain the source values and are not recomputed into business logic.
 - Missing scores and unavailable optional values remain visibly unavailable instead of becoming zero.
+- Start/Play/Open calls use `/go/{destination_slug}` reviewed destinations with disclosure metadata. Affiliate or sponsor metadata must never affect ROI, Risk, Confidence, history snapshots, or organic rankings.
 
 Run backend and frontend together locally:
 

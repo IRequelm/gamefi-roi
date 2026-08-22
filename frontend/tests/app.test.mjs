@@ -4,30 +4,35 @@ import assert from "node:assert/strict";
 import {
   ApiError,
   buildRankingsPath,
+  formatBreakEven,
   formatMoney,
   formatRatio,
   renderError,
   renderFreshnessAlert,
   renderHistory,
+  renderOpportunityDetail,
   renderRankingsTable,
   renderScoreBadge,
   renderStrategyDetail,
 } from "../assets/app.js";
 
-test("rankings rendering includes required columns and stored API values", () => {
+test("rankings rendering includes card metrics and stored API values", () => {
   const html = renderRankingsTable(rankingPayload());
 
-  assert.match(html, /Game/);
-  assert.match(html, /Strategy/);
+  assert.match(html, /DeFi Kingdoms/);
+  assert.match(html, /DFK Jeweler/);
   assert.match(html, /Capital/);
   assert.match(html, /Net\/day/);
   assert.match(html, /30D ROI/);
   assert.match(html, /Break-even/);
-  assert.match(html, /Confidence/);
-  assert.match(html, /Risk/);
+  assert.match(html, /82 HIGH/);
+  assert.match(html, /79 VERY HIGH/);
   assert.match(html, /250.00 USD/);
   assert.match(html, /0.4885 USD/);
   assert.match(html, /0.05862/);
+  assert.match(html, /\$250/);
+  assert.match(html, /5.86%/);
+  assert.match(html, /\/go\/defi-kingdoms-play/);
 });
 
 test("finder filters build supported rankings query only", () => {
@@ -36,13 +41,14 @@ test("finder filters build supported rankings query only", () => {
     riskMax: "50",
     confidenceMin: "70",
     gameId: "farmers-world",
+    opportunityType: "GAME",
     economyType: "resource-production",
     playtime: "unsupported",
   });
 
   assert.equal(
     path,
-    "/rankings?capital_max=20.00&confidence_min=70&risk_max=50&game_id=farmers-world&economy_type=resource-production",
+    "/rankings?capital_max=20.00&confidence_min=70&risk_max=50&game_id=farmers-world&opportunity_type=GAME&economy_type=resource-production",
   );
   assert.doesNotMatch(path, /playtime/);
 });
@@ -62,7 +68,19 @@ test("strategy detail renders capital, earnings, scores, classification, warning
   assert.match(html, /roi-core-v1/);
   assert.match(html, /2 snapshots/);
   assert.match(html, /0.05862/);
+  assert.match(html, /5.86%/);
+  assert.match(html, /Start/);
   assert.doesNotMatch(html, /5.862%/);
+});
+
+test("opportunity detail shows unavailable financial ROI without inventing zero", () => {
+  const html = renderOpportunityDetail(opportunityPayload());
+
+  assert.match(html, /Grass/);
+  assert.match(html, /Financial ROI unavailable/);
+  assert.match(html, /Non Transferable Points/);
+  assert.match(html, /\/go\/grass-official/);
+  assert.doesNotMatch(html, />0<\/|0\.00/);
 });
 
 test("risk and confidence badges preserve unavailable scores", () => {
@@ -107,9 +125,11 @@ test("history no-history state is explicit", () => {
 });
 
 test("financial formatting preserves exact API Decimal strings", () => {
-  assert.equal(formatRatio({ value: "0.05862", status: "available", reason: null }), "0.05862");
-  assert.equal(formatRatio({ value: "0.84", status: "available", reason: null }), "0.84");
-  assert.equal(formatMoney({ amount: "0.0317954339244676", currency: "USD" }), "0.0317954339244676 USD");
+  assert.match(formatRatio({ value: "0.05862", status: "available", reason: null }), /5.86%/);
+  assert.match(formatRatio({ value: "0.84", status: "available", reason: null }), /84%/);
+  assert.match(formatMoney({ amount: "0.0317954339244676", currency: "USD" }), /\$0.03/);
+  assert.match(formatMoney({ amount: "0.0317954339244676", currency: "USD" }), /0.0317954339244676 USD/);
+  assert.match(formatBreakEven({ days: "511.7707", status: "available", reason: null }), /512 days/);
 });
 
 function rankingPayload() {
@@ -126,6 +146,7 @@ function rankingPayload() {
           chain: "dfk-chain",
           economy_type: "locked-yield-reward",
           description: "Lock strategy.",
+          primary_destination: destinationPayload("defi-kingdoms-play"),
         },
         latest_snapshot: snapshotPayload(),
       },
@@ -139,13 +160,64 @@ function strategyPayload() {
   return {
     strategy_id: "dfk-crystalvale-jeweler-cjewel-max-lock",
     strategy_version: "v1",
+    opportunity_id: "defi-kingdoms",
+    opportunity_type: "GAME",
     game_id: "defi-kingdoms",
     game_name: "DeFi Kingdoms",
     name: "DFK Jeweler cJEWEL Max Lock",
     chain: "dfk-chain",
     economy_type: "locked-yield-reward",
     description: "cJEWEL max-lock strategy.",
+    primary_destination: destinationPayload("defi-kingdoms-play"),
     latest_snapshot: snapshotPayload(),
+  };
+}
+
+function opportunityPayload() {
+  return {
+    opportunity_id: "grass",
+    opportunity_type: "DEPIN_NODE",
+    name: "Grass",
+    status: "candidate",
+    platforms: ["browser-extension"],
+    chains: ["solana"],
+    economy_types: ["bandwidth-contribution", "points-program"],
+    reward_asset_or_points_type: ["Grass Points"],
+    value_realization_status: "non_transferable_points",
+    data_feasibility_status: "PARTIAL",
+    strategy_count: 0,
+    legacy_game_id: null,
+    feasibility_summary: "Points are not a reproducible financial ROI input.",
+    official_source_references: [{ label: "Grass terms", url: "https://www.grass.io/terms-and-conditions/" }],
+    outbound_destinations: [destinationPayload("grass-official")],
+    primary_destination: destinationPayload("grass-official"),
+    strategies: [],
+  };
+}
+
+function destinationPayload(slug) {
+  return {
+    destination_id: `dest-${slug}`,
+    destination_slug: slug,
+    opportunity_id: slug === "grass-official" ? "grass" : "defi-kingdoms",
+    opportunity_type: slug === "grass-official" ? "DEPIN_NODE" : "GAME",
+    game_id: slug === "grass-official" ? null : "defi-kingdoms",
+    strategy_id: null,
+    destination_type: "official_site",
+    label: "Open official site",
+    redirect_url: `/go/${slug}`,
+    official_url: "https://example.com/",
+    referral_url: null,
+    referral_code: null,
+    status: "active",
+    is_affiliate: false,
+    affiliate_program: null,
+    commercial_relationship: "none",
+    disclosure_text: "Official outbound link. No affiliate relationship is configured.",
+    source_reference: { label: "Official site", url: "https://example.com/" },
+    reviewed_at: "2026-08-23T00:00:00Z",
+    verification_status: "verified",
+    allowed_surfaces: ["web", "api", "redirect"],
   };
 }
 
@@ -169,6 +241,8 @@ function snapshotPayload() {
     snapshot_id: "snapshot-1",
     strategy_id: "dfk-crystalvale-jeweler-cjewel-max-lock",
     strategy_version: "v1",
+    opportunity_id: "defi-kingdoms",
+    opportunity_type: "GAME",
     game_id: "defi-kingdoms",
     game_name: "DeFi Kingdoms",
     chain: "dfk-chain",

@@ -5,11 +5,13 @@ Project version: 0.1
 
 ## Current state
 
-**ACTIVE GATE: G14 — Scale / Opportunity + Referral Foundation**
+**ACTIVE GATE: G15 — Monetization**
 
 G12 is complete and frozen in the G12 baseline Git commit.
 
 G13 is complete for the accepted public beta deployment. The beta is live on Render Free Web Service + Free Render Postgres, with GitHub Actions scheduled recalculation. Free-tier limits are accepted public-beta limitations, not production-grade guarantees.
+
+G14 is complete in the repository. It adds the backward-compatible Opportunity catalog, referral/outbound foundation, and public-beta UI readability pass. Render auto-deploy remains off from G13, so the current public URL must be manually deployed to serve the G14 routes and UI.
 
 ## Gate board
 
@@ -29,8 +31,8 @@ G13 is complete for the accepted public beta deployment. The beta is live on Ren
 | G11 | Web MVP | COMPLETE |
 | G12 | Validation | COMPLETE |
 | G13 | Production | COMPLETE |
-| G14 | Scale / Opportunity + Referral Foundation | ACTIVE |
-| G15 | Monetization | NOT STARTED |
+| G14 | Scale / Opportunity + Referral Foundation | COMPLETE |
+| G15 | Monetization | ACTIVE |
 
 ## G0 objective
 
@@ -527,26 +529,74 @@ G14 must not implement G15 monetization analytics, sponsored placement inventory
 
 G14 must not assign financial value to points-only opportunities unless a lawful, reproducible, realizable value route exists. Points-only outputs must show ROI unavailable rather than zero.
 
-## G14 planned acceptance criteria
+## G14 acceptance criteria
 
-- [ ] `Game` to `Opportunity` backward-compatibility feasibility is documented and approved before code changes,
-- [ ] canonical `Opportunity` model supports `GAME`, `DEPIN_NODE`, and `POINTS`,
-- [ ] existing DeFi Kingdoms, Farmers World, and Splinterlands adapter outputs remain backward-equivalent,
-- [ ] existing `game_id` values and `/api/v1/games` behavior remain compatible for current clients,
-- [ ] new opportunity metadata does not require ROI core changes or game/opportunity type branches in the ROI engine,
-- [ ] Grass, Teneo, and ARO have recorded candidate feasibility notes before any adapter work,
-- [ ] outbound destination metadata exists for modeled opportunities/games/strategies with stable ids/slugs, destination type, target URL, status, ownership/commercial relationship, disclosure text, source/provenance, review timestamp, and allowed use,
-- [ ] referral/affiliate metadata is structured separately from ROI/risk/confidence model inputs,
-- [ ] first-party `/go/{destination_slug}` redirect route resolves only allowlisted active destinations,
-- [ ] redirect route fails closed for missing, disabled, malformed, or unreviewed destinations,
-- [ ] web/API can expose outbound destination metadata needed for links and disclosure without exposing secrets,
-- [ ] affiliate/referral status is clearly disclosed where links are shown,
-- [ ] tests prove affiliate/sponsor/referral metadata cannot change ROI, Risk, Confidence, history snapshots, or organic ranking order,
-- [ ] no affiliate attribution/reporting, sponsored placement ranking, commercial analytics, or paid promotion surfaces are implemented,
-- [ ] documentation explains how future commercial relationships are represented without contaminating economic calculations,
-- [ ] documentation explains that native referral/points rewards are separate from GameFi ROI commercial referral metadata,
-- [ ] all required tests, doctor checks, probes, and whitespace checks pass,
-- [ ] baseline Git commit for G14.
+- [x] `Game` to `Opportunity` backward-compatibility feasibility is documented and approved before code changes,
+- [x] canonical `Opportunity` model supports `GAME`, `DEPIN_NODE`, and `POINTS`,
+- [x] existing DeFi Kingdoms, Farmers World, and Splinterlands adapter outputs remain backward-equivalent,
+- [x] existing `game_id` values and `/api/v1/games` behavior remain compatible for current clients,
+- [x] new opportunity metadata does not require ROI core changes or game/opportunity type branches in the ROI engine,
+- [x] Grass, Teneo, and ARO have recorded candidate feasibility notes before any adapter work,
+- [x] outbound destination metadata exists for modeled opportunities/games/strategies with stable ids/slugs, destination type, target URL, status, ownership/commercial relationship, disclosure text, source/provenance, review timestamp, and allowed use,
+- [x] referral/affiliate metadata is structured separately from ROI/risk/confidence model inputs,
+- [x] first-party `/go/{destination_slug}` redirect route resolves only allowlisted active destinations,
+- [x] redirect route fails closed for missing, disabled, malformed, or unreviewed destinations,
+- [x] web/API can expose outbound destination metadata needed for links and disclosure without exposing secrets,
+- [x] affiliate/referral status is clearly disclosed where links are shown,
+- [x] tests prove affiliate/sponsor/referral metadata cannot change ROI, Risk, Confidence, history snapshots, or organic ranking order,
+- [x] no affiliate attribution/reporting, sponsored placement ranking, commercial analytics, or paid promotion surfaces are implemented,
+- [x] documentation explains how future commercial relationships are represented without contaminating economic calculations,
+- [x] documentation explains that native referral/points rewards are separate from GameFi ROI commercial referral metadata,
+- [x] all required tests, doctor checks, probes, and whitespace checks pass,
+- [x] baseline Git commit for G14.
+
+## G14 opportunity/referral decision
+
+G14 adds a canonical static `Opportunity` catalog and keeps the existing `Game` catalog as a GAME-only compatibility view.
+
+Implemented opportunity types:
+
+- `GAME`,
+- `DEPIN_NODE`,
+- `POINTS`.
+
+Initial 10 opportunity records:
+
+| Opportunity | Type | Feasibility | Financial ROI |
+|---|---|---|---|
+| DeFi Kingdoms | `GAME` | `GO` | available through existing DFK Jeweler strategy |
+| Farmers World | `GAME` | `GO` | available through existing Axe Wood Production strategy |
+| Splinterlands | `GAME` | `GO` | available through existing Modern Ranked SPS EV strategy |
+| Grass | `DEPIN_NODE` | `PARTIAL` | unavailable; points/value route not reproducible |
+| Teneo | `DEPIN_NODE` | `PARTIAL` | unavailable; beta points/account data not reproducible |
+| ARO Network | `DEPIN_NODE` | `PARTIAL` | unavailable; Jade/future-drop value not reproducible |
+| Nodepay | `POINTS` | `PARTIAL` | unavailable; conversion/share data not reproducible |
+| DAWN | `DEPIN_NODE` | `REJECTED` for financial ROI | unavailable; terms state no monetary value |
+| BlockMesh | `DEPIN_NODE` | `PARTIAL` | unavailable; token eligibility/value not reproducible |
+| Bless Network | `DEPIN_NODE` | `PARTIAL` | unavailable; reward/value data not reproducible |
+
+API additions:
+
+```text
+GET /api/v1/opportunities
+GET /api/v1/opportunities/{opportunity_id}
+```
+
+Web additions:
+
+```text
+/opportunities
+/opportunities/{opportunity_id}
+/go/{destination_slug}
+```
+
+The UI now formats money, ROI percentages, and break-even values for readability while preserving exact API Decimal strings as source values. The frontend still does not recalculate ROI, Risk, Confidence, or rankings.
+
+Outbound/referral metadata is implemented as reviewed product metadata. Current destinations use official URL fallback and have no configured affiliate relationship. `/go/{destination_slug}` accepts no arbitrary target parameter, redirects only active verified destinations, and logs only a minimal aggregate event without cookies or per-user attribution.
+
+Affiliate/sponsor/referral metadata is excluded from ROI inputs, risk/confidence scoring, historical snapshots, validation, and organic ranking order. G15 is the first gate where attribution/reporting, sponsored placements, and commercial analytics may be implemented.
+
+Public beta note: `https://gamefi-roi-web.onrender.com/api/v1/health` was reachable and healthy during G14 verification. Because `render.yaml` keeps `autoDeployTrigger: off`, the current public deployment will not serve the new G14 routes until the G14 commit is manually deployed on Render.
 
 ## G15 objective
 
@@ -577,4 +627,4 @@ Affiliate/sponsor relationships must never affect ROI, Risk, Confidence, strateg
 
 ## Current instruction to Codex
 
-G14 is active after G13 public-beta closure. Do not implement G14 or G15 until the user explicitly asks to proceed.
+G15 is active after G14 repository completion. Do not implement G15 until the user explicitly asks to proceed.

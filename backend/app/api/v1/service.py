@@ -23,6 +23,10 @@ from app.api.v1.schemas import (
     HistoryPage,
     MoneyAmount,
     OpsStatusPayload,
+    OpportunitiesPage,
+    OpportunityDetail,
+    OpportunitySummary,
+    OutboundDestinationPayload,
     PageMeta,
     RankingItem,
     RankingsPage,
@@ -30,6 +34,7 @@ from app.api.v1.schemas import (
     RoiMetrics,
     ScoreContributionPayload,
     ScorePayload,
+    SourceReferencePayload,
     StrategiesPage,
     StrategySnapshotPayload,
     StrategyOpsStatusPayload,
@@ -43,7 +48,23 @@ from app.config.settings import Settings
 from app.risk.results import METHODOLOGY_VERSION, SnapshotScoreResult
 from app.storage.history import HistoryRepository, StrategyCalculationFailure, StrategySnapshot
 from app.storage.scoring import ScoringRepository
-from app.strategies.catalog import GameCatalogEntry, StrategyCatalogEntry, get_game, get_strategy, list_games, list_strategies
+from app.strategies.catalog import (
+    GameCatalogEntry,
+    OpportunityCatalogEntry,
+    OutboundDestination,
+    SourceReference,
+    StrategyCatalogEntry,
+    get_game,
+    get_opportunity,
+    get_strategy,
+    list_games,
+    list_opportunities,
+    list_strategies,
+    outbound_destinations_for_opportunity,
+    outbound_destinations_for_strategy,
+    primary_destination_for_opportunity,
+    primary_destination_for_strategy,
+)
 
 RANKING_ORDERING = [
     "roi_total_30d desc",
@@ -64,6 +85,22 @@ class ApiDataService:
         page = _paginate(games, limit=limit, offset=offset)
         return [_game_summary(game) for game in page], len(games)
 
+    def opportunities_page(self, *, limit: int, offset: int) -> tuple[list[OpportunitySummary], int]:
+        opportunities = list(list_opportunities())
+        page = _paginate(opportunities, limit=limit, offset=offset)
+        return [_opportunity_summary(opportunity) for opportunity in page], len(opportunities)
+
+    def opportunity_detail(self, opportunity_id: str) -> OpportunityDetail | None:
+        opportunity = get_opportunity(opportunity_id)
+        if opportunity is None:
+            return None
+        strategies = [
+            self.strategy_summary(strategy, include_latest=True)
+            for strategy in list_strategies()
+            if strategy.opportunity_id == opportunity.opportunity_id
+        ]
+        return _opportunity_detail(opportunity, strategies=strategies)
+
     def game_detail(self, game_id: str) -> GameDetail | None:
         game = get_game(game_id)
         if game is None:
@@ -76,6 +113,9 @@ class ApiDataService:
         return GameDetail(
             **_game_summary(game).model_dump(),
             strategies=[strategy for strategy in strategies if strategy is not None],
+            outbound_destinations=[
+                _outbound_destination(destination) for destination in outbound_destinations_for_opportunity(game.opportunity_id)
+            ],
         )
 
     def strategies_page(
@@ -84,6 +124,8 @@ class ApiDataService:
         limit: int,
         offset: int,
         game_id: str | None = None,
+        opportunity_id: str | None = None,
+        opportunity_type: str | None = None,
         chain: str | None = None,
         economy_type: str | None = None,
     ) -> tuple[list[StrategySummary], int]:
@@ -91,6 +133,8 @@ class ApiDataService:
             strategy
             for strategy in list_strategies()
             if (game_id is None or strategy.game_id == game_id)
+            and (opportunity_id is None or strategy.opportunity_id == opportunity_id)
+            and (opportunity_type is None or strategy.opportunity_type == opportunity_type)
             and (chain is None or strategy.chain == chain)
             and (economy_type is None or strategy.economy_type == economy_type)
         ]
@@ -112,12 +156,18 @@ class ApiDataService:
         return StrategySummary(
             strategy_id=strategy.strategy_id,
             strategy_version=strategy.strategy_version,
+            opportunity_id=strategy.opportunity_id,
+            opportunity_type=strategy.opportunity_type,
             game_id=strategy.game_id,
             game_name=strategy.game_name,
             name=strategy.name,
             chain=strategy.chain,
             economy_type=strategy.economy_type,
             description=strategy.description,
+            outbound_destinations=[
+                _outbound_destination(destination) for destination in outbound_destinations_for_strategy(strategy.strategy_id)
+            ],
+            primary_destination=_maybe_outbound_destination(primary_destination_for_strategy(strategy.strategy_id)),
             latest_snapshot=latest,
         )
 
@@ -177,6 +227,8 @@ class ApiDataService:
         confidence_min: int | None = None,
         risk_max: int | None = None,
         game_id: str | None = None,
+        opportunity_id: str | None = None,
+        opportunity_type: str | None = None,
         chain: str | None = None,
         economy_type: str | None = None,
     ) -> RankingsPage:
@@ -198,6 +250,8 @@ class ApiDataService:
                 confidence_min=confidence_min,
                 risk_max=risk_max,
                 game_id=game_id,
+                opportunity_id=opportunity_id,
+                opportunity_type=opportunity_type,
                 chain=chain,
                 economy_type=economy_type,
             ):
@@ -231,6 +285,8 @@ def snapshot_payload(
         snapshot_id=snapshot.snapshot_id,
         strategy_id=snapshot.strategy_id,
         strategy_version=snapshot.strategy_version,
+        opportunity_id=strategy.opportunity_id,
+        opportunity_type=strategy.opportunity_type,
         game_id=strategy.game_id,
         game_name=strategy.game_name,
         chain=strategy.chain,
@@ -432,11 +488,88 @@ def _score_payloads(score: SnapshotScoreResult | None) -> tuple[ScorePayload, Sc
 def _game_summary(game: GameCatalogEntry) -> GameSummary:
     return GameSummary(
         game_id=game.game_id,
+        opportunity_id=game.opportunity_id,
+        opportunity_type=game.opportunity_type,
         name=game.name,
         chains=list(game.chains),
         economy_types=list(game.economy_types),
         status=game.status,
         strategy_count=len(game.strategy_ids),
+        primary_destination=_maybe_outbound_destination(primary_destination_for_opportunity(game.opportunity_id)),
+    )
+
+
+def _opportunity_summary(opportunity: OpportunityCatalogEntry) -> OpportunitySummary:
+    return OpportunitySummary(
+        opportunity_id=opportunity.opportunity_id,
+        opportunity_type=opportunity.opportunity_type,
+        name=opportunity.name,
+        status=opportunity.status,
+        platforms=list(opportunity.platforms),
+        chains=list(opportunity.chains),
+        economy_types=list(opportunity.economy_types),
+        reward_asset_or_points_type=list(opportunity.reward_asset_or_points_type),
+        value_realization_status=opportunity.value_realization_status,
+        data_feasibility_status=opportunity.data_feasibility_status,
+        strategy_count=len(opportunity.strategy_ids),
+        legacy_game_id=opportunity.legacy_game_id,
+        primary_destination=_maybe_outbound_destination(primary_destination_for_opportunity(opportunity.opportunity_id)),
+    )
+
+
+def _opportunity_detail(
+    opportunity: OpportunityCatalogEntry,
+    *,
+    strategies: list[StrategySummary],
+) -> OpportunityDetail:
+    return OpportunityDetail(
+        **_opportunity_summary(opportunity).model_dump(),
+        feasibility_summary=opportunity.feasibility_summary,
+        official_source_references=[_source_reference(reference) for reference in opportunity.official_source_references],
+        outbound_destinations=[
+            _outbound_destination(destination)
+            for destination in outbound_destinations_for_opportunity(opportunity.opportunity_id)
+        ],
+        strategies=strategies,
+    )
+
+
+def _maybe_outbound_destination(destination: OutboundDestination | None) -> OutboundDestinationPayload | None:
+    if destination is None:
+        return None
+    return _outbound_destination(destination)
+
+
+def _outbound_destination(destination: OutboundDestination) -> OutboundDestinationPayload:
+    return OutboundDestinationPayload(
+        destination_id=destination.destination_id,
+        destination_slug=destination.destination_slug,
+        opportunity_id=destination.opportunity_id,
+        opportunity_type=destination.opportunity_type,
+        game_id=destination.game_id,
+        strategy_id=destination.strategy_id,
+        destination_type=destination.destination_type,
+        label=destination.label,
+        redirect_url=f"/go/{destination.destination_slug}",
+        official_url=destination.official_url,
+        referral_url=destination.referral_url,
+        referral_code=destination.referral_code,
+        status=destination.status,
+        is_affiliate=destination.is_affiliate,
+        affiliate_program=destination.affiliate_program,
+        commercial_relationship=destination.commercial_relationship,
+        disclosure_text=destination.disclosure_text,
+        source_reference=_source_reference(destination.source_reference),
+        reviewed_at=destination.reviewed_at,
+        verification_status=destination.verification_status,
+        allowed_surfaces=list(destination.allowed_surfaces),
+    )
+
+
+def _source_reference(reference: SourceReference) -> SourceReferencePayload:
+    return SourceReferencePayload(
+        label=reference.label,
+        url=reference.url,
     )
 
 
@@ -531,6 +664,8 @@ def _passes_filters(
     confidence_min: int | None,
     risk_max: int | None,
     game_id: str | None,
+    opportunity_id: str | None,
+    opportunity_type: str | None,
     chain: str | None,
     economy_type: str | None,
 ) -> bool:
@@ -544,6 +679,10 @@ def _passes_filters(
     if risk_max is not None and (score is None or score.risk.score > risk_max):
         return False
     if game_id is not None and strategy.game_id != game_id:
+        return False
+    if opportunity_id is not None and strategy.opportunity_id != opportunity_id:
+        return False
+    if opportunity_type is not None and strategy.opportunity_type != opportunity_type:
         return False
     if chain is not None and strategy.chain != chain:
         return False

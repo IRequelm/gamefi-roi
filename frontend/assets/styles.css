@@ -256,6 +256,19 @@ input[type="range"] {
   overflow: hidden;
 }
 
+.ranking-section,
+.opportunity-section {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.ranking-section .section-header,
+.opportunity-section .section-header {
+  border: 0;
+  padding: 0 0 12px;
+}
+
 .section-header {
   display: flex;
   align-items: center;
@@ -305,6 +318,12 @@ tr:last-child td {
 .metric {
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+}
+
+.money,
+.ratio,
+.break-even {
+  font-variant-numeric: tabular-nums;
 }
 
 .muted {
@@ -367,6 +386,95 @@ tr:last-child td {
   border-color: rgba(164, 95, 24, 0.35);
   background: #fff5e6;
   color: var(--amber);
+}
+
+.ranking-card-grid,
+.opportunity-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.ranking-card-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+}
+
+.opportunity-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+}
+
+.ranking-card,
+.opportunity-card {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  padding: 16px;
+}
+
+.ranking-card-head,
+.identity-row,
+.card-badges,
+.card-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ranking-card-head {
+  align-items: flex-start;
+}
+
+.ranking-card-head h3,
+.opportunity-card h3 {
+  margin-top: 2px;
+}
+
+.rank-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  min-width: 42px;
+  height: 42px;
+  border: 1px solid rgba(49, 93, 140, 0.22);
+  border-radius: 8px;
+  background: #edf4fb;
+  color: var(--blue);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.card-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.card-badges,
+.card-actions,
+.identity-row {
+  flex-wrap: wrap;
+}
+
+.card-actions {
+  margin-top: 2px;
+}
+
+.button.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.button.cta span {
+  border-left: 1px solid rgba(255, 255, 255, 0.45);
+  font-size: 0.78rem;
+  font-weight: 650;
+  opacity: 0.92;
+  padding-left: 8px;
 }
 
 .summary-grid,
@@ -488,6 +596,10 @@ tr:last-child td {
 
   .site-nav {
     width: 100%;
+  }
+
+  .card-metrics {
+    grid-template-columns: 1fr;
   }
 
   h1 {
