@@ -10,9 +10,11 @@ import {
   renderError,
   renderFreshnessAlert,
   renderHistory,
+  renderHomeShell,
   renderOpportunityDetail,
   renderRankingsTable,
   renderScoreBadge,
+  renderStrategySignals,
   renderStrategyDetail,
 } from "../assets/app.js";
 
@@ -32,7 +34,24 @@ test("rankings rendering includes card metrics and stored API values", () => {
   assert.match(html, /0.05862/);
   assert.match(html, /\$250/);
   assert.match(html, /5.86%/);
+  assert.match(html, /Positive return/);
+  assert.match(html, /Very high risk warning/);
+  assert.match(html, /Updated 2026-08-16 12:00 UTC/);
   assert.match(html, /\/go\/defi-kingdoms-play/);
+  assert.match(html, /ranking-card-grid/);
+  assert.doesNotMatch(html, /<table/);
+  assert.doesNotMatch(html, /<tr/);
+});
+
+test("home renders results as cards before filters without table ranking markup", () => {
+  const html = renderHomeShell([{ game_id: "defi-kingdoms", name: "DeFi Kingdoms", economy_types: ["locked-yield-reward"] }], rankingPayload(), [
+    opportunityPayload(),
+  ]);
+
+  assert.match(html, /Top current ranking/);
+  assert.match(html, /ranking-card-grid/);
+  assert.match(html, /finder-results/);
+  assert.doesNotMatch(html, /<table/);
 });
 
 test("finder filters build supported rankings query only", () => {
@@ -78,6 +97,7 @@ test("opportunity detail shows unavailable financial ROI without inventing zero"
 
   assert.match(html, /Grass/);
   assert.match(html, /Financial ROI unavailable/);
+  assert.match(html, /Reward type/);
   assert.match(html, /Non Transferable Points/);
   assert.match(html, /\/go\/grass-official/);
   assert.doesNotMatch(html, />0<\/|0\.00/);
@@ -127,9 +147,43 @@ test("history no-history state is explicit", () => {
 test("financial formatting preserves exact API Decimal strings", () => {
   assert.match(formatRatio({ value: "0.05862", status: "available", reason: null }), /5.86%/);
   assert.match(formatRatio({ value: "0.84", status: "available", reason: null }), /84%/);
+  assert.match(formatRatio({ value: "0.006465812345", status: "available", reason: null }), /0.65%/);
+  assert.match(formatRatio({ value: "-0.0012219", status: "available", reason: null }), /-0.12%/);
+  assert.match(formatMoney({ amount: "7.371741749984404665", currency: "USD" }), /\$7.37/);
   assert.match(formatMoney({ amount: "0.0317954339244676", currency: "USD" }), /\$0.03/);
   assert.match(formatMoney({ amount: "0.0317954339244676", currency: "USD" }), /0.0317954339244676 USD/);
+  assert.match(formatMoney({ amount: "0.0015888099956", currency: "USD" }, { perDay: true }), /\$0.0016\/day/);
+  assert.match(formatMoney({ amount: "-3.51E-7", currency: "USD" }, { perDay: true }), /loss &lt; \$0.0001\/day/);
   assert.match(formatBreakEven({ days: "511.7707", status: "available", reason: null }), /512 days/);
+  assert.match(formatBreakEven({ days: "4639.788", status: "available", reason: null }), /4,640 days/);
+});
+
+test("negative return and warning signals are explicit", () => {
+  const snapshot = snapshotPayload();
+  snapshot.earnings.net_earnings_day.amount = "-3.51E-7";
+  snapshot.roi.roi_total_30d.value = "-0.0012219";
+  snapshot.confidence.label = "LOW";
+  snapshot.risk.label = "VERY HIGH";
+
+  const html = renderStrategySignals(snapshot);
+
+  assert.match(html, /Negative return/);
+  assert.match(html, /Low confidence warning/);
+  assert.match(html, /Very high risk warning/);
+});
+
+test("long strategy names stay in card structure with CTA behavior", () => {
+  const payload = rankingPayload();
+  payload.items[0].strategy.name =
+    "Extremely Long Strategy Name With Many Capital And Reward Assumptions That Must Remain Readable In A Card";
+
+  const html = renderRankingsTable(payload);
+
+  assert.match(html, /ranking-card/);
+  assert.match(html, /View strategy/);
+  assert.match(html, /Start/);
+  assert.match(html, /\/go\/defi-kingdoms-play/);
+  assert.doesNotMatch(html, /<table/);
 });
 
 function rankingPayload() {

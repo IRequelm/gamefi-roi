@@ -13,6 +13,8 @@ G13 is complete for the accepted public beta deployment. The beta is live on Ren
 
 G14 is complete in the repository. It adds the backward-compatible Opportunity catalog, referral/outbound foundation, and public-beta UI readability pass. Render auto-deploy remains off from G13, so the current public URL must be manually deployed to serve the G14 routes and UI.
 
+G14 post-deployment UI acceptance follow-up: the first deployed G14 UI still looked too much like an internal analytics/debug surface on the public Home/ROI Finder. A corrective G14 fix was added before any G15 monetization work to make the public beta user-readable: responsive strategy cards replace ranking tables, Decimal API strings remain authoritative but are formatted for display, tiny/scientific values are readable, confidence/risk/freshness interpretation is explicit, and opportunity cards show unavailable ROI for non-financial candidates instead of zero.
+
 ## Gate board
 
 | Gate | Name | Status |
@@ -591,6 +593,16 @@ Web additions:
 ```
 
 The UI now formats money, ROI percentages, and break-even values for readability while preserving exact API Decimal strings as source values. The frontend still does not recalculate ROI, Risk, Confidence, or rankings.
+
+Post-deployment UI acceptance fix:
+
+- Home/ROI Finder and Rankings use responsive strategy cards instead of a wide ranking table.
+- Cards show game/opportunity, strategy, capital, net/day, 30D ROI, break-even, confidence, risk, freshness/last updated, warnings, View Strategy, and Start/Play CTA when available.
+- Display formatting handles long Decimal strings, scientific notation, tiny positive/negative currency values, positive/negative ROI percentages, and large break-even day counts.
+- Strategy cards show interpretation badges such as positive return, negative return, low-confidence warning, very-high-risk warning, stale-data warning, and ROI unavailable.
+- Opportunity cards use the same visual system for `GAME`, `DEPIN_NODE`, and `POINTS`; non-financial candidates expose ROI as unavailable, reward type, opportunity type, Start/Open CTA, and the reason financial ROI is unavailable.
+- Strategy detail keeps API values authoritative but formats capital, earnings, ROI, break-even, history rows, confidence/risk, LIVE/CONFIG/DERIVED, warnings, and freshness for human scanning.
+- Frontend regression tests cover exact API value retention, human-readable formatting, negative ROI, tiny values, unavailable ROI, long strategy names, no table-based ranking markup, responsive card structure, risk/confidence labels, and CTA behavior.
 
 Outbound/referral metadata is implemented as reviewed product metadata. Current destinations use official URL fallback and have no configured affiliate relationship. `/go/{destination_slug}` accepts no arbitrary target parameter, redirects only active verified destinations, and logs only a minimal aggregate event without cookies or per-user attribution.
 

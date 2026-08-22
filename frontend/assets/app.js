@@ -48,11 +48,15 @@ export function renderHomeShell(games = [], rankings = { items: [], page: { tota
   return `
     <div class="page-shell">
       <section class="page-head">
-        <p class="eyebrow">Public web MVP</p>
-        <h1>Find strategy ROI without hiding the assumptions.</h1>
-        <p class="lede">Rankings come directly from stored API snapshots. Candidate opportunities without lawful, reproducible financial value stay visible, but their ROI remains unavailable.</p>
+        <p class="eyebrow">Public beta</p>
+        <h1>Compare the current modeled strategies.</h1>
+        <p class="lede">Results use stored API snapshots. Candidate opportunities without lawful, reproducible financial value stay visible, with ROI marked unavailable.</p>
       </section>
+      ${renderTopRankingSummary(rankings)}
       <section class="finder-grid" aria-label="ROI finder">
+        <div id="finder-results">
+          ${renderRankingsTable(rankings, { compact: true })}
+        </div>
         <form class="tool-panel" id="finder-form">
           <h2>ROI Finder</h2>
           <div class="form-grid">
@@ -101,12 +105,30 @@ export function renderHomeShell(games = [], rankings = { items: [], page: { tota
             <a class="secondary-button" href="/rankings" data-link>Open rankings</a>
           </div>
         </form>
-        <div id="finder-results">
-          ${renderRankingsTable(rankings, { compact: true })}
-        </div>
       </section>
       ${renderOpportunityList(opportunities, { compact: true })}
     </div>
+  `;
+}
+
+export function renderTopRankingSummary(rankings = { items: [] }) {
+  const top = (rankings.items || [])[0];
+  if (!top) {
+    return "";
+  }
+  const snapshot = top.latest_snapshot;
+  return `
+    <section class="choice-strip" aria-label="Top ranked strategy">
+      <div>
+        <span class="eyebrow">Top current ranking</span>
+        <strong>${escapeHtml(snapshot.game_name)} · ${escapeHtml(top.strategy.name)}</strong>
+      </div>
+      <div class="choice-metrics">
+        ${summaryItem("Capital", formatMoney(snapshot.capital.total_capital))}
+        ${summaryItem("Net/day", formatMoney(snapshot.earnings.net_earnings_day, { perDay: true }))}
+        ${summaryItem("30D ROI", formatRatio(snapshot.roi.roi_total_30d))}
+      </div>
+    </section>
   `;
 }
 
@@ -162,6 +184,10 @@ export function renderOpportunityDetail(opportunity) {
           <h3>Feasibility</h3>
           <p>${renderFeasibilityStatus(opportunity.data_feasibility_status)}</p>
         </div>
+        <div class="game-card">
+          <h3>Reward type</h3>
+          <p>${escapeHtml((opportunity.reward_asset_or_points_type || []).join(", ") || "Unspecified")}</p>
+        </div>
       </section>
       ${
         hasStrategies
@@ -202,6 +228,11 @@ export function renderOpportunityCard(opportunity) {
     opportunity.strategy_count > 0
       ? `${escapeHtml(String(opportunity.strategy_count))} modeled strateg${opportunity.strategy_count === 1 ? "y" : "ies"}`
       : "Financial ROI unavailable";
+  const rewardTypes = (opportunity.reward_asset_or_points_type || []).join(", ") || "Unspecified";
+  const roiText =
+    opportunity.strategy_count > 0 && opportunity.value_realization_status === "realizable"
+      ? '<span class="badge good">Modeled</span>'
+      : '<span class="badge warning">Unavailable</span>';
   return `
     <article class="opportunity-card">
       <div class="identity-row">
@@ -210,7 +241,11 @@ export function renderOpportunityCard(opportunity) {
       </div>
       <h3><a class="strategy-link" href="/opportunities/${encodeURIComponent(opportunity.opportunity_id)}" data-link>${escapeHtml(opportunity.name)}</a></h3>
       <p class="muted">${strategyText}</p>
-      <p>${renderValueStatus(opportunity.value_realization_status)}</p>
+      <div class="opportunity-facts">
+        ${metricItem("Reward type", escapeHtml(rewardTypes))}
+        ${metricItem("Financial ROI", roiText)}
+      </div>
+      <p class="muted">${opportunity.strategy_count > 0 ? escapeHtml(labelize(opportunity.value_realization_status)) : escapeHtml(unavailableRoiReason(opportunity))}</p>
       <div class="card-actions">
         <a class="secondary-button" href="/opportunities/${encodeURIComponent(opportunity.opportunity_id)}" data-link>Review</a>
         ${renderDestinationButton(opportunity.primary_destination, "Open")}
@@ -255,9 +290,10 @@ export function renderRankingCard(item) {
           <p class="muted">${escapeHtml(strategy.strategy_version)} | ${escapeHtml(labelize(strategy.economy_type))}</p>
         </div>
       </div>
+      ${renderStrategySignals(snapshot)}
       <div class="card-metrics">
         ${metricItem("Capital", formatMoney(snapshot.capital.total_capital))}
-        ${metricItem("Net/day", formatMoney(snapshot.earnings.net_earnings_day))}
+        ${metricItem("Net/day", formatMoney(snapshot.earnings.net_earnings_day, { perDay: true }))}
         ${metricItem("30D ROI", formatRatio(snapshot.roi.roi_total_30d))}
         ${metricItem("Break-even", formatBreakEven(snapshot.roi.break_even))}
       </div>
@@ -267,8 +303,9 @@ export function renderRankingCard(item) {
         ${renderFreshnessPill(snapshot.freshness)}
         ${renderWarningsIndicator(snapshot.warnings)}
       </div>
+      <p class="updated-note">Updated ${formatDateTime(snapshot.calculated_at)}</p>
       <div class="card-actions">
-        <a class="secondary-button" href="/strategies/${encodeURIComponent(strategy.strategy_id)}" data-link>Details</a>
+        <a class="secondary-button" href="/strategies/${encodeURIComponent(strategy.strategy_id)}" data-link>View strategy</a>
         ${renderDestinationButton(strategy.primary_destination, "Start")}
       </div>
     </article>
@@ -381,6 +418,7 @@ export function renderStrategyDetail(strategy, historyPage = { items: [] }) {
         </div>
       </section>
       ${renderFreshnessAlert(snapshot)}
+      ${renderStrategySignals(snapshot)}
       ${renderOverviewMetrics(snapshot)}
       <section class="section-panel">
         <div class="section-header"><h2>Capital Breakdown</h2></div>
@@ -394,12 +432,12 @@ export function renderStrategyDetail(strategy, historyPage = { items: [] }) {
       <section class="section-panel">
         <div class="section-header"><h2>Earnings and Costs</h2></div>
         <div class="section-body metric-grid">
-          ${metricItem("Gross nominal/day", formatMoney(snapshot.earnings.gross_nominal_earnings_day))}
-          ${metricItem("Realizable/day", formatMoney(snapshot.earnings.realizable_earnings_day))}
-          ${metricItem("Operating cost/day", formatMoney(snapshot.earnings.operating_cost_day))}
-          ${metricItem("Transaction cost/day", formatMoney(snapshot.earnings.transaction_cost_day))}
-          ${metricItem("Other cost/day", formatMoney(snapshot.earnings.other_cost_day))}
-          ${metricItem("Net/day", formatMoney(snapshot.earnings.net_earnings_day))}
+          ${metricItem("Gross nominal/day", formatMoney(snapshot.earnings.gross_nominal_earnings_day, { perDay: true }))}
+          ${metricItem("Realizable/day", formatMoney(snapshot.earnings.realizable_earnings_day, { perDay: true }))}
+          ${metricItem("Operating cost/day", formatMoney(snapshot.earnings.operating_cost_day, { perDay: true }))}
+          ${metricItem("Transaction cost/day", formatMoney(snapshot.earnings.transaction_cost_day, { perDay: true }))}
+          ${metricItem("Other cost/day", formatMoney(snapshot.earnings.other_cost_day, { perDay: true }))}
+          ${metricItem("Net/day", formatMoney(snapshot.earnings.net_earnings_day, { perDay: true }))}
         </div>
       </section>
       <section class="section-panel">
@@ -440,7 +478,7 @@ export function renderOverviewMetrics(snapshot) {
   return `
     <section class="summary-grid" aria-label="Strategy summary">
       ${summaryItem("Capital", formatMoney(snapshot.capital.total_capital))}
-      ${summaryItem("Net/day", formatMoney(snapshot.earnings.net_earnings_day))}
+      ${summaryItem("Net/day", formatMoney(snapshot.earnings.net_earnings_day, { perDay: true }))}
       ${summaryItem("30D ROI", formatRatio(snapshot.roi.roi_total_30d))}
       ${summaryItem("Risk", scoreText(snapshot.risk))}
     </section>
@@ -601,7 +639,7 @@ export function renderHistory(historyPage = { items: [] }) {
                 (snapshot) => `
                   <tr>
                     <td>${formatDateTime(snapshot.calculated_at)}</td>
-                    <td class="metric">${formatMoney(snapshot.earnings.net_earnings_day)}</td>
+                    <td class="metric">${formatMoney(snapshot.earnings.net_earnings_day, { perDay: true })}</td>
                     <td class="metric">${formatRatio(snapshot.roi.roi_total_30d)}</td>
                     <td>${renderScoreBadge(snapshot.confidence, "confidence")}</td>
                     <td>${renderScoreBadge(snapshot.risk, "risk")}</td>
@@ -665,6 +703,38 @@ export function renderFreshnessAlert(snapshot) {
   return `<section class="alert ${danger ? "danger" : ""}">${messages.map(escapeHtml).join(" ")}</section>`;
 }
 
+export function renderStrategySignals(snapshot) {
+  const signals = [];
+  const roi = snapshot.roi?.roi_total_30d;
+  const netSign = decimalSign(snapshot.earnings?.net_earnings_day?.amount ?? "0");
+  if (!roi || roi.value === null || roi.value === undefined) {
+    signals.push({ label: "ROI unavailable", tone: "warning" });
+  } else if (netSign > 0) {
+    signals.push({ label: "Positive return", tone: "good" });
+  } else if (netSign < 0) {
+    signals.push({ label: "Negative return", tone: "high" });
+  } else {
+    signals.push({ label: "Flat net earnings", tone: "medium" });
+  }
+  if (snapshot.confidence?.available && snapshot.confidence.label === "LOW") {
+    signals.push({ label: "Low confidence warning", tone: "warning" });
+  }
+  if (snapshot.risk?.available && ["HIGH", "VERY HIGH"].includes(snapshot.risk.label)) {
+    signals.push({
+      label: snapshot.risk.label === "VERY HIGH" ? "Very high risk warning" : "High risk warning",
+      tone: "high",
+    });
+  }
+  if (snapshot.freshness?.overall_status && snapshot.freshness.overall_status !== "fresh") {
+    signals.push({ label: "Stale data warning", tone: "warning" });
+  }
+  return `
+    <div class="signal-row">
+      ${signals.map((signal) => `<span class="badge ${signal.tone}">${escapeHtml(signal.label)}</span>`).join("")}
+    </div>
+  `;
+}
+
 export function renderError(error) {
   const notFound = error?.status === 404;
   return `
@@ -679,7 +749,7 @@ export function renderLoading() {
   return '<section class="loading-state"><p>Loading strategy data...</p></section>';
 }
 
-export function formatMoney(money) {
+export function formatMoney(money, options = {}) {
   if (!money || money.amount === null || money.amount === undefined) {
     return '<span class="muted">Unavailable</span>';
   }
@@ -687,16 +757,22 @@ export function formatMoney(money) {
   const amount = normalizeDecimalString(rawAmount);
   const currency = String(money.currency || "").trim();
   const exact = `${rawAmount} ${currency}`.trim();
+  const suffix = options.perDay ? "/day" : "";
   if (currency.toUpperCase() === "USD") {
-    const negative = amount.startsWith("-");
-    const absolute = negative ? amount.slice(1) : amount;
-    const tiny = isNonZeroDecimal(absolute) && roundsToZeroAtScale(absolute, 2);
-    const rounded = addThousands(roundDecimalString(absolute, 2));
-    const display = tiny ? `${negative ? "-" : ""}<$0.01` : `${negative ? "-" : ""}$${rounded}`;
+    const sign = decimalSign(amount);
+    const absolute = sign < 0 ? amount.slice(1) : amount;
+    let display;
+    if (sign !== 0 && comparePositiveDecimals(absolute, "0.0001") < 0) {
+      display = `${sign < 0 ? "loss " : ""}< $0.0001${suffix}`;
+    } else {
+      const scale = comparePositiveDecimals(absolute, "0.01") < 0 && sign !== 0 ? 4 : 2;
+      const rounded = trimTrailingZeros(addThousands(roundDecimalString(absolute, scale)));
+      display = `${sign < 0 ? "-" : ""}$${rounded}${suffix}`;
+    }
     return `<span class="money" title="${escapeHtml(exact)}">${escapeHtml(display)}</span>`;
   }
   const rounded = trimTrailingZeros(roundDecimalString(amount, 4));
-  return `<span class="money" title="${escapeHtml(exact)}">${escapeHtml(`${rounded} ${currency}`.trim())}</span>`;
+  return `<span class="money" title="${escapeHtml(exact)}">${escapeHtml(`${rounded} ${currency}${suffix}`.trim())}</span>`;
 }
 
 export function formatRatio(metric) {
@@ -715,12 +791,13 @@ export function formatBreakEven(metric) {
   }
   const rawDays = String(metric.days);
   const rounded = roundDecimalString(normalizeDecimalString(rawDays), 0);
-  return `<span class="break-even" title="Exact days: ${escapeHtml(rawDays)}">${escapeHtml(rounded)} ${rounded === "1" ? "day" : "days"}</span>`;
+  const days = addThousands(rounded);
+  return `<span class="break-even" title="Exact days: ${escapeHtml(rawDays)}">${escapeHtml(days)} ${rounded === "1" ? "day" : "days"}</span>`;
 }
 
 function normalizeDecimalString(value) {
-  const text = String(value).trim();
-  if (!text || /e/i.test(text)) {
+  const text = expandExponentialNotation(String(value).trim());
+  if (!text) {
     return text;
   }
   const negative = text.startsWith("-");
@@ -730,6 +807,39 @@ function normalizeDecimalString(value) {
   const fraction = fractionPart.replace(/0+$/, "");
   const normalized = fraction ? `${integer}.${fraction}` : integer;
   return negative && normalized !== "0" ? `-${normalized}` : normalized;
+}
+
+function expandExponentialNotation(value) {
+  const match = String(value)
+    .trim()
+    .match(/^([+-]?)(\d+)(?:\.(\d+))?[eE]([+-]?\d+)$/);
+  if (!match) {
+    return value;
+  }
+  const [, sign, integer, fraction = "", exponentText] = match;
+  const exponent = parseSignedInteger(exponentText);
+  const digits = `${integer}${fraction}`;
+  const point = integer.length + exponent;
+  let expanded;
+  if (point <= 0) {
+    expanded = `0.${"0".repeat(Math.abs(point))}${digits}`;
+  } else if (point >= digits.length) {
+    expanded = `${digits}${"0".repeat(point - digits.length)}`;
+  } else {
+    expanded = `${digits.slice(0, point)}.${digits.slice(point)}`;
+  }
+  return `${sign === "-" ? "-" : ""}${expanded}`;
+}
+
+function parseSignedInteger(value) {
+  const text = String(value);
+  const negative = text.startsWith("-");
+  const digits = text.replace(/^[+-]/, "");
+  let parsed = 0;
+  for (const char of digits) {
+    parsed = parsed * 10 + (char.charCodeAt(0) - 48);
+  }
+  return negative ? -parsed : parsed;
 }
 
 function shiftDecimal(value, places) {
@@ -802,20 +912,43 @@ function trimTrailingZeros(value) {
   return trimmed === "" || trimmed === "-0" ? "0" : trimmed;
 }
 
-function isNonZeroDecimal(value) {
-  return /[1-9]/.test(String(value).replace(/[^0-9]/g, ""));
+function decimalSign(value) {
+  const normalized = normalizeDecimalString(value);
+  const digits = normalized.replace(/[-.]/g, "");
+  if (!/[1-9]/.test(digits)) {
+    return 0;
+  }
+  return normalized.startsWith("-") ? -1 : 1;
 }
 
-function roundsToZeroAtScale(value, scale) {
-  return roundDecimalString(value, scale).replace(/[.0-]/g, "") === "";
+function comparePositiveDecimals(left, right) {
+  const normalizedLeft = normalizeDecimalString(left).replace(/^-/, "");
+  const normalizedRight = normalizeDecimalString(right).replace(/^-/, "");
+  const [leftInteger, leftFraction = ""] = normalizedLeft.split(".");
+  const [rightInteger, rightFraction = ""] = normalizedRight.split(".");
+  const cleanLeftInteger = leftInteger.replace(/^0+(?=\d)/, "");
+  const cleanRightInteger = rightInteger.replace(/^0+(?=\d)/, "");
+  if (cleanLeftInteger.length !== cleanRightInteger.length) {
+    return cleanLeftInteger.length > cleanRightInteger.length ? 1 : -1;
+  }
+  if (cleanLeftInteger !== cleanRightInteger) {
+    return cleanLeftInteger > cleanRightInteger ? 1 : -1;
+  }
+  const fractionLength = Math.max(leftFraction.length, rightFraction.length);
+  const paddedLeftFraction = leftFraction.padEnd(fractionLength, "0");
+  const paddedRightFraction = rightFraction.padEnd(fractionLength, "0");
+  if (paddedLeftFraction === paddedRightFraction) {
+    return 0;
+  }
+  return paddedLeftFraction > paddedRightFraction ? 1 : -1;
 }
 
 export function renderScoreBadge(score, kind) {
   if (!score?.available) {
-    return '<span class="badge">Unavailable</span>';
+    return `<span class="badge">${escapeHtml(labelize(kind))} Unavailable</span>`;
   }
   const label = score.label || "UNKNOWN";
-  return `<span class="badge ${scoreClass(label, kind)}">${escapeHtml(String(score.score))} ${escapeHtml(label)}</span>`;
+  return `<span class="badge ${scoreClass(label, kind)}">${escapeHtml(labelize(kind))} ${escapeHtml(String(score.score))} ${escapeHtml(label)}</span>`;
 }
 
 export function scoreText(score) {
@@ -833,7 +966,7 @@ export function renderFreshnessPill(freshness) {
 
 export function renderWarningsIndicator(warnings = []) {
   if (!warnings.length) {
-    return '<span class="badge good">None</span>';
+    return '<span class="badge good">No warnings</span>';
   }
   return `<span class="badge warning">${escapeHtml(String(warnings.length))} warning${warnings.length === 1 ? "" : "s"}</span>`;
 }
@@ -943,7 +1076,7 @@ function formatDateTime(value) {
   if (!value) {
     return "Unavailable";
   }
-  return escapeHtml(String(value).replace("T", " ").replace("Z", " UTC"));
+  return escapeHtml(String(value).replace("T", " ").replace("Z", " UTC").replace(/:00 UTC$/, " UTC"));
 }
 
 export function labelize(value) {
