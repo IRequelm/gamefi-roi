@@ -75,6 +75,29 @@ def test_evm_source_reports_json_rpc_error() -> None:
         source.observe_chain_id(timedelta(minutes=5))
 
 
+def test_evm_source_preserves_rpc_query_for_request_and_redacts_locator() -> None:
+    seen_urls: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen_urls.append(str(request.url))
+        return httpx.Response(200, json={"jsonrpc": "2.0", "id": 1, "result": "0xd2af"}, request=request)
+
+    source = EvmJsonRpcSource(
+        provider_name="fixture-rpc",
+        rpc_url="https://rpc.example/dfk/rpc?apikey=secret-token&network=dfk",
+        timeout_seconds=1,
+        max_retries=0,
+        transport=httpx.MockTransport(handler),
+    )
+
+    observation = source.observe_chain_id(timedelta(minutes=5))
+
+    assert seen_urls == ["https://rpc.example/dfk/rpc?apikey=secret-token&network=dfk"]
+    assert "apikey=secret-token" not in observation.source_locator
+    assert "apikey=REDACTED" in observation.source_locator
+    assert "network=dfk" in observation.source_locator
+
+
 def test_evm_decoder_rejects_bad_call_data() -> None:
     with pytest.raises(SourceParseError):
         decode_uint_words("0x123", provider="fixture", operation="decode")

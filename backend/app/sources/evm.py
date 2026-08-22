@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from typing import Any
-from urllib.parse import urlsplit, urlunsplit
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from uuid import NAMESPACE_URL, uuid5
 
 import httpx
@@ -17,6 +17,7 @@ from app.sources.observations import Observation, ObservationStatus, SourceType
 
 
 UINT_WORD_HEX_LENGTH = 64
+SENSITIVE_QUERY_KEY_PARTS = ("key", "token", "secret", "password", "auth")
 
 
 @dataclass(frozen=True)
@@ -55,6 +56,7 @@ class EvmJsonRpcSource:
         self.provider_name = provider_name
         base_url, rpc_path = _split_rpc_url(rpc_url)
         self._rpc_path = rpc_path
+        self._locator_rpc_path = _redact_sensitive_query_values(rpc_path)
         self._client = SourceHttpClient(
             provider=provider_name,
             base_url=base_url,
@@ -214,7 +216,7 @@ class EvmJsonRpcSource:
         )
 
     def _source_locator(self, method: str, params: list[Any]) -> str:
-        return f"{self._client.source_locator(self._rpc_path, {})}#{method}:{params}"
+        return f"{self._client.source_locator(self._locator_rpc_path, {})}#{method}:{params}"
 
     def _observation_id(self, *, entity_id: str, metric: str, observed_at: datetime) -> str:
         key = f"{self.provider_name}|{entity_id}|{metric}|{observed_at.isoformat()}"
@@ -286,9 +288,30 @@ def _split_rpc_url(rpc_url: str) -> tuple[str, str]:
     parsed = urlsplit(normalized)
     path_parts = [part for part in parsed.path.split("/") if part]
     if not path_parts:
-        return normalized, ""
+        base_url = urlunsplit((parsed.scheme, parsed.netloc, parsed.path.rstrip("/"), "", ""))
+        rpc_path = f"?{parsed.query}" if parsed.query else ""
+        return base_url, rpc_path
 
     rpc_path = path_parts[-1]
     parent_path = "/" + "/".join(path_parts[:-1]) if len(path_parts) > 1 else ""
     base_url = urlunsplit((parsed.scheme, parsed.netloc, parent_path, "", ""))
+    if parsed.query:
+        rpc_path = f"{rpc_path}?{parsed.query}"
     return base_url, rpc_path
+
+
+def _redact_sensitive_query_values(path: str) -> str:
+    parsed = urlsplit(path)
+    if not parsed.query:
+        return path
+
+    redacted_query = urlencode(
+        [
+            (
+                key,
+                "REDACTED" if any(part in key.lower() for part in SENSITIVE_QUERY_KEY_PARTS) else value,
+            )
+            for key, value in parse_qsl(parsed.query, keep_blank_values=True)
+        ]
+    )
+    return urlunsplit((parsed.scheme, parsed.netloc, parsed.path, redacted_query, parsed.fragment))

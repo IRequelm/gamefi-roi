@@ -472,7 +472,26 @@ Low-cost beta deployment configuration:
 - beta scheduled recalculation uses GitHub Actions workflow `.github/workflows/render-beta-recalculation.yml`,
 - Free Render Postgres expires after 30 days and has no Render-managed backups/PITR/logical backups.
 
-Current blocker: actual public deployment requires a Render workspace/link, production provider secrets, GitHub Actions beta scheduler secrets, and a Render database that are not available in this Codex environment.
+Current production validation status:
+
+- public beta URL is reachable at `https://gamefi-roi-web.onrender.com`,
+- GitHub Actions beta recalculation reaches Render Postgres and creates successful snapshots for Farmers World and Splinterlands,
+- DFK Jeweler is currently absent from rankings because production has no successful DFK snapshot,
+- local DFK live probe succeeds through live DFK inputs -> adapter -> ROI engine, narrowing the production issue to the production DFK RPC/source request path,
+- a G13 fix preserves query parameters in managed EVM RPC URLs while redacting sensitive query values from observation provenance,
+- G13 must remain ACTIVE until the fix is deployed, at least two consecutive production recalculation runs are verified, DFK has either a valid production snapshot or a documented fail-closed production data-source reason, and the remaining production validation checks pass.
+
+## Post-G13 UI/UX backlog
+
+Do not implement these during G13. Record them for the first appropriate post-production UI gate:
+
+- human-readable money formatting,
+- human-readable ROI percentage formatting,
+- ranking cards instead of the current wide raw table,
+- responsive layout cleanup,
+- game/opportunity logos,
+- clearer risk/confidence presentation,
+- Play/Start CTA integration with the upcoming referral foundation.
 
 ## G14 objective
 
