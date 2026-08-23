@@ -58,14 +58,14 @@ test("home renders results as cards before filters without table ranking markup"
   assert.doesNotMatch(html, /<table/);
 });
 
-test("static shell uses GamCryp brand lockup without a fabricated logo image", () => {
+test("static shell uses the official GamCryp logo asset without placeholder markup", () => {
   const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
 
   assert.match(html, /GamCryp \| Web3 Opportunity Intelligence/);
+  assert.match(html, /<img class="brand-logo" src="\/assets\/brand\/gamcryp-logo\.png" alt="GamCryp">/);
   assert.match(html, /brand-lockup/);
-  assert.match(html, /data-logo-placeholder="\/assets\/brand\/gamcryp-logo\.png"/);
+  assert.doesNotMatch(html, /data-logo-placeholder/);
   assert.doesNotMatch(html, /brand-mark/);
-  assert.doesNotMatch(html, /<img[^>]+gamcryp/i);
 });
 
 test("GamCryp brand stylesheet uses dark navy base and restrained accent palette", () => {
@@ -75,6 +75,9 @@ test("GamCryp brand stylesheet uses dark navy base and restrained accent palette
   assert.match(css, /--cyan:\s*#20f6ff/);
   assert.match(css, /--blue:\s*#2682ff/);
   assert.match(css, /--violet:\s*#9b4dff/);
+  assert.match(css, /\.brand-logo\s*{/);
+  assert.match(css, /height:\s*auto/);
+  assert.match(css, /object-fit:\s*contain/);
   assert.match(css, /overflow-x:\s*hidden/);
   assert.doesNotMatch(css, /#f6f7f2|#fff5e6|#e9f5ed|#edf4fb/);
 });

@@ -20,6 +20,7 @@ def test_web_mvp_pages_are_served_by_fastapi(monkeypatch, tmp_path) -> None:
 
         assert response.status_code == 200
         assert "GamCryp" in response.text
+        assert "/assets/brand/gamcryp-logo.png" in response.text
         assert "/assets/app.js" in response.text
 
 
@@ -28,9 +29,12 @@ def test_web_assets_are_served_and_point_to_api_v1(monkeypatch, tmp_path) -> Non
 
     app_js = client.get("/assets/app.js")
     styles = client.get("/assets/styles.css")
+    logo = client.get("/assets/brand/gamcryp-logo.png")
 
     assert app_js.status_code == 200
     assert styles.status_code == 200
+    assert logo.status_code == 200
+    assert logo.headers["content-type"] == "image/png"
     assert 'const API_BASE = "/api/v1";' in app_js.text
     assert "/api/v2" not in app_js.text
     assert "calculate_strategy_roi" not in app_js.text

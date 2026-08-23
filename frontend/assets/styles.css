@@ -100,9 +100,18 @@ select {
 .brand {
   display: inline-flex;
   align-items: center;
+  gap: 10px;
   min-width: max-content;
   color: var(--ink);
   text-decoration: none;
+}
+
+.brand-logo {
+  display: block;
+  width: clamp(42px, 5vw, 56px);
+  height: auto;
+  flex: 0 0 auto;
+  object-fit: contain;
 }
 
 .brand-lockup {
@@ -885,6 +894,10 @@ tr:last-child td {
 
   .brand-tagline {
     font-size: 0.62rem;
+  }
+
+  .brand-logo {
+    width: 40px;
   }
 
   .site-header {

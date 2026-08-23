@@ -609,7 +609,7 @@ Post-deployment UI acceptance fix:
 Post-deployment GamCryp brand/UI refinement:
 
 - Header uses the GamCryp text lockup with "Web3 Opportunity Intelligence" as the product descriptor.
-- The official logo has not been redrawn from screenshots; the intended repository path for a future approved source logo asset is `frontend/assets/brand/gamcryp-logo.png`.
+- The official logo asset is stored at `frontend/assets/brand/gamcryp-logo.png` and is loaded directly in the header without redrawing, cropping, or modifying the source image.
 - The warm beige visual system was replaced with a deep navy/midnight base, dark elevated cards, restrained cyan/electric-blue/violet accents, and subtle ambient/grid texture.
 - The ranking card structure, opportunity watchlist, Start/Open CTAs, risk/confidence labels, and unavailable ROI states remain the same product surfaces with updated brand styling only.
 - Affiliate/sponsor/referral metadata remains excluded from ROI, Risk, Confidence, history snapshots, validation, and organic ranking order.
