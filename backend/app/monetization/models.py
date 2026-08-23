@@ -138,3 +138,17 @@ class MonetizationMetrics:
     verified_revenue: MonetizationMetricValue
     earnings_per_click: MonetizationMetricValue
     verified_conversion_rate: MonetizationMetricValue
+
+
+@dataclass(frozen=True)
+class InboundLandingEvent:
+    event_id: str
+    landing_path: str
+    referrer_domain: str | None
+    utm_source: str | None
+    utm_medium: str | None
+    utm_campaign: str | None
+    channel: str
+    coarse_session_id: str | None
+    occurred_at: datetime
+    created_at: datetime

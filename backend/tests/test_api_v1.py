@@ -60,6 +60,7 @@ def test_production_security_headers_are_enabled(monkeypatch) -> None:
     monkeypatch.setenv("GAMEFI_DATABASE_URL", "postgresql+psycopg://user:pass@host:5432/gamefi")
     monkeypatch.setenv("GAMEFI_COINGECKO_API_KEY", "secret-test-key")
     monkeypatch.setenv("GAMEFI_DFK_CHAIN_RPC_URL", "https://dedicated-rpc.example/dfk")
+    monkeypatch.setenv("GAMEFI_PUBLIC_BASE_URL", "https://gamefi-roi-web.onrender.com")
 
     response = TestClient(create_app()).get("/api/v1/health")
 

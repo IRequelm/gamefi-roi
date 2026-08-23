@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from functools import lru_cache
+import re
 from typing import Literal
+from urllib.parse import urlsplit
 
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -30,6 +32,10 @@ class Settings(BaseSettings):
     database_pool_recycle_seconds: int = Field(default=1800, ge=300, le=86_400)
     allowed_cors_origins: str = ""
     security_headers_enabled: bool = True
+    public_base_url: str = "http://localhost:8000"
+    indexnow_key: str | None = None
+    google_site_verification: str | None = None
+    bing_site_verification: str | None = None
     scheduler_cadence_minutes: int = Field(default=30, ge=5, le=1_440)
     production_hard_stale_seconds: int = Field(default=1800, ge=300, le=86_400)
     market_data_http_timeout_seconds: float = Field(default=10.0, gt=0, le=60)
@@ -63,6 +69,43 @@ class Settings(BaseSettings):
         if isinstance(value, str) and value.strip() == "":
             return None
         return value
+
+    @field_validator(
+        "indexnow_key",
+        "google_site_verification",
+        "bing_site_verification",
+        mode="before",
+    )
+    @classmethod
+    def blank_optional_search_setting_is_none(cls, value: object) -> object:
+        if isinstance(value, str) and value.strip() == "":
+            return None
+        return value
+
+    @field_validator("indexnow_key")
+    @classmethod
+    def validate_indexnow_key(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        text = value.strip()
+        if not re.fullmatch(r"[A-Za-z0-9-]{8,128}", text):
+            raise ValueError("GAMEFI_INDEXNOW_KEY must be 8-128 characters using letters, numbers, or dashes")
+        return text
+
+    @field_validator("public_base_url")
+    @classmethod
+    def normalize_public_base_url(cls, value: str) -> str:
+        text = value.strip().rstrip("/")
+        if not text.startswith(("http://", "https://")):
+            raise ValueError("GAMEFI_PUBLIC_BASE_URL must start with http:// or https://")
+        parsed = urlsplit(text)
+        if not parsed.netloc:
+            raise ValueError("GAMEFI_PUBLIC_BASE_URL must include a host")
+        if parsed.path:
+            raise ValueError("GAMEFI_PUBLIC_BASE_URL must not include a path")
+        if parsed.query or parsed.fragment:
+            raise ValueError("GAMEFI_PUBLIC_BASE_URL must not include query or fragment")
+        return text
 
     @model_validator(mode="after")
     def validate_runtime_configuration(self) -> "Settings":
@@ -98,6 +141,9 @@ class Settings(BaseSettings):
 
         if not self.security_headers_enabled:
             raise ValueError("GAMEFI_SECURITY_HEADERS_ENABLED must remain true in production")
+
+        if not self.public_base_url.startswith("https://"):
+            raise ValueError("GAMEFI_PUBLIC_BASE_URL must be an HTTPS canonical host in production")
 
     @property
     def database_backend(self) -> str:

@@ -37,6 +37,14 @@ services:
         value: "1800"
       - key: GAMEFI_SECURITY_HEADERS_ENABLED
         value: "true"
+      - key: GAMEFI_PUBLIC_BASE_URL
+        sync: false
+      - key: GAMEFI_INDEXNOW_KEY
+        sync: false
+      - key: GAMEFI_GOOGLE_SITE_VERIFICATION
+        sync: false
+      - key: GAMEFI_BING_SITE_VERIFICATION
+        sync: false
       - key: GAMEFI_SCHEDULER_CADENCE_MINUTES
         value: "30"
       - key: GAMEFI_PRODUCTION_HARD_STALE_SECONDS
@@ -98,6 +106,14 @@ services:
         value: "1800"
       - key: GAMEFI_SECURITY_HEADERS_ENABLED
         value: "true"
+      - key: GAMEFI_PUBLIC_BASE_URL
+        sync: false
+      - key: GAMEFI_INDEXNOW_KEY
+        sync: false
+      - key: GAMEFI_GOOGLE_SITE_VERIFICATION
+        sync: false
+      - key: GAMEFI_BING_SITE_VERIFICATION
+        sync: false
       - key: GAMEFI_SCHEDULER_CADENCE_MINUTES
         value: "30"
       - key: GAMEFI_PRODUCTION_HARD_STALE_SECONDS

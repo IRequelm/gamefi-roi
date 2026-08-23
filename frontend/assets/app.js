@@ -1,4 +1,20 @@
 const API_BASE = "/api/v1";
+const CURATED_RANKING_FILTERS = {
+  "/rankings/under-25": "capital_max=25",
+  "/rankings/high-confidence": "confidence_min=80",
+  "/rankings/gamefi": "opportunity_type=GAME",
+};
+const RANKING_FILTER_KEYS = new Set([
+  "capital_min",
+  "capital_max",
+  "confidence_min",
+  "risk_max",
+  "game_id",
+  "opportunity_id",
+  "opportunity_type",
+  "chain",
+  "economy_type",
+]);
 
 export class ApiError extends Error {
   constructor(status, message) {
@@ -40,6 +56,18 @@ export function buildRankingsPath(filters = {}) {
   addParam(params, "economy_type", filters.economyType);
   const query = params.toString();
   return `/rankings${query ? `?${query}` : ""}`;
+}
+
+export function curatedRankingQuery(path, currentSearch = "") {
+  const params = new URLSearchParams(CURATED_RANKING_FILTERS[path] || "");
+  const incoming = new URLSearchParams(currentSearch);
+  for (const [key, value] of incoming.entries()) {
+    if (RANKING_FILTER_KEYS.has(key)) {
+      params.set(key, value);
+    }
+  }
+  const query = params.toString();
+  return query ? `?${query}` : "";
 }
 
 export function renderHomeShell(games = [], rankings = { items: [], page: { total: 0 } }, opportunities = []) {
@@ -1208,6 +1236,8 @@ async function renderCurrentRoute() {
       bindFinder(root);
     } else if (path === "/rankings") {
       root.innerHTML = renderRankingsPage(await apiGet(`/rankings${window.location.search}`));
+    } else if (CURATED_RANKING_FILTERS[path]) {
+      root.innerHTML = renderRankingsPage(await apiGet(`/rankings${curatedRankingQuery(path, window.location.search)}`));
     } else if (path === "/opportunities") {
       root.innerHTML = renderOpportunitiesPage(await apiGet("/opportunities"));
     } else if (path.startsWith("/opportunities/")) {

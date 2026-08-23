@@ -89,3 +89,18 @@ class SponsoredPlacementRecord(Base):
     audit_trail_json: Mapped[dict[str, Any]] = mapped_column("audit_trail", JSON, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class InboundLandingEventRecord(Base):
+    __tablename__ = "inbound_landing_events"
+
+    event_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    landing_path: Mapped[str] = mapped_column(String(512), nullable=False, index=True)
+    referrer_domain: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
+    utm_source: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
+    utm_medium: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    utm_campaign: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    channel: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    coarse_session_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
+    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)

@@ -72,7 +72,11 @@ REQUIRED_IMPORTS = (
     "app.risk.results",
     "app.risk.scoring",
     "app.risk.scoring_probe",
+    "app.search.canonical",
+    "app.search.indexnow",
+    "app.search.indexnow_cli",
     "app.web.routes",
+    "app.web.seo",
     "app.web_probe",
 )
 

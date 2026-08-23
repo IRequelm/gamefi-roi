@@ -56,6 +56,53 @@ def test_blank_coingecko_api_key_is_not_treated_as_secret(monkeypatch) -> None:
     assert settings.coingecko_api_key is None
 
 
+def test_public_base_url_is_normalized_and_required_https_in_production(monkeypatch) -> None:
+    monkeypatch.setenv("GAMEFI_ENVIRONMENT", "local")
+    monkeypatch.setenv("GAMEFI_DATABASE_URL", "postgresql+psycopg://user:pass@host:5432/gamefi")
+    monkeypatch.setenv("GAMEFI_PUBLIC_BASE_URL", "https://example.com/")
+
+    settings = get_settings()
+
+    assert settings.public_base_url == "https://example.com"
+
+    from app.config.settings import clear_settings_cache
+
+    clear_settings_cache()
+    monkeypatch.setenv("GAMEFI_ENVIRONMENT", "production")
+    monkeypatch.setenv("GAMEFI_PUBLIC_BASE_URL", "http://example.com")
+    monkeypatch.setenv("GAMEFI_COINGECKO_API_KEY", "secret-test-key")
+    monkeypatch.setenv("GAMEFI_DFK_CHAIN_RPC_URL", "https://dedicated-rpc.example/dfk")
+
+    with pytest.raises(ValidationError):
+        get_settings()
+
+    clear_settings_cache()
+    monkeypatch.setenv("GAMEFI_ENVIRONMENT", "local")
+    monkeypatch.setenv("GAMEFI_PUBLIC_BASE_URL", "https://example.com/app")
+
+    with pytest.raises(ValidationError):
+        get_settings()
+
+
+def test_indexnow_key_is_optional_but_validated_when_present(monkeypatch) -> None:
+    monkeypatch.setenv("GAMEFI_ENVIRONMENT", "test")
+    monkeypatch.setenv("GAMEFI_DATABASE_URL", "sqlite+pysqlite:///:memory:")
+    monkeypatch.setenv("GAMEFI_ALLOW_SQLITE_FOR_TESTS", "true")
+    monkeypatch.setenv("GAMEFI_INDEXNOW_KEY", "")
+
+    settings = get_settings()
+
+    assert settings.indexnow_key is None
+
+    from app.config.settings import clear_settings_cache
+
+    clear_settings_cache()
+    monkeypatch.setenv("GAMEFI_INDEXNOW_KEY", "bad key")
+
+    with pytest.raises(ValidationError):
+        get_settings()
+
+
 def test_render_postgresql_url_is_normalized_to_psycopg_driver(monkeypatch) -> None:
     monkeypatch.setenv("GAMEFI_ENVIRONMENT", "local")
     monkeypatch.setenv("GAMEFI_DATABASE_URL", "postgresql://user:pass@host:5432/gamefi")

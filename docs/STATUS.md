@@ -5,7 +5,7 @@ Project version: 0.1
 
 ## Current state
 
-**ACTIVE GATE: G16 — Search / AI Discoverability + Traffic Acquisition**
+**ACTIVE GATE: PAUSED — no next gate defined after G16**
 
 G12 is complete and frozen in the G12 baseline Git commit.
 
@@ -18,6 +18,8 @@ G14 post-deployment UI acceptance follow-up: the first deployed G14 UI still loo
 G14 post-deployment brand/UI refinement: before G15 monetization work, the public beta received a GamCryp visual pass based on the supplied visual references. This is presentation-only: backend logic, ROI calculations, ranking logic, adapters, API contracts, referral logic, and opportunity modeling remain unchanged. The live structure stays card-based while the visual language moves to dark navy surfaces with restrained cyan/blue/violet accents and semantic risk/confidence colors preserved.
 
 G15 is complete in the repository. It adds a monetization foundation on top of the G14 referral layer: privacy-minimal `/go/...` click persistence, referral lifecycle metadata, verified/manual revenue attribution foundations, sponsored placement metadata, commercial analytics metrics, disclosure documentation, and a tighter conversion-oriented public UI. ROI, Risk, Confidence, historical snapshots, validation, and organic ranking order remain analytically isolated from affiliate/sponsor/commercial data.
+
+G16 is complete in the repository. It adds server-visible public HTML, page-specific metadata, canonical URL inventory, sitemap, robots policy, operator-triggered IndexNow support, and privacy-minimal inbound acquisition attribution. ROI calculations, adapters, risk/confidence methodology, historical snapshots, monetization attribution, sponsored placement separation, and organic ranking logic remain unchanged. No G17 has been defined; the project is paused after G16 until the roadmap is extended.
 
 ## Gate board
 
@@ -39,7 +41,7 @@ G15 is complete in the repository. It adds a monetization foundation on top of t
 | G13 | Production | COMPLETE |
 | G14 | Scale / Opportunity + Referral Foundation | COMPLETE |
 | G15 | Monetization | COMPLETE |
-| G16 | Search / AI Discoverability + Traffic Acquisition | ACTIVE |
+| G16 | Search / AI Discoverability + Traffic Acquisition | COMPLETE |
 
 ## G0 objective
 
@@ -678,3 +680,36 @@ G16 may include:
 - traffic acquisition measurement that respects the G15 privacy and integrity boundary.
 
 G16 must not change ROI calculations, adapters, risk/confidence methodology, organic ranking logic, or monetization attribution logic unless a backward-compatible bug fix is explicitly required.
+
+## G16 acceptance criteria
+
+- [x] canonical public pages render meaningful server-visible HTML before JavaScript enhancement,
+- [x] canonical URL generation uses `GAMEFI_PUBLIC_BASE_URL` and does not hard-code Render in SEO logic,
+- [x] public pages include page-specific title, meta description, canonical URL, robots directive, Open Graph, Twitter metadata, and truthful JSON-LD,
+- [x] JSON-LD is limited to appropriate `Organization`, `WebSite`, `WebPage`, and `BreadcrumbList` schema types,
+- [x] `/sitemap.xml` includes absolute canonical public URLs only and excludes `/api`, `/go`, assets, query permutations, and internal/debug/test routes,
+- [x] `/robots.txt` allows public content, disallows `/api`, `/go`, query traps, and internal/debug/test routes, and does not block Googlebot, Bingbot, OAI-SearchBot, or PerplexityBot,
+- [x] `/go/{destination_slug}` redirects remain first-party outbound redirects with noindex/nofollow behavior and do not become search landing pages,
+- [x] query-string ranking/filter pages render `noindex,follow`; only curated landing pages are indexable,
+- [x] IndexNow support is operator-triggered, validates canonical host/path eligibility, exposes the key verification file only when configured, uses timeouts/retries, and redacts keys from errors,
+- [x] inbound acquisition attribution stores only privacy-minimal landing/referrer/UTM/channel/coarse-session metadata,
+- [x] inbound acquisition, referral, affiliate, sponsor, and commercial data cannot affect ROI, Risk, Confidence, historical snapshots, or organic ranking order,
+- [x] docs include search discovery runbook, operator checklist, data contract, architecture notes, and an accepted search/AI policy decision,
+- [x] deterministic tests cover crawlable HTML, metadata, canonicals, robots, sitemap XML, JSON-LD parseability, links, noindex behavior, unavailable ROI, IndexNow validation/failure isolation, inbound attribution, and ranking integrity,
+- [x] backend tests, frontend tests, doctor, compileall, pip check, API probe, web probe, and `git diff --check` pass,
+- [x] baseline Git commit for G16.
+
+## G16 search/discovery implementation notes
+
+G16 adds:
+
+- `app.web.seo` for server-rendered public pages and metadata,
+- `app.search.canonical` for canonical inventory and curated landing-page definitions,
+- `app.search.indexnow` and `app.search.indexnow_cli` for manual IndexNow submission,
+- `/robots.txt`, `/sitemap.xml`, and optional `/{GAMEFI_INDEXNOW_KEY}.txt`,
+- `inbound_landing_events` storage and migration for privacy-minimal acquisition attribution,
+- `docs/SEARCH_DISCOVERY_RUNBOOK.md`,
+- `docs/SEARCH_DISCOVERY_OPERATOR_CHECKLIST.md`,
+- `docs/DECISIONS/0007-search-ai-discoverability-policy.md`.
+
+G16 does not start monetization expansion beyond G15, new adapters, optimization, portfolio features, auth, alerts, AI chat, or production deployment changes. No next gate is active.

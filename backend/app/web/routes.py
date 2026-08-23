@@ -1,25 +1,40 @@
-"""Routes for the static G11 web MVP."""
+"""Routes for public web pages, static assets, and outbound redirects."""
 
 from __future__ import annotations
 
 import logging
+from html import escape
 from pathlib import Path
 from urllib.parse import urlsplit
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse, Response
 from sqlalchemy import Engine
 from sqlalchemy.exc import SQLAlchemyError
 from starlette.staticfiles import StaticFiles
 
 from app.api.dependencies import get_database_engine
+from app.api.v1.service import ApiDataService
+from app.config.settings import Settings, get_settings
+from app.search.canonical import CURATED_RANKING_PAGES, canonical_page_inventory, canonical_url, lastmod_date
 from app.storage.monetization import MonetizationRepository
 from app.strategies.catalog import get_outbound_destination
+from app.web.seo import (
+    curated_rankings_page,
+    game_page,
+    home_page,
+    methodology_page,
+    opportunities_page,
+    opportunity_page,
+    rankings_page,
+    record_landing_visit,
+    render_document,
+    strategy_page,
+)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 FRONTEND_ROOT = PROJECT_ROOT / "frontend"
 FRONTEND_ASSETS = FRONTEND_ROOT / "assets"
-INDEX_HTML = FRONTEND_ROOT / "index.html"
 
 router = APIRouter(include_in_schema=False)
 logger = logging.getLogger(__name__)
@@ -30,14 +45,160 @@ def frontend_assets() -> StaticFiles:
 
 
 @router.get("/")
+def serve_home(
+    request: Request,
+    settings: Settings = Depends(get_settings),
+    engine: Engine = Depends(get_database_engine),
+) -> HTMLResponse:
+    service = ApiDataService(engine)
+    page = home_page(service, settings=settings, request=request)
+    return _html_response(page, request=request, settings=settings, engine=engine)
+
+
 @router.get("/rankings")
+def serve_rankings(
+    request: Request,
+    settings: Settings = Depends(get_settings),
+    engine: Engine = Depends(get_database_engine),
+) -> HTMLResponse:
+    service = ApiDataService(engine)
+    page = rankings_page(service, settings=settings, request=request)
+    return _html_response(page, request=request, settings=settings, engine=engine)
+
+
+@router.get("/rankings/{landing_slug}")
+def serve_curated_rankings(
+    landing_slug: str,
+    request: Request,
+    settings: Settings = Depends(get_settings),
+    engine: Engine = Depends(get_database_engine),
+) -> HTMLResponse:
+    landing = next((page for page in CURATED_RANKING_PAGES if page.slug == landing_slug), None)
+    if landing is None:
+        raise HTTPException(status_code=404, detail=f"Unknown ranking landing page: {landing_slug}")
+    service = ApiDataService(engine)
+    page = curated_rankings_page(service, settings=settings, request=request, landing=landing)
+    return _html_response(page, request=request, settings=settings, engine=engine)
+
+
 @router.get("/opportunities")
+def serve_opportunities(
+    request: Request,
+    settings: Settings = Depends(get_settings),
+    engine: Engine = Depends(get_database_engine),
+) -> HTMLResponse:
+    service = ApiDataService(engine)
+    page = opportunities_page(service, settings=settings, request=request)
+    return _html_response(page, request=request, settings=settings, engine=engine)
+
+
 @router.get("/opportunities/{opportunity_id}")
-@router.get("/methodology")
+def serve_opportunity_detail(
+    opportunity_id: str,
+    request: Request,
+    settings: Settings = Depends(get_settings),
+    engine: Engine = Depends(get_database_engine),
+) -> HTMLResponse:
+    service = ApiDataService(engine)
+    opportunity = service.opportunity_detail(opportunity_id)
+    if opportunity is None:
+        raise HTTPException(status_code=404, detail=f"Unknown opportunity_id: {opportunity_id}")
+    page = opportunity_page(opportunity, settings=settings, request=request)
+    return _html_response(page, request=request, settings=settings, engine=engine)
+
+
 @router.get("/games/{game_id}")
+def serve_game_detail(
+    game_id: str,
+    request: Request,
+    settings: Settings = Depends(get_settings),
+    engine: Engine = Depends(get_database_engine),
+) -> HTMLResponse:
+    service = ApiDataService(engine)
+    game = service.game_detail(game_id)
+    if game is None:
+        raise HTTPException(status_code=404, detail=f"Unknown game_id: {game_id}")
+    page = game_page(game, settings=settings, request=request)
+    return _html_response(page, request=request, settings=settings, engine=engine)
+
+
 @router.get("/strategies/{strategy_id}")
-def serve_frontend() -> FileResponse:
-    return FileResponse(INDEX_HTML)
+def serve_strategy_detail(
+    strategy_id: str,
+    request: Request,
+    settings: Settings = Depends(get_settings),
+    engine: Engine = Depends(get_database_engine),
+) -> HTMLResponse:
+    service = ApiDataService(engine)
+    strategy = service.strategy_detail(strategy_id)
+    if strategy is None:
+        raise HTTPException(status_code=404, detail=f"Unknown strategy_id: {strategy_id}")
+    history = service.history_page(strategy_id, limit=50, offset=0)
+    history_items = [] if history is None else history.items
+    page = strategy_page(strategy, history_items, settings=settings, request=request)
+    return _html_response(page, request=request, settings=settings, engine=engine)
+
+
+@router.get("/methodology")
+def serve_methodology(
+    request: Request,
+    settings: Settings = Depends(get_settings),
+    engine: Engine = Depends(get_database_engine),
+) -> HTMLResponse:
+    page = methodology_page(settings=settings, request=request)
+    return _html_response(page, request=request, settings=settings, engine=engine)
+
+
+@router.get("/robots.txt")
+def robots_txt(settings: Settings = Depends(get_settings)) -> PlainTextResponse:
+    lines = [
+        "User-agent: *",
+        "Allow: /",
+        "Disallow: /api/",
+        "Disallow: /go/",
+        "Disallow: /admin/",
+        "Disallow: /internal/",
+        "Disallow: /debug/",
+        "Disallow: /test/",
+        "Disallow: /*?*",
+        "",
+        "# OAI-SearchBot is intentionally allowed for ChatGPT search discovery.",
+        "# GPTBot is not separately blocked here; change this policy explicitly if training crawl opt-out is desired.",
+        "# ChatGPT-User is user-triggered and not used for automatic search indexing control.",
+        f"Sitemap: {canonical_url(settings, '/sitemap.xml')}",
+    ]
+    return PlainTextResponse("\n".join(lines) + "\n", headers={"Cache-Control": "public, max-age=3600"})
+
+
+@router.get("/sitemap.xml")
+def sitemap_xml(
+    settings: Settings = Depends(get_settings),
+    engine: Engine = Depends(get_database_engine),
+) -> Response:
+    entries = []
+    for page in canonical_page_inventory(engine):
+        entries.append(
+            "  <url>"
+            f"<loc>{escape(page.absolute_url(settings), quote=False)}</loc>"
+            f"<lastmod>{lastmod_date(page.lastmod)}</lastmod>"
+            f"<changefreq>{escape(page.changefreq)}</changefreq>"
+            f"<priority>{escape(page.priority)}</priority>"
+            "</url>"
+        )
+    xml = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        + "\n".join(entries)
+        + "\n</urlset>\n"
+    )
+    return Response(content=xml, media_type="application/xml", headers={"Cache-Control": "public, max-age=300"})
+
+
+@router.get("/{indexnow_key}.txt")
+def indexnow_key_file(indexnow_key: str, settings: Settings = Depends(get_settings)) -> PlainTextResponse:
+    if not settings.indexnow_key or indexnow_key != settings.indexnow_key:
+        raise HTTPException(status_code=404, detail="IndexNow key file not configured.")
+    return PlainTextResponse(settings.indexnow_key, headers={"Cache-Control": "public, max-age=300"})
 
 
 @router.get("/go/{destination_slug}")
@@ -80,7 +241,19 @@ def outbound_redirect(
             "is_affiliate": destination.is_affiliate,
         },
     )
-    return RedirectResponse(target_url, status_code=302, headers={"Cache-Control": "no-store"})
+    return RedirectResponse(
+        target_url,
+        status_code=302,
+        headers={"Cache-Control": "no-store", "X-Robots-Tag": "noindex, nofollow"},
+    )
+
+
+def _html_response(page, *, request: Request, settings: Settings, engine: Engine) -> HTMLResponse:
+    try:
+        record_landing_visit(request, MonetizationRepository(engine), path=page.path)
+    except SQLAlchemyError as exc:
+        logger.warning("landing_visit_persistence_failed", extra={"path": page.path, "error": str(exc)})
+    return HTMLResponse(render_document(page, settings=settings), headers={"Cache-Control": "public, max-age=60"})
 
 
 def _user_agent_category(user_agent: str) -> str:

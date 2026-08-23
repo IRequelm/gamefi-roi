@@ -1,6 +1,7 @@
 """Persistent storage models."""
 
 from app.storage.models.monetization import (
+    InboundLandingEventRecord,
     OutboundClickEventRecord,
     ReferralProgramRecord,
     RevenueAttributionRecord,
@@ -12,6 +13,7 @@ from app.storage.models.strategy_history import StrategyCalculationFailureRecord
 
 __all__ = [
     "ObservationRecord",
+    "InboundLandingEventRecord",
     "OutboundClickEventRecord",
     "ReferralProgramRecord",
     "RevenueAttributionRecord",

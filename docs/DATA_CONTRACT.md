@@ -728,6 +728,89 @@ Unavailable denominators or unverified partner data remain unavailable; they mus
 
 `SponsoredPlacement` records contain placement id, opportunity id, optional strategy id, surface, status, label, disclosure text, campaign/sponsor metadata, active window, and audit trail. API/web responses must distinguish sponsored placement collections from organic ranking results.
 
+### G16 search and acquisition data contract
+
+G16 public discovery data is additive. It must not modify strategy snapshots, risk/confidence scores, ROI outputs, adapter results, organic rankings, sponsored placement order, or monetization attribution logic.
+
+Search-rendered public pages are generated from existing read models and catalog data:
+
+- `StrategySummary`,
+- `StrategySnapshotPayload`,
+- `RankingItem`,
+- `OpportunitySummary`,
+- `OpportunityDetail`,
+- `GameDetail`,
+- outbound destination payloads,
+- sponsored placement payloads where an existing page already renders commercial surfaces.
+
+Display formatting may convert exact API Decimal strings into human-readable text at the HTML/UI boundary. The exact API values remain authoritative and must remain available via API responses and title attributes where useful. Formatting must never feed back into the ROI engine, snapshot persistence, scoring, or ranking.
+
+Canonical public URL records contain:
+
+- canonical path,
+- absolute URL derived from `GAMEFI_PUBLIC_BASE_URL`,
+- last modified timestamp/date derived from stored snapshot or catalog review evidence,
+- change frequency,
+- priority.
+
+The canonical inventory must exclude:
+
+- `/api`,
+- `/go`,
+- assets,
+- admin/internal/debug/test paths,
+- arbitrary query permutations,
+- unreviewed arbitrary URLs.
+
+Query-string pages render `noindex,follow` and canonicalize to the clean path unless explicitly modeled as curated landing pages under a stable slug.
+
+Structured data is limited to truthful schema types that match the page:
+
+- `Organization`,
+- `WebSite`,
+- `WebPage`,
+- `BreadcrumbList`.
+
+Do not use `Product`, `Review`, `Offer`, `FAQ`, `HowTo`, aggregate ratings, or review snippets unless future gates add evidence and review processes that satisfy those schemas.
+
+`InboundLandingEvent` records:
+
+- `event_id`,
+- `landing_path`,
+- optional `referrer_domain`,
+- optional `utm_source`,
+- optional `utm_medium`,
+- optional `utm_campaign`,
+- normalized `channel`,
+- optional coarse session id,
+- `occurred_at`,
+- `created_at`.
+
+Allowed normalized acquisition channels:
+
+- `google`,
+- `bing`,
+- `chatgpt`,
+- `perplexity`,
+- `x`,
+- `reddit`,
+- `direct`,
+- `referral`,
+- `other`.
+
+Inbound acquisition records are not conversion records and are not affiliate attribution. They may be used for acquisition reporting only. They must not include fingerprinting, raw IP storage, cookies, private wallet/user identifiers, or invasive personal tracking.
+
+IndexNow submissions:
+
+- require `GAMEFI_INDEXNOW_KEY`,
+- expose only the protocol-required `{key}.txt` verification file at the public root,
+- submit only canonical public URLs belonging to `GAMEFI_PUBLIC_BASE_URL`,
+- reject `/api`, `/go`, query URLs, and wrong-host URLs before any outbound notification,
+- use the official IndexNow batch endpoint,
+- use timeouts and bounded retries,
+- redact the key from logs/errors,
+- are manual/operator-triggered and must not run on normal page requests.
+
 ## 10. Provenance
 
 Every snapshot must be reproducible enough to answer:

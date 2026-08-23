@@ -5,6 +5,7 @@ import { readFileSync } from "node:fs";
 import {
   ApiError,
   buildRankingsPath,
+  curatedRankingQuery,
   formatBreakEven,
   formatMoney,
   formatRatio,
@@ -104,6 +105,14 @@ test("finder filters build supported rankings query only", () => {
     "/rankings?capital_max=20.00&confidence_min=70&risk_max=50&game_id=farmers-world&opportunity_type=GAME&economy_type=resource-production",
   );
   assert.doesNotMatch(path, /playtime/);
+});
+
+test("curated ranking landing pages keep organic filters and ignore tracking params", () => {
+  assert.equal(curatedRankingQuery("/rankings/under-25", "?utm_source=chatgpt"), "?capital_max=25");
+  assert.equal(
+    curatedRankingQuery("/rankings/gamefi", "?utm_source=perplexity&risk_max=80"),
+    "?opportunity_type=GAME&risk_max=80",
+  );
 });
 
 test("strategy detail renders capital, earnings, scores, classification, warnings, and versions", () => {

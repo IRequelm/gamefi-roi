@@ -17,6 +17,7 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.orm import Session
 
 from app.monetization.models import (
+    InboundLandingEvent,
     MONETIZATION_METHODOLOGY_VERSION,
     MonetizationMetrics,
     MonetizationMetricValue,
@@ -29,6 +30,7 @@ from app.monetization.models import (
     SponsoredPlacementStatus,
 )
 from app.storage.models.monetization import (
+    InboundLandingEventRecord,
     OutboundClickEventRecord,
     ReferralProgramRecord,
     RevenueAttributionRecord,
@@ -89,6 +91,47 @@ class MonetizationRepository:
             stmt = stmt.where(OutboundClickEventRecord.destination_slug == destination_slug)
         with Session(self.engine) as session:
             return [_click_from_record(record) for record in session.scalars(stmt).all()]
+
+    def record_landing_visit(
+        self,
+        *,
+        landing_path: str,
+        referrer_domain: str | None = None,
+        utm_source: str | None = None,
+        utm_medium: str | None = None,
+        utm_campaign: str | None = None,
+        channel: str | None = None,
+        coarse_session_id: str | None = None,
+        occurred_at: datetime | None = None,
+    ) -> InboundLandingEvent:
+        event_time = _normalize_utc(occurred_at or datetime.now(UTC))
+        detected_channel = _clean_token(channel, fallback="other") if channel else normalize_acquisition_channel(
+            utm_source=utm_source,
+            referrer_domain=referrer_domain,
+        )
+        record = InboundLandingEventRecord(
+            event_id=str(uuid4()),
+            landing_path=_clean_path(landing_path),
+            referrer_domain=_clean_domain(referrer_domain),
+            utm_source=_clean_optional(utm_source),
+            utm_medium=_clean_optional(utm_medium),
+            utm_campaign=_clean_optional(utm_campaign),
+            channel=detected_channel,
+            coarse_session_id=_clean_optional(coarse_session_id),
+            occurred_at=event_time,
+            created_at=datetime.now(UTC),
+        )
+        with Session(self.engine, expire_on_commit=False) as session:
+            session.add(record)
+            session.commit()
+            return _landing_from_record(record)
+
+    def landing_visits(self, *, landing_path: str | None = None) -> list[InboundLandingEvent]:
+        stmt = select(InboundLandingEventRecord).order_by(InboundLandingEventRecord.occurred_at)
+        if landing_path is not None:
+            stmt = stmt.where(InboundLandingEventRecord.landing_path == landing_path)
+        with Session(self.engine) as session:
+            return [_landing_from_record(record) for record in session.scalars(stmt).all()]
 
     def save_referral_program(
         self,
@@ -361,6 +404,21 @@ def _click_from_record(record: OutboundClickEventRecord) -> OutboundClickEvent:
     )
 
 
+def _landing_from_record(record: InboundLandingEventRecord) -> InboundLandingEvent:
+    return InboundLandingEvent(
+        event_id=record.event_id,
+        landing_path=record.landing_path,
+        referrer_domain=record.referrer_domain,
+        utm_source=record.utm_source,
+        utm_medium=record.utm_medium,
+        utm_campaign=record.utm_campaign,
+        channel=record.channel,
+        coarse_session_id=record.coarse_session_id,
+        occurred_at=_normalize_utc(record.occurred_at),
+        created_at=_normalize_utc(record.created_at),
+    )
+
+
 def _referral_program_from_record(record: ReferralProgramRecord) -> ReferralProgram:
     return ReferralProgram(
         program_id=record.program_id,
@@ -476,6 +534,45 @@ def _clean_token(value: str | None, *, fallback: str) -> str:
         return fallback
     cleaned = "".join(char for char in text if char.isalnum() or char in ("_", "-", "."))
     return cleaned[:128] or fallback
+
+
+def _clean_path(value: str) -> str:
+    text = str(value).strip()
+    if not text.startswith("/"):
+        text = f"/{text}"
+    return text.split("?", 1)[0].split("#", 1)[0][:512]
+
+
+def _clean_domain(value: str | None) -> str | None:
+    text = _clean_optional(value)
+    if text is None:
+        return None
+    lowered = text.lower().strip(".")
+    cleaned = "".join(char for char in lowered if char.isalnum() or char in ("-", "."))
+    return cleaned[:255] or None
+
+
+def normalize_acquisition_channel(*, utm_source: str | None, referrer_domain: str | None) -> str:
+    source = (utm_source or "").strip().lower()
+    domain = (referrer_domain or "").strip().lower()
+    evidence = source or domain
+    if not evidence:
+        return "direct"
+    if "chatgpt.com" in evidence or source in {"chatgpt", "openai"}:
+        return "chatgpt"
+    if "perplexity" in evidence:
+        return "perplexity"
+    if "google" in evidence:
+        return "google"
+    if "bing" in evidence or "microsoft" in evidence:
+        return "bing"
+    if source in {"x", "twitter"} or "x.com" in domain or "twitter.com" in domain:
+        return "x"
+    if "reddit" in evidence:
+        return "reddit"
+    if source:
+        return "other"
+    return "referral"
 
 
 def _normalize_utc(value: datetime) -> datetime:

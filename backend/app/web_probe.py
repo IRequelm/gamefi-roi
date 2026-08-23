@@ -1,4 +1,4 @@
-"""Local smoke probe for the G11 web MVP."""
+"""Local smoke probe for the public web MVP."""
 
 from __future__ import annotations
 
@@ -21,11 +21,14 @@ def main() -> int:
     paths = (
         "/",
         "/rankings",
+        "/rankings/gamefi",
         "/opportunities",
         "/opportunities/grass",
         "/games/farmers-world",
         f"/strategies/{DFK_CJEWEL_MAX_LOCK_V1.strategy_id}",
         "/methodology",
+        "/robots.txt",
+        "/sitemap.xml",
         "/assets/app.js",
         "/assets/styles.css",
         "/api/v1/rankings",
@@ -39,7 +42,7 @@ def main() -> int:
 
     rankings = client.get("/api/v1/rankings").json()
     opportunities = client.get("/api/v1/opportunities").json()
-    print(f"web probe pages=7 assets=2 opportunities={opportunities['page']['total']} strategies={rankings['page']['total']}")
+    print(f"web probe pages=10 assets=2 opportunities={opportunities['page']['total']} strategies={rankings['page']['total']}")
     return 0
 
 

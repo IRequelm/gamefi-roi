@@ -257,6 +257,55 @@ G15 commercial storage uses four separate tables:
 
 `/api/v1/rankings` continues to return organic ranking `items` from snapshots/scores only. Sponsored placements, when present, are exposed in a separate `sponsored_placements` collection and must not be merged into the organic list.
 
+### G16 search / AI discovery boundary
+
+G16 converts the public web shell from JavaScript-only pages into server-rendered, crawlable HTML for the canonical public pages while preserving the browser client as progressive enhancement.
+
+Canonical crawlable URL families:
+
+- `/`,
+- `/opportunities`,
+- `/opportunities/{opportunity_id}`,
+- `/strategies/{strategy_id}`,
+- `/games/{game_id}`,
+- `/rankings`,
+- curated ranking landing pages under `/rankings/{slug}`,
+- `/methodology`.
+
+The canonical public host is configured by `GAMEFI_PUBLIC_BASE_URL`. Search, sitemap, JSON-LD, Open Graph, Twitter metadata, and IndexNow submission code must derive absolute URLs from this setting and must not hard-code a hosting provider URL in application logic.
+
+Search modules:
+
+- `app.web.seo`: builds server-rendered HTML, page-specific metadata, truthful JSON-LD, crawlable anchor links, and human-readable display formatting from existing API service payloads.
+- `app.search.canonical`: owns the canonical public URL inventory, curated ranking page definitions, canonical URL normalization, sitemap inputs, and IndexNow eligibility checks.
+- `app.search.indexnow`: submits explicitly selected canonical URLs to IndexNow with host validation, timeouts, bounded retries, and secret redaction.
+- `app.search.indexnow_cli`: manual operator CLI for all-canonical or explicit URL submissions.
+
+Public page requests may read persisted snapshots, scores, catalog records, outbound metadata, and commercial placement metadata already exposed by the read-oriented API. They must not call adapters, live providers, blockchain RPCs, source connectors, recalculation jobs, or ROI/risk/confidence logic.
+
+Search metadata must remain truthful:
+
+- no guaranteed-return language,
+- no page-level “game ROI” without strategy context,
+- unavailable ROI is rendered as unavailable, never zero,
+- sponsored/referral/commercial relationships never affect ROI, Risk, Confidence, historical snapshots, or organic ranking order,
+- sponsored placements remain labeled and separate where rendered.
+
+`/sitemap.xml` contains absolute canonical URLs only and excludes `/api`, `/go`, assets, query permutations, debug/test/internal paths, and arbitrary filtered ranking URLs. Query-parameter pages render `noindex,follow` and canonicalize to their clean path unless they are explicit curated landing pages.
+
+`/robots.txt` allows public content and disallows `/api`, `/go`, admin/internal/debug/test paths, and query traps. It intentionally does not block Googlebot, Bingbot, OAI-SearchBot, or PerplexityBot. OAI-SearchBot is treated as the ChatGPT search discovery crawler; GPTBot is documented separately as OpenAI's training crawler and is not controlled by the OAI-SearchBot policy.
+
+Inbound acquisition attribution is privacy-minimal and separate from monetization attribution:
+
+- landing path,
+- referrer domain,
+- UTM source/medium/campaign,
+- normalized channel,
+- timestamp,
+- optional coarse session id only when already supplied.
+
+It does not set cookies, fingerprint users, store raw IP addresses, trigger provider calls, alter rankings, or join into ROI/risk/confidence calculations.
+
 ## 5. Provider abstraction
 
 No provider-specific URL should be embedded inside an adapter.
