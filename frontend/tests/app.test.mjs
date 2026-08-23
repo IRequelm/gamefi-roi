@@ -8,6 +8,7 @@ import {
   formatBreakEven,
   formatMoney,
   formatRatio,
+  formatUpdatedAge,
   renderError,
   renderFreshnessAlert,
   renderHistory,
@@ -15,6 +16,7 @@ import {
   renderOpportunityDetail,
   renderRankingsTable,
   renderScoreBadge,
+  renderSponsoredPlacements,
   renderStrategySignals,
   renderStrategyDetail,
 } from "../assets/app.js";
@@ -37,8 +39,11 @@ test("rankings rendering includes card metrics and stored API values", () => {
   assert.match(html, /5.86%/);
   assert.match(html, /Positive return/);
   assert.match(html, /Very high risk warning/);
-  assert.match(html, /Updated 2026-08-16 12:00 UTC/);
+  assert.match(html, /Updated /);
+  assert.doesNotMatch(html, /Updated 2026-08-16 12:00 UTC/);
   assert.match(html, /\/go\/defi-kingdoms-play/);
+  assert.match(html, /source_page=rankings/);
+  assert.match(html, /placement=strategy_card/);
   assert.match(html, /ranking-card-grid/);
   assert.doesNotMatch(html, /<table/);
   assert.doesNotMatch(html, /<tr/);
@@ -52,9 +57,10 @@ test("home renders results as cards before filters without table ranking markup"
   assert.match(html, /GamCryp public beta/);
   assert.match(html, /Find Web3 earning opportunities/);
   assert.match(html, /Risk and confidence separated/);
-  assert.match(html, /Top current modeled result/);
+  assert.match(html, /Top current organic match/);
   assert.match(html, /ranking-card-grid/);
   assert.match(html, /finder-results/);
+  assert.match(html, /filter-panel/);
   assert.doesNotMatch(html, /<table/);
 });
 
@@ -184,6 +190,12 @@ test("financial formatting preserves exact API Decimal strings", () => {
   assert.match(formatMoney({ amount: "-3.51E-7", currency: "USD" }, { perDay: true }), /loss &lt; \$0.0001\/day/);
   assert.match(formatBreakEven({ days: "511.7707", status: "available", reason: null }), /512 days/);
   assert.match(formatBreakEven({ days: "4639.788", status: "available", reason: null }), /4,640 days/);
+  assert.match(
+    formatBreakEven({ days: null, status: "not_computable", reason: "No positive net earnings." }),
+    /Not profitable/,
+  );
+  assert.equal(formatUpdatedAge("2026-08-16T11:36:00Z", new Date("2026-08-16T12:00:00Z")), "Updated 24m ago");
+  assert.equal(formatUpdatedAge("2026-08-16T10:00:00Z", new Date("2026-08-16T12:00:00Z")), "Updated 2h ago");
 });
 
 test("negative return and warning signals are explicit", () => {
@@ -212,6 +224,34 @@ test("long strategy names stay in card structure with CTA behavior", () => {
   assert.match(html, /Start/);
   assert.match(html, /\/go\/defi-kingdoms-play/);
   assert.doesNotMatch(html, /<table/);
+});
+
+test("clean ranking cards remove redundant fresh and no-warning badges", () => {
+  const payload = rankingPayload();
+  payload.items[0].latest_snapshot.warnings = [];
+
+  const html = renderRankingsTable(payload);
+
+  assert.doesNotMatch(html, /No warnings/);
+  assert.doesNotMatch(html, />fresh</i);
+});
+
+test("sponsored placements render separately from organic ranking cards", () => {
+  const html = renderSponsoredPlacements([
+    {
+      placement_id: "sponsored-1",
+      opportunity_id: "grass",
+      strategy_id: null,
+      surface: "rankings",
+      status: "ACTIVE",
+      label: "Sponsored opportunity",
+      disclosure_text: "Paid placement. Does not affect organic rankings.",
+    },
+  ]);
+
+  assert.match(html, /Sponsored opportunity/);
+  assert.match(html, /Commercial/);
+  assert.doesNotMatch(html, /ranking-card/);
 });
 
 function rankingPayload() {
@@ -296,6 +336,7 @@ function destinationPayload(slug) {
     affiliate_program: null,
     commercial_relationship: "none",
     disclosure_text: "Official outbound link. No affiliate relationship is configured.",
+    referral_status: "NONE",
     source_reference: { label: "Official site", url: "https://example.com/" },
     reviewed_at: "2026-08-23T00:00:00Z",
     verification_status: "verified",

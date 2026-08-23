@@ -673,6 +673,61 @@ Commercial entities such as campaigns, sponsors, clicks, conversions, and revenu
 
 Affiliate/sponsor relationships must never affect ROI, Risk, Confidence, historical strategy snapshots, validation results, or organic ranking order. Sponsored placements must be explicit commercial surfaces, not modified organic results.
 
+G15 commercial records:
+
+`OutboundClickEvent`
+
+- `event_id`,
+- `destination_slug`,
+- `destination_id`,
+- `opportunity_id`,
+- `opportunity_type`,
+- optional `game_id`,
+- optional `strategy_id`,
+- `destination_type`,
+- `referral_status`,
+- `commercial_relationship`,
+- `is_affiliate`,
+- `target_url_kind` (`official` or `referral`),
+- optional `source_page`,
+- optional `placement`,
+- optional coarse session id,
+- coarse `user_agent_category`,
+- `occurred_at`,
+- `created_at`.
+
+The `/go/{destination_slug}` route may persist click events after destination validation. It must not accept an arbitrary target URL, set tracking cookies, store raw private identifiers, or require personal tracking. If no active referral URL exists, the redirect uses the official URL.
+
+Referral lifecycle statuses:
+
+- `NONE`,
+- `DISCOVERED`,
+- `APPLICATION_REQUIRED`,
+- `PENDING`,
+- `VERIFIED`,
+- `ACTIVE`,
+- `PAUSED`,
+- `REJECTED`,
+- `EXPIRED`.
+
+`ReferralProgram` records store lifecycle status, affiliate program name if any, disclosure text, verification status/timestamps, and evidence. They are commercial metadata only.
+
+`RevenueAttribution` records are partner/manual imports linked to destinations, opportunities, and optionally strategies. Only `VERIFIED` records may contribute to reporting metrics. Pending or rejected attribution must not be counted as conversion or revenue.
+
+G15 commercial metrics:
+
+- outbound clicks,
+- coarse sessions where available,
+- CTR only when a verified impression denominator exists,
+- verified conversions,
+- verified revenue,
+- EPC only as `verified revenue / outbound clicks`,
+- conversion rate only when verified conversions and outbound clicks both exist.
+
+Unavailable denominators or unverified partner data remain unavailable; they must not be presented as zero.
+
+`SponsoredPlacement` records contain placement id, opportunity id, optional strategy id, surface, status, label, disclosure text, campaign/sponsor metadata, active window, and audit trail. API/web responses must distinguish sponsored placement collections from organic ranking results.
+
 ## 10. Provenance
 
 Every snapshot must be reproducible enough to answer:

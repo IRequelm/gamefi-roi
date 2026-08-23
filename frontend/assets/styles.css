@@ -295,6 +295,15 @@ p {
   padding: 14px;
 }
 
+.filter-panel {
+  align-self: start;
+}
+
+.filter-panel-head {
+  display: grid;
+  gap: 4px;
+}
+
 .form-grid {
   display: grid;
   gap: 10px;
@@ -583,9 +592,10 @@ tr:last-child td {
   box-shadow: var(--shadow), var(--glow-cyan);
 }
 
-.choice-strip {
+.choice-strip,
+.top-opportunity-card {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(300px, 520px);
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 480px) auto;
   gap: 16px;
   align-items: center;
   border: 1px solid rgba(32, 246, 255, 0.24);
@@ -595,10 +605,30 @@ tr:last-child td {
   padding: 14px 16px;
 }
 
-.choice-strip strong {
+.top-opportunity-card {
+  background:
+    radial-gradient(circle at 6% 16%, rgba(32, 246, 255, 0.12), transparent 18rem),
+    linear-gradient(135deg, rgba(7, 17, 31, 0.96), rgba(5, 10, 24, 0.94));
+}
+
+.choice-strip strong,
+.top-opportunity-copy p {
   display: block;
   margin-top: 4px;
   overflow-wrap: anywhere;
+}
+
+.top-opportunity-copy {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.top-opportunity-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
 }
 
 .choice-metrics {
@@ -668,6 +698,15 @@ tr:last-child td {
 .updated-note {
   color: var(--muted);
   font-size: 0.82rem;
+}
+
+.watchlist-note {
+  min-height: 2.8em;
+}
+
+.sponsored-section {
+  border-color: rgba(255, 190, 85, 0.28);
+  background: rgba(255, 190, 85, 0.05);
 }
 
 .button.cta {
@@ -822,6 +861,7 @@ tr:last-child td {
 @media (max-width: 900px) {
   .finder-grid,
   .choice-strip,
+  .top-opportunity-card,
   .split-grid,
   .summary-grid,
   .metric-grid,
@@ -842,6 +882,10 @@ tr:last-child td {
 
   .tool-panel {
     order: 2;
+  }
+
+  .top-opportunity-actions {
+    justify-content: flex-start;
   }
 
   .card-metrics,
@@ -879,8 +923,13 @@ tr:last-child td {
     padding: 12px;
   }
 
+  .top-opportunity-card {
+    gap: 12px;
+    padding: 13px;
+  }
+
   .choice-metrics {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: 1fr;
     gap: 6px;
   }
 

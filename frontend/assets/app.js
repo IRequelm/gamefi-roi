@@ -49,8 +49,8 @@ export function renderHomeShell(games = [], rankings = { items: [], page: { tota
     <div class="page-shell">
       <section class="page-head">
         <p class="eyebrow">GamCryp public beta</p>
-        <h1>Find Web3 earning opportunities worth modeling.</h1>
-        <p class="lede">See modeled ROI where reproducible, risk/confidence, and freshness across GAME, DEPIN_NODE, and POINTS opportunities.</p>
+        <h1>Find Web3 earning opportunities with evidence behind them.</h1>
+        <p class="lede">Start with the current organic leaders, then filter by capital, risk, confidence, and opportunity type.</p>
         <div class="hero-proof-points" aria-label="GamCryp data principles">
           <span>Modeled ROI where reproducible</span>
           <span>Risk and confidence separated</span>
@@ -62,8 +62,11 @@ export function renderHomeShell(games = [], rankings = { items: [], page: { tota
         <div id="finder-results">
           ${renderRankingsTable(rankings, { compact: true })}
         </div>
-        <form class="tool-panel" id="finder-form">
-          <h2>ROI Finder</h2>
+        <form class="tool-panel filter-panel" id="finder-form">
+          <div class="filter-panel-head">
+            <h2>Filters</h2>
+            <p class="muted">Organic ranking order still comes from the API.</p>
+          </div>
           <div class="form-grid">
             <div class="field">
               <label for="capital-max">Capital budget</label>
@@ -122,16 +125,24 @@ export function renderTopRankingSummary(rankings = { items: [] }) {
     return "";
   }
   const snapshot = top.latest_snapshot;
+  const strategy = top.strategy;
   return `
-    <section class="choice-strip" aria-label="Top ranked strategy">
-      <div>
-        <span class="eyebrow">Top current modeled result</span>
-        <strong>${escapeHtml(snapshot.game_name)} · ${escapeHtml(top.strategy.name)}</strong>
+    <section class="top-opportunity-card" aria-label="Top ranked organic strategy">
+      <div class="top-opportunity-copy">
+        <span class="eyebrow">Top current organic match</span>
+        <h2>${escapeHtml(snapshot.game_name)}</h2>
+        <p><a class="strategy-link" href="/strategies/${encodeURIComponent(strategy.strategy_id)}" data-link>${escapeHtml(strategy.name)}</a></p>
+        ${renderStrategySignals(snapshot)}
+        <p class="updated-note">${formatUpdatedAge(snapshot.calculated_at)} · Organic ranking from API</p>
       </div>
       <div class="choice-metrics">
         ${summaryItem("Capital", formatMoney(snapshot.capital.total_capital))}
         ${summaryItem("Net/day", formatMoney(snapshot.earnings.net_earnings_day, { perDay: true }))}
         ${summaryItem("30D ROI", formatRatio(snapshot.roi.roi_total_30d))}
+      </div>
+      <div class="top-opportunity-actions">
+        <a class="secondary-button" href="/strategies/${encodeURIComponent(strategy.strategy_id)}" data-link>View strategy</a>
+        ${renderDestinationButton(strategy.primary_destination, "Start", { sourcePage: "home", placement: "top_opportunity" })}
       </div>
     </section>
   `;
@@ -146,6 +157,7 @@ export function renderRankingsPage(rankings) {
         <p class="lede">The order is supplied by the API: 30D ROI, confidence, risk, last calculation time, then strategy id. Brand or referral metadata never changes this order.</p>
       </section>
       ${renderRankingsTable(rankings)}
+      ${renderSponsoredPlacements(rankings.sponsored_placements || [])}
     </div>
   `;
 }
@@ -214,7 +226,7 @@ export function renderOpportunityList(opportunities = [], options = {}) {
   if (!opportunities.length) {
     return "";
   }
-  const heading = options.compact ? "Opportunity watchlist" : "Opportunity catalog";
+  const heading = options.compact ? "Opportunity radar" : "Opportunity catalog";
   return `
     <section class="section-panel opportunity-section">
       <div class="section-header">
@@ -247,13 +259,14 @@ export function renderOpportunityCard(opportunity) {
       <h3><a class="strategy-link" href="/opportunities/${encodeURIComponent(opportunity.opportunity_id)}" data-link>${escapeHtml(opportunity.name)}</a></h3>
       <p class="muted">${strategyText}</p>
       <div class="opportunity-facts">
+        ${metricItem("Type", escapeHtml(labelize(opportunity.opportunity_type)))}
         ${metricItem("Reward type", escapeHtml(rewardTypes))}
         ${metricItem("Financial ROI", roiText)}
       </div>
-      <p class="muted">${opportunity.strategy_count > 0 ? escapeHtml(labelize(opportunity.value_realization_status)) : escapeHtml(unavailableRoiReason(opportunity))}</p>
+      <p class="muted watchlist-note">${opportunity.strategy_count > 0 ? escapeHtml(labelize(opportunity.value_realization_status)) : escapeHtml(conciseUnavailableRoiReason(opportunity))}</p>
       <div class="card-actions">
         <a class="secondary-button" href="/opportunities/${encodeURIComponent(opportunity.opportunity_id)}" data-link>Review</a>
-        ${renderDestinationButton(opportunity.primary_destination, "Open")}
+        ${renderDestinationButton(opportunity.primary_destination, "Open", { sourcePage: "opportunity_watchlist", placement: "opportunity_card" })}
       </div>
     </article>
   `;
@@ -305,13 +318,13 @@ export function renderRankingCard(item) {
       <div class="card-badges">
         ${renderScoreBadge(snapshot.confidence, "confidence")}
         ${renderScoreBadge(snapshot.risk, "risk")}
-        ${renderFreshnessPill(snapshot.freshness)}
-        ${renderWarningsIndicator(snapshot.warnings)}
+        ${renderFreshnessPill(snapshot.freshness, { hideFresh: true })}
+        ${renderWarningsIndicator(snapshot.warnings, { hideEmpty: true })}
       </div>
-      <p class="updated-note">Updated ${formatDateTime(snapshot.calculated_at)}</p>
+      <p class="updated-note">${formatUpdatedAge(snapshot.calculated_at)}</p>
       <div class="card-actions">
         <a class="secondary-button" href="/strategies/${encodeURIComponent(strategy.strategy_id)}" data-link>View strategy</a>
-        ${renderDestinationButton(strategy.primary_destination, "Start")}
+        ${renderDestinationButton(strategy.primary_destination, "Start", { sourcePage: "rankings", placement: "strategy_card" })}
       </div>
     </article>
   `;
@@ -419,7 +432,7 @@ export function renderStrategyDetail(strategy, historyPage = { items: [] }) {
           <span class="badge info">${escapeHtml(strategy.strategy_id)}</span>
           <span class="badge">${escapeHtml(strategy.strategy_version)}</span>
           <a class="secondary-button" href="/games/${encodeURIComponent(strategy.game_id)}" data-link>${escapeHtml(strategy.game_name)}</a>
-          ${renderDestinationButton(strategy.primary_destination, "Start")}
+          ${renderDestinationButton(strategy.primary_destination, "Start", { sourcePage: "strategy_detail", placement: "primary_cta" })}
         </div>
       </section>
       ${renderFreshnessAlert(snapshot)}
@@ -472,10 +485,37 @@ export function renderStrategyDetail(strategy, historyPage = { items: [] }) {
           ${metricItem("Adapter contract", snapshot.versions.adapter_contract_version)}
           ${metricItem("ROI model", snapshot.versions.model_version)}
           ${metricItem("Scoring methodology", snapshot.versions.scoring_methodology_version || "Unavailable")}
-          ${metricItem("Last calculated", formatDateTime(snapshot.calculated_at))}
+          ${metricItem("Last calculated", `${formatUpdatedAge(snapshot.calculated_at)} (${formatDateTime(snapshot.calculated_at)})`)}
         </div>
       </section>
     </div>
+  `;
+}
+
+export function renderSponsoredPlacements(placements = []) {
+  if (!placements.length) {
+    return "";
+  }
+  return `
+    <section class="section-panel sponsored-section" aria-label="Sponsored placements">
+      <div class="section-header">
+        <h2>Sponsored</h2>
+        <span class="badge warning">Commercial</span>
+      </div>
+      <div class="section-body contributor-list">
+        ${placements
+          .map(
+            (placement) => `
+              <article class="contributor">
+                <strong>${escapeHtml(placement.label)}</strong>
+                <span>${escapeHtml(placement.disclosure_text)}</span>
+                <small>${escapeHtml(placement.status)} · ${escapeHtml(placement.surface)}</small>
+              </article>
+            `,
+          )
+          .join("")}
+      </div>
+    </section>
   `;
 }
 
@@ -668,6 +708,7 @@ export function renderMethodologyPage() {
     ["Total vs at-risk capital", "Total capital is the full entry requirement. Capital at risk is the portion economically exposed after recoverable value is considered."],
     ["Confidence vs risk", "Confidence measures trust in the calculation and data. Risk measures economic downside. They are independent."],
     ["LIVE / CONFIG / DERIVED", "LIVE means current observation, CONFIG means explicit assumption, and DERIVED means calculated from observed or configured inputs."],
+    ["Commercial separation", "Referral, affiliate, or sponsor relationships are disclosure metadata only. They do not change ROI, Risk, Confidence, or organic ranking order."],
     ["No guaranteed returns", "Expected value and ROI are analytical estimates, not promises, investment advice, or automated execution instructions."],
   ];
   return `
@@ -792,7 +833,9 @@ export function formatRatio(metric) {
 
 export function formatBreakEven(metric) {
   if (!metric || metric.days === null || metric.days === undefined) {
-    return `<span class="muted">${escapeHtml(metric?.reason || "Unavailable")}</span>`;
+    const reason = metric?.reason || "Unavailable";
+    const label = /positive net earnings/i.test(reason) ? "Not profitable" : reason;
+    return `<span class="muted" title="${escapeHtml(reason)}">${escapeHtml(label)}</span>`;
   }
   const rawDays = String(metric.days);
   const rounded = roundDecimalString(normalizeDecimalString(rawDays), 0);
@@ -963,26 +1006,32 @@ export function scoreText(score) {
   return `${score.score} ${score.label}`;
 }
 
-export function renderFreshnessPill(freshness) {
+export function renderFreshnessPill(freshness, options = {}) {
   const status = freshness?.overall_status || "unknown";
+  if (options.hideFresh && status === "fresh") {
+    return "";
+  }
   const className = status === "fresh" ? "good" : "warning";
   return `<span class="badge ${className}">${escapeHtml(status)}</span>`;
 }
 
-export function renderWarningsIndicator(warnings = []) {
+export function renderWarningsIndicator(warnings = [], options = {}) {
   if (!warnings.length) {
+    if (options.hideEmpty) {
+      return "";
+    }
     return '<span class="badge good">No warnings</span>';
   }
   return `<span class="badge warning">${escapeHtml(String(warnings.length))} warning${warnings.length === 1 ? "" : "s"}</span>`;
 }
 
-export function renderDestinationButton(destination, label = "Open") {
+export function renderDestinationButton(destination, label = "Open", context = {}) {
   if (!destination || destination.status !== "active" || !destination.redirect_url) {
     return '<span class="badge">No reviewed link</span>';
   }
   const relationship = destination.is_affiliate ? "Affiliate" : labelize(destination.commercial_relationship || "none");
   return `
-    <a class="button cta" href="${escapeHtml(destination.redirect_url)}" title="${escapeHtml(destination.disclosure_text)}">
+    <a class="button cta" href="${escapeHtml(redirectWithContext(destination.redirect_url, context))}" title="${escapeHtml(destination.disclosure_text)}">
       ${escapeHtml(label)}
       <span>${escapeHtml(relationship)}</span>
     </a>
@@ -1014,6 +1063,11 @@ export function renderValueStatus(status) {
 function unavailableRoiReason(opportunity) {
   const status = labelize(opportunity.value_realization_status || "unknown");
   return `This opportunity has ${status} value realization. Financial ROI is unavailable, not zero, until reward value, costs, timing, and exit route are lawfully and reproducibly sourceable.`;
+}
+
+function conciseUnavailableRoiReason(opportunity) {
+  const status = labelize(opportunity.value_realization_status || "unknown");
+  return `ROI unavailable: ${status} value route is not reproducible yet.`;
 }
 
 export function classificationBadge(classification) {
@@ -1075,6 +1129,45 @@ function evidenceSummary(evidence) {
     .slice(0, 3)
     .map(([key, value]) => `${labelize(key)}: ${String(value)}`)
     .join("; ");
+}
+
+export function formatUpdatedAge(value, now = new Date()) {
+  const parsed = Date.parse(value);
+  const current = now instanceof Date ? now.getTime() : Date.parse(now);
+  if (!Number.isFinite(parsed) || !Number.isFinite(current)) {
+    return "Updated time unavailable";
+  }
+  const elapsedSeconds = Math.max(0, Math.floor((current - parsed) / 1000));
+  if (elapsedSeconds < 60) {
+    return "Updated just now";
+  }
+  const elapsedMinutes = Math.floor(elapsedSeconds / 60);
+  if (elapsedMinutes < 60) {
+    return `Updated ${elapsedMinutes}m ago`;
+  }
+  const elapsedHours = Math.floor(elapsedMinutes / 60);
+  if (elapsedHours < 48) {
+    return `Updated ${elapsedHours}h ago`;
+  }
+  const elapsedDays = Math.floor(elapsedHours / 24);
+  if (elapsedDays < 14) {
+    return `Updated ${elapsedDays}d ago`;
+  }
+  return `Updated ${formatDateTime(value)}`;
+}
+
+function redirectWithContext(url, context = {}) {
+  if (!url) {
+    return url;
+  }
+  const params = new URLSearchParams();
+  addParam(params, "source_page", context.sourcePage);
+  addParam(params, "placement", context.placement);
+  const query = params.toString();
+  if (!query) {
+    return url;
+  }
+  return `${url}${url.includes("?") ? "&" : "?"}${query}`;
 }
 
 function formatDateTime(value) {

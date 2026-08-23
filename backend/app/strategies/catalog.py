@@ -40,11 +40,16 @@ class OutboundDestination:
     reviewed_at: datetime
     verification_status: str
     allowed_surfaces: tuple[str, ...]
+    referral_status: str = "NONE"
     expires_at: datetime | None = None
 
     @property
     def target_url(self) -> str:
-        return self.referral_url or self.official_url
+        return self.referral_url if self.target_url_kind == "referral" else self.official_url
+
+    @property
+    def target_url_kind(self) -> str:
+        return "referral" if self.referral_url and self.referral_status == "ACTIVE" else "official"
 
     def is_active(self, *, now: datetime | None = None) -> bool:
         current = now or datetime.now(UTC)

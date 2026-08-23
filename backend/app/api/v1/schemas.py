@@ -145,6 +145,19 @@ class OutboundDestinationPayload(BaseModel):
     reviewed_at: datetime
     verification_status: str
     allowed_surfaces: list[str]
+    referral_status: str = "NONE"
+
+
+class SponsoredPlacementPayload(BaseModel):
+    placement_id: str
+    opportunity_id: str
+    strategy_id: str | None = None
+    surface: str
+    status: str
+    label: str
+    disclosure_text: str
+    campaign_name: str | None = None
+    sponsor_name: str | None = None
 
 
 class OpportunitySummary(BaseModel):
@@ -256,6 +269,7 @@ class RankingsPage(BaseModel):
     items: list[RankingItem]
     page: PageMeta
     ordering: list[str]
+    sponsored_placements: list[SponsoredPlacementPayload] = Field(default_factory=list)
 
 
 class HealthPayload(BaseModel):

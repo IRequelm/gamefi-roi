@@ -43,6 +43,7 @@ gamefi-roi/
 │   │   ├── strategies/
 │   │   ├── engine/
 │   │   ├── risk/
+│   │   ├── monetization/
 │   │   ├── storage/
 │   │   ├── api/
 │   │   ├── jobs/
@@ -234,7 +235,7 @@ Supported planned opportunity types:
 
 G14 may add structured opportunity/strategy outbound destination metadata and a first-party `/go/...` redirect layer. The redirect layer must resolve only allowlisted reviewed destinations and fail closed for unknown or disabled destinations.
 
-G15 may add affiliate attribution/reporting, sponsored placements, and commercial analytics on top of the G14 foundation.
+G15 adds affiliate attribution/reporting foundations, sponsored placement metadata, and commercial analytics on top of the G14 foundation.
 
 Commercial data must remain separated from:
 - adapter observations,
@@ -246,6 +247,15 @@ Commercial data must remain separated from:
 Affiliate/sponsor relationships must never affect ROI, Risk, Confidence, or organic rankings. Sponsored placements must be separately modeled, explicitly labeled, and served outside organic ranking order.
 
 Points-only opportunities must not publish financial ROI until a lawful, reproducible, realizable value route exists. The platform may show points production, capital/cost burden, warnings, and confidence/risk context with ROI marked unavailable rather than zero.
+
+G15 commercial storage uses four separate tables:
+
+- `outbound_click_events`: privacy-minimal `/go/...` click events with destination, source surface, coarse optional session, user-agent category, and official/referral target kind.
+- `referral_programs`: referral lifecycle metadata with explicit statuses `NONE`, `DISCOVERED`, `APPLICATION_REQUIRED`, `PENDING`, `VERIFIED`, `ACTIVE`, `PAUSED`, `REJECTED`, and `EXPIRED`.
+- `revenue_attributions`: verified/manual partner attribution imports. Pending or rejected imports are retained for audit but do not contribute to EPC or conversion-rate metrics.
+- `sponsored_placements`: labeled commercial placement metadata with campaign status, placement surface, disclosure text, and audit trail.
+
+`/api/v1/rankings` continues to return organic ranking `items` from snapshots/scores only. Sponsored placements, when present, are exposed in a separate `sponsored_placements` collection and must not be merged into the organic list.
 
 ## 5. Provider abstraction
 

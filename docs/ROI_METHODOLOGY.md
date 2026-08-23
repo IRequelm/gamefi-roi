@@ -300,6 +300,15 @@ The system does not:
 
 Commercial monetization metadata, affiliate attribution, sponsored placement data, and referral destination metadata are not ROI inputs. If a game-native referral reward is ever modeled as an economic strategy, it must be explicit strategy/config evidence and must not be introduced because of a commercial relationship with GameFi ROI.
 
+G15 monetization reporting uses verified commercial records only:
+
+- outbound clicks are measured through the first-party `/go/...` layer,
+- pending or rejected partner imports do not count as conversion or revenue,
+- EPC is defined only as verified revenue divided by outbound clicks,
+- conversion rate is defined only when verified conversions and outbound clicks are both present.
+
+These reporting metrics are commercial analytics, not strategy economics. They must never be fed into ROI, Risk, Confidence, validation, historical snapshot generation, or organic ranking order.
+
 ## 19. G3 acceptance principle
 
 Before any live game adapter can be trusted, the generic engine must pass manually verified fixed scenarios covering:

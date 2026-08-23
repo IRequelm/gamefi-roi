@@ -39,6 +39,7 @@ from app.api.v1.schemas import (
     StrategySnapshotPayload,
     StrategyOpsStatusPayload,
     StrategySummary,
+    SponsoredPlacementPayload,
     UnavailableFactorPayload,
     UncertaintyRangePayload,
     VersionPayload,
@@ -47,6 +48,7 @@ from app.api.v1.schemas import (
 from app.config.settings import Settings
 from app.risk.results import METHODOLOGY_VERSION, SnapshotScoreResult
 from app.storage.history import HistoryRepository, StrategyCalculationFailure, StrategySnapshot
+from app.storage.monetization import MonetizationRepository
 from app.storage.scoring import ScoringRepository
 from app.strategies.catalog import (
     GameCatalogEntry,
@@ -78,6 +80,7 @@ RANKING_ORDERING = [
 class ApiDataService:
     def __init__(self, engine: Engine) -> None:
         self.history = HistoryRepository(engine)
+        self.monetization = MonetizationRepository(engine)
         self.scoring = ScoringRepository(engine)
 
     def games_page(self, *, limit: int, offset: int) -> tuple[list[GameSummary], int]:
@@ -271,6 +274,20 @@ class ApiDataService:
             ],
             page=PageMeta(limit=limit, offset=offset, total=len(rows)),
             ordering=RANKING_ORDERING,
+            sponsored_placements=[
+                SponsoredPlacementPayload(
+                    placement_id=placement.placement_id,
+                    opportunity_id=placement.opportunity_id,
+                    strategy_id=placement.strategy_id,
+                    surface=placement.surface,
+                    status=placement.status.value,
+                    label=placement.label,
+                    disclosure_text=placement.disclosure_text,
+                    campaign_name=placement.campaign_name,
+                    sponsor_name=placement.sponsor_name,
+                )
+                for placement in self.monetization.active_sponsored_placements(surface="rankings")
+            ],
         )
 
 
@@ -563,6 +580,7 @@ def _outbound_destination(destination: OutboundDestination) -> OutboundDestinati
         reviewed_at=destination.reviewed_at,
         verification_status=destination.verification_status,
         allowed_surfaces=list(destination.allowed_surfaces),
+        referral_status=destination.referral_status,
     )
 
 

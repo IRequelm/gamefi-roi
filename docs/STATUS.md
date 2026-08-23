@@ -5,7 +5,7 @@ Project version: 0.1
 
 ## Current state
 
-**ACTIVE GATE: G15 — Monetization**
+**ACTIVE GATE: G16 — Search / AI Discoverability + Traffic Acquisition**
 
 G12 is complete and frozen in the G12 baseline Git commit.
 
@@ -16,6 +16,8 @@ G14 is complete in the repository. It adds the backward-compatible Opportunity c
 G14 post-deployment UI acceptance follow-up: the first deployed G14 UI still looked too much like an internal analytics/debug surface on the public Home/ROI Finder. A corrective G14 fix was added before any G15 monetization work to make the public beta user-readable: responsive strategy cards replace ranking tables, Decimal API strings remain authoritative but are formatted for display, tiny/scientific values are readable, confidence/risk/freshness interpretation is explicit, and opportunity cards show unavailable ROI for non-financial candidates instead of zero.
 
 G14 post-deployment brand/UI refinement: before G15 monetization work, the public beta received a GamCryp visual pass based on the supplied visual references. This is presentation-only: backend logic, ROI calculations, ranking logic, adapters, API contracts, referral logic, and opportunity modeling remain unchanged. The live structure stays card-based while the visual language moves to dark navy surfaces with restrained cyan/blue/violet accents and semantic risk/confidence colors preserved.
+
+G15 is complete in the repository. It adds a monetization foundation on top of the G14 referral layer: privacy-minimal `/go/...` click persistence, referral lifecycle metadata, verified/manual revenue attribution foundations, sponsored placement metadata, commercial analytics metrics, disclosure documentation, and a tighter conversion-oriented public UI. ROI, Risk, Confidence, historical snapshots, validation, and organic ranking order remain analytically isolated from affiliate/sponsor/commercial data.
 
 ## Gate board
 
@@ -36,7 +38,8 @@ G14 post-deployment brand/UI refinement: before G15 monetization work, the publi
 | G12 | Validation | COMPLETE |
 | G13 | Production | COMPLETE |
 | G14 | Scale / Opportunity + Referral Foundation | COMPLETE |
-| G15 | Monetization | ACTIVE |
+| G15 | Monetization | COMPLETE |
+| G16 | Search / AI Discoverability + Traffic Acquisition | ACTIVE |
 
 ## G0 objective
 
@@ -634,19 +637,44 @@ G15 may include:
 
 Affiliate/sponsor relationships must never affect ROI, Risk, Confidence, strategy snapshots, validation results, or organic rankings. Sponsored placements must be separate, explicitly labeled surfaces with deterministic separation from organic results.
 
-## G15 planned acceptance criteria
+## G15 acceptance criteria
 
-- [ ] affiliate attribution/reporting is implemented only from `/go/...` outbound events and approved partner data,
-- [ ] commercial analytics are stored separately from strategy snapshots, ROI outputs, risk/confidence scores, and organic ranking inputs,
-- [ ] sponsored placement data model exists with explicit labeling, campaign status, placement surface, disclosure text, and audit trail,
-- [ ] sponsored placements cannot alter organic ranking order or analytical metrics,
-- [ ] API/web responses distinguish organic ranking results from sponsored placements,
-- [ ] tests prove changing affiliate/sponsor/commercial metadata does not change ROI, Risk, Confidence, or organic rankings,
-- [ ] legal/compliance review requirements for disclosures, tracking, and partner data usage are documented before public monetized launch,
-- [ ] reporting clearly separates clicks, conversions, revenue, and partner campaign metrics from user-facing economic strategy metrics,
-- [ ] all required tests, doctor checks, probes, and whitespace checks pass,
-- [ ] baseline Git commit for G15.
+- [x] affiliate attribution/reporting is implemented only from `/go/...` outbound events and approved partner data,
+- [x] commercial analytics are stored separately from strategy snapshots, ROI outputs, risk/confidence scores, and organic ranking inputs,
+- [x] sponsored placement data model exists with explicit labeling, campaign status, placement surface, disclosure text, and audit trail,
+- [x] sponsored placements cannot alter organic ranking order or analytical metrics,
+- [x] API/web responses distinguish organic ranking results from sponsored placements,
+- [x] tests prove changing affiliate/sponsor/commercial metadata does not change ROI, Risk, Confidence, or organic rankings,
+- [x] legal/compliance review requirements for disclosures, tracking, and partner data usage are documented before public monetized launch,
+- [x] reporting clearly separates clicks, conversions, revenue, and partner campaign metrics from user-facing economic strategy metrics,
+- [x] all required tests, doctor checks, probes, and whitespace checks pass,
+- [x] baseline Git commit for G15.
 
-## Current instruction to Codex
+## G15 monetization implementation notes
 
-G15 is active after G14 repository completion. Do not implement G15 until the user explicitly asks to proceed.
+G15 adds:
+
+- `outbound_click_events` for privacy-minimal first-party redirect click events,
+- `referral_programs` for lifecycle status and verification metadata,
+- `revenue_attributions` for verified/manual partner import foundations,
+- `sponsored_placements` for labeled commercial placement metadata,
+- commercial metrics where CTR, EPC, revenue, and conversion rate are unavailable unless their denominators and verified inputs exist,
+- API response separation where organic `/api/v1/rankings.items` remains analytical and sponsored placements are exposed separately in `sponsored_placements`,
+- public disclosure copy and conversion-focused UI refinements.
+
+Referral lifecycle statuses are `NONE`, `DISCOVERED`, `APPLICATION_REQUIRED`, `PENDING`, `VERIFIED`, `ACTIVE`, `PAUSED`, `REJECTED`, and `EXPIRED`.
+
+Affiliate/sponsor relationships must never affect ROI, Risk, Confidence, historical snapshots, validation, or organic rankings.
+
+## G16 objective
+
+Increase discoverability and acquisition for the public beta without changing analytical outputs.
+
+G16 may include:
+
+- search-engine metadata and content structure,
+- AI/search discoverability improvements,
+- shareable opportunity/strategy pages,
+- traffic acquisition measurement that respects the G15 privacy and integrity boundary.
+
+G16 must not change ROI calculations, adapters, risk/confidence methodology, organic ranking logic, or monetization attribution logic unless a backward-compatible bug fix is explicitly required.

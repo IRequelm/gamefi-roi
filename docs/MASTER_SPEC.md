@@ -212,7 +212,8 @@ Potential monetization:
 
 Roadmap:
 - G14 introduces the Opportunity catalog foundation and referral foundation: backward-compatible `Game` to `Opportunity` model expansion, structured outbound/referral metadata, and a first-party `/go/...` redirect layer.
-- G15 introduces monetization: affiliate attribution/reporting, sponsored placements, and commercial analytics.
+- G15 introduces monetization foundation: privacy-minimal outbound click persistence, referral lifecycle metadata, verified/manual attribution foundations, labeled sponsored placement metadata, and commercial analytics that remain separate from organic strategy intelligence.
+- G16 is reserved for Search / AI Discoverability + Traffic Acquisition.
 
 Affiliate/sponsor relationships must never affect ROI, Risk, Confidence, strategy snapshots, validation results, or organic rankings. Sponsored placements must be clearly labeled and separated from organic ranking order and analytical metrics.
 

@@ -6,10 +6,14 @@ import logging
 from pathlib import Path
 from urllib.parse import urlsplit
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import FileResponse, RedirectResponse
+from sqlalchemy import Engine
+from sqlalchemy.exc import SQLAlchemyError
 from starlette.staticfiles import StaticFiles
 
+from app.api.dependencies import get_database_engine
+from app.storage.monetization import MonetizationRepository
 from app.strategies.catalog import get_outbound_destination
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
@@ -37,7 +41,11 @@ def serve_frontend() -> FileResponse:
 
 
 @router.get("/go/{destination_slug}")
-def outbound_redirect(destination_slug: str) -> RedirectResponse:
+def outbound_redirect(
+    destination_slug: str,
+    request: Request,
+    engine: Engine = Depends(get_database_engine),
+) -> RedirectResponse:
     destination = get_outbound_destination(destination_slug)
     if destination is None or not destination.is_active() or "redirect" not in destination.allowed_surfaces:
         raise HTTPException(status_code=404, detail="Unknown or inactive outbound destination.")
@@ -46,6 +54,21 @@ def outbound_redirect(destination_slug: str) -> RedirectResponse:
     parsed = urlsplit(target_url)
     if parsed.scheme != "https" or not parsed.netloc:
         raise HTTPException(status_code=404, detail="Outbound destination is not reviewed for redirect.")
+
+    try:
+        MonetizationRepository(engine).record_outbound_click(
+            destination=destination,
+            target_url_kind=destination.target_url_kind,
+            source_page=request.query_params.get("source_page"),
+            placement=request.query_params.get("placement"),
+            coarse_session_id=request.headers.get("x-gamcryp-session"),
+            user_agent_category=_user_agent_category(request.headers.get("user-agent", "")),
+        )
+    except SQLAlchemyError as exc:
+        logger.warning(
+            "outbound_click_persistence_failed",
+            extra={"destination_slug": destination.destination_slug, "error": str(exc)},
+        )
 
     logger.info(
         "outbound_redirect",
@@ -58,3 +81,16 @@ def outbound_redirect(destination_slug: str) -> RedirectResponse:
         },
     )
     return RedirectResponse(target_url, status_code=302, headers={"Cache-Control": "no-store"})
+
+
+def _user_agent_category(user_agent: str) -> str:
+    text = user_agent.lower()
+    if not text:
+        return "unknown"
+    if "bot" in text or "crawler" in text or "spider" in text:
+        return "bot"
+    if "mobile" in text or "iphone" in text or "android" in text:
+        return "mobile"
+    if "ipad" in text or "tablet" in text:
+        return "tablet"
+    return "desktop"
