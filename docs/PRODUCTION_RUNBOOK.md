@@ -103,6 +103,7 @@ GitHub Actions beta scheduler secrets:
 GitHub Actions beta scheduler non-secret env:
 
 - defined in `.github/workflows/render-beta-recalculation.yml`,
+- `GAMEFI_PUBLIC_BASE_URL` defaults to `https://gamefi-roi-web.onrender.com` and may be overridden with the GitHub repository variable `GAMEFI_PUBLIC_BASE_URL` when a custom domain becomes canonical,
 - pool size is `1`, max overflow is `0`,
 - cadence is `30` minutes.
 

@@ -37,6 +37,9 @@ def test_beta_scheduler_workflow_uses_existing_recalculation_with_overlap_guard(
     assert "cron: \"*/30 * * * *\"" in workflow
     assert "cancel-in-progress: false" in workflow
     assert "GAMEFI_BETA_DATABASE_URL" in workflow
+    assert "GAMEFI_PUBLIC_BASE_URL" in workflow
+    assert "vars.GAMEFI_PUBLIC_BASE_URL" in workflow
+    assert "https://gamefi-roi-web.onrender.com" in workflow
     assert "GAMEFI_COINGECKO_API_KEY" in workflow
     assert "GAMEFI_DFK_CHAIN_RPC_URL" in workflow
     assert "python -m app.jobs.production_recalculation" in workflow

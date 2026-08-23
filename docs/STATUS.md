@@ -21,6 +21,8 @@ G15 is complete in the repository. It adds a monetization foundation on top of t
 
 G16 is complete in the repository. It adds server-visible public HTML, page-specific metadata, canonical URL inventory, sitemap, robots policy, operator-triggered IndexNow support, and privacy-minimal inbound acquisition attribution. ROI calculations, adapters, risk/confidence methodology, historical snapshots, monetization attribution, sponsored placement separation, and organic ranking logic remain unchanged. No G17 has been defined; the project is paused after G16 until the roadmap is extended.
 
+Post-G16 production scheduler fix: the GitHub Actions beta recalculation workflow now exports `GAMEFI_PUBLIC_BASE_URL` as a non-secret production env value, with a GitHub repository variable override for future custom domains. This fixes the production settings validation regression introduced by G16 without changing ROI, adapters, scoring, ranking, API contracts, or monetization logic.
+
 ## Gate board
 
 | Gate | Name | Status |
