@@ -31,6 +31,8 @@ REQUIRED_IMPORTS = (
     "app.api.v1_probe",
     "app.config.settings",
     "app.monetization.models",
+    "app.monetization.referral_operations",
+    "app.operator.routes",
     "app.storage.database",
     "app.storage.history",
     "app.storage.metadata",

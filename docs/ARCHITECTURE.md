@@ -306,6 +306,42 @@ Inbound acquisition attribution is privacy-minimal and separate from monetizatio
 
 It does not set cookies, fingerprint users, store raw IP addresses, trigger provider calls, alter rankings, or join into ROI/risk/confidence calculations.
 
+### G17 referral operations boundary
+
+G17 adds a small single-operator workflow layer for managing referral program coverage. It is intentionally separate from the analytical core.
+
+Modules:
+
+- `app.monetization.referral_operations`: derives referral coverage states from stored metadata, validates operator-provided URLs, creates referral work queue tasks, overlays safe active referral destinations for `/go`, and validates manual revenue records.
+- `app.operator.routes`: serves the protected HTML operator console. It is included in the FastAPI app but excluded from OpenAPI, sitemap, and indexable search surfaces.
+- `app.storage.monetization`: persists expanded referral program metadata, referral task queue rows, outbound clicks, sponsored placements, and revenue attribution.
+
+Request boundaries:
+
+- normal public API/web requests may read reviewed destination metadata and redirect through `/go/{destination_slug}`,
+- normal public API/web requests must not create referral tasks or execute referral health checks,
+- `/go/{destination_slug}` does not accept arbitrary target URLs and falls back to the reviewed official URL when a referral URL is invalid, missing, unverified, expired, or paused,
+- operator pages require Basic Auth credentials from environment secrets and set `noindex,nofollow` headers.
+
+Commercial integrity boundary:
+
+- referral status,
+- referral URL/code,
+- affiliate program metadata,
+- click events,
+- revenue attribution,
+- sponsored placement data,
+- operator task state,
+
+must never feed:
+
+- ROI engine inputs/outputs,
+- adapter result construction,
+- risk/confidence scoring,
+- historical strategy snapshot persistence,
+- validation outputs,
+- organic ranking inputs or ordering.
+
 ## 5. Provider abstraction
 
 No provider-specific URL should be embedded inside an adapter.

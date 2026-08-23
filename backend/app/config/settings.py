@@ -36,6 +36,10 @@ class Settings(BaseSettings):
     indexnow_key: str | None = None
     google_site_verification: str | None = None
     bing_site_verification: str | None = None
+    operator_username: str | None = None
+    operator_password: str | None = None
+    referral_reverify_days: int = Field(default=30, ge=1, le=365)
+    referral_pending_recheck_days: int = Field(default=14, ge=1, le=180)
     scheduler_cadence_minutes: int = Field(default=30, ge=5, le=1_440)
     production_hard_stale_seconds: int = Field(default=1800, ge=300, le=86_400)
     market_data_http_timeout_seconds: float = Field(default=10.0, gt=0, le=60)
@@ -74,6 +78,8 @@ class Settings(BaseSettings):
         "indexnow_key",
         "google_site_verification",
         "bing_site_verification",
+        "operator_username",
+        "operator_password",
         mode="before",
     )
     @classmethod

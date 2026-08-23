@@ -86,6 +86,15 @@ Security:
 - `GAMEFI_SECURITY_HEADERS_ENABLED=true`
 - `GAMEFI_ALLOWED_CORS_ORIGINS=` blank unless a separate trusted origin is introduced.
 
+Operator console:
+
+- `GAMEFI_OPERATOR_USERNAME`: required to enable `/operator/...`.
+- `GAMEFI_OPERATOR_PASSWORD`: required to enable `/operator/...`.
+- `GAMEFI_REFERRAL_REVERIFY_DAYS=30`
+- `GAMEFI_REFERRAL_PENDING_RECHECK_DAYS=14`
+
+The operator console has no default password. If username or password is missing, operator routes fail closed with `503` and remain `noindex,nofollow`. Store operator credentials only in Render environment secrets or an equivalent secret manager; do not commit them or paste them into chat.
+
 Freshness:
 
 - `GAMEFI_MARKET_DATA_PRICE_FRESHNESS_SECONDS=300`
@@ -265,6 +274,9 @@ Production controls in code/config:
 - FastAPI debug mode is not enabled.
 - Static files are served from explicit assets, with no directory listing.
 - Normal API requests do not expose internal exception traces by design.
+- Operator console credentials are configured only by environment secrets.
+- Operator pages set `X-Robots-Tag: noindex, nofollow`, are excluded from sitemap, and are disallowed by robots.
+- Operator pages use Basic Auth and no session cookies, so the G17 console does not introduce cookie-backed CSRF state.
 
 Render controls:
 
@@ -284,9 +296,12 @@ The existing FastAPI app serves:
 
 - `/`
 - `/rankings`
+- `/opportunities`
+- `/opportunities/{opportunity_id}`
 - `/games/{game_id}`
 - `/strategies/{strategy_id}`
 - `/methodology`
+- `/operator/referrals` behind Basic Auth when operator credentials are configured.
 
 HTTPS is required. If no custom domain is available, use the Render `onrender.com` URL for beta and document the custom domain as pending.
 

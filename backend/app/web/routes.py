@@ -16,6 +16,11 @@ from starlette.staticfiles import StaticFiles
 from app.api.dependencies import get_database_engine
 from app.api.v1.service import ApiDataService
 from app.config.settings import Settings, get_settings
+from app.monetization.referral_operations import (
+    ReferralValidationError,
+    destination_with_operator_referral,
+    program_for_destination,
+)
 from app.search.canonical import CURATED_RANKING_PAGES, canonical_page_inventory, canonical_url, lastmod_date
 from app.storage.monetization import MonetizationRepository
 from app.strategies.catalog import get_outbound_destination
@@ -156,6 +161,7 @@ def robots_txt(settings: Settings = Depends(get_settings)) -> PlainTextResponse:
         "Allow: /",
         "Disallow: /api/",
         "Disallow: /go/",
+        "Disallow: /operator/",
         "Disallow: /admin/",
         "Disallow: /internal/",
         "Disallow: /debug/",
@@ -211,13 +217,25 @@ def outbound_redirect(
     if destination is None or not destination.is_active() or "redirect" not in destination.allowed_surfaces:
         raise HTTPException(status_code=404, detail="Unknown or inactive outbound destination.")
 
+    repository = MonetizationRepository(engine)
+    try:
+        destination = destination_with_operator_referral(
+            destination,
+            program_for_destination(repository, destination.destination_slug),
+        )
+    except ReferralValidationError as exc:
+        logger.warning(
+            "operator_referral_overlay_invalid_official_fallback",
+            extra={"destination_slug": destination_slug, "error": str(exc)},
+        )
+
     target_url = destination.target_url
     parsed = urlsplit(target_url)
     if parsed.scheme != "https" or not parsed.netloc:
         raise HTTPException(status_code=404, detail="Outbound destination is not reviewed for redirect.")
 
     try:
-        MonetizationRepository(engine).record_outbound_click(
+        repository.record_outbound_click(
             destination=destination,
             target_url_kind=destination.target_url_kind,
             source_page=request.query_params.get("source_page"),

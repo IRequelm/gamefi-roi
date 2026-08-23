@@ -46,9 +46,21 @@ class ReferralProgramRecord(Base):
     commercial_relationship: Mapped[str] = mapped_column(String(64), nullable=False)
     disclosure_text: Mapped[str] = mapped_column(String(2048), nullable=False)
     verification_status: Mapped[str] = mapped_column(String(64), nullable=False)
+    official_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    referral_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    referral_code: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    referral_url_template: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    program_type: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    commission_description: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    eligibility_notes: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    geographic_restrictions: Mapped[str | None] = mapped_column(String(1024), nullable=True)
+    evidence_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
     evidence_json: Mapped[dict[str, Any]] = mapped_column("evidence", JSON, nullable=False)
+    applied_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     last_checked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    operator_notes: Mapped[str | None] = mapped_column(String(4096), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
@@ -67,9 +79,27 @@ class RevenueAttributionRecord(Base):
     revenue_amount: Mapped[str | None] = mapped_column(String(128), nullable=True)
     revenue_currency: Mapped[str | None] = mapped_column(String(32), nullable=True)
     source_program: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    settlement_reference_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    notes: Mapped[str | None] = mapped_column(String(4096), nullable=True)
     evidence_json: Mapped[dict[str, Any]] = mapped_column("evidence", JSON, nullable=False)
     imported_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class ReferralTaskRecord(Base):
+    __tablename__ = "referral_tasks"
+
+    task_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    opportunity_id: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    destination_slug: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
+    task_type: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    reason: Mapped[str] = mapped_column(String(2048), nullable=False)
+    status: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
+    notes: Mapped[str | None] = mapped_column(String(4096), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class SponsoredPlacementRecord(Base):

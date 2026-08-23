@@ -702,13 +702,16 @@ Referral lifecycle statuses:
 
 - `NONE`,
 - `DISCOVERED`,
+- `RESEARCH_REQUIRED`,
 - `APPLICATION_REQUIRED`,
 - `PENDING`,
 - `VERIFIED`,
 - `ACTIVE`,
 - `PAUSED`,
 - `REJECTED`,
-- `EXPIRED`.
+- `EXPIRED`,
+- `NO_PROGRAM_FOUND`,
+- `REVERIFY`.
 
 `ReferralProgram` records store lifecycle status, affiliate program name if any, disclosure text, verification status/timestamps, and evidence. They are commercial metadata only.
 
@@ -727,6 +730,78 @@ G15 commercial metrics:
 Unavailable denominators or unverified partner data remain unavailable; they must not be presented as zero.
 
 `SponsoredPlacement` records contain placement id, opportunity id, optional strategy id, surface, status, label, disclosure text, campaign/sponsor metadata, active window, and audit trail. API/web responses must distinguish sponsored placement collections from organic ranking results.
+
+### G17 referral operations data contract
+
+G17 extends the G14/G15 referral foundation with operator workflow metadata. These records remain commercial operations data only. They must not be used by the ROI engine, adapter contracts, risk/confidence scoring, historical snapshots, validation, or organic ranking inputs.
+
+Coverage states:
+
+- `REFERRAL_ACTIVE`: reviewed active referral link is safe and current,
+- `REFERRAL_PENDING`: affiliate/referral application is pending,
+- `REFERRAL_MISSING`: no reviewed referral program metadata exists,
+- `REFERRAL_RESEARCH_REQUIRED`: operator must research or apply before any referral can be used,
+- `NO_PROGRAM_FOUND`: operator found evidence that no program currently exists,
+- `REFERRAL_EXPIRED`: stored referral expires before or at the evaluation time,
+- `REFERRAL_PAUSED`: program/link is intentionally paused,
+- `REFERRAL_REVERIFY`: program/link requires periodic re-verification.
+
+Referral operation metadata:
+
+- `official_url`,
+- `referral_url`,
+- `referral_code`,
+- `referral_url_template`,
+- `affiliate_program`,
+- `program_type`,
+- `commission_description`,
+- `eligibility_notes`,
+- `geographic_restrictions`,
+- `referral_status`,
+- `verification_status`,
+- `evidence_url`,
+- `evidence_reference`,
+- `applied_at`,
+- `verified_at`,
+- `last_checked_at`,
+- `expires_at`,
+- `operator_notes`,
+- `updated_at`.
+
+Safe outbound URL rules:
+
+- official/referral URLs must use HTTPS,
+- URL schemes such as `javascript:` and `data:` are invalid,
+- localhost, loopback, private-network, link-local, and reserved IP destinations are invalid,
+- active referral URL hosts must match the reviewed official-domain relationship,
+- active template-based referral URLs must include a referral code and a `{code}` placeholder,
+- invalid or missing referral metadata must fall back to the reviewed official URL and must not create an arbitrary redirect.
+
+Referral task types:
+
+- `FIND_REFERRAL_PROGRAM`,
+- `APPLY_TO_PROGRAM`,
+- `VERIFY_REFERRAL_LINK`,
+- `RECHECK_PENDING_APPLICATION`,
+- `REVERIFY_PROGRAM`,
+- `REPLACE_EXPIRED_LINK`.
+
+Only one open task may exist for the same opportunity and task type. Re-running the stored-metadata health check must update the existing open task rather than creating duplicates.
+
+Manual revenue attribution remains explicit:
+
+- partner/operator-entered records default to `PENDING`,
+- only `VERIFIED` records may contribute to commercial analytics,
+- a verified revenue record requires settlement or evidence reference,
+- click counts do not imply revenue and unverified revenue must not count as verified revenue.
+
+Operator console requirements:
+
+- credentials come only from `GAMEFI_OPERATOR_USERNAME` and `GAMEFI_OPERATOR_PASSWORD`,
+- there is no default password and no public writable route,
+- Basic Auth responses do not require cookie-backed CSRF handling,
+- operator pages are `noindex,nofollow`, excluded from sitemap, and disallowed by robots,
+- operator routes are excluded from the public OpenAPI schema.
 
 ### G16 search and acquisition data contract
 

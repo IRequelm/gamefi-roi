@@ -5,7 +5,7 @@ Project version: 0.1
 
 ## Current state
 
-**ACTIVE GATE: PAUSED — no next gate defined after G16**
+**ACTIVE GATE: PAUSED — no next gate defined after G17**
 
 G12 is complete and frozen in the G12 baseline Git commit.
 
@@ -19,9 +19,11 @@ G14 post-deployment brand/UI refinement: before G15 monetization work, the publi
 
 G15 is complete in the repository. It adds a monetization foundation on top of the G14 referral layer: privacy-minimal `/go/...` click persistence, referral lifecycle metadata, verified/manual revenue attribution foundations, sponsored placement metadata, commercial analytics metrics, disclosure documentation, and a tighter conversion-oriented public UI. ROI, Risk, Confidence, historical snapshots, validation, and organic ranking order remain analytically isolated from affiliate/sponsor/commercial data.
 
-G16 is complete in the repository. It adds server-visible public HTML, page-specific metadata, canonical URL inventory, sitemap, robots policy, operator-triggered IndexNow support, and privacy-minimal inbound acquisition attribution. ROI calculations, adapters, risk/confidence methodology, historical snapshots, monetization attribution, sponsored placement separation, and organic ranking logic remain unchanged. No G17 has been defined; the project is paused after G16 until the roadmap is extended.
+G16 is complete in the repository. It adds server-visible public HTML, page-specific metadata, canonical URL inventory, sitemap, robots policy, operator-triggered IndexNow support, and privacy-minimal inbound acquisition attribution. ROI calculations, adapters, risk/confidence methodology, historical snapshots, monetization attribution, sponsored placement separation, and organic ranking logic remain unchanged.
 
 Post-G16 production scheduler fix: the GitHub Actions beta recalculation workflow now exports `GAMEFI_PUBLIC_BASE_URL` as a non-secret production env value, with a GitHub repository variable override for future custom domains. This fixes the production settings validation regression introduced by G16 without changing ROI, adapters, scoring, ranking, API contracts, or monetization logic.
+
+G17 is complete in the repository. It adds referral operations coverage states, a single-operator protected console, safe referral metadata editing, work queue generation, stored-metadata health checks, and manual verified revenue entry. Referral, sponsor, click, and revenue data remain outside ROI, Risk, Confidence, strategy snapshots, validation, and organic ranking order. No G18 has been defined; the project is paused after G17 until the roadmap is extended.
 
 ## Gate board
 
@@ -44,6 +46,7 @@ Post-G16 production scheduler fix: the GitHub Actions beta recalculation workflo
 | G14 | Scale / Opportunity + Referral Foundation | COMPLETE |
 | G15 | Monetization | COMPLETE |
 | G16 | Search / AI Discoverability + Traffic Acquisition | COMPLETE |
+| G17 | Referral Operations + Operator Console | COMPLETE |
 
 ## G0 objective
 
@@ -714,4 +717,60 @@ G16 adds:
 - `docs/SEARCH_DISCOVERY_OPERATOR_CHECKLIST.md`,
 - `docs/DECISIONS/0007-search-ai-discoverability-policy.md`.
 
-G16 does not start monetization expansion beyond G15, new adapters, optimization, portfolio features, auth, alerts, AI chat, or production deployment changes. No next gate is active.
+G16 does not start monetization expansion beyond G15, new adapters, optimization, portfolio features, auth, alerts, AI chat, or production deployment changes.
+
+## G17 objective
+
+Build the operator workflow required to manage referral/affiliate coverage across the existing Opportunity catalog without contaminating analytical outputs.
+
+G17 adds:
+
+- explicit referral coverage states,
+- a protected single-operator console,
+- safe referral/outbound metadata editing,
+- referral work queue tasks,
+- metadata-only referral health checks,
+- manual verified revenue/conversion entry,
+- runbook coverage for day-to-day referral operations.
+
+G17 must not change ROI calculations, adapter economics, risk/confidence scoring, historical strategy snapshots, organic ranking order, search/discovery attribution, public sponsored placement rules, portfolio features, auth for public users, AI, optimization, or new opportunity adapters.
+
+## G17 acceptance criteria
+
+- [x] coverage states exist for `REFERRAL_ACTIVE`, `REFERRAL_PENDING`, `REFERRAL_MISSING`, `REFERRAL_RESEARCH_REQUIRED`, `NO_PROGRAM_FOUND`, `REFERRAL_EXPIRED`, `REFERRAL_PAUSED`, and `REFERRAL_REVERIFY`,
+- [x] referral lifecycle metadata supports official URL, referral URL, referral code/template, program name/type, commission/reward description, eligibility, geographic restrictions, status, evidence URL/reference, applied/verified/last-checked/expires timestamps, and operator notes,
+- [x] referral URLs are validated for HTTPS, reviewed host/domain relationship, and unsafe schemes/private/local destinations before they can become active,
+- [x] `/go/{destination_slug}` uses the reviewed active referral URL when valid and falls back to the official URL when the referral URL is missing, invalid, paused, expired, or unverified,
+- [x] referral operations never create arbitrary open redirects and `/go` still fails closed for unknown destinations,
+- [x] task queue types exist for `FIND_REFERRAL_PROGRAM`, `APPLY_TO_PROGRAM`, `VERIFY_REFERRAL_LINK`, `RECHECK_PENDING_APPLICATION`, `REVERIFY_PROGRAM`, and `REPLACE_EXPIRED_LINK`,
+- [x] referral health checks create/update open tasks without duplicates and are based only on stored metadata,
+- [x] a protected operator console exists for referral coverage, work queue review, safe metadata editing, health checks, and manual verified revenue entry,
+- [x] operator auth is configured only through environment secrets, has no default password, and returns fail-closed when credentials are absent,
+- [x] operator pages are noindex/nofollow, omitted from sitemap, disallowed by robots, and excluded from public OpenAPI schemas,
+- [x] manual revenue attribution remains partner/operator-entered; pending/unverified revenue is retained but never counted as verified revenue,
+- [x] affiliate/referral/sponsor/revenue data cannot affect ROI, Risk, Confidence, strategy snapshots, validation outputs, or organic ranking order,
+- [x] database schema and Alembic migration exist for the referral operations fields and task queue,
+- [x] documentation explains referral operations, environment variables, alert/workflow handling, and commercial integrity boundaries,
+- [x] backend tests, frontend tests, doctor, compileall, pip check, probes, and `git diff --check` pass,
+- [x] baseline Git commit for G17.
+
+## G17 referral operations implementation notes
+
+G17 adds:
+
+- `app.monetization.referral_operations` for coverage state calculation, safety validation, work queue task generation, `/go` referral overlay helpers, and manual revenue validation,
+- `app.operator.routes` for the Basic Auth protected single-operator HTML console,
+- migration `20260823_0007_referral_operations` for expanded `referral_programs`, expanded `revenue_attributions`, and new `referral_tasks`,
+- operator environment variables `GAMEFI_OPERATOR_USERNAME`, `GAMEFI_OPERATOR_PASSWORD`, `GAMEFI_REFERRAL_REVERIFY_DAYS`, and `GAMEFI_REFERRAL_PENDING_RECHECK_DAYS`,
+- `docs/REFERRAL_OPERATIONS_RUNBOOK.md`.
+
+Operator console routes:
+
+```text
+/operator/referrals
+/operator/referrals/{opportunity_id}
+/operator/referrals/health
+/operator/revenue
+```
+
+Commercial integrity remains unchanged: referral relationships, verified revenue, click metrics, sponsor data, and operator task status never feed ROI, Risk, Confidence, snapshots, validation, or organic rankings. No next gate is active.

@@ -24,6 +24,9 @@ from app.monetization.models import (
     OutboundClickEvent,
     ReferralLifecycleStatus,
     ReferralProgram,
+    ReferralTask,
+    ReferralTaskStatus,
+    ReferralTaskType,
     RevenueAttribution,
     RevenueAttributionStatus,
     SponsoredPlacement,
@@ -33,6 +36,7 @@ from app.storage.models.monetization import (
     InboundLandingEventRecord,
     OutboundClickEventRecord,
     ReferralProgramRecord,
+    ReferralTaskRecord,
     RevenueAttributionRecord,
     SponsoredPlacementRecord,
 )
@@ -144,9 +148,21 @@ class MonetizationRepository:
         commercial_relationship: str = "none",
         disclosure_text: str,
         verification_status: str = "unverified",
+        official_url: str | None = None,
+        referral_url: str | None = None,
+        referral_code: str | None = None,
+        referral_url_template: str | None = None,
+        program_type: str | None = None,
+        commission_description: str | None = None,
+        eligibility_notes: str | None = None,
+        geographic_restrictions: str | None = None,
+        evidence_url: str | None = None,
         evidence: dict[str, Any] | None = None,
+        applied_at: datetime | None = None,
         verified_at: datetime | None = None,
         last_checked_at: datetime | None = None,
+        expires_at: datetime | None = None,
+        operator_notes: str | None = None,
     ) -> ReferralProgram:
         status = _referral_status(referral_status)
         now = datetime.now(UTC)
@@ -173,9 +189,21 @@ class MonetizationRepository:
             record.commercial_relationship = _clean_token(commercial_relationship, fallback="none")
             record.disclosure_text = disclosure_text
             record.verification_status = _clean_token(verification_status, fallback="unverified")
+            record.official_url = _clean_url_text(official_url)
+            record.referral_url = _clean_url_text(referral_url)
+            record.referral_code = _clean_optional(referral_code, limit=255)
+            record.referral_url_template = _clean_url_text(referral_url_template)
+            record.program_type = _clean_optional(program_type)
+            record.commission_description = _clean_optional(commission_description, limit=2048)
+            record.eligibility_notes = _clean_optional(eligibility_notes, limit=2048)
+            record.geographic_restrictions = _clean_optional(geographic_restrictions, limit=1024)
+            record.evidence_url = _clean_url_text(evidence_url)
             record.evidence_json = dict(evidence or {})
+            record.applied_at = _normalize_utc(applied_at) if applied_at else None
             record.verified_at = _normalize_utc(verified_at) if verified_at else None
             record.last_checked_at = _normalize_utc(last_checked_at) if last_checked_at else None
+            record.expires_at = _normalize_utc(expires_at) if expires_at else None
+            record.operator_notes = _clean_optional(operator_notes, limit=4096)
             record.updated_at = now
             if existing is None:
                 session.add(record)
@@ -188,6 +216,95 @@ class MonetizationRepository:
                 select(ReferralProgramRecord).where(ReferralProgramRecord.destination_slug == destination_slug)
             )
             return None if record is None else _referral_program_from_record(record)
+
+    def referral_programs(self) -> list[ReferralProgram]:
+        stmt = select(ReferralProgramRecord).order_by(ReferralProgramRecord.destination_slug)
+        with Session(self.engine) as session:
+            return [_referral_program_from_record(record) for record in session.scalars(stmt).all()]
+
+    def upsert_referral_task(
+        self,
+        *,
+        opportunity_id: str,
+        task_type: ReferralTaskType | str,
+        reason: str,
+        destination_slug: str | None = None,
+        due_at: datetime | None = None,
+        notes: str | None = None,
+    ) -> ReferralTask:
+        task_kind = _task_type(task_type)
+        now = datetime.now(UTC)
+        with Session(self.engine, expire_on_commit=False) as session:
+            existing = session.scalar(
+                select(ReferralTaskRecord)
+                .where(
+                    ReferralTaskRecord.opportunity_id == opportunity_id,
+                    ReferralTaskRecord.task_type == task_kind.value,
+                    ReferralTaskRecord.status == ReferralTaskStatus.OPEN.value,
+                )
+                .order_by(ReferralTaskRecord.created_at)
+            )
+            record = existing or ReferralTaskRecord(
+                task_id=str(uuid5(NAMESPACE_URL, f"gamefi-roi-referral-task|{opportunity_id}|{task_kind.value}")),
+                opportunity_id=opportunity_id,
+                task_type=task_kind.value,
+                status=ReferralTaskStatus.OPEN.value,
+                created_at=now,
+                updated_at=now,
+                reason="",
+            )
+            record.destination_slug = _clean_optional(destination_slug, limit=255)
+            record.reason = reason[:2048]
+            record.due_at = _normalize_utc(due_at) if due_at else None
+            record.notes = _clean_optional(notes, limit=4096)
+            record.updated_at = now
+            if existing is None:
+                session.add(record)
+            session.commit()
+            return _referral_task_from_record(record)
+
+    def resolve_referral_task(
+        self,
+        *,
+        opportunity_id: str,
+        task_type: ReferralTaskType | str,
+        status: ReferralTaskStatus | str = ReferralTaskStatus.RESOLVED,
+    ) -> None:
+        task_kind = _task_type(task_type)
+        task_status = _task_status(status)
+        now = datetime.now(UTC)
+        with Session(self.engine) as session:
+            records = session.scalars(
+                select(ReferralTaskRecord).where(
+                    ReferralTaskRecord.opportunity_id == opportunity_id,
+                    ReferralTaskRecord.task_type == task_kind.value,
+                    ReferralTaskRecord.status == ReferralTaskStatus.OPEN.value,
+                )
+            ).all()
+            for record in records:
+                record.status = task_status.value
+                record.updated_at = now
+                record.resolved_at = now
+            session.commit()
+
+    def referral_tasks(
+        self,
+        *,
+        status: ReferralTaskStatus | str | None = None,
+        opportunity_id: str | None = None,
+    ) -> list[ReferralTask]:
+        stmt = select(ReferralTaskRecord).order_by(
+            ReferralTaskRecord.status,
+            ReferralTaskRecord.due_at,
+            ReferralTaskRecord.created_at,
+            ReferralTaskRecord.task_id,
+        )
+        if status is not None:
+            stmt = stmt.where(ReferralTaskRecord.status == _task_status(status).value)
+        if opportunity_id is not None:
+            stmt = stmt.where(ReferralTaskRecord.opportunity_id == opportunity_id)
+        with Session(self.engine) as session:
+            return [_referral_task_from_record(record) for record in session.scalars(stmt).all()]
 
     def save_revenue_attribution(
         self,
@@ -202,6 +319,8 @@ class MonetizationRepository:
         revenue_amount: Decimal | str | None = None,
         revenue_currency: str | None = None,
         source_program: str | None = None,
+        settlement_reference_id: str | None = None,
+        notes: str | None = None,
         evidence: dict[str, Any] | None = None,
         imported_at: datetime | None = None,
     ) -> RevenueAttribution:
@@ -229,6 +348,8 @@ class MonetizationRepository:
             revenue_amount=str(amount) if amount is not None else None,
             revenue_currency=currency,
             source_program=_clean_optional(source_program),
+            settlement_reference_id=_clean_optional(settlement_reference_id, limit=255),
+            notes=_clean_optional(notes, limit=4096),
             evidence_json=dict(evidence or {}),
             imported_at=_normalize_utc(imported_at or datetime.now(UTC)),
             created_at=datetime.now(UTC),
@@ -237,6 +358,20 @@ class MonetizationRepository:
             session.add(record)
             session.commit()
             return _revenue_attribution_from_record(record)
+
+    def revenue_attributions(
+        self,
+        *,
+        destination_slug: str | None = None,
+        attribution_status: RevenueAttributionStatus | str | None = None,
+    ) -> list[RevenueAttribution]:
+        stmt = select(RevenueAttributionRecord).order_by(RevenueAttributionRecord.imported_at)
+        if destination_slug is not None:
+            stmt = stmt.where(RevenueAttributionRecord.destination_slug == destination_slug)
+        if attribution_status is not None:
+            stmt = stmt.where(RevenueAttributionRecord.attribution_status == _attribution_status(attribution_status).value)
+        with Session(self.engine) as session:
+            return [_revenue_attribution_from_record(record) for record in session.scalars(stmt).all()]
 
     def save_sponsored_placement(
         self,
@@ -430,11 +565,39 @@ def _referral_program_from_record(record: ReferralProgramRecord) -> ReferralProg
         commercial_relationship=record.commercial_relationship,
         disclosure_text=record.disclosure_text,
         verification_status=record.verification_status,
+        official_url=record.official_url,
+        referral_url=record.referral_url,
+        referral_code=record.referral_code,
+        referral_url_template=record.referral_url_template,
+        program_type=record.program_type,
+        commission_description=record.commission_description,
+        eligibility_notes=record.eligibility_notes,
+        geographic_restrictions=record.geographic_restrictions,
+        evidence_url=record.evidence_url,
         evidence=MappingProxyType(dict(record.evidence_json)),
+        applied_at=_normalize_utc(record.applied_at) if record.applied_at else None,
         verified_at=_normalize_utc(record.verified_at) if record.verified_at else None,
         last_checked_at=_normalize_utc(record.last_checked_at) if record.last_checked_at else None,
+        expires_at=_normalize_utc(record.expires_at) if record.expires_at else None,
+        operator_notes=record.operator_notes,
         created_at=_normalize_utc(record.created_at),
         updated_at=_normalize_utc(record.updated_at),
+    )
+
+
+def _referral_task_from_record(record: ReferralTaskRecord) -> ReferralTask:
+    return ReferralTask(
+        task_id=record.task_id,
+        opportunity_id=record.opportunity_id,
+        destination_slug=record.destination_slug,
+        task_type=ReferralTaskType(record.task_type),
+        reason=record.reason,
+        status=ReferralTaskStatus(record.status),
+        due_at=_normalize_utc(record.due_at) if record.due_at else None,
+        notes=record.notes,
+        created_at=_normalize_utc(record.created_at),
+        updated_at=_normalize_utc(record.updated_at),
+        resolved_at=_normalize_utc(record.resolved_at) if record.resolved_at else None,
     )
 
 
@@ -451,6 +614,8 @@ def _revenue_attribution_from_record(record: RevenueAttributionRecord) -> Revenu
         revenue_amount=Decimal(record.revenue_amount) if record.revenue_amount is not None else None,
         revenue_currency=record.revenue_currency,
         source_program=record.source_program,
+        settlement_reference_id=record.settlement_reference_id,
+        notes=record.notes,
         evidence=MappingProxyType(dict(record.evidence_json)),
         imported_at=_normalize_utc(record.imported_at),
         created_at=_normalize_utc(record.created_at),
@@ -521,11 +686,29 @@ def _placement_status(value: SponsoredPlacementStatus | str) -> SponsoredPlaceme
         raise MonetizationPersistenceError(f"Unsupported sponsored placement status: {value}") from exc
 
 
-def _clean_optional(value: str | None) -> str | None:
+def _task_type(value: ReferralTaskType | str) -> ReferralTaskType:
+    try:
+        return value if isinstance(value, ReferralTaskType) else ReferralTaskType(str(value))
+    except ValueError as exc:
+        raise MonetizationPersistenceError(f"Unsupported referral task type: {value}") from exc
+
+
+def _task_status(value: ReferralTaskStatus | str) -> ReferralTaskStatus:
+    try:
+        return value if isinstance(value, ReferralTaskStatus) else ReferralTaskStatus(str(value))
+    except ValueError as exc:
+        raise MonetizationPersistenceError(f"Unsupported referral task status: {value}") from exc
+
+
+def _clean_optional(value: str | None, *, limit: int = 128) -> str | None:
     if value is None:
         return None
-    text = str(value).strip()[:128]
+    text = str(value).strip()[:limit]
     return text or None
+
+
+def _clean_url_text(value: str | None) -> str | None:
+    return _clean_optional(value, limit=2048)
 
 
 def _clean_token(value: str | None, *, fallback: str) -> str:

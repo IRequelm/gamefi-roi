@@ -214,6 +214,7 @@ Roadmap:
 - G14 introduces the Opportunity catalog foundation and referral foundation: backward-compatible `Game` to `Opportunity` model expansion, structured outbound/referral metadata, and a first-party `/go/...` redirect layer.
 - G15 introduces monetization foundation: privacy-minimal outbound click persistence, referral lifecycle metadata, verified/manual attribution foundations, labeled sponsored placement metadata, and commercial analytics that remain separate from organic strategy intelligence.
 - G16 introduces search and AI discoverability foundations: server-visible public pages, canonical metadata, sitemap/robots policy, operator-triggered IndexNow submission, and privacy-minimal inbound acquisition attribution that remain separate from analytical outputs.
+- G17 introduces referral operations: protected single-operator workflow, coverage states, safe referral editing, work queue tasks, metadata-only health checks, and manual verified revenue entry.
 
 Affiliate/sponsor relationships must never affect ROI, Risk, Confidence, strategy snapshots, validation results, or organic rankings. Sponsored placements must be clearly labeled and separated from organic ranking order and analytical metrics.
 

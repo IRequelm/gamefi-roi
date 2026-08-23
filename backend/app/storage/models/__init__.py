@@ -4,6 +4,7 @@ from app.storage.models.monetization import (
     InboundLandingEventRecord,
     OutboundClickEventRecord,
     ReferralProgramRecord,
+    ReferralTaskRecord,
     RevenueAttributionRecord,
     SponsoredPlacementRecord,
 )
@@ -16,6 +17,7 @@ __all__ = [
     "InboundLandingEventRecord",
     "OutboundClickEventRecord",
     "ReferralProgramRecord",
+    "ReferralTaskRecord",
     "RevenueAttributionRecord",
     "SponsoredPlacementRecord",
     "StrategyCalculationFailureRecord",

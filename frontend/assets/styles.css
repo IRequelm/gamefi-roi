@@ -973,8 +973,74 @@ tr:last-child td {
     width: 100%;
   }
 
-  .card-actions .badge {
+.card-actions .badge {
     width: 100%;
     justify-content: center;
   }
+}
+
+.operator-shell {
+  max-width: 1280px;
+}
+
+.operator-head {
+  border-color: rgba(32, 246, 255, 0.24);
+}
+
+.operator-table-wrap {
+  overflow-x: auto;
+}
+
+.operator-table {
+  border-collapse: collapse;
+  min-width: 980px;
+  width: 100%;
+}
+
+.operator-table th,
+.operator-table td {
+  border-bottom: 1px solid rgba(153, 178, 216, 0.14);
+  padding: 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.operator-table th {
+  color: var(--muted);
+  font-size: 0.76rem;
+  text-transform: uppercase;
+}
+
+.operator-form {
+  display: grid;
+  gap: 12px;
+}
+
+.operator-form .field {
+  display: grid;
+  gap: 6px;
+}
+
+.operator-form input,
+.operator-form select,
+.operator-form textarea {
+  background: rgba(3, 10, 24, 0.88);
+  border: 1px solid rgba(153, 178, 216, 0.22);
+  border-radius: 8px;
+  color: var(--text);
+  font: inherit;
+  padding: 10px 12px;
+}
+
+.operator-form textarea {
+  min-height: 74px;
+  resize: vertical;
+}
+
+.alert {
+  background: rgba(255, 104, 104, 0.12);
+  border: 1px solid rgba(255, 104, 104, 0.4);
+  border-radius: 8px;
+  color: #ffd7d7;
+  padding: 10px 12px;
 }
