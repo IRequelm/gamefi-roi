@@ -25,6 +25,7 @@ from app.api.v1.service import ApiDataService
 from app.config.settings import Settings
 from app.search.canonical import CURATED_RANKING_PAGES, CuratedRankingPage, canonical_url, lastmod_date
 from app.storage.monetization import MonetizationRepository, normalize_acquisition_channel
+from app.strategies.catalog import CATALOG_REVIEWED_AT
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 FRONTEND_ASSETS = PROJECT_ROOT / "frontend" / "assets"
@@ -122,6 +123,7 @@ def home_page(service: ApiDataService, *, settings: Settings, request: Request) 
             <span>Unavailable ROI stays unavailable</span>
           </div>
         </section>
+        {_render_catalog_stats(rankings, opportunities)}
         {_render_ranking_cards(rankings.items[:3], heading="Current organic leaders")}
         {_render_opportunity_cards(opportunities, heading="Opportunity radar")}
       </div>
@@ -571,6 +573,23 @@ def _render_opportunity_cards(opportunities: list[OpportunitySummary], *, headin
     """
 
 
+def _render_catalog_stats(rankings: RankingsPage, opportunities: list[OpportunitySummary]) -> str:
+    opportunity_count = len(opportunities)
+    modeled_count = rankings.page.total
+    unavailable_count = sum(1 for opportunity in opportunities if opportunity.strategy_count == 0)
+    opportunity_types = ", ".join(
+        sorted({labelize(opportunity.opportunity_type) for opportunity in opportunities})
+    )
+    return f"""
+      <section class="catalog-stat-grid" aria-label="GamCryp V1 coverage">
+        {_summary("Reviewed opportunities", escape(str(opportunity_count)))}
+        {_summary("Modeled strategies", escape(str(modeled_count)))}
+        {_summary("Opportunity types", escape(opportunity_types))}
+        {_summary("ROI unavailable", escape(f"{unavailable_count} explicit"))}
+      </section>
+    """
+
+
 def _render_strategy_cards(strategies: list[StrategySummary]) -> str:
     if not strategies:
         return _empty("Financial ROI unavailable", "No modeled strategy is currently available for this opportunity.")
@@ -779,7 +798,7 @@ def _max_opportunity_lastmod(opportunities) -> datetime:
         destination = getattr(opportunity, "primary_destination", None)
         if destination is not None:
             dates.append(destination.reviewed_at)
-    return max(dates, default=datetime(2026, 8, 23, tzinfo=UTC))
+    return max(dates, default=CATALOG_REVIEWED_AT)
 
 
 def _truncate_text(value: str, limit: int) -> str:

@@ -31,7 +31,7 @@ from app.engine.decimal_context import FINANCIAL_DECIMAL_CONTEXT, decimal_from_i
 from app.sources.amm import ConstantProductPool, quote_exact_input, spot_price
 from app.sources.evm import ContractCallObservationRequest, ContractCallOutput, EvmJsonRpcSource, decode_address_word
 from app.sources.observations import Observation, ObservationStatus, SourceType
-from app.strategies.defi_kingdoms import DFK_CJEWEL_MAX_LOCK_V1
+from app.strategies.defi_kingdoms import DFK_CJEWEL_MAX_LOCK_V1, DfkJewelerStrategyDefinition
 
 GET_YESTERDAY_APR_DATA = "0x16886540"
 GET_RESERVES = "0x0902f1ac"
@@ -40,9 +40,8 @@ TOKEN1 = "0xd21220a7"
 WEI_PER_TOKEN = Decimal("1000000000000000000")
 
 
-def run_probe() -> dict[str, Any]:
-    strategy = DFK_CJEWEL_MAX_LOCK_V1
-    observations = load_live_observations()
+def run_probe(strategy: DfkJewelerStrategyDefinition = DFK_CJEWEL_MAX_LOCK_V1) -> dict[str, Any]:
+    observations = load_live_observations(strategy=strategy)
     adapter_result = DfkJewelerAdapter(strategy).build_engine_input(observations)
     roi = calculate_strategy_roi(adapter_result.economics_input)
     return {
@@ -66,9 +65,12 @@ def run_probe() -> dict[str, Any]:
     }
 
 
-def load_live_observations(active_time: datetime | None = None) -> tuple[Observation, ...]:
+def load_live_observations(
+    active_time: datetime | None = None,
+    *,
+    strategy: DfkJewelerStrategyDefinition = DFK_CJEWEL_MAX_LOCK_V1,
+) -> tuple[Observation, ...]:
     settings = get_settings()
-    strategy = DFK_CJEWEL_MAX_LOCK_V1
     freshness_window = timedelta(seconds=settings.dfk_chain_observation_freshness_seconds)
     source = EvmJsonRpcSource(
         provider_name="dfk-chain-rpc",

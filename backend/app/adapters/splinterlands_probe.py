@@ -33,12 +33,11 @@ from app.sources.splinterlands import (
     SplinterlandsSeasonRequest,
     SplinterlandsSettingsRequest,
 )
-from app.strategies.splinterlands import SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1
+from app.strategies.splinterlands import SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1, SplinterlandsModernRankedStrategyDefinition
 
 
-def run_probe() -> dict[str, Any]:
-    strategy = SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1
-    observations, season_observations = load_live_observations_with_season_probe()
+def run_probe(strategy: SplinterlandsModernRankedStrategyDefinition = SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1) -> dict[str, Any]:
+    observations, season_observations = load_live_observations_with_season_probe(strategy=strategy)
     adapter_result = SplinterlandsModernRankedAdapter(strategy).build_engine_input(observations)
     roi = calculate_strategy_roi(adapter_result.economics_input)
     return {
@@ -66,16 +65,21 @@ def run_probe() -> dict[str, Any]:
     }
 
 
-def load_live_observations(active_time: datetime | None = None) -> tuple[Observation, ...]:
-    observations, _season_observations = load_live_observations_with_season_probe(active_time)
+def load_live_observations(
+    active_time: datetime | None = None,
+    *,
+    strategy: SplinterlandsModernRankedStrategyDefinition = SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1,
+) -> tuple[Observation, ...]:
+    observations, _season_observations = load_live_observations_with_season_probe(active_time, strategy=strategy)
     return observations
 
 
 def load_live_observations_with_season_probe(
     active_time: datetime | None = None,
+    *,
+    strategy: SplinterlandsModernRankedStrategyDefinition = SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1,
 ) -> tuple[tuple[Observation, ...], tuple[Observation, ...]]:
     settings = get_settings()
-    strategy = SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1
     game_freshness = timedelta(seconds=settings.splinterlands_observation_freshness_seconds)
     price_freshness = timedelta(seconds=settings.market_data_price_freshness_seconds)
 

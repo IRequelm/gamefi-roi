@@ -86,6 +86,7 @@ export function renderHomeShell(games = [], rankings = { items: [], page: { tota
         </div>
       </section>
       ${renderTopRankingSummary(rankings)}
+      ${renderCatalogStats(rankings, opportunities)}
       <section class="finder-grid" aria-label="ROI finder">
         <div id="finder-results">
           ${renderRankingsTable(rankings, { compact: true })}
@@ -144,6 +145,21 @@ export function renderHomeShell(games = [], rankings = { items: [], page: { tota
       </section>
       ${renderOpportunityList(opportunities, { compact: true })}
     </div>
+  `;
+}
+
+export function renderCatalogStats(rankings = { page: { total: 0 } }, opportunities = []) {
+  const opportunityCount = opportunities.length;
+  const modeledCount = rankings.page?.total ?? (rankings.items || []).length;
+  const unavailableCount = opportunities.filter((opportunity) => !opportunity.strategy_count).length;
+  const types = Array.from(new Set(opportunities.map((opportunity) => labelize(opportunity.opportunity_type)))).sort();
+  return `
+    <section class="catalog-stat-grid" aria-label="GamCryp V1 coverage">
+      ${summaryItem("Reviewed opportunities", escapeHtml(String(opportunityCount)))}
+      ${summaryItem("Modeled strategies", escapeHtml(String(modeledCount)))}
+      ${summaryItem("Opportunity types", escapeHtml(types.join(", ") || "Unavailable"))}
+      ${summaryItem("ROI unavailable", escapeHtml(`${unavailableCount} explicit`))}
+    </section>
   `;
 }
 

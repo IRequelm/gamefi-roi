@@ -35,12 +35,11 @@ from app.sources.atomicassets import AtomicAssetsFloorRequest, AtomicAssetsMarke
 from app.sources.coingecko import CoinGeckoMarketDataSource
 from app.sources.market_data import TokenPriceRequest
 from app.sources.observations import Observation, ObservationStatus
-from app.strategies.farmers_world import FARMERS_WORLD_AXE_WOOD_V1
+from app.strategies.farmers_world import FARMERS_WORLD_AXE_WOOD_V1, FarmersWorldAxeStrategyDefinition
 
 
-def run_probe() -> dict[str, Any]:
-    strategy = FARMERS_WORLD_AXE_WOOD_V1
-    observations = load_live_observations()
+def run_probe(strategy: FarmersWorldAxeStrategyDefinition = FARMERS_WORLD_AXE_WOOD_V1) -> dict[str, Any]:
+    observations = load_live_observations(strategy=strategy)
     adapter_result = FarmersWorldAxeAdapter(strategy).build_engine_input(observations)
     roi = calculate_strategy_roi(adapter_result.economics_input)
     return {
@@ -65,9 +64,12 @@ def run_probe() -> dict[str, Any]:
     }
 
 
-def load_live_observations(active_time: datetime | None = None) -> tuple[Observation, ...]:
+def load_live_observations(
+    active_time: datetime | None = None,
+    *,
+    strategy: FarmersWorldAxeStrategyDefinition = FARMERS_WORLD_AXE_WOOD_V1,
+) -> tuple[Observation, ...]:
     settings = get_settings()
-    strategy = FARMERS_WORLD_AXE_WOOD_V1
     market_freshness = timedelta(seconds=settings.wax_market_observation_freshness_seconds)
     price_freshness = timedelta(seconds=settings.market_data_price_freshness_seconds)
 

@@ -56,32 +56,52 @@ from app.jobs.recalculation import ScheduledRecalculator, StrategyCalculationTas
 from app.sources.observations import Observation, SourceType
 from app.storage.database import create_database_engine
 from app.storage.history import HistoryRepository
-from app.strategies.defi_kingdoms import DFK_CJEWEL_MAX_LOCK_V1
-from app.strategies.farmers_world import FARMERS_WORLD_AXE_WOOD_V1
-from app.strategies.splinterlands import SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1
+from app.strategies.defi_kingdoms import DFK_JEWELER_STRATEGIES, DfkJewelerStrategyDefinition
+from app.strategies.farmers_world import FARMERS_WORLD_AXE_STRATEGIES, FarmersWorldAxeStrategyDefinition
+from app.strategies.splinterlands import (
+    SPLINTERLANDS_MODERN_RANKED_STRATEGIES,
+    SplinterlandsModernRankedStrategyDefinition,
+)
 
 
 def build_history_probe_tasks() -> tuple[StrategyCalculationTask, ...]:
-    return (
+    dfk_tasks = tuple(
         StrategyCalculationTask(
-            strategy_id=DFK_CJEWEL_MAX_LOCK_V1.strategy_id,
-            strategy_version=DFK_CJEWEL_MAX_LOCK_V1.strategy_version,
-            adapter=DfkJewelerAdapter(DFK_CJEWEL_MAX_LOCK_V1),
-            load_observations=_dfk_observations,
-        ),
-        StrategyCalculationTask(
-            strategy_id=FARMERS_WORLD_AXE_WOOD_V1.strategy_id,
-            strategy_version=FARMERS_WORLD_AXE_WOOD_V1.strategy_version,
-            adapter=FarmersWorldAxeAdapter(FARMERS_WORLD_AXE_WOOD_V1),
-            load_observations=_farmers_world_observations,
-        ),
-        StrategyCalculationTask(
-            strategy_id=SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1.strategy_id,
-            strategy_version=SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1.strategy_version,
-            adapter=SplinterlandsModernRankedAdapter(SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1),
-            load_observations=_splinterlands_observations,
-        ),
+            strategy_id=strategy.strategy_id,
+            strategy_version=strategy.strategy_version,
+            adapter=DfkJewelerAdapter(strategy),
+            load_observations=lambda active_time, strategy=strategy: _dfk_observations(
+                active_time,
+                strategy=strategy,
+            ),
+        )
+        for strategy in DFK_JEWELER_STRATEGIES
     )
+    farmers_tasks = tuple(
+        StrategyCalculationTask(
+            strategy_id=strategy.strategy_id,
+            strategy_version=strategy.strategy_version,
+            adapter=FarmersWorldAxeAdapter(strategy),
+            load_observations=lambda active_time, strategy=strategy: _farmers_world_observations(
+                active_time,
+                strategy=strategy,
+            ),
+        )
+        for strategy in FARMERS_WORLD_AXE_STRATEGIES
+    )
+    splinterlands_tasks = tuple(
+        StrategyCalculationTask(
+            strategy_id=strategy.strategy_id,
+            strategy_version=strategy.strategy_version,
+            adapter=SplinterlandsModernRankedAdapter(strategy),
+            load_observations=lambda active_time, strategy=strategy: _splinterlands_observations(
+                active_time,
+                strategy=strategy,
+            ),
+        )
+        for strategy in SPLINTERLANDS_MODERN_RANKED_STRATEGIES
+    )
+    return (*dfk_tasks, *farmers_tasks, *splinterlands_tasks)
 
 
 def main() -> int:
@@ -110,23 +130,32 @@ def main() -> int:
     return 0 if not result.failures else 1
 
 
-def _dfk_observations(active_time: datetime) -> tuple[Observation, ...]:
-    strategy_id = DFK_CJEWEL_MAX_LOCK_V1.strategy_id
+def _dfk_observations(
+    active_time: datetime,
+    *,
+    strategy: DfkJewelerStrategyDefinition,
+) -> tuple[Observation, ...]:
+    strategy_id = strategy.strategy_id
+    locked_jewel = Decimal(strategy.locked_jewel_amount)
+    entry_value = locked_jewel * Decimal("0.25")
+    emergency_exit_value = entry_value * Decimal("0.50")
+    reward_jewel_day = locked_jewel * Decimal("0.002")
+    reward_realizable_value = reward_jewel_day * Decimal("0.25") * Decimal("0.997")
     configs = (
-        _config(strategy_id, LOCKED_JEWEL_AMOUNT, DFK_CJEWEL_MAX_LOCK_V1.locked_jewel_amount, "JEWEL", active_time),
-        _config(strategy_id, LOCK_DAYS, str(DFK_CJEWEL_MAX_LOCK_V1.lock_days), "day", active_time),
-        _config(strategy_id, MAX_LOCK_DAYS, str(DFK_CJEWEL_MAX_LOCK_V1.max_lock_days), "day", active_time),
+        _config(strategy_id, LOCKED_JEWEL_AMOUNT, strategy.locked_jewel_amount, "JEWEL", active_time),
+        _config(strategy_id, LOCK_DAYS, str(strategy.lock_days), "day", active_time),
+        _config(strategy_id, MAX_LOCK_DAYS, str(strategy.max_lock_days), "day", active_time),
     )
     live = (
         _live(YESTERDAY_CJEWEL_BALANCE, "250000", "cJEWEL", active_time, SourceType.ONCHAIN, "dfk-chain"),
         _live(YESTERDAY_REWARD_JEWEL, "500", "JEWEL", active_time, SourceType.ONCHAIN, "dfk-chain"),
     )
     derived = (
-        _derived(strategy_id, ENTRY_VALUE_USD, "250.00", active_time, source_locator="amm:dfk-wjewel-usdc:spot"),
+        _derived(strategy_id, ENTRY_VALUE_USD, str(entry_value), active_time, source_locator="amm:dfk-wjewel-usdc:spot"),
         _derived(
             strategy_id,
             EMERGENCY_EXIT_VALUE_USD,
-            "125.00",
+            str(emergency_exit_value),
             active_time,
             source_locator="amm:dfk-wjewel-usdc:quote_exact_input",
         ),
@@ -140,7 +169,7 @@ def _dfk_observations(active_time: datetime) -> tuple[Observation, ...]:
         _derived(
             strategy_id,
             REWARD_REALIZABLE_VALUE_USD,
-            "0.4985",
+            str(reward_realizable_value),
             active_time,
             source_locator="amm:dfk-wjewel-usdc:quote_exact_input",
         ),
@@ -155,22 +184,38 @@ def _dfk_observations(active_time: datetime) -> tuple[Observation, ...]:
     return (*configs, *live, *derived)
 
 
-def _farmers_world_observations(active_time: datetime) -> tuple[Observation, ...]:
-    strategy_id = FARMERS_WORLD_AXE_WOOD_V1.strategy_id
+def _farmers_world_observations(
+    active_time: datetime,
+    *,
+    strategy: FarmersWorldAxeStrategyDefinition,
+) -> tuple[Observation, ...]:
+    strategy_id = strategy.strategy_id
+    tool_count = Decimal(strategy.tool_count)
+    entry_value = tool_count * Decimal("1.80")
+    exit_value = tool_count * Decimal("1.70")
+    fww_realizable_value = tool_count * Decimal("0.0594")
+    fwf_cost = tool_count * Decimal("0.006")
+    fwg_cost = tool_count * Decimal("0.003")
     configs = (
-        _config(strategy_id, TOOL_COUNT, FARMERS_WORLD_AXE_WOOD_V1.tool_count, "tool", active_time),
-        _config(strategy_id, CYCLES_PER_DAY, FARMERS_WORLD_AXE_WOOD_V1.cycles_per_day, "cycle/day", active_time),
-        _config(strategy_id, CYCLE_HOURS, FARMERS_WORLD_AXE_WOOD_V1.cycle_hours, "hour", active_time),
-        _config(strategy_id, FWW_OUTPUT_PER_CYCLE, FARMERS_WORLD_AXE_WOOD_V1.fww_output_per_cycle, "FWW", active_time),
-        _config(strategy_id, FWF_INPUT_PER_CYCLE, FARMERS_WORLD_AXE_WOOD_V1.fwf_input_per_cycle, "FWF", active_time),
-        _config(strategy_id, FWG_INPUT_PER_CYCLE, FARMERS_WORLD_AXE_WOOD_V1.fwg_input_per_cycle, "FWG", active_time),
+        _config(strategy_id, TOOL_COUNT, strategy.tool_count, "tool", active_time),
+        _config(strategy_id, CYCLES_PER_DAY, strategy.cycles_per_day, "cycle/day", active_time),
+        _config(strategy_id, CYCLE_HOURS, strategy.cycle_hours, "hour", active_time),
+        _config(strategy_id, FWW_OUTPUT_PER_CYCLE, strategy.fww_output_per_cycle, "FWW", active_time),
+        _config(strategy_id, FWF_INPUT_PER_CYCLE, strategy.fwf_input_per_cycle, "FWF", active_time),
+        _config(strategy_id, FWG_INPUT_PER_CYCLE, strategy.fwg_input_per_cycle, "FWG", active_time),
     )
     derived = (
-        _derived(strategy_id, FARMERS_ENTRY_VALUE_USD, "1.80", active_time, source_locator="atomicassets floor * WAX/USD"),
+        _derived(
+            strategy_id,
+            FARMERS_ENTRY_VALUE_USD,
+            str(entry_value),
+            active_time,
+            source_locator="atomicassets floor * WAX/USD",
+        ),
         _derived(
             strategy_id,
             FARMERS_EXIT_VALUE_USD,
-            "1.70",
+            str(exit_value),
             active_time,
             source_locator="AtomicAssets floor net marketplace fee * WAX/USD",
         ),
@@ -184,21 +229,21 @@ def _farmers_world_observations(active_time: datetime) -> tuple[Observation, ...
         _derived(
             strategy_id,
             FWW_REALIZABLE_VALUE_DAY_USD,
-            "0.0594",
+            str(fww_realizable_value),
             active_time,
             source_locator="Alcor FWW/WAX quote_exact_input * WAX/USD",
         ),
         _derived(
             strategy_id,
             FWF_OPERATING_COST_DAY_USD,
-            "0.006",
+            str(fwf_cost),
             active_time,
             source_locator="Alcor FWF/WAX quote_exact_output * WAX/USD",
         ),
         _derived(
             strategy_id,
             FWG_OPERATING_COST_DAY_USD,
-            "0.003",
+            str(fwg_cost),
             active_time,
             source_locator="Alcor FWG/WAX quote_exact_output * WAX/USD",
         ),
@@ -213,8 +258,12 @@ def _farmers_world_observations(active_time: datetime) -> tuple[Observation, ...
     return (*configs, *derived)
 
 
-def _splinterlands_observations(active_time: datetime) -> tuple[Observation, ...]:
-    strategy_id = SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1.strategy_id
+def _splinterlands_observations(
+    active_time: datetime,
+    *,
+    strategy: SplinterlandsModernRankedStrategyDefinition,
+) -> tuple[Observation, ...]:
+    strategy_id = strategy.strategy_id
     season_end = active_time + timedelta(days=14)
     live = (
         _live(SPELLBOOK_COST_USD, "10.00", "USD", active_time, SourceType.OFFICIAL_API, "splinterlands"),
@@ -232,47 +281,47 @@ def _splinterlands_observations(active_time: datetime) -> tuple[Observation, ...
         _live(SPS_REFERENCE_PRICE_USD, "0.01", "USD", active_time, SourceType.MARKET_API, "splinterlands:sps"),
     )
     configs = (
-        _config(strategy_id, BATTLES_PER_DAY, SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1.battles_per_day, "battle/day", active_time),
-        _config(strategy_id, WIN_PROBABILITY, SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1.win_probability, "probability", active_time),
+        _config(strategy_id, BATTLES_PER_DAY, strategy.battles_per_day, "battle/day", active_time),
+        _config(strategy_id, WIN_PROBABILITY, strategy.win_probability, "probability", active_time),
         _config(
             strategy_id,
             WIN_PROBABILITY_LOW,
-            SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1.win_probability_low,
+            strategy.win_probability_low,
             "probability",
             active_time,
         ),
         _config(
             strategy_id,
             WIN_PROBABILITY_HIGH,
-            SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1.win_probability_high,
+            strategy.win_probability_high,
             "probability",
             active_time,
         ),
         _config(
             strategy_id,
             SPS_REWARD_PER_WIN,
-            SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1.expected_sps_reward_per_win,
+            strategy.expected_sps_reward_per_win,
             "SPS",
             active_time,
         ),
         _config(
             strategy_id,
             REALIZATION_HAIRCUT_BPS,
-            SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1.realization_haircut_bps,
+            strategy.realization_haircut_bps,
             "basis_point",
             active_time,
         ),
         _config(
             strategy_id,
             CARD_RENTAL_COST_DAY_USD,
-            SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1.card_rental_cost_day_usd,
+            strategy.card_rental_cost_day_usd,
             "USD",
             active_time,
         ),
         _config(
             strategy_id,
             SPLINTERLANDS_TRANSACTION_COST_DAY_USD,
-            SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1.transaction_cost_day_usd,
+            strategy.transaction_cost_day_usd,
             "USD",
             active_time,
         ),

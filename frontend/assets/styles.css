@@ -724,6 +724,7 @@ tr:last-child td {
 }
 
 .summary-grid,
+.catalog-stat-grid,
 .metric-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -762,8 +763,17 @@ tr:last-child td {
 }
 
 .choice-strip .summary-item,
+.catalog-stat-grid .summary-item,
 .ranking-card .metric-item {
   background: rgba(3, 9, 20, 0.5);
+}
+
+.catalog-stat-grid {
+  border: 1px solid rgba(32, 246, 255, 0.18);
+  border-radius: 10px;
+  background: rgba(7, 17, 31, 0.72);
+  box-shadow: var(--shadow);
+  padding: 12px;
 }
 
 .ranking-card .metric-item:nth-child(2) strong,
@@ -864,6 +874,7 @@ tr:last-child td {
   .top-opportunity-card,
   .split-grid,
   .summary-grid,
+  .catalog-stat-grid,
   .metric-grid,
   .method-grid,
   .game-grid,
@@ -973,7 +984,7 @@ tr:last-child td {
     width: 100%;
   }
 
-.card-actions .badge {
+  .card-actions .badge {
     width: 100%;
     justify-content: center;
   }
@@ -1027,7 +1038,7 @@ tr:last-child td {
   background: rgba(3, 10, 24, 0.88);
   border: 1px solid rgba(153, 178, 216, 0.22);
   border-radius: 8px;
-  color: var(--text);
+  color: var(--ink);
   font: inherit;
   padding: 10px 12px;
 }

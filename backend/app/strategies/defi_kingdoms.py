@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 
 @dataclass(frozen=True)
@@ -48,4 +48,27 @@ DFK_CJEWEL_MAX_LOCK_V1 = DfkJewelerStrategyDefinition(
     emergency_withdrawal_penalty_bps=5_000,
     dex_fee_bps=30,
     break_even_basis="total_capital",
+)
+
+
+DFK_CJEWEL_100_MAX_LOCK_V1 = replace(
+    DFK_CJEWEL_MAX_LOCK_V1,
+    strategy_id="dfk-crystalvale-jeweler-cjewel-100-max-lock",
+    name="DeFi Kingdoms Crystalvale Jeweler 100 JEWEL Max Lock",
+    locked_jewel_amount="100",
+)
+
+
+DFK_CJEWEL_5000_MAX_LOCK_V1 = replace(
+    DFK_CJEWEL_MAX_LOCK_V1,
+    strategy_id="dfk-crystalvale-jeweler-cjewel-5000-max-lock",
+    name="DeFi Kingdoms Crystalvale Jeweler 5000 JEWEL Max Lock",
+    locked_jewel_amount="5000",
+)
+
+
+DFK_JEWELER_STRATEGIES: tuple[DfkJewelerStrategyDefinition, ...] = (
+    DFK_CJEWEL_MAX_LOCK_V1,
+    DFK_CJEWEL_100_MAX_LOCK_V1,
+    DFK_CJEWEL_5000_MAX_LOCK_V1,
 )

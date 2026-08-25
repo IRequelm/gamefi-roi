@@ -12,7 +12,7 @@ from sqlalchemy import Engine
 from app.api.v1.service import ApiDataService
 from app.config.settings import Settings
 from app.storage.history import HistoryRepository
-from app.strategies.catalog import G14_REVIEWED_AT, list_games, list_opportunities, list_strategies
+from app.strategies.catalog import CATALOG_REVIEWED_AT, list_games, list_opportunities, list_strategies
 
 
 @dataclass(frozen=True)
@@ -76,13 +76,13 @@ def canonical_page_inventory(engine: Engine) -> list[CanonicalPage]:
     latest_by_strategy = {snapshot.strategy_id: snapshot for snapshot in HistoryRepository(engine).latest_snapshots()}
     latest_snapshot_time = max(
         (snapshot.calculated_at for snapshot in latest_by_strategy.values()),
-        default=G14_REVIEWED_AT,
+        default=CATALOG_REVIEWED_AT,
     )
     pages: list[CanonicalPage] = [
         CanonicalPage("/", latest_snapshot_time, priority="1.0"),
         CanonicalPage("/opportunities", latest_snapshot_time, priority="0.8"),
         CanonicalPage("/rankings", latest_snapshot_time, priority="0.9"),
-        CanonicalPage("/methodology", G14_REVIEWED_AT, priority="0.7", changefreq="weekly"),
+        CanonicalPage("/methodology", CATALOG_REVIEWED_AT, priority="0.7", changefreq="weekly"),
     ]
 
     for opportunity in list_opportunities():
@@ -94,7 +94,7 @@ def canonical_page_inventory(engine: Engine) -> list[CanonicalPage]:
         pages.append(
             CanonicalPage(
                 f"/opportunities/{opportunity.opportunity_id}",
-                max(strategy_times, default=G14_REVIEWED_AT),
+                max(strategy_times, default=CATALOG_REVIEWED_AT),
                 priority="0.7" if opportunity.strategy_ids else "0.55",
             )
         )
@@ -105,14 +105,14 @@ def canonical_page_inventory(engine: Engine) -> list[CanonicalPage]:
             for strategy_id in game.strategy_ids
             if strategy_id in latest_by_strategy
         ]
-        pages.append(CanonicalPage(f"/games/{game.game_id}", max(strategy_times, default=G14_REVIEWED_AT)))
+        pages.append(CanonicalPage(f"/games/{game.game_id}", max(strategy_times, default=CATALOG_REVIEWED_AT)))
 
     for strategy in list_strategies():
         snapshot = latest_by_strategy.get(strategy.strategy_id)
         pages.append(
             CanonicalPage(
                 f"/strategies/{strategy.strategy_id}",
-                snapshot.calculated_at if snapshot is not None else G14_REVIEWED_AT,
+                snapshot.calculated_at if snapshot is not None else CATALOG_REVIEWED_AT,
                 priority="0.75",
             )
         )

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 
 @dataclass(frozen=True)
@@ -70,4 +70,27 @@ FARMERS_WORLD_AXE_WOOD_V1 = FarmersWorldAxeStrategyDefinition(
     fwg_input_per_cycle="1",
     transaction_cost_wax_day="0",
     break_even_basis="total_capital",
+)
+
+
+FARMERS_WORLD_AXE_WOOD_3X_V1 = replace(
+    FARMERS_WORLD_AXE_WOOD_V1,
+    strategy_id="farmers-world-axe-wood-production-3x",
+    name="Farmers World Axe Wood Production 3 Axes",
+    tool_count="3",
+)
+
+
+FARMERS_WORLD_AXE_WOOD_10X_V1 = replace(
+    FARMERS_WORLD_AXE_WOOD_V1,
+    strategy_id="farmers-world-axe-wood-production-10x",
+    name="Farmers World Axe Wood Production 10 Axes",
+    tool_count="10",
+)
+
+
+FARMERS_WORLD_AXE_STRATEGIES: tuple[FarmersWorldAxeStrategyDefinition, ...] = (
+    FARMERS_WORLD_AXE_WOOD_V1,
+    FARMERS_WORLD_AXE_WOOD_3X_V1,
+    FARMERS_WORLD_AXE_WOOD_10X_V1,
 )

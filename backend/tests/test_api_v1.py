@@ -49,9 +49,7 @@ def test_ops_status_exposes_database_scheduler_and_strategy_health(monkeypatch, 
     assert payload["scheduler"]["cadence_minutes"] == 30
     assert payload["scheduler"]["last_successful_run_at"] == NOW.isoformat().replace("+00:00", "Z")
     assert {item["strategy_id"] for item in payload["strategies"]} == {
-        DFK_CJEWEL_MAX_LOCK_V1.strategy_id,
-        FARMERS_WORLD_AXE_WOOD_V1.strategy_id,
-        SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1.strategy_id,
+        strategy.strategy_id for strategy in catalog.list_strategies()
     }
 
 
@@ -100,7 +98,7 @@ def test_strategy_detail_includes_latest_snapshot_risk_and_confidence(monkeypatc
     assert latest["opportunity_id"] == "defi-kingdoms"
     assert latest["opportunity_type"] == "GAME"
     assert latest["capital"]["total_capital"] == {"amount": "250.00", "currency": "USD"}
-    assert latest["earnings"]["net_earnings_day"]["amount"] == "0.4885"
+    assert Decimal(latest["earnings"]["net_earnings_day"]["amount"]) == Decimal("0.4885")
     assert latest["confidence"]["score"] == 82
     assert latest["confidence"]["label"] == "HIGH"
     assert latest["risk"]["score"] == 79
@@ -121,35 +119,74 @@ def test_rankings_order_and_tie_breaking_policy(monkeypatch, tmp_path) -> None:
     assert response.status_code == 200
     payload = response.json()
     assert payload["ordering"] == RANKING_ORDERING
-    assert [item["rank"] for item in payload["items"]] == [1, 2, 3]
+    assert [item["rank"] for item in payload["items"]] == list(range(1, len(catalog.list_strategies()) + 1))
     assert [item["strategy"]["strategy_id"] for item in payload["items"]] == [
         FARMERS_WORLD_AXE_WOOD_V1.strategy_id,
+        "farmers-world-axe-wood-production-10x",
+        "farmers-world-axe-wood-production-3x",
+        "splinterlands-modern-ranked-active-sps-ev",
+        "dfk-crystalvale-jeweler-cjewel-5000-max-lock",
         DFK_CJEWEL_MAX_LOCK_V1.strategy_id,
         SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1.strategy_id,
+        "dfk-crystalvale-jeweler-cjewel-100-max-lock",
+        "splinterlands-modern-ranked-grinder-sps-ev",
+        "splinterlands-modern-ranked-casual-sps-ev",
     ]
 
 
 def test_rankings_filters_use_only_modeled_fields(monkeypatch, tmp_path) -> None:
     client, _engine = _seeded_client(monkeypatch, tmp_path, "filters.db")
 
-    assert _ranking_ids(client, "/api/v1/rankings?risk_max=50") == [FARMERS_WORLD_AXE_WOOD_V1.strategy_id]
-    assert _ranking_ids(client, "/api/v1/rankings?confidence_min=80") == [DFK_CJEWEL_MAX_LOCK_V1.strategy_id]
-    assert _ranking_ids(client, "/api/v1/rankings?game_id=farmers-world") == [FARMERS_WORLD_AXE_WOOD_V1.strategy_id]
+    assert _ranking_ids(client, "/api/v1/rankings?risk_max=50") == [
+        FARMERS_WORLD_AXE_WOOD_V1.strategy_id,
+        "farmers-world-axe-wood-production-10x",
+        "farmers-world-axe-wood-production-3x",
+    ]
+    assert _ranking_ids(client, "/api/v1/rankings?confidence_min=80") == [
+        "dfk-crystalvale-jeweler-cjewel-5000-max-lock",
+        DFK_CJEWEL_MAX_LOCK_V1.strategy_id,
+        "dfk-crystalvale-jeweler-cjewel-100-max-lock",
+    ]
+    assert _ranking_ids(client, "/api/v1/rankings?game_id=farmers-world") == [
+        FARMERS_WORLD_AXE_WOOD_V1.strategy_id,
+        "farmers-world-axe-wood-production-10x",
+        "farmers-world-axe-wood-production-3x",
+    ]
     assert _ranking_ids(client, "/api/v1/rankings?opportunity_id=farmers-world") == [
-        FARMERS_WORLD_AXE_WOOD_V1.strategy_id
+        FARMERS_WORLD_AXE_WOOD_V1.strategy_id,
+        "farmers-world-axe-wood-production-10x",
+        "farmers-world-axe-wood-production-3x",
     ]
     assert _ranking_ids(client, "/api/v1/rankings?opportunity_type=GAME") == [
         FARMERS_WORLD_AXE_WOOD_V1.strategy_id,
+        "farmers-world-axe-wood-production-10x",
+        "farmers-world-axe-wood-production-3x",
+        "splinterlands-modern-ranked-active-sps-ev",
+        "dfk-crystalvale-jeweler-cjewel-5000-max-lock",
         DFK_CJEWEL_MAX_LOCK_V1.strategy_id,
         SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1.strategy_id,
+        "dfk-crystalvale-jeweler-cjewel-100-max-lock",
+        "splinterlands-modern-ranked-grinder-sps-ev",
+        "splinterlands-modern-ranked-casual-sps-ev",
     ]
     assert _ranking_ids(client, "/api/v1/rankings?opportunity_type=DEPIN_NODE") == []
-    assert _ranking_ids(client, "/api/v1/rankings?chain=wax") == [FARMERS_WORLD_AXE_WOOD_V1.strategy_id]
+    assert _ranking_ids(client, "/api/v1/rankings?chain=wax") == [
+        FARMERS_WORLD_AXE_WOOD_V1.strategy_id,
+        "farmers-world-axe-wood-production-10x",
+        "farmers-world-axe-wood-production-3x",
+    ]
     assert _ranking_ids(client, "/api/v1/rankings?economy_type=resource-production") == [
-        FARMERS_WORLD_AXE_WOOD_V1.strategy_id
+        FARMERS_WORLD_AXE_WOOD_V1.strategy_id,
+        "farmers-world-axe-wood-production-10x",
+        "farmers-world-axe-wood-production-3x",
     ]
     assert _ranking_ids(client, "/api/v1/rankings?capital_min=2&capital_max=20") == [
-        SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1.strategy_id
+        "farmers-world-axe-wood-production-10x",
+        "farmers-world-axe-wood-production-3x",
+        "splinterlands-modern-ranked-active-sps-ev",
+        SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1.strategy_id,
+        "splinterlands-modern-ranked-grinder-sps-ev",
+        "splinterlands-modern-ranked-casual-sps-ev",
     ]
 
 
@@ -160,9 +197,9 @@ def test_list_pagination_is_deterministic(monkeypatch, tmp_path) -> None:
 
     assert response.status_code == 200
     payload = response.json()
-    assert payload["page"] == {"limit": 1, "offset": 1, "total": 3}
+    assert payload["page"] == {"limit": 1, "offset": 1, "total": len(catalog.list_strategies())}
     assert len(payload["items"]) == 1
-    assert payload["items"][0]["strategy_id"] == FARMERS_WORLD_AXE_WOOD_V1.strategy_id
+    assert payload["items"][0]["strategy_id"] == catalog.list_strategies()[1].strategy_id
 
 
 def test_history_is_ordered_and_paginated(monkeypatch, tmp_path) -> None:
@@ -256,7 +293,10 @@ def test_games_endpoints_include_strategy_catalog(monkeypatch, tmp_path) -> None
     ]
     assert {item["opportunity_type"] for item in list_response.json()["items"]} == {"GAME"}
     assert detail_response.status_code == 200
-    assert detail_response.json()["strategies"][0]["strategy_id"] == SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1.strategy_id
+    assert detail_response.json()["strategy_count"] == 4
+    assert {strategy["strategy_id"] for strategy in detail_response.json()["strategies"]} >= {
+        SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1.strategy_id
+    }
     assert detail_response.json()["primary_destination"]["redirect_url"] == "/go/splinterlands-play"
 
 
@@ -270,9 +310,15 @@ def test_opportunities_catalog_includes_non_game_candidates_without_financial_sn
 
     assert list_response.status_code == 200
     payload = list_response.json()
-    assert payload["page"]["total"] == 10
+    assert payload["page"]["total"] >= 25
     assert {item["opportunity_type"] for item in payload["items"]} == {"GAME", "DEPIN_NODE", "POINTS"}
-    assert {item["opportunity_id"] for item in payload["items"]} >= {"grass", "teneo", "aro-network"}
+    assert {item["opportunity_id"] for item in payload["items"]} >= {
+        "grass",
+        "teneo",
+        "aro-network",
+        "pixels",
+        "datagram",
+    }
     assert grass_response.status_code == 200
     grass = grass_response.json()
     assert grass["opportunity_type"] == "DEPIN_NODE"

@@ -10,6 +10,7 @@ import {
   formatMoney,
   formatRatio,
   formatUpdatedAge,
+  renderCatalogStats,
   renderError,
   renderFreshnessAlert,
   renderHistory,
@@ -59,10 +60,33 @@ test("home renders results as cards before filters without table ranking markup"
   assert.match(html, /Find Web3 earning opportunities/);
   assert.match(html, /Risk and confidence separated/);
   assert.match(html, /Top current organic match/);
+  assert.match(html, /Reviewed opportunities/);
+  assert.match(html, /Modeled strategies/);
+  assert.match(html, /Opportunity types/);
+  assert.match(html, /ROI unavailable/);
   assert.match(html, /ranking-card-grid/);
   assert.match(html, /finder-results/);
   assert.match(html, /filter-panel/);
   assert.doesNotMatch(html, /<table/);
+});
+
+test("catalog stats summarize V1 coverage without financial recomputation", () => {
+  const html = renderCatalogStats(
+    { items: rankingPayload().items, page: { total: 10 } },
+    [
+      { opportunity_type: "GAME", strategy_count: 3 },
+      { opportunity_type: "DEPIN_NODE", strategy_count: 0 },
+      { opportunity_type: "POINTS", strategy_count: 0 },
+    ],
+  );
+
+  assert.match(html, /Reviewed opportunities/);
+  assert.match(html, />3</);
+  assert.match(html, /Modeled strategies/);
+  assert.match(html, />10</);
+  assert.match(html, /DEPIN NODE, GAME, POINTS/);
+  assert.match(html, /2 explicit/);
+  assert.doesNotMatch(html, /30D ROI|Net\/day|Break-even/);
 });
 
 test("static shell uses the official GamCryp logo asset without placeholder markup", () => {

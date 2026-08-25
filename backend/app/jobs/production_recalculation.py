@@ -26,9 +26,9 @@ from app.sources.observations import Observation
 from app.storage.database import create_database_engine
 from app.storage.history import CalculationWindow, HistoryRepository, StrategySnapshot
 from app.storage.scoring import ScoringRepository
-from app.strategies.defi_kingdoms import DFK_CJEWEL_MAX_LOCK_V1
-from app.strategies.farmers_world import FARMERS_WORLD_AXE_WOOD_V1
-from app.strategies.splinterlands import SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1
+from app.strategies.defi_kingdoms import DFK_JEWELER_STRATEGIES
+from app.strategies.farmers_world import FARMERS_WORLD_AXE_STRATEGIES
+from app.strategies.splinterlands import SPLINTERLANDS_MODERN_RANKED_STRATEGIES
 
 logger = logging.getLogger(__name__)
 SCHEDULER_LOCK_KEY = 913_013_013
@@ -57,26 +57,52 @@ class HardStaleInputError(RuntimeError):
 def build_production_tasks(settings: Settings | None = None) -> tuple[StrategyCalculationTask, ...]:
     active_settings = settings or get_settings()
     hard_stale = timedelta(seconds=active_settings.production_hard_stale_seconds)
-    return (
+    dfk_tasks = tuple(
         StrategyCalculationTask(
-            strategy_id=DFK_CJEWEL_MAX_LOCK_V1.strategy_id,
-            strategy_version=DFK_CJEWEL_MAX_LOCK_V1.strategy_version,
-            adapter=DfkJewelerAdapter(DFK_CJEWEL_MAX_LOCK_V1),
-            load_observations=with_hard_stale_check(load_dfk_observations, hard_stale=hard_stale),
-        ),
-        StrategyCalculationTask(
-            strategy_id=FARMERS_WORLD_AXE_WOOD_V1.strategy_id,
-            strategy_version=FARMERS_WORLD_AXE_WOOD_V1.strategy_version,
-            adapter=FarmersWorldAxeAdapter(FARMERS_WORLD_AXE_WOOD_V1),
-            load_observations=with_hard_stale_check(load_farmers_world_observations, hard_stale=hard_stale),
-        ),
-        StrategyCalculationTask(
-            strategy_id=SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1.strategy_id,
-            strategy_version=SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1.strategy_version,
-            adapter=SplinterlandsModernRankedAdapter(SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1),
-            load_observations=with_hard_stale_check(load_splinterlands_observations, hard_stale=hard_stale),
-        ),
+            strategy_id=strategy.strategy_id,
+            strategy_version=strategy.strategy_version,
+            adapter=DfkJewelerAdapter(strategy),
+            load_observations=with_hard_stale_check(
+                lambda active_time, strategy=strategy: load_dfk_observations(
+                    active_time,
+                    strategy=strategy,
+                ),
+                hard_stale=hard_stale,
+            ),
+        )
+        for strategy in DFK_JEWELER_STRATEGIES
     )
+    farmers_tasks = tuple(
+        StrategyCalculationTask(
+            strategy_id=strategy.strategy_id,
+            strategy_version=strategy.strategy_version,
+            adapter=FarmersWorldAxeAdapter(strategy),
+            load_observations=with_hard_stale_check(
+                lambda active_time, strategy=strategy: load_farmers_world_observations(
+                    active_time,
+                    strategy=strategy,
+                ),
+                hard_stale=hard_stale,
+            ),
+        )
+        for strategy in FARMERS_WORLD_AXE_STRATEGIES
+    )
+    splinterlands_tasks = tuple(
+        StrategyCalculationTask(
+            strategy_id=strategy.strategy_id,
+            strategy_version=strategy.strategy_version,
+            adapter=SplinterlandsModernRankedAdapter(strategy),
+            load_observations=with_hard_stale_check(
+                lambda active_time, strategy=strategy: load_splinterlands_observations(
+                    active_time,
+                    strategy=strategy,
+                ),
+                hard_stale=hard_stale,
+            ),
+        )
+        for strategy in SPLINTERLANDS_MODERN_RANKED_STRATEGIES
+    )
+    return (*dfk_tasks, *farmers_tasks, *splinterlands_tasks)
 
 
 def run_production_recalculation(
