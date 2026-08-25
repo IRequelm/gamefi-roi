@@ -8,6 +8,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+import app.api.v1.service as api_service
 from app.api.app import create_app
 from app.api.v1.service import RANKING_ORDERING
 from app.jobs.history_probe import build_history_probe_tasks
@@ -51,6 +52,7 @@ def test_ops_status_exposes_database_scheduler_and_strategy_health(monkeypatch, 
     assert {item["strategy_id"] for item in payload["strategies"]} == {
         strategy.strategy_id for strategy in catalog.list_strategies()
     }
+    assert {item["freshness_status"] for item in payload["strategies"]} == {"fresh"}
 
 
 def test_production_security_headers_are_enabled(monkeypatch) -> None:
@@ -258,6 +260,43 @@ def test_stale_freshness_is_exposed(monkeypatch, tmp_path) -> None:
     assert response.json()["freshness"]["overall_status"] == "stale"
 
 
+def test_old_otherwise_valid_snapshot_ages_into_stale_without_mutating_source_summary(monkeypatch, tmp_path) -> None:
+    client, engine = _seeded_client(monkeypatch, tmp_path, "aged-stale-api.db")
+    monkeypatch.setattr(api_service, "_utc_now", lambda: NOW + timedelta(minutes=6))
+
+    response = client.get(f"/api/v1/strategies/{DFK_CJEWEL_MAX_LOCK_V1.strategy_id}/latest")
+    rankings = client.get("/api/v1/rankings")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["freshness"]["overall_status"] == "stale"
+    assert payload["freshness"]["status_counts"]["stale"] == 0
+    assert any(
+        item["strategy"]["strategy_id"] == DFK_CJEWEL_MAX_LOCK_V1.strategy_id for item in rankings.json()["items"]
+    )
+
+    with Session(engine) as session:
+        record = session.scalar(
+            select(StrategySnapshotRecord)
+            .where(StrategySnapshotRecord.strategy_id == DFK_CJEWEL_MAX_LOCK_V1.strategy_id)
+            .order_by(StrategySnapshotRecord.calculated_at.desc())
+        )
+        assert record is not None
+        assert record.freshness_summary_json["status_counts"]["stale"] == 0
+
+
+def test_ops_status_counts_aged_snapshots_as_stale(monkeypatch, tmp_path) -> None:
+    client, _engine = _seeded_client(monkeypatch, tmp_path, "aged-stale-ops.db")
+    monkeypatch.setattr(api_service, "_utc_now", lambda: NOW + timedelta(minutes=6))
+
+    response = client.get("/api/v1/ops/status")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["stale_strategy_count"] == len(catalog.list_strategies())
+    assert {item["freshness_status"] for item in payload["strategies"]} == {"stale"}
+
+
 def test_invalid_ids_return_404(monkeypatch, tmp_path) -> None:
     client, _engine = _seeded_client(monkeypatch, tmp_path, "invalid.db")
 
@@ -375,6 +414,7 @@ def test_referral_metadata_cannot_change_rankings_or_scores(monkeypatch, tmp_pat
 def _seeded_client(monkeypatch, tmp_path, database_name: str) -> tuple[TestClient, object]:
     engine = _migrated_engine(monkeypatch, tmp_path, database_name)
     _seed_snapshots_and_scores(engine)
+    monkeypatch.setattr(api_service, "_utc_now", lambda: NOW + timedelta(minutes=1))
     return TestClient(create_app()), engine
 
 

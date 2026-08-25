@@ -99,6 +99,42 @@ def test_farmers_world_adapter_fails_when_required_observation_is_stale() -> Non
         )
 
 
+def test_farmers_world_adapter_rejects_zero_market_derived_entry_value() -> None:
+    fixture = json.loads(FIXTURE_PATH.read_text(encoding="utf-8"))
+    payload = dict(fixture["strategy"])
+    payload["entry_value_usd"] = "0"
+    observations = _observations_from_fixture(payload)
+
+    with pytest.raises(AdapterInputError, match=ENTRY_VALUE_USD):
+        FarmersWorldAxeAdapter(FARMERS_WORLD_AXE_WOOD_V1).build_engine_input(
+            observations,
+            calculated_at=datetime(2026, 8, 15, 12, 0, tzinfo=UTC),
+        )
+
+
+def test_farmers_world_adapter_rejects_zero_reward_market_value_but_allows_zero_transaction_cost() -> None:
+    fixture = json.loads(FIXTURE_PATH.read_text(encoding="utf-8"))
+    payload = dict(fixture["strategy"])
+    payload["fww_realizable_value_day_usd"] = "0"
+    payload["transaction_cost_day_usd"] = "0"
+    observations = _observations_from_fixture(payload)
+
+    with pytest.raises(AdapterInputError, match=FWW_REALIZABLE_VALUE_DAY_USD):
+        FarmersWorldAxeAdapter(FARMERS_WORLD_AXE_WOOD_V1).build_engine_input(
+            observations,
+            calculated_at=datetime(2026, 8, 15, 12, 0, tzinfo=UTC),
+        )
+
+    valid_payload = dict(fixture["strategy"])
+    valid_payload["transaction_cost_day_usd"] = "0"
+    valid_result = FarmersWorldAxeAdapter(FARMERS_WORLD_AXE_WOOD_V1).build_engine_input(
+        _observations_from_fixture(valid_payload),
+        calculated_at=datetime(2026, 8, 15, 12, 0, tzinfo=UTC),
+    )
+
+    assert valid_result.economics_input.costs.transaction_cost_day.amount == Decimal("0")
+
+
 def _observations_from_fixture(payload: dict[str, str]) -> tuple[Observation, ...]:
     now = datetime(2026, 8, 15, 12, 0, tzinfo=UTC)
     strategy_id = FARMERS_WORLD_AXE_WOOD_V1.strategy_id

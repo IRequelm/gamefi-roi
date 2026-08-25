@@ -96,12 +96,18 @@ class FarmersWorldAxeAdapter:
         require_positive(fww_output_per_cycle, FWW_OUTPUT_PER_CYCLE)
         require_non_negative(fwf_input_per_cycle, FWF_INPUT_PER_CYCLE)
         require_non_negative(fwg_input_per_cycle, FWG_INPUT_PER_CYCLE)
-        require_non_negative(entry_value_usd, ENTRY_VALUE_USD)
-        require_non_negative(exit_value_usd, EXIT_VALUE_USD)
-        require_non_negative(fww_reference_price_usd, FWW_REFERENCE_PRICE_USD)
-        require_non_negative(fww_realizable_value_day_usd, FWW_REALIZABLE_VALUE_DAY_USD)
-        require_non_negative(fwf_operating_cost_day_usd, FWF_OPERATING_COST_DAY_USD)
-        require_non_negative(fwg_operating_cost_day_usd, FWG_OPERATING_COST_DAY_USD)
+        require_positive(entry_value_usd, ENTRY_VALUE_USD)
+        require_positive(exit_value_usd, EXIT_VALUE_USD)
+        require_positive(fww_reference_price_usd, FWW_REFERENCE_PRICE_USD)
+        require_positive(fww_realizable_value_day_usd, FWW_REALIZABLE_VALUE_DAY_USD)
+        if fwf_input_per_cycle > Decimal("0"):
+            require_positive(fwf_operating_cost_day_usd, FWF_OPERATING_COST_DAY_USD)
+        else:
+            require_non_negative(fwf_operating_cost_day_usd, FWF_OPERATING_COST_DAY_USD)
+        if fwg_input_per_cycle > Decimal("0"):
+            require_positive(fwg_operating_cost_day_usd, FWG_OPERATING_COST_DAY_USD)
+        else:
+            require_non_negative(fwg_operating_cost_day_usd, FWG_OPERATING_COST_DAY_USD)
         require_non_negative(transaction_cost_day_usd, TRANSACTION_COST_DAY_USD)
 
         daily = calculate_axe_daily_quantities(

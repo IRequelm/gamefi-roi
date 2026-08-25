@@ -99,6 +99,15 @@ class CoinGeckoMarketDataSource(UnsupportedMarketDataSource):
                     retryable=False,
                 )
             )
+        if value <= Decimal("0"):
+            raise SourceParseError(
+                SourceErrorDetail(
+                    provider=self.provider_name,
+                    operation="get_token_prices",
+                    message=f"Price for {provider_asset_id}/{quote_currency} must be strictly positive",
+                    retryable=False,
+                )
+            )
 
         observed_at = self._observed_at(payload)
         observation_id = self._observation_id(

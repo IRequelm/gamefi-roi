@@ -91,3 +91,19 @@ def test_coingecko_rejects_non_integer_observed_timestamp() -> None:
                 freshness_window=timedelta(minutes=5),
             )
         )
+
+
+def test_coingecko_rejects_zero_market_price() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, text='{"wax":{"usd":0.0,"last_updated_at":1711356300}}', request=request)
+
+    source = CoinGeckoMarketDataSource(_settings(), transport=httpx.MockTransport(handler))
+
+    with pytest.raises(SourceParseError, match="strictly positive"):
+        source.get_token_prices(
+            TokenPriceRequest(
+                provider_asset_ids=("wax",),
+                quote_currency="usd",
+                freshness_window=timedelta(minutes=5),
+            )
+        )

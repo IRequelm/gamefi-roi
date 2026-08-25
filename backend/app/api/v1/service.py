@@ -358,7 +358,7 @@ def health_payload(*, service: str, environment: str, version: str) -> HealthPay
 
 
 def ops_status_payload(*, engine: Engine, settings: Settings) -> OpsStatusPayload:
-    generated_at = datetime.now(UTC)
+    generated_at = _utc_now()
     database_status = _database_status(engine)
     if database_status["status"] != "ok":
         return OpsStatusPayload(
@@ -389,7 +389,9 @@ def ops_status_payload(*, engine: Engine, settings: Settings) -> OpsStatusPayloa
                 else max(last_successful_run_at, snapshot.calculated_at)
             )
             freshness_status = _overall_freshness(
-                {key: int(value) for key, value in dict(snapshot.freshness_summary.get("status_counts", {})).items()}
+                {key: int(value) for key, value in dict(snapshot.freshness_summary.get("status_counts", {})).items()},
+                snapshot=snapshot,
+                now=generated_at,
             )
             if freshness_status != "fresh":
                 stale_count += 1
@@ -621,7 +623,7 @@ def _break_even(payload: Any) -> BreakEvenMetric:
 def _freshness(snapshot: StrategySnapshot) -> FreshnessPayload:
     counts = {key: int(value) for key, value in dict(snapshot.freshness_summary.get("status_counts", {})).items()}
     return FreshnessPayload(
-        overall_status=_overall_freshness(counts),
+        overall_status=_overall_freshness(counts, snapshot=snapshot),
         calculated_at=snapshot.calculated_at,
         status_counts=counts,
         input_count=int(snapshot.freshness_summary.get("input_count", len(snapshot.input_observation_ids))),
@@ -662,14 +664,28 @@ def _classification_summary(snapshot: StrategySnapshot) -> ClassificationSummary
     return ClassificationSummaryPayload(counts=counts, metrics=metrics)
 
 
-def _overall_freshness(counts: dict[str, int]) -> str:
+def _overall_freshness(
+    counts: dict[str, int],
+    *,
+    snapshot: StrategySnapshot | None = None,
+    now: datetime | None = None,
+) -> str:
     if counts.get("invalid", 0) > 0:
         return "invalid"
     if counts.get("missing", 0) > 0:
         return "missing"
     if counts.get("stale", 0) > 0:
         return "stale"
+    if snapshot is not None and _snapshot_deadline_has_passed(snapshot, now=now):
+        return "stale"
     return "fresh"
+
+
+def _snapshot_deadline_has_passed(snapshot: StrategySnapshot, *, now: datetime | None = None) -> bool:
+    deadline = _parse_datetime(snapshot.freshness_summary.get("earliest_fresh_until"))
+    if deadline is None:
+        return False
+    return (now or _utc_now()) > deadline
 
 
 def _passes_filters(
@@ -747,3 +763,7 @@ def _normalize_utc(value: datetime) -> datetime:
     if value.tzinfo is None or value.utcoffset() is None:
         return value.replace(tzinfo=UTC)
     return value.astimezone(UTC)
+
+
+def _utc_now() -> datetime:
+    return datetime.now(UTC)

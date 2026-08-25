@@ -108,3 +108,33 @@ def test_atomicassets_rejects_malformed_price() -> None:
                 freshness_window=timedelta(minutes=5),
             )
         )
+
+
+def test_atomicassets_rejects_zero_floor_price() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json={
+                "success": True,
+                "data": [
+                    {
+                        "price": {"amount": "0", "token_precision": 8, "token_symbol": "WAX"},
+                        "current_collection_fee": "0.05",
+                    }
+                ],
+            },
+            request=request,
+        )
+
+    source = AtomicAssetsMarketDataSource(_settings(), transport=httpx.MockTransport(handler))
+
+    with pytest.raises(SourceParseError, match="strictly positive"):
+        source.get_floor_listing(
+            AtomicAssetsFloorRequest(
+                collection_name="farmersworld",
+                schema_name="tools",
+                template_id="203881",
+                listing_symbol="WAX",
+                freshness_window=timedelta(minutes=5),
+            )
+        )

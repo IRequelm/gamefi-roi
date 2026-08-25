@@ -164,6 +164,15 @@ def _sale_price(sale: dict[str, Any]) -> tuple[Decimal, str]:
 
     denominator = decimal_from_int(10) ** precision
     value = FINANCIAL_DECIMAL_CONTEXT.divide(Decimal(amount), denominator)
+    if value <= Decimal("0"):
+        raise SourceParseError(
+            SourceErrorDetail(
+                provider=AtomicAssetsMarketDataSource.provider_name,
+                operation="get_floor_listing",
+                message="AtomicAssets sale floor price must be strictly positive",
+                retryable=False,
+            )
+        )
     return value, symbol.upper()
 
 
