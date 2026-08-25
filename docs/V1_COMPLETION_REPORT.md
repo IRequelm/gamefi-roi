@@ -1,7 +1,7 @@
 # GamCryp V1 Completion Report
 
-Status: G18 local readiness in progress; public deployment verification pending
-Date: 2026-08-24
+Status: V1 COMPLETE — OPERATIONS / GROWTH MODE
+Date: 2026-08-26
 
 ## 1. Product Summary
 
@@ -147,11 +147,11 @@ External indexing or AI citation is not claimed because it cannot be observed di
 
 Public beta URL: `https://gamefi-roi-web.onrender.com`.
 
-G13 public beta is complete. G18 production verification for the expanded catalog is pending until the G18 commit is deployed to Render and checked from the public URL.
+G13 public beta is complete and G18 production verification for the expanded catalog passed on Render.
 
-Local G18 verification on 2026-08-24 used a migrated temporary SQLite test database with no production secrets:
+Local G18 verification used a migrated temporary SQLite test database with no production secrets:
 
-- backend tests: 173 passed;
+- backend tests: 179 passed;
 - frontend tests: 19 passed;
 - compileall: passed;
 - pip check: passed;
@@ -164,7 +164,17 @@ Local G18 verification on 2026-08-24 used a migrated temporary SQLite test datab
 - G12 independent validation probe: passed for the original three manually validated fixtures;
 - `git diff --check`: passed.
 
-Public G18 verification is still pending. The currently reachable public shell does not by itself prove the expanded G18 catalog is deployed, and production checks must be rerun after Render serves the G18 commit.
+Public G18 verification passed:
+
+- latest Render deployment is live;
+- latest GitHub Actions recalculation returned `status: ok`;
+- `score_count`: 10;
+- `snapshot_ids`: 10;
+- `failure_ids`: none;
+- public API/web surface shows 26 opportunities and 10 modeled strategies;
+- old snapshots correctly aged into stale;
+- after successful recalculation, latest snapshots returned to fresh;
+- `/api/v1/ops/status` `stale_strategy_count` returned to 0.
 
 Current beta architecture remains:
 
@@ -217,9 +227,7 @@ Weekly:
 
 ## 13. Manual External Actions Still Pending
 
-- Deploy the G18 commit to Render because `render.yaml` keeps auto deploy off.
-- Run or confirm the GitHub Actions beta recalculation after deployment.
-- Verify `/api/v1/health`, `/api/v1/ops/status`, `/api/v1/rankings`, `/sitemap.xml`, `/robots.txt`, `/operator/referrals`, and all expanded public pages from the public URL.
+- No V1-blocking external deployment or verification action remains.
 - Add real referral programs only through the operator console after authorized signup/application. Do not paste referral partner secrets, database URLs, provider keys, or operator credentials into chat or Git.
 - Upgrade Render Postgres before treating V1 as backup/PITR-grade production.
 
@@ -236,7 +244,7 @@ Analytics:
 - positive modeled strategies: 10 in deterministic V1 fixture
 - negative modeled strategies: 0 in deterministic V1 fixture
 - ROI unavailable opportunities: 23
-- stale strategies: unavailable until production G18 public verification
+- stale strategies: 0 after the verified successful production recalculation
 - Risk distribution in deterministic fixture: MEDIUM 3, VERY HIGH 7
 - Confidence distribution in deterministic fixture: HIGH 3, MODERATE 3, LOW 4
 

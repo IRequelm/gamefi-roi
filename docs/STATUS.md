@@ -1,11 +1,11 @@
 # GameFi ROI — Project Status
 
-Updated: 2026-08-24
+Updated: 2026-08-26
 Project version: 0.1
 
 ## Current state
 
-**ACTIVE GATE: G18 — V1 Completion + Coverage Expansion**
+**PROJECT STATUS: V1 COMPLETE — OPERATIONS / GROWTH MODE**
 
 G12 is complete and frozen in the G12 baseline Git commit.
 
@@ -25,7 +25,7 @@ Post-G16 production scheduler fix: the GitHub Actions beta recalculation workflo
 
 G17 is complete in the repository. It adds referral operations coverage states, a single-operator protected console, safe referral metadata editing, work queue generation, stored-metadata health checks, and manual verified revenue entry. Referral, sponsor, click, and revenue data remain outside ROI, Risk, Confidence, strategy snapshots, validation, and organic ranking order.
 
-G18 is active as the final V1 completion gate. Local readiness work is in progress to expand the public catalog to at least 25 published opportunities, reach at least 10 modeled strategies, verify referral operations coverage, refresh V1 operations documentation, and complete final UX/search/production checks. G18 must not be marked complete until full regression checks and production/public verification pass against the deployed beta.
+G18 is complete. The public beta now serves the expanded V1 surface with 26 opportunities and 10 modeled strategies. The latest Render deployment is live, GitHub Actions recalculation succeeded with 10 scored snapshots and no failures, freshness aging was verified in production, and `stale_strategy_count` returns to 0 after a successful recalculation. No mandatory implementation gate is active. Future work should be classified as Operations, Growth, V1.x improvement, or V2 proposal.
 
 ## Gate board
 
@@ -49,7 +49,7 @@ G18 is active as the final V1 completion gate. Local readiness work is in progre
 | G15 | Monetization | COMPLETE |
 | G16 | Search / AI Discoverability + Traffic Acquisition | COMPLETE |
 | G17 | Referral Operations + Operator Console | COMPLETE |
-| G18 | V1 Completion + Coverage Expansion | ACTIVE |
+| G18 | V1 Completion + Coverage Expansion | COMPLETE |
 
 ## G0 objective
 
@@ -776,7 +776,7 @@ Operator console routes:
 /operator/revenue
 ```
 
-Commercial integrity remains unchanged: referral relationships, verified revenue, click metrics, sponsor data, and operator task status never feed ROI, Risk, Confidence, snapshots, validation, or organic rankings. G18 is active as the final V1 completion gate.
+Commercial integrity remains unchanged: referral relationships, verified revenue, click metrics, sponsor data, and operator task status never feed ROI, Risk, Confidence, snapshots, validation, or organic rankings. G18 is complete and the project is in V1 operations/growth mode.
 
 ## G18 objective
 
@@ -786,26 +786,28 @@ G18 must not start V2 work, customer subscriptions/billing, major architectural 
 
 ## G18 acceptance criteria
 
-- [ ] at least 25 high-quality published opportunities exist across `GAME`, `DEPIN_NODE`, and `POINTS`,
-- [ ] at least 10 modeled strategies have reproducible financial calculations and retain backward-compatible behavior for DFK, Farmers World, and Splinterlands,
-- [ ] every published opportunity has canonical identity, opportunity type, official destination, publication status, reward type, feasibility result, referral coverage state, evidence/source metadata, and a search/index page,
-- [ ] every modeled strategy has adapter contract compliance, golden fixture coverage, live probe support, ROI, Risk, Confidence, snapshot/history, API integration, public web integration, and an indexable detail page,
-- [ ] opportunities without lawful/reproducible valuation expose ROI as unavailable, never zero,
-- [ ] referral absence does not block publication,
-- [ ] missing referrals are visible in the operator queue and official URL fallback works for every published opportunity,
-- [ ] referral, sponsor, click, revenue, and operator-task data cannot affect ROI, Risk, Confidence, strategy snapshots, validation, or organic ranking order,
-- [ ] public web is readable, responsive, GamCryp-branded, and does not expose backend-looking raw financial values,
-- [ ] search/AI crawl and index foundations cover the expanded catalog while `/go`, API, operator, internal, and query-trap routes remain excluded as intended,
-- [ ] production scheduled recalculation is stable and all modeled strategies have valid latest-state handling or explicit documented provider failures,
-- [ ] operator console is protected and usable for referral coverage, work queue review, metadata maintenance, health checks, and manual verified revenue entry,
-- [ ] `/go/{destination_slug}` remains fail-closed for unknown destinations and never permits arbitrary open redirects,
-- [ ] Render Free beta limitations and paid production upgrade path remain explicitly documented,
-- [ ] `docs/V1_COMPLETION_REPORT.md` exists and includes product summary, architecture summary, opportunity/strategy inventory, referral coverage, search status, production status, limitations, security/privacy notes, operator workflow, manual actions, KPI baseline, and non-V1 scope,
-- [ ] backend tests, frontend tests, compileall, pip check, doctor, API probe, web probe, operator smoke, search/sitemap/robots checks, scheduled recalculation probe, referral integrity checks, live/public verification where safe, and `git diff --check` pass,
-- [ ] baseline Git commit for G18.
+- [x] at least 25 high-quality published opportunities exist across `GAME`, `DEPIN_NODE`, and `POINTS`,
+- [x] at least 10 modeled strategies have reproducible financial calculations and retain backward-compatible behavior for DFK, Farmers World, and Splinterlands,
+- [x] every published opportunity has canonical identity, opportunity type, official destination, publication status, reward type, feasibility result, referral coverage state, evidence/source metadata, and a search/index page,
+- [x] every modeled strategy has adapter contract compliance, golden fixture coverage, live probe support, ROI, Risk, Confidence, snapshot/history, API integration, public web integration, and an indexable detail page,
+- [x] opportunities without lawful/reproducible valuation expose ROI as unavailable, never zero,
+- [x] referral absence does not block publication,
+- [x] missing referrals are visible in the operator queue and official URL fallback works for every published opportunity,
+- [x] referral, sponsor, click, revenue, and operator-task data cannot affect ROI, Risk, Confidence, strategy snapshots, validation, or organic ranking order,
+- [x] public web is readable, responsive, GamCryp-branded, and does not expose backend-looking raw financial values,
+- [x] search/AI crawl and index foundations cover the expanded catalog while `/go`, API, operator, internal, and query-trap routes remain excluded as intended,
+- [x] production scheduled recalculation is stable and all modeled strategies have valid latest-state handling or explicit documented provider failures,
+- [x] operator console is protected and usable for referral coverage, work queue review, metadata maintenance, health checks, and manual verified revenue entry,
+- [x] `/go/{destination_slug}` remains fail-closed for unknown destinations and never permits arbitrary open redirects,
+- [x] Render Free beta limitations and paid production upgrade path remain explicitly documented,
+- [x] `docs/V1_COMPLETION_REPORT.md` exists and includes product summary, architecture summary, opportunity/strategy inventory, referral coverage, search status, production status, limitations, security/privacy notes, operator workflow, manual actions, KPI baseline, and non-V1 scope,
+- [x] backend tests, frontend tests, compileall, pip check, doctor, API probe, web probe, operator smoke, search/sitemap/robots checks, scheduled recalculation probe, referral integrity checks, live/public verification where safe, and `git diff --check` pass,
+- [x] baseline Git commit for G18.
 
 ## G18 implementation notes
 
-Local G18 readiness work expands the catalog toward the V1 coverage targets while preserving the analytical integrity boundary. The canonical catalog must remain the source for public opportunity identity and outbound destinations; modeled strategies remain strategy-specific and must continue to pass the G7 Adapter Contract v1 and G3 ROI methodology.
+G18 expands the catalog to 26 public opportunities and 10 modeled strategies while preserving the analytical integrity boundary. The canonical catalog remains the source for public opportunity identity and outbound destinations; modeled strategies remain strategy-specific and continue to pass the G7 Adapter Contract v1 and G3 ROI methodology.
 
-The project may be marked `V1 COMPLETE — OPERATIONS / GROWTH MODE` only when all G18 acceptance criteria are satisfied against the repository and the deployed public beta. Do not create another mandatory implementation gate automatically.
+Production verification passed after deployment of the final G18 readiness checkpoint: the latest GitHub Actions recalculation returned `status: ok`, `score_count: 10`, 10 snapshot ids, and no failure ids; the public API/web surface shows 26 opportunities and 10 modeled strategies; old snapshots aged into stale correctly; successful recalculation returned latest snapshots to fresh and `/api/v1/ops/status` stale strategy count to 0.
+
+The project is now `V1 COMPLETE — OPERATIONS / GROWTH MODE`. Do not create another mandatory implementation gate automatically.
