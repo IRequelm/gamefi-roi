@@ -106,7 +106,9 @@ test("static shell uses the official GamCryp logo asset without placeholder mark
   assert.match(html, /GamCryp \| Web3 Opportunity Intelligence/);
   assert.match(html, /<img class="brand-logo" src="\/assets\/brand\/gamcryp-logo\.png" alt="GamCryp">/);
   assert.match(html, /brand-lockup/);
+  assert.match(html, /https:\/\/x.com\/GamCryp/);
   assert.match(html, /mailto:info@gamcryp.com/);
+  assert.match(html, />info@gamcryp.com</);
   assert.match(html, /https:\/\/www.youtube.com\/@GamCryp/);
   assert.match(html, /gaMeasurementId: null/);
   assert.doesNotMatch(html, /gamcryp@gmail.com/);
@@ -126,8 +128,16 @@ test("GamCryp brand stylesheet uses dark navy base and restrained accent palette
   assert.match(css, /height:\s*auto/);
   assert.match(css, /object-fit:\s*contain/);
   assert.match(css, /overflow-x:\s*hidden/);
+  assert.match(css, /\.badge\s*{[\s\S]*min-height:\s*30px/);
+  assert.match(css, /\.badge\s*{[\s\S]*padding:\s*5px 10px/);
+  assert.match(css, /\.badge\s*{[\s\S]*line-height:\s*1\.22/);
   assert.match(css, /\.badge\s*{[\s\S]*white-space:\s*nowrap/);
   assert.match(css, /\.badge\s*{[\s\S]*word-break:\s*keep-all/);
+  assert.match(css, /\.ranking-card-grid\s*{[\s\S]*minmax\(min\(100%, 340px\), 1fr\)/);
+  assert.match(css, /\.opportunity-grid\s*{[\s\S]*minmax\(min\(100%, 300px\), 1fr\)/);
+  assert.match(css, /\.opportunity-facts\s*{[\s\S]*grid-template-columns:\s*1fr/);
+  assert.match(css, /\.watchlist-note\s*{[\s\S]*line-height:\s*1\.42/);
+  assert.match(css, /\.button,\n\.secondary-button\s*{[\s\S]*justify-content:\s*center/);
   assert.doesNotMatch(css, /#f6f7f2|#fff5e6|#e9f5ed|#edf4fb/);
 });
 

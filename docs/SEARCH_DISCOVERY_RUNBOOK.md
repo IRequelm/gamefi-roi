@@ -30,7 +30,7 @@ Required or optional environment variables:
 - `GAMEFI_GOOGLE_SITE_VERIFICATION`: optional Google Search Console verification token.
 - `GAMEFI_BING_SITE_VERIFICATION`: optional Bing Webmaster Tools verification token.
 - `GAMEFI_GA_MEASUREMENT_ID`: optional GA4 measurement id, for example `G-XXXXXXXXXX`. Leave blank to disable Google Analytics entirely.
-- `GAMEFI_PUBLIC_X_URL`: optional public X profile URL. Leave blank until the official URL is supplied.
+- `GAMEFI_PUBLIC_X_URL`: public X profile URL. Default: `https://x.com/GamCryp`.
 - `GAMEFI_PUBLIC_YOUTUBE_URL`: public YouTube URL. Default: `https://www.youtube.com/@GamCryp`.
 - `GAMEFI_PUBLIC_CONTACT_EMAIL`: public contact email. Default: `info@gamcryp.com`.
 

@@ -34,7 +34,7 @@ class Settings(BaseSettings):
     security_headers_enabled: bool = True
     public_base_url: str = "http://localhost:8000"
     ga_measurement_id: str | None = None
-    public_x_url: str | None = None
+    public_x_url: str | None = "https://x.com/GamCryp"
     public_youtube_url: str = "https://www.youtube.com/@GamCryp"
     public_contact_email: str = "info@gamcryp.com"
     indexnow_key: str | None = None

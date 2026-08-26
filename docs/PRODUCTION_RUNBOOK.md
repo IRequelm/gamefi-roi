@@ -90,7 +90,7 @@ Public brand and analytics:
 
 - `GAMEFI_PUBLIC_BASE_URL`: canonical public origin.
 - `GAMEFI_GA_MEASUREMENT_ID`: optional GA4 measurement id such as `G-XXXXXXXXXX`; leave blank to disable Google Analytics and avoid loading Google scripts.
-- `GAMEFI_PUBLIC_X_URL`: optional official X URL; leave blank until supplied.
+- `GAMEFI_PUBLIC_X_URL=https://x.com/GamCryp`: official public X profile URL.
 - `GAMEFI_PUBLIC_YOUTUBE_URL=https://www.youtube.com/@GamCryp`
 - `GAMEFI_PUBLIC_CONTACT_EMAIL=info@gamcryp.com`
 

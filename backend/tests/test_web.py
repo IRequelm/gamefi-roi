@@ -22,7 +22,8 @@ def test_web_mvp_pages_are_served_by_fastapi(monkeypatch, tmp_path) -> None:
         assert "GamCryp" in response.text
         assert "/assets/brand/gamcryp-logo.png" in response.text
         assert "/assets/app.js" in response.text
-        assert "info@gamcryp.com" in response.text
+        assert "https://x.com/GamCryp" in response.text
+        assert 'mailto:info@gamcryp.com">info@gamcryp.com</a>' in response.text
         assert "https://www.youtube.com/@GamCryp" in response.text
         assert "gamcryp@gmail.com" not in response.text
 

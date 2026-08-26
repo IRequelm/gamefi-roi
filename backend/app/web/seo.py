@@ -834,7 +834,7 @@ def _verification_meta(settings: Settings) -> str:
 def _public_config_script(settings: Settings) -> str:
     payload = {
         "gaMeasurementId": settings.ga_measurement_id,
-        "xUrl": settings.public_x_url,
+        "xUrl": settings.public_x_url or "https://x.com/GamCryp",
         "youtubeUrl": settings.public_youtube_url,
         "contactEmail": settings.public_contact_email,
     }
@@ -842,18 +842,15 @@ def _public_config_script(settings: Settings) -> str:
 
 
 def _footer_html(settings: Settings) -> str:
-    x_link = (
-        f'<a href="{escape(settings.public_x_url)}" rel="noopener noreferrer" target="_blank">X</a>'
-        if settings.public_x_url
-        else '<span class="footer-link-disabled" title="X link pending">X</span>'
-    )
+    x_url = settings.public_x_url or "https://x.com/GamCryp"
+    x_link = f'<a href="{escape(x_url)}" rel="noopener noreferrer" target="_blank">X</a>'
     return f"""
     <footer class="site-footer">
       <nav class="footer-links" aria-label="Brand links">
         <span>GamCryp</span>
         {x_link}
         <a href="{escape(settings.public_youtube_url)}" rel="noopener noreferrer" target="_blank">YouTube</a>
-        <a href="mailto:{escape(settings.public_contact_email)}">Contact</a>
+        <a href="mailto:{escape(settings.public_contact_email)}">{escape(settings.public_contact_email)}</a>
         <a href="/methodology" data-link>Methodology</a>
       </nav>
       <p>Analytics only. No guaranteed returns. Not investment advice. Commercial relationships never affect ROI, Risk, Confidence, or organic rankings.</p>
