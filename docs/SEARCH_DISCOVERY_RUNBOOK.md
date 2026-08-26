@@ -29,6 +29,10 @@ Required or optional environment variables:
 - `GAMEFI_INDEXNOW_KEY`: optional IndexNow key. Leave blank to disable IndexNow submission.
 - `GAMEFI_GOOGLE_SITE_VERIFICATION`: optional Google Search Console verification token.
 - `GAMEFI_BING_SITE_VERIFICATION`: optional Bing Webmaster Tools verification token.
+- `GAMEFI_GA_MEASUREMENT_ID`: optional GA4 measurement id, for example `G-XXXXXXXXXX`. Leave blank to disable Google Analytics entirely.
+- `GAMEFI_PUBLIC_X_URL`: optional public X profile URL. Leave blank until the official URL is supplied.
+- `GAMEFI_PUBLIC_YOUTUBE_URL`: public YouTube URL. Default: `https://www.youtube.com/@GamCryp`.
+- `GAMEFI_PUBLIC_CONTACT_EMAIL`: public contact email. Default: `info@gamcryp.com`.
 
 Do not commit provider keys, site verification secrets, or partner credentials.
 
@@ -142,6 +146,39 @@ Normalized channels:
 - `other`.
 
 Inbound acquisition records are separate from G15 outbound clicks, revenue attribution, sponsored placements, and partner reporting. They must never affect ROI, Risk, Confidence, historical snapshots, or organic ranking order.
+
+## GA4 / Google Ads Readiness
+
+GA4 support is optional and disabled by default. When `GAMEFI_GA_MEASUREMENT_ID` is blank, the public pages emit no Google tag script and make no Google Analytics requests.
+
+When a GA4 measurement id is configured, the frontend exposes a compact consent prompt with:
+
+- `Accept analytics`,
+- `Reject essential only`.
+
+Analytics initializes only after acceptance. Rejection keeps the site fully functional, including `/go/...` outbound redirects and existing privacy-minimal server attribution. The Google tag is loaded through the GA4 `gtag.js` path only; Google Tag Manager and a separate Ads stack are intentionally not added.
+
+Centralized frontend events:
+
+- `opportunity_view`,
+- `strategy_view`,
+- `start_click`,
+- `outbound_click`.
+
+Allowed event parameters are limited to opportunity/strategy identity, opportunity type, placement, referral status, and page path/title. Do not send referral secrets, referral codes, emails, operator information, raw financial payloads, wallet identifiers, or other personally identifying data.
+
+Manual external setup still pending after domain migration:
+
+1. Create a GA4 property and web data stream.
+2. Obtain the `G-` measurement id.
+3. Add it as `GAMEFI_GA_MEASUREMENT_ID` in Render environment configuration.
+4. Create or link Google Ads later, outside the codebase.
+5. Link GA4 to Google Ads through Google account settings.
+6. Decide which engagement events may later become Ads key events; do not treat `start_click` or `outbound_click` as verified revenue.
+7. Verify the consent prompt blocks analytics before acceptance.
+8. Verify traffic after `gamcryp.com` migration.
+
+GA4 is additive measurement only. GamCryp's internal `/go/...` click records and verified partner revenue imports remain the source of truth for commercial reporting, and commercial data must never affect ROI, Risk, Confidence, strategy snapshots, or organic rankings.
 
 ## Verification
 

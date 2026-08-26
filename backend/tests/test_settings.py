@@ -103,6 +103,45 @@ def test_indexnow_key_is_optional_but_validated_when_present(monkeypatch) -> Non
         get_settings()
 
 
+def test_ga_and_public_brand_config_are_optional_and_validated(monkeypatch) -> None:
+    monkeypatch.setenv("GAMEFI_ENVIRONMENT", "test")
+    monkeypatch.setenv("GAMEFI_DATABASE_URL", "sqlite+pysqlite:///:memory:")
+    monkeypatch.setenv("GAMEFI_ALLOW_SQLITE_FOR_TESTS", "true")
+    monkeypatch.setenv("GAMEFI_GA_MEASUREMENT_ID", "")
+    monkeypatch.setenv("GAMEFI_PUBLIC_X_URL", "")
+
+    settings = get_settings()
+
+    assert settings.ga_measurement_id is None
+    assert settings.public_x_url is None
+    assert settings.public_youtube_url == "https://www.youtube.com/@GamCryp"
+    assert settings.public_contact_email == "info@gamcryp.com"
+
+    from app.config.settings import clear_settings_cache
+
+    clear_settings_cache()
+    monkeypatch.setenv("GAMEFI_GA_MEASUREMENT_ID", "G-test1234")
+    monkeypatch.setenv("GAMEFI_PUBLIC_X_URL", "https://x.com/GamCryp")
+
+    settings = get_settings()
+
+    assert settings.ga_measurement_id == "G-TEST1234"
+    assert settings.public_x_url == "https://x.com/GamCryp"
+
+    clear_settings_cache()
+    monkeypatch.setenv("GAMEFI_GA_MEASUREMENT_ID", "UA-legacy")
+
+    with pytest.raises(ValidationError):
+        get_settings()
+
+    clear_settings_cache()
+    monkeypatch.setenv("GAMEFI_GA_MEASUREMENT_ID", "")
+    monkeypatch.setenv("GAMEFI_PUBLIC_X_URL", "http://x.example/gamcryp")
+
+    with pytest.raises(ValidationError):
+        get_settings()
+
+
 def test_render_postgresql_url_is_normalized_to_psycopg_driver(monkeypatch) -> None:
     monkeypatch.setenv("GAMEFI_ENVIRONMENT", "local")
     monkeypatch.setenv("GAMEFI_DATABASE_URL", "postgresql://user:pass@host:5432/gamefi")

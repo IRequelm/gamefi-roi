@@ -33,6 +33,10 @@ class Settings(BaseSettings):
     allowed_cors_origins: str = ""
     security_headers_enabled: bool = True
     public_base_url: str = "http://localhost:8000"
+    ga_measurement_id: str | None = None
+    public_x_url: str | None = None
+    public_youtube_url: str = "https://www.youtube.com/@GamCryp"
+    public_contact_email: str = "info@gamcryp.com"
     indexnow_key: str | None = None
     google_site_verification: str | None = None
     bing_site_verification: str | None = None
@@ -78,6 +82,8 @@ class Settings(BaseSettings):
         "indexnow_key",
         "google_site_verification",
         "bing_site_verification",
+        "ga_measurement_id",
+        "public_x_url",
         "operator_username",
         "operator_password",
         mode="before",
@@ -98,6 +104,16 @@ class Settings(BaseSettings):
             raise ValueError("GAMEFI_INDEXNOW_KEY must be 8-128 characters using letters, numbers, or dashes")
         return text
 
+    @field_validator("ga_measurement_id")
+    @classmethod
+    def validate_ga_measurement_id(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        text = value.strip().upper()
+        if not re.fullmatch(r"G-[A-Z0-9]{6,20}", text):
+            raise ValueError("GAMEFI_GA_MEASUREMENT_ID must look like G-XXXXXXXXXX")
+        return text
+
     @field_validator("public_base_url")
     @classmethod
     def normalize_public_base_url(cls, value: str) -> str:
@@ -111,6 +127,27 @@ class Settings(BaseSettings):
             raise ValueError("GAMEFI_PUBLIC_BASE_URL must not include a path")
         if parsed.query or parsed.fragment:
             raise ValueError("GAMEFI_PUBLIC_BASE_URL must not include query or fragment")
+        return text
+
+    @field_validator("public_x_url", "public_youtube_url")
+    @classmethod
+    def validate_public_https_url(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        text = value.strip().rstrip("/")
+        parsed = urlsplit(text)
+        if parsed.scheme != "https" or not parsed.netloc:
+            raise ValueError("Public brand URLs must be HTTPS URLs with a host")
+        if parsed.query or parsed.fragment:
+            raise ValueError("Public brand URLs must not include query or fragment")
+        return text
+
+    @field_validator("public_contact_email")
+    @classmethod
+    def validate_public_contact_email(cls, value: str) -> str:
+        text = value.strip().lower()
+        if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", text):
+            raise ValueError("GAMEFI_PUBLIC_CONTACT_EMAIL must be a valid public contact email")
         return text
 
     @model_validator(mode="after")

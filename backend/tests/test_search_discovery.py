@@ -31,7 +31,8 @@ def test_strategy_page_contains_meaningful_server_rendered_content(monkeypatch, 
     assert "30-day ROI" in html
     assert "Risk and Confidence" in html
     assert f'<link rel="canonical" href="http://localhost:8000/strategies/{DFK_CJEWEL_MAX_LOCK_V1.strategy_id}">' in html
-    assert '<a class="button cta" href="/go/defi-kingdoms-play">' in html
+    assert '<a class="button cta" href="/go/defi-kingdoms-play"' in html
+    assert 'data-analytics-link="outbound"' in html
     assert '"@type":"WebPage"' in html
 
 
@@ -43,7 +44,10 @@ def test_unavailable_points_roi_is_crawlable_and_not_zero(monkeypatch, tmp_path)
     assert response.status_code == 200
     html = response.text
     assert "Grass" in html
-    assert "Financial ROI unavailable" in html
+    assert "ROI not measurable yet" in html
+    assert "Points cannot currently be converted to cash reliably" in html
+    assert "DePIN / Nodes" in html
+    assert "DEPIN_NODE" not in html
     assert "$0" not in html
     assert "Points" in html or "POINTS" in html
 

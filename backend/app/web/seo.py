@@ -53,6 +53,8 @@ def render_document(page: SeoPage, *, settings: Settings) -> str:
     styles = asset_url("/assets/styles.css")
     app_js = asset_url("/assets/app.js")
     logo = asset_url("/assets/brand/gamcryp-logo.png")
+    public_config = _public_config_script(settings)
+    footer = _footer_html(settings)
     return f"""<!doctype html>
 <html lang="en">
   <head>
@@ -94,9 +96,8 @@ def render_document(page: SeoPage, *, settings: Settings) -> str:
     <main id="app" tabindex="-1">
       {page.body_html}
     </main>
-    <footer class="site-footer">
-      <p>GamCryp analytics only. No guaranteed returns. Not investment advice. Outbound links may use referral or affiliate metadata; commercial relationships never affect ROI, Risk, Confidence, or organic rankings.</p>
-    </footer>
+    {footer}
+    {public_config}
     <script type="module" src="{escape(app_js)}"></script>
   </body>
 </html>"""
@@ -116,7 +117,8 @@ def home_page(service: ApiDataService, *, settings: Settings, request: Request) 
         <section class="page-head">
           <p class="eyebrow">GamCryp public beta</p>
           <h1>Web3 earning opportunities with ROI, Risk, Confidence, and evidence.</h1>
-          <p class="lede">{escape(answer)}</p>
+          <p class="lede">GamCryp tracks Web3 earning opportunities. When rewards and exits can be priced reproducibly, we calculate modeled ROI. When they cannot, we show why instead of inventing a number.</p>
+          <p class="muted">{escape(answer)}</p>
           <div class="hero-proof-points" aria-label="GamCryp data principles">
             <span>Latest modeled snapshots</span>
             <span>Risk and confidence separated</span>
@@ -211,7 +213,7 @@ def curated_rankings_page(
 
 def opportunities_page(service: ApiDataService, *, settings: Settings, request: Request) -> SeoPage:
     opportunities, _total = service.opportunities_page(limit=100, offset=0)
-    description = "Crawlable catalog of GAME, DEPIN_NODE, and POINTS opportunities reviewed by GamCryp, including modeled ROI availability and unavailable-value reasons."
+    description = "Crawlable catalog of Games, DePIN / Nodes, and Points programs reviewed by GamCryp, including modeled ROI availability and unavailable-value reasons."
     body = f"""
       <div class="page-shell">
         <section class="page-head">
@@ -251,7 +253,7 @@ def opportunity_page(
     body = f"""
       <div class="page-shell">
         <section class="page-head">
-          <p class="eyebrow">{escape(labelize(opportunity.opportunity_type))} opportunity</p>
+          <p class="eyebrow">{escape(opportunity_type_label(opportunity.opportunity_type))}</p>
           <h1>{escape(opportunity.name)} ROI status and evidence</h1>
           <p class="lede">{escape(answer)}</p>
           <div class="button-row">
@@ -261,9 +263,9 @@ def opportunity_page(
         <section class="section-panel">
           <div class="section-header"><h2>Executive Summary</h2></div>
           <div class="section-body metric-grid">
-            {_metric("Opportunity type", labelize(opportunity.opportunity_type))}
-            {_metric("Financial status", labelize(opportunity.value_realization_status))}
-            {_metric("Feasibility", opportunity.data_feasibility_status)}
+            {_metric("Opportunity type", opportunity_type_label(opportunity.opportunity_type))}
+            {_metric("ROI status", value_status_label(opportunity.value_realization_status, opportunity.strategy_count))}
+            {_metric("Review state", feasibility_label(opportunity.data_feasibility_status))}
             {_metric("Reward model", ", ".join(opportunity.reward_asset_or_points_type) or "Unspecified")}
           </div>
         </section>
@@ -297,7 +299,7 @@ def game_page(game, *, settings: Settings, request: Request) -> SeoPage:
     description = (
         _ranking_answer(snapshot, first_strategy)
         if snapshot is not None and first_strategy is not None
-        else f"{game.name} is a GAME opportunity in the GamCryp catalog."
+        else f"{game.name} is a Games opportunity in the GamCryp catalog."
     )
     body = f"""
       <div class="page-shell">
@@ -306,7 +308,7 @@ def game_page(game, *, settings: Settings, request: Request) -> SeoPage:
           <h1>{escape(game.name)} ROI strategies</h1>
           <p class="lede">{escape(description)}</p>
           <div class="button-row">
-            {_destination_button(game.primary_destination, "Play / Start")}
+            {_destination_button(game.primary_destination, "Start")}
             <a class="secondary-button" href="/opportunities/{escape(game.opportunity_id)}">Canonical opportunity</a>
           </div>
         </section>
@@ -482,10 +484,8 @@ def _opportunity_answer(
 ) -> str:
     if strategy is not None and snapshot is not None:
         return _ranking_answer(snapshot, strategy)
-    status = labelize(opportunity.value_realization_status)
     return (
-        f"Financial ROI for {opportunity.name} is currently unavailable, not zero, because its "
-        f"{status} value route is not yet lawful and reproducible enough for a modeled strategy."
+        f"ROI for {opportunity.name} is not measurable yet. {plain_unavailable_reason(opportunity)}"
     )
 
 
@@ -516,10 +516,10 @@ def _render_ranking_cards(items: list[RankingItem], *, heading: str) -> str:
               </div>
               <p>{escape(_ranking_answer(snapshot, strategy))}</p>
               <div class="card-metrics">
-                {_metric("Capital", format_money_html(snapshot.capital.total_capital))}
-                {_metric("Net/day", format_money_html(snapshot.earnings.net_earnings_day, per_day=True))}
-                {_metric("30D ROI", format_ratio_html(snapshot.roi.roi_total_30d))}
-                {_metric("Break-even", format_break_even_html(snapshot.roi.break_even))}
+                {_metric("Estimated starting capital", format_money_html(snapshot.capital.total_capital))}
+                {_metric("Estimated net/day", format_money_html(snapshot.earnings.net_earnings_day, per_day=True))}
+                {_metric("30-day modeled ROI", format_ratio_html(snapshot.roi.roi_total_30d))}
+                {_metric("Current break-even", format_break_even_html(snapshot.roi.break_even))}
               </div>
               <div class="card-badges">
                 {_badge(f"Confidence {score_text(snapshot.confidence)}", score_class(snapshot.confidence, "confidence"))}
@@ -544,22 +544,23 @@ def _render_ranking_cards(items: list[RankingItem], *, heading: str) -> str:
 def _render_opportunity_cards(opportunities: list[OpportunitySummary], *, heading: str) -> str:
     cards = []
     for opportunity in opportunities:
-        roi_text = "Modeled strategy available" if opportunity.strategy_count else _unavailable_reason(opportunity)
+        roi_text = "Review the modeled strategy for current assumptions." if opportunity.strategy_count else plain_unavailable_reason(opportunity)
         cards.append(
             f"""
             <article class="opportunity-card">
               <div class="identity-row">
-                {_badge(labelize(opportunity.opportunity_type), "info")}
-                {_badge(opportunity.data_feasibility_status, "good" if opportunity.data_feasibility_status == "GO" else "medium")}
+                {_badge(opportunity_type_label(opportunity.opportunity_type), "info")}
+                {_badge(feasibility_label(opportunity.data_feasibility_status), "good" if opportunity.data_feasibility_status == "GO" else "medium")}
               </div>
               <h3><a class="strategy-link" href="/opportunities/{escape(opportunity.opportunity_id)}">{escape(opportunity.name)}</a></h3>
+              <p class="muted">{escape(opportunity_intro(opportunity))}</p>
               <p class="muted">{escape(roi_text)}</p>
               <div class="opportunity-facts">
                 {_metric("Reward type", escape(", ".join(opportunity.reward_asset_or_points_type) or "Unspecified"))}
-                {_metric("Financial ROI", escape("Available" if opportunity.strategy_count else "Unavailable"))}
+                {_metric("Can ROI be measured?", value_status_label(opportunity.value_realization_status, opportunity.strategy_count))}
               </div>
               <div class="card-actions">
-                <a class="secondary-button" href="/opportunities/{escape(opportunity.opportunity_id)}">Review</a>
+                <a class="secondary-button" href="/opportunities/{escape(opportunity.opportunity_id)}">Learn more</a>
                 {_destination_button(opportunity.primary_destination, "Open")}
               </div>
             </article>
@@ -578,21 +579,21 @@ def _render_catalog_stats(rankings: RankingsPage, opportunities: list[Opportunit
     modeled_count = rankings.page.total
     unavailable_count = sum(1 for opportunity in opportunities if opportunity.strategy_count == 0)
     opportunity_types = ", ".join(
-        sorted({labelize(opportunity.opportunity_type) for opportunity in opportunities})
+        sorted({opportunity_type_label(opportunity.opportunity_type) for opportunity in opportunities})
     )
     return f"""
       <section class="catalog-stat-grid" aria-label="GamCryp V1 coverage">
         {_summary("Reviewed opportunities", escape(str(opportunity_count)))}
         {_summary("Modeled strategies", escape(str(modeled_count)))}
         {_summary("Opportunity types", escape(opportunity_types))}
-        {_summary("ROI unavailable", escape(f"{unavailable_count} explicit"))}
+        {_summary("ROI not measured", escape(f"{unavailable_count} explicit"))}
       </section>
     """
 
 
 def _render_strategy_cards(strategies: list[StrategySummary]) -> str:
     if not strategies:
-        return _empty("Financial ROI unavailable", "No modeled strategy is currently available for this opportunity.")
+        return _empty("ROI not measurable yet", "No modeled strategy is currently available for this opportunity.")
     items = [
         RankingItem(rank=index + 1, strategy=strategy, latest_snapshot=strategy.latest_snapshot)
         for index, strategy in enumerate(strategies)
@@ -607,10 +608,10 @@ def _render_snapshot_detail(snapshot: StrategySnapshotPayload) -> str:
     risk_reason = snapshot.risk.contributions[0].reason if snapshot.risk.contributions else "No risk contribution detail recorded."
     return f"""
       <section class="summary-grid" aria-label="Strategy summary">
-        {_summary("Capital", format_money_html(snapshot.capital.total_capital))}
-        {_summary("Net/day", format_money_html(snapshot.earnings.net_earnings_day, per_day=True))}
-        {_summary("30D ROI", format_ratio_html(snapshot.roi.roi_total_30d))}
-        {_summary("Break-even", format_break_even_html(snapshot.roi.break_even))}
+        {_summary("Estimated starting capital", format_money_html(snapshot.capital.total_capital))}
+        {_summary("Estimated net/day", format_money_html(snapshot.earnings.net_earnings_day, per_day=True))}
+        {_summary("30-day modeled ROI", format_ratio_html(snapshot.roi.roi_total_30d))}
+        {_summary("Current break-even", format_break_even_html(snapshot.roi.break_even))}
       </section>
       <section class="section-panel">
         <div class="section-header"><h2>Risk and Confidence</h2></div>
@@ -696,7 +697,9 @@ def _empty(title: str, body: str) -> str:
 def _destination_button(destination, label: str) -> str:
     if destination is None or destination.status != "active":
         return '<span class="badge">No reviewed link</span>'
-    return f'<a class="button cta" href="{escape(destination.redirect_url)}">{escape(label)}<span>{escape(labelize(destination.commercial_relationship))}</span></a>'
+    relationship = destination_relationship_label(destination)
+    relationship_html = f"<span>{escape(relationship)}</span>" if relationship else ""
+    return f'<a class="button cta" href="{escape(destination.redirect_url)}"{analytics_attributes(destination)}>{escape(label)}{relationship_html}</a>'
 
 
 def _summary(label: str, value: str) -> str:
@@ -782,8 +785,7 @@ def labelize(value: str) -> str:
 
 
 def _unavailable_reason(opportunity) -> str:
-    status = labelize(opportunity.value_realization_status)
-    return f"Financial ROI unavailable: {status} value route is not reproducible enough for public financial modeling."
+    return plain_unavailable_reason(opportunity)
 
 
 def _rankings_lastmod(rankings: RankingsPage) -> datetime | None:
@@ -829,8 +831,125 @@ def _verification_meta(settings: Settings) -> str:
     return "\n    ".join(parts)
 
 
+def _public_config_script(settings: Settings) -> str:
+    payload = {
+        "gaMeasurementId": settings.ga_measurement_id,
+        "xUrl": settings.public_x_url,
+        "youtubeUrl": settings.public_youtube_url,
+        "contactEmail": settings.public_contact_email,
+    }
+    return f"<script>window.GAMCRYP_PUBLIC_CONFIG = {_json_ld(payload)};</script>"
+
+
+def _footer_html(settings: Settings) -> str:
+    x_link = (
+        f'<a href="{escape(settings.public_x_url)}" rel="noopener noreferrer" target="_blank">X</a>'
+        if settings.public_x_url
+        else '<span class="footer-link-disabled" title="X link pending">X</span>'
+    )
+    return f"""
+    <footer class="site-footer">
+      <nav class="footer-links" aria-label="Brand links">
+        <span>GamCryp</span>
+        {x_link}
+        <a href="{escape(settings.public_youtube_url)}" rel="noopener noreferrer" target="_blank">YouTube</a>
+        <a href="mailto:{escape(settings.public_contact_email)}">Contact</a>
+        <a href="/methodology" data-link>Methodology</a>
+      </nav>
+      <p>Analytics only. No guaranteed returns. Not investment advice. Commercial relationships never affect ROI, Risk, Confidence, or organic rankings.</p>
+    </footer>
+    """
+
+
 def _json_ld(payload: dict) -> str:
     return json.dumps(payload, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
+
+
+def opportunity_type_label(value: str) -> str:
+    normalized = str(value or "").upper()
+    if normalized == "GAME":
+        return "Games"
+    if normalized == "DEPIN_NODE":
+        return "DePIN / Nodes"
+    if normalized == "POINTS":
+        return "Points programs"
+    return labelize(value or "Opportunity")
+
+
+def opportunity_type_description(value: str) -> str:
+    normalized = str(value or "").upper()
+    if normalized == "GAME":
+        return "Earn through blockchain game economies where rewards and exits can be reviewed."
+    if normalized == "DEPIN_NODE":
+        return "Earn rewards by running software or providing network, compute, storage, bandwidth, or similar resources."
+    if normalized == "POINTS":
+        return "Earn points now; cash or token value may not exist yet."
+    return "A reviewed Web3 earning opportunity."
+
+
+def opportunity_intro(opportunity) -> str:
+    reward_types = ", ".join(opportunity.reward_asset_or_points_type)
+    reward_text = f" Rewards tracked: {reward_types}." if reward_types else ""
+    feasibility_summary = getattr(opportunity, "feasibility_summary", "")
+    summary = f" {feasibility_summary}" if feasibility_summary else ""
+    return f"{opportunity_type_description(opportunity.opportunity_type)}{reward_text}{summary}".strip()
+
+
+def value_status_label(status: str, strategy_count: int) -> str:
+    if str(status or "").lower() == "realizable" and strategy_count > 0:
+        return "ROI can be measured"
+    return "ROI not measurable yet"
+
+
+def feasibility_label(status: str) -> str:
+    normalized = str(status or "").upper()
+    if normalized == "GO":
+        return "Ready"
+    if normalized == "PARTIAL":
+        return "Research"
+    if normalized == "PARKED":
+        return "Watchlist"
+    if normalized == "REJECTED":
+        return "Not modelable"
+    return "Under review"
+
+
+def plain_unavailable_reason(opportunity) -> str:
+    value_status = str(opportunity.value_realization_status or "").lower()
+    feasibility = str(opportunity.data_feasibility_status or "").upper()
+    summary = str(getattr(opportunity, "feasibility_summary", "") or "").lower()
+    if "non_transferable_points" in value_status or "points are not" in summary or "no monetary value" in summary:
+        return "Points cannot currently be converted to cash reliably."
+    if "future_airdrop" in value_status or "future" in summary or "airdrop" in summary:
+        return "Reward value is not yet verifiable."
+    if feasibility == "REJECTED" or "unknown" in value_status or "exit" in summary or "realizable value" in summary:
+        return "A reproducible exit value is not available yet."
+    return "Reward has no reliable market price yet."
+
+
+def destination_relationship_label(destination) -> str:
+    if getattr(destination, "is_affiliate", False):
+        return "Affiliate"
+    relationship = str(getattr(destination, "commercial_relationship", "") or "").lower()
+    if relationship in {"", "none", "official"}:
+        return ""
+    return labelize(relationship)
+
+
+def analytics_attributes(destination) -> str:
+    attributes = {
+        "data-analytics-link": "outbound",
+        "data-opportunity-id": destination.opportunity_id,
+        "data-strategy-id": getattr(destination, "strategy_id", None),
+        "data-opportunity-type": opportunity_type_label(destination.opportunity_type),
+        "data-placement": "server_rendered_cta",
+        "data-referral-status": str(getattr(destination, "referral_status", "") or "none").lower(),
+    }
+    return "".join(
+        f' {key}="{escape(str(value))}"'
+        for key, value in attributes.items()
+        if value is not None and str(value).strip()
+    )
 
 
 def _organization_json(settings: Settings) -> dict:

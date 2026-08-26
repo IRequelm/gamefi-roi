@@ -27,6 +27,8 @@ G17 is complete in the repository. It adds referral operations coverage states, 
 
 G18 is complete. The public beta now serves the expanded V1 surface with 26 opportunities and 10 modeled strategies. The latest Render deployment is live, GitHub Actions recalculation succeeded with 10 scored snapshots and no failures, freshness aging was verified in production, and `stale_strategy_count` returns to 0 after a successful recalculation. No mandatory implementation gate is active. Future work should be classified as Operations, Growth, V1.x improvement, or V2 proposal.
 
+Post-G18 launch polish is an Operations/Growth patch, not a gate reopen. It cleans public-facing labels, opportunity-card explanations, CTA relationship text, footer contact links, and optional consent-gated GA4 readiness while preserving ROI formulas, adapters, scoring, snapshots, API contracts, referral routing, monetization separation, and organic ranking order.
+
 ## Gate board
 
 | Gate | Name | Status |

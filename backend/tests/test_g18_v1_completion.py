@@ -170,7 +170,8 @@ def test_v1_unavailable_roi_opportunities_render_without_zero_roi(monkeypatch, t
     response = client.get("/opportunities/grass")
 
     assert response.status_code == 200
-    assert "Financial ROI unavailable" in response.text
+    assert "ROI not measurable yet" in response.text
+    assert "Points cannot currently be converted to cash reliably" in response.text
     assert "$0" not in response.text
     assert "0%" not in response.text
 

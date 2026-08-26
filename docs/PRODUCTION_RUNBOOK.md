@@ -86,6 +86,16 @@ Security:
 - `GAMEFI_SECURITY_HEADERS_ENABLED=true`
 - `GAMEFI_ALLOWED_CORS_ORIGINS=` blank unless a separate trusted origin is introduced.
 
+Public brand and analytics:
+
+- `GAMEFI_PUBLIC_BASE_URL`: canonical public origin.
+- `GAMEFI_GA_MEASUREMENT_ID`: optional GA4 measurement id such as `G-XXXXXXXXXX`; leave blank to disable Google Analytics and avoid loading Google scripts.
+- `GAMEFI_PUBLIC_X_URL`: optional official X URL; leave blank until supplied.
+- `GAMEFI_PUBLIC_YOUTUBE_URL=https://www.youtube.com/@GamCryp`
+- `GAMEFI_PUBLIC_CONTACT_EMAIL=info@gamcryp.com`
+
+GA4 consent is handled in the frontend. Google Analytics is additive only and must not replace first-party `/go/...` records or influence ROI, Risk, Confidence, snapshots, or organic rankings.
+
 Operator console:
 
 - `GAMEFI_OPERATOR_USERNAME`: required to enable `/operator/...`.

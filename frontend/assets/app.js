@@ -15,6 +15,25 @@ const RANKING_FILTER_KEYS = new Set([
   "chain",
   "economy_type",
 ]);
+const ANALYTICS_CONSENT_KEY = "gamcryp.analyticsConsent.v1";
+const ANALYTICS_ALLOWED_EVENTS = new Set([
+  "page_view",
+  "opportunity_view",
+  "strategy_view",
+  "start_click",
+  "outbound_click",
+]);
+const ANALYTICS_ALLOWED_PARAMS = new Set([
+  "opportunity_id",
+  "strategy_id",
+  "opportunity_type",
+  "placement",
+  "referral_status",
+  "page_path",
+  "page_title",
+]);
+let initializedAnalyticsId = null;
+let lastTrackedPage = null;
 
 export class ApiError extends Error {
   constructor(status, message) {
@@ -78,7 +97,7 @@ export function renderHomeShell(games = [], rankings = { items: [], page: { tota
       <section class="page-head">
         <p class="eyebrow">GamCryp public beta</p>
         <h1>Find Web3 earning opportunities with evidence behind them.</h1>
-        <p class="lede">Start with the current organic leaders, then filter by capital, risk, confidence, and opportunity type.</p>
+        <p class="lede">GamCryp tracks Web3 earning opportunities. When rewards and exits can be priced reproducibly, we calculate modeled ROI. When they cannot, we show why instead of inventing a number.</p>
         <div class="hero-proof-points" aria-label="GamCryp data principles">
           <span>Modeled ROI where reproducible</span>
           <span>Risk and confidence separated</span>
@@ -126,7 +145,7 @@ export function renderHomeShell(games = [], rankings = { items: [], page: { tota
               <label for="opportunity-type">Opportunity type</label>
               <select id="opportunity-type" name="opportunityType">
                 <option value="">Any opportunity type</option>
-                ${opportunityTypeOptions.map((value) => `<option value="${escapeHtml(value)}">${escapeHtml(labelize(value))}</option>`).join("")}
+                ${opportunityTypeOptions.map((value) => `<option value="${escapeHtml(value)}">${escapeHtml(opportunityTypeLabel(value))}</option>`).join("")}
               </select>
             </div>
             <div class="field">
@@ -152,13 +171,13 @@ export function renderCatalogStats(rankings = { page: { total: 0 } }, opportunit
   const opportunityCount = opportunities.length;
   const modeledCount = rankings.page?.total ?? (rankings.items || []).length;
   const unavailableCount = opportunities.filter((opportunity) => !opportunity.strategy_count).length;
-  const types = Array.from(new Set(opportunities.map((opportunity) => labelize(opportunity.opportunity_type)))).sort();
+  const types = Array.from(new Set(opportunities.map((opportunity) => opportunityTypeLabel(opportunity.opportunity_type)))).sort();
   return `
     <section class="catalog-stat-grid" aria-label="GamCryp V1 coverage">
       ${summaryItem("Reviewed opportunities", escapeHtml(String(opportunityCount)))}
       ${summaryItem("Modeled strategies", escapeHtml(String(modeledCount)))}
       ${summaryItem("Opportunity types", escapeHtml(types.join(", ") || "Unavailable"))}
-      ${summaryItem("ROI unavailable", escapeHtml(`${unavailableCount} explicit`))}
+      ${summaryItem("ROI not measured", escapeHtml(`${unavailableCount} explicit`))}
     </section>
   `;
 }
@@ -173,16 +192,17 @@ export function renderTopRankingSummary(rankings = { items: [] }) {
   return `
     <section class="top-opportunity-card" aria-label="Top ranked organic strategy">
       <div class="top-opportunity-copy">
-        <span class="eyebrow">Top current organic match</span>
+        <span class="eyebrow">Top modeled opportunity right now</span>
         <h2>${escapeHtml(snapshot.game_name)}</h2>
         <p><a class="strategy-link" href="/strategies/${encodeURIComponent(strategy.strategy_id)}" data-link>${escapeHtml(strategy.name)}</a></p>
+        <p class="muted">Ranked by modeled 30D ROI, then confidence, risk, and recency according to the organic ranking methodology.</p>
         ${renderStrategySignals(snapshot)}
         <p class="updated-note">${formatUpdatedAge(snapshot.calculated_at)} · Organic ranking from API</p>
       </div>
       <div class="choice-metrics">
-        ${summaryItem("Capital", formatMoney(snapshot.capital.total_capital))}
-        ${summaryItem("Net/day", formatMoney(snapshot.earnings.net_earnings_day, { perDay: true }))}
-        ${summaryItem("30D ROI", formatRatio(snapshot.roi.roi_total_30d))}
+        ${summaryItem("Estimated starting capital", formatMoney(snapshot.capital.total_capital))}
+        ${summaryItem("Estimated net/day", formatMoney(snapshot.earnings.net_earnings_day, { perDay: true }))}
+        ${summaryItem("30-day modeled ROI", formatRatio(snapshot.roi.roi_total_30d))}
       </div>
       <div class="top-opportunity-actions">
         <a class="secondary-button" href="/strategies/${encodeURIComponent(strategy.strategy_id)}" data-link>View strategy</a>
@@ -224,25 +244,26 @@ export function renderOpportunityDetail(opportunity) {
   return `
     <div class="page-shell">
       <section class="page-head">
-        <p class="eyebrow">${escapeHtml(labelize(opportunity.opportunity_type))} opportunity</p>
+        <p class="eyebrow">${escapeHtml(opportunityTypeLabel(opportunity.opportunity_type))}</p>
         <h1>${escapeHtml(opportunity.name)}</h1>
-        <p class="lede">${escapeHtml(opportunity.feasibility_summary || "No feasibility summary recorded.")}</p>
+        <p class="lede">${escapeHtml(opportunityIntro(opportunity))}</p>
         <div class="button-row">
-          ${renderDestinationButton(opportunity.primary_destination, opportunity.opportunity_type === "GAME" ? "Play / Start" : "Open official site")}
+          ${renderDestinationButton(opportunity.primary_destination, opportunity.opportunity_type === "GAME" ? "Start" : "Open", { sourcePage: "opportunity_detail", placement: "primary_cta" })}
           ${opportunity.legacy_game_id ? `<a class="secondary-button" href="/games/${encodeURIComponent(opportunity.legacy_game_id)}" data-link>Game view</a>` : ""}
         </div>
       </section>
       <section class="game-grid">
         <div class="game-card">
-          <h3>Type</h3>
-          <p>${escapeHtml(labelize(opportunity.opportunity_type))}</p>
+          <h3>Opportunity type</h3>
+          <p>${escapeHtml(opportunityTypeLabel(opportunity.opportunity_type))}</p>
+          <p class="muted">${escapeHtml(opportunityTypeDescription(opportunity.opportunity_type))}</p>
         </div>
         <div class="game-card">
-          <h3>Financial ROI</h3>
-          <p>${renderValueStatus(opportunity.value_realization_status)}</p>
+          <h3>ROI status</h3>
+          <p>${renderValueStatus(opportunity.value_realization_status, opportunity.strategy_count)}</p>
         </div>
         <div class="game-card">
-          <h3>Feasibility</h3>
+          <h3>Review state</h3>
           <p>${renderFeasibilityStatus(opportunity.data_feasibility_status)}</p>
         </div>
         <div class="game-card">
@@ -253,7 +274,7 @@ export function renderOpportunityDetail(opportunity) {
       ${
         hasStrategies
           ? renderStrategyList(opportunity.strategies)
-          : `<section class="empty-state"><h2>Financial ROI unavailable</h2><p class="muted">${escapeHtml(unavailableRoiReason(opportunity))}</p></section>`
+          : `<section class="empty-state"><h2>ROI not measurable yet</h2><p class="muted">${escapeHtml(unavailableRoiReason(opportunity))}</p></section>`
       }
       <section class="section-panel">
         <div class="section-header"><h2>Sources and Outbound Links</h2></div>
@@ -285,31 +306,30 @@ export function renderOpportunityList(opportunities = [], options = {}) {
 }
 
 export function renderOpportunityCard(opportunity) {
-  const strategyText =
-    opportunity.strategy_count > 0
-      ? `${escapeHtml(String(opportunity.strategy_count))} modeled strateg${opportunity.strategy_count === 1 ? "y" : "ies"}`
-      : "Financial ROI unavailable";
+  const strategyText = opportunity.strategy_count > 0
+    ? `${escapeHtml(String(opportunity.strategy_count))} modeled strateg${opportunity.strategy_count === 1 ? "y" : "ies"}`
+    : opportunityCardState(opportunity);
   const rewardTypes = (opportunity.reward_asset_or_points_type || []).join(", ") || "Unspecified";
-  const roiText =
-    opportunity.strategy_count > 0 && opportunity.value_realization_status === "realizable"
-      ? '<span class="badge good">Modeled</span>'
-      : '<span class="badge warning">Unavailable</span>';
+  const roiText = opportunity.strategy_count > 0 && opportunity.value_realization_status === "realizable"
+    ? '<span class="badge good">ROI modeled</span>'
+    : `<span class="badge warning">${escapeHtml(opportunityCardState(opportunity))}</span>`;
   return `
     <article class="opportunity-card">
       <div class="identity-row">
-        <span class="badge info">${escapeHtml(labelize(opportunity.opportunity_type))}</span>
+        <span class="badge info">${escapeHtml(opportunityTypeLabel(opportunity.opportunity_type))}</span>
         ${renderFeasibilityStatus(opportunity.data_feasibility_status)}
       </div>
       <h3><a class="strategy-link" href="/opportunities/${encodeURIComponent(opportunity.opportunity_id)}" data-link>${escapeHtml(opportunity.name)}</a></h3>
+      <p class="muted">${escapeHtml(opportunityIntro(opportunity))}</p>
       <p class="muted">${strategyText}</p>
       <div class="opportunity-facts">
-        ${metricItem("Type", escapeHtml(labelize(opportunity.opportunity_type)))}
+        ${metricItem("Opportunity type", escapeHtml(opportunityTypeLabel(opportunity.opportunity_type)))}
         ${metricItem("Reward type", escapeHtml(rewardTypes))}
-        ${metricItem("Financial ROI", roiText)}
+        ${metricItem("Can ROI be measured?", roiText)}
       </div>
-      <p class="muted watchlist-note">${opportunity.strategy_count > 0 ? escapeHtml(labelize(opportunity.value_realization_status)) : escapeHtml(conciseUnavailableRoiReason(opportunity))}</p>
+      <p class="muted watchlist-note">${opportunity.strategy_count > 0 ? "Review the modeled strategy for assumptions and current freshness." : escapeHtml(conciseUnavailableRoiReason(opportunity))}</p>
       <div class="card-actions">
-        <a class="secondary-button" href="/opportunities/${encodeURIComponent(opportunity.opportunity_id)}" data-link>Review</a>
+        <a class="secondary-button" href="/opportunities/${encodeURIComponent(opportunity.opportunity_id)}" data-link>Learn more</a>
         ${renderDestinationButton(opportunity.primary_destination, "Open", { sourcePage: "opportunity_watchlist", placement: "opportunity_card" })}
       </div>
     </article>
@@ -354,11 +374,12 @@ export function renderRankingCard(item) {
       </div>
       ${renderStrategySignals(snapshot)}
       <div class="card-metrics">
-        ${metricItem("Capital", formatMoney(snapshot.capital.total_capital))}
-        ${metricItem("Net/day", formatMoney(snapshot.earnings.net_earnings_day, { perDay: true }))}
-        ${metricItem("30D ROI", formatRatio(snapshot.roi.roi_total_30d))}
-        ${metricItem("Break-even", formatBreakEven(snapshot.roi.break_even))}
+        ${metricItem("Estimated starting capital", formatMoney(snapshot.capital.total_capital))}
+        ${metricItem("Estimated net/day", formatMoney(snapshot.earnings.net_earnings_day, { perDay: true }))}
+        ${metricItem("30-day modeled ROI", formatRatio(snapshot.roi.roi_total_30d))}
+        ${metricItem("Current break-even", formatBreakEven(snapshot.roi.break_even))}
       </div>
+      ${renderNetEarningsInterpretation(snapshot)}
       <div class="card-badges">
         ${renderScoreBadge(snapshot.confidence, "confidence")}
         ${renderScoreBadge(snapshot.risk, "risk")}
@@ -405,7 +426,7 @@ export function renderGameDetail(game) {
         <h1>${escapeHtml(game.name)}</h1>
         <p class="lede">${escapeHtml(game.status)} game with ${escapeHtml(String(game.strategy_count))} modeled strategy.</p>
         <div class="button-row">
-          ${renderDestinationButton(game.primary_destination, "Play / Start")}
+          ${renderDestinationButton(game.primary_destination, "Start", { sourcePage: "game_detail", placement: "primary_cta" })}
           <a class="secondary-button" href="/opportunities/${encodeURIComponent(game.opportunity_id)}" data-link>Opportunity record</a>
         </div>
       </section>
@@ -485,10 +506,13 @@ export function renderStrategyDetail(strategy, historyPage = { items: [] }) {
       <section class="section-panel">
         <div class="section-header"><h2>Capital Breakdown</h2></div>
         <div class="section-body metric-grid">
-          ${metricItem("Total capital", formatMoney(snapshot.capital.total_capital))}
+          ${metricItem("Estimated starting capital", formatMoney(snapshot.capital.total_capital))}
           ${metricItem("Sunk cost", formatMoney(snapshot.capital.sunk_cost))}
           ${metricItem("Recoverable capital", formatMoney(snapshot.capital.recoverable_capital))}
           ${metricItem("Capital at risk", formatMoney(snapshot.capital.capital_at_risk))}
+        </div>
+        <div class="section-body">
+          <p class="muted">Sunk cost is modeled as non-recoverable, recoverable capital is the estimated exit value of assets, and locked capital remains exposed until the modeled exit route is available.</p>
         </div>
       </section>
       <section class="section-panel">
@@ -499,15 +523,15 @@ export function renderStrategyDetail(strategy, historyPage = { items: [] }) {
           ${metricItem("Operating cost/day", formatMoney(snapshot.earnings.operating_cost_day, { perDay: true }))}
           ${metricItem("Transaction cost/day", formatMoney(snapshot.earnings.transaction_cost_day, { perDay: true }))}
           ${metricItem("Other cost/day", formatMoney(snapshot.earnings.other_cost_day, { perDay: true }))}
-          ${metricItem("Net/day", formatMoney(snapshot.earnings.net_earnings_day, { perDay: true }))}
+          ${metricItem("Estimated net/day", formatMoney(snapshot.earnings.net_earnings_day, { perDay: true }))}
         </div>
       </section>
       <section class="section-panel">
         <div class="section-header"><h2>Return Metrics</h2></div>
         <div class="section-body metric-grid">
-          ${metricItem("Break-even", formatBreakEven(snapshot.roi.break_even))}
+          ${metricItem("Current break-even", formatBreakEven(snapshot.roi.break_even))}
           ${metricItem("ROI total 7D", formatRatio(snapshot.roi.roi_total_7d))}
-          ${metricItem("ROI total 30D", formatRatio(snapshot.roi.roi_total_30d))}
+          ${metricItem("30-day modeled ROI", formatRatio(snapshot.roi.roi_total_30d))}
           ${metricItem("ROI total 90D", formatRatio(snapshot.roi.roi_total_90d))}
           ${metricItem("ROI at-risk 7D", formatRatio(snapshot.roi.roi_risk_7d))}
           ${metricItem("ROI at-risk 30D", formatRatio(snapshot.roi.roi_risk_30d))}
@@ -566,9 +590,9 @@ export function renderSponsoredPlacements(placements = []) {
 export function renderOverviewMetrics(snapshot) {
   return `
     <section class="summary-grid" aria-label="Strategy summary">
-      ${summaryItem("Capital", formatMoney(snapshot.capital.total_capital))}
-      ${summaryItem("Net/day", formatMoney(snapshot.earnings.net_earnings_day, { perDay: true }))}
-      ${summaryItem("30D ROI", formatRatio(snapshot.roi.roi_total_30d))}
+      ${summaryItem("Estimated starting capital", formatMoney(snapshot.capital.total_capital))}
+      ${summaryItem("Estimated net/day", formatMoney(snapshot.earnings.net_earnings_day, { perDay: true }))}
+      ${summaryItem("30-day modeled ROI", formatRatio(snapshot.roi.roi_total_30d))}
       ${summaryItem("Risk", scoreText(snapshot.risk))}
     </section>
   `;
@@ -680,8 +704,8 @@ export function renderWarnings(warnings = []) {
   if (!warnings.length) {
     return `
       <section class="section-panel">
-        <div class="section-header"><h2>Warnings</h2><span class="badge good">None</span></div>
-        <div class="section-body"><p class="muted">No adapter warnings are attached to this snapshot.</p></div>
+        <div class="section-header"><h2>Warnings</h2><span class="badge good">Clear</span></div>
+        <div class="section-body"><p class="muted">No warnings are attached to this snapshot.</p></div>
       </section>
     `;
   }
@@ -798,25 +822,25 @@ export function renderStrategySignals(snapshot) {
   const roi = snapshot.roi?.roi_total_30d;
   const netSign = decimalSign(snapshot.earnings?.net_earnings_day?.amount ?? "0");
   if (!roi || roi.value === null || roi.value === undefined) {
-    signals.push({ label: "ROI unavailable", tone: "warning" });
+    signals.push({ label: "ROI not measurable yet", tone: "warning" });
   } else if (netSign > 0) {
-    signals.push({ label: "Positive return", tone: "good" });
+    signals.push({ label: "Profitable now", tone: "good" });
   } else if (netSign < 0) {
-    signals.push({ label: "Negative return", tone: "high" });
+    signals.push({ label: "Unprofitable now", tone: "high" });
   } else {
     signals.push({ label: "Flat net earnings", tone: "medium" });
   }
   if (snapshot.confidence?.available && snapshot.confidence.label === "LOW") {
-    signals.push({ label: "Low confidence warning", tone: "warning" });
+    signals.push({ label: "Low confidence", tone: "warning" });
   }
   if (snapshot.risk?.available && ["HIGH", "VERY HIGH"].includes(snapshot.risk.label)) {
     signals.push({
-      label: snapshot.risk.label === "VERY HIGH" ? "Very high risk warning" : "High risk warning",
+      label: snapshot.risk.label === "VERY HIGH" ? "Very high risk" : "High risk",
       tone: "high",
     });
   }
   if (snapshot.freshness?.overall_status && snapshot.freshness.overall_status !== "fresh") {
-    signals.push({ label: "Stale data warning", tone: "warning" });
+    signals.push({ label: "Stale data", tone: "warning" });
   }
   return `
     <div class="signal-row">
@@ -1037,10 +1061,10 @@ function comparePositiveDecimals(left, right) {
 
 export function renderScoreBadge(score, kind) {
   if (!score?.available) {
-    return `<span class="badge">${escapeHtml(labelize(kind))} Unavailable</span>`;
+    return `<span class="badge">${escapeHtml(labelize(kind))} unavailable</span>`;
   }
   const label = score.label || "UNKNOWN";
-  return `<span class="badge ${scoreClass(label, kind)}">${escapeHtml(labelize(kind))} ${escapeHtml(String(score.score))} ${escapeHtml(label)}</span>`;
+  return `<span class="badge ${scoreClass(label, kind)}">${escapeHtml(labelize(kind))} ${escapeHtml(String(score.score))} ${escapeHtml(publicScoreLabel(label))}</span>`;
 }
 
 export function scoreText(score) {
@@ -1056,7 +1080,7 @@ export function renderFreshnessPill(freshness, options = {}) {
     return "";
   }
   const className = status === "fresh" ? "good" : "warning";
-  return `<span class="badge ${className}">${escapeHtml(status)}</span>`;
+  return `<span class="badge ${className}">${escapeHtml(labelize(status))}</span>`;
 }
 
 export function renderWarningsIndicator(warnings = [], options = {}) {
@@ -1073,11 +1097,13 @@ export function renderDestinationButton(destination, label = "Open", context = {
   if (!destination || destination.status !== "active" || !destination.redirect_url) {
     return '<span class="badge">No reviewed link</span>';
   }
-  const relationship = destination.is_affiliate ? "Affiliate" : labelize(destination.commercial_relationship || "none");
+  const relationship = destinationRelationshipLabel(destination);
+  const href = redirectWithContext(destination.redirect_url, context);
+  const analytics = analyticsAttributes(destination, context);
   return `
-    <a class="button cta" href="${escapeHtml(redirectWithContext(destination.redirect_url, context))}" title="${escapeHtml(destination.disclosure_text)}">
+    <a class="button cta" href="${escapeHtml(href)}" title="${escapeHtml(destination.disclosure_text)}"${analytics}>
       ${escapeHtml(label)}
-      <span>${escapeHtml(relationship)}</span>
+      ${relationship ? `<span>${escapeHtml(relationship)}</span>` : ""}
     </a>
   `;
 }
@@ -1095,23 +1121,22 @@ export function renderDestinationDisclosure(destination) {
 export function renderFeasibilityStatus(status) {
   const normalized = String(status || "unknown").toUpperCase();
   const className = normalized === "GO" ? "good" : normalized === "REJECTED" ? "high" : "medium";
-  return `<span class="badge ${className}">${escapeHtml(normalized)}</span>`;
+  return `<span class="badge ${className}" title="${escapeHtml(feasibilityLabel(normalized))} review state">${escapeHtml(feasibilityLabel(normalized))}</span>`;
 }
 
-export function renderValueStatus(status) {
+export function renderValueStatus(status, strategyCount = 0) {
   const normalized = String(status || "unknown");
-  const available = normalized === "realizable";
-  return `<span class="badge ${available ? "good" : "warning"}">${escapeHtml(labelize(normalized))}</span>`;
+  const measurable = normalized === "realizable" && strategyCount > 0;
+  const label = measurable ? "ROI can be measured" : "ROI not measurable yet";
+  return `<span class="badge ${measurable ? "good" : "warning"}">${escapeHtml(label)}</span>`;
 }
 
 function unavailableRoiReason(opportunity) {
-  const status = labelize(opportunity.value_realization_status || "unknown");
-  return `This opportunity has ${status} value realization. Financial ROI is unavailable, not zero, until reward value, costs, timing, and exit route are lawfully and reproducibly sourceable.`;
+  return plainUnavailableReason(opportunity);
 }
 
 function conciseUnavailableRoiReason(opportunity) {
-  const status = labelize(opportunity.value_realization_status || "unknown");
-  return `ROI unavailable: ${status} value route is not reproducible yet.`;
+  return plainUnavailableReason(opportunity);
 }
 
 export function classificationBadge(classification) {
@@ -1227,6 +1252,280 @@ export function labelize(value) {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
+export function opportunityTypeLabel(value) {
+  const normalized = String(value || "").toUpperCase();
+  if (normalized === "GAME") {
+    return "Games";
+  }
+  if (normalized === "DEPIN_NODE") {
+    return "DePIN / Nodes";
+  }
+  if (normalized === "POINTS") {
+    return "Points programs";
+  }
+  return labelize(value || "Opportunity");
+}
+
+function opportunityTypeDescription(value) {
+  const normalized = String(value || "").toUpperCase();
+  if (normalized === "GAME") {
+    return "Earn through blockchain game economies where rewards and exits can be reviewed.";
+  }
+  if (normalized === "DEPIN_NODE") {
+    return "Earn rewards by running software or providing network, compute, storage, bandwidth, or similar resources.";
+  }
+  if (normalized === "POINTS") {
+    return "Earn points now; cash or token value may not exist yet.";
+  }
+  return "A reviewed Web3 earning opportunity.";
+}
+
+function opportunityIntro(opportunity) {
+  const typeDescription = opportunityTypeDescription(opportunity.opportunity_type);
+  const rewardTypes = (opportunity.reward_asset_or_points_type || []).join(", ");
+  const rewardText = rewardTypes ? ` Rewards tracked: ${rewardTypes}.` : "";
+  const summary = opportunity.feasibility_summary ? ` ${opportunity.feasibility_summary}` : "";
+  return `${typeDescription}${rewardText}${summary}`.trim();
+}
+
+function opportunityCardState(opportunity) {
+  const status = String(opportunity.data_feasibility_status || "").toUpperCase();
+  if (status === "PARKED" || status === "REJECTED") {
+    return "Watchlist / Research";
+  }
+  return "ROI not measurable yet";
+}
+
+function plainUnavailableReason(opportunity) {
+  const valueStatus = String(opportunity.value_realization_status || "").toLowerCase();
+  const feasibility = String(opportunity.data_feasibility_status || "").toUpperCase();
+  const summary = String(opportunity.feasibility_summary || "").toLowerCase();
+  if (valueStatus.includes("non_transferable_points") || summary.includes("points are not") || summary.includes("no monetary value")) {
+    return "Points cannot currently be converted to cash reliably.";
+  }
+  if (valueStatus.includes("future_airdrop") || summary.includes("future") || summary.includes("airdrop")) {
+    return "Reward value is not yet verifiable.";
+  }
+  if (feasibility === "REJECTED" || valueStatus.includes("unknown") || summary.includes("exit") || summary.includes("realizable value")) {
+    return "A reproducible exit value is not available yet.";
+  }
+  return "Reward has no reliable market price yet.";
+}
+
+function feasibilityLabel(value) {
+  if (value === "GO") {
+    return "Ready";
+  }
+  if (value === "PARTIAL") {
+    return "Research";
+  }
+  if (value === "PARKED") {
+    return "Watchlist";
+  }
+  if (value === "REJECTED") {
+    return "Not modelable";
+  }
+  return "Under review";
+}
+
+function publicScoreLabel(label) {
+  return labelize(String(label || "unknown").toLowerCase());
+}
+
+function destinationRelationshipLabel(destination) {
+  if (destination.is_affiliate) {
+    return "Affiliate";
+  }
+  const relationship = String(destination.commercial_relationship || "").toLowerCase();
+  if (!relationship || relationship === "none" || relationship === "official") {
+    return "";
+  }
+  return labelize(relationship);
+}
+
+function analyticsAttributes(destination, context = {}) {
+  const attributes = {
+    "data-analytics-link": "outbound",
+    "data-opportunity-id": destination.opportunity_id,
+    "data-strategy-id": destination.strategy_id,
+    "data-opportunity-type": opportunityTypeLabel(destination.opportunity_type),
+    "data-placement": context.placement,
+    "data-referral-status": String(destination.referral_status || (destination.is_affiliate ? "affiliate" : "none")).toLowerCase(),
+  };
+  return Object.entries(attributes)
+    .filter(([, value]) => value !== null && value !== undefined && String(value).trim() !== "")
+    .map(([key, value]) => ` ${key}="${escapeHtml(String(value))}"`)
+    .join("");
+}
+
+function renderNetEarningsInterpretation(snapshot) {
+  const sign = decimalSign(snapshot.earnings?.net_earnings_day?.amount ?? "0");
+  if (sign < 0) {
+    return `<p class="metric-note">Currently losing approximately ${formatMoney(snapshot.earnings.net_earnings_day, { perDay: true })}.</p>`;
+  }
+  if (sign > 0) {
+    return `<p class="metric-note">Currently earning approximately ${formatMoney(snapshot.earnings.net_earnings_day, { perDay: true })}.</p>`;
+  }
+  return '<p class="metric-note">Estimated net earnings are currently flat.</p>';
+}
+
+export function publicConfig(win = globalThis.window) {
+  return win?.GAMCRYP_PUBLIC_CONFIG || {};
+}
+
+export function analyticsMeasurementId(win = globalThis.window) {
+  const value = publicConfig(win).gaMeasurementId;
+  const text = typeof value === "string" ? value.trim() : "";
+  return /^G-[A-Z0-9]{6,20}$/.test(text) ? text : "";
+}
+
+export function analyticsConsent(storage = globalThis.window?.localStorage) {
+  try {
+    return storage?.getItem(ANALYTICS_CONSENT_KEY) || null;
+  } catch {
+    return null;
+  }
+}
+
+export function renderAnalyticsConsentBanner(win = globalThis.window) {
+  if (!analyticsMeasurementId(win) || analyticsConsent(win?.localStorage)) {
+    return "";
+  }
+  return `
+    <section class="analytics-consent" data-analytics-consent-banner>
+      <div>
+        <strong>Privacy-friendly analytics</strong>
+        <p>Help GamCryp understand which public opportunity pages are useful. Essential site and /go redirect behavior works either way.</p>
+      </div>
+      <div class="analytics-consent-actions">
+        <button class="button" type="button" data-analytics-consent="accepted">Accept analytics</button>
+        <button class="secondary-button" type="button" data-analytics-consent="rejected">Reject essential only</button>
+      </div>
+    </section>
+  `;
+}
+
+export function setAnalyticsConsent(preference, context = {}) {
+  const win = context.win || globalThis.window;
+  const storage = context.storage || win?.localStorage;
+  const normalized = preference === "accepted" ? "accepted" : "rejected";
+  try {
+    storage?.setItem(ANALYTICS_CONSENT_KEY, normalized);
+  } catch {
+    return false;
+  }
+  if (normalized === "accepted") {
+    initializeAnalytics(context);
+  }
+  return true;
+}
+
+export function initializeAnalytics(context = {}) {
+  const win = context.win || globalThis.window;
+  const doc = context.doc || win?.document || globalThis.document;
+  const storage = context.storage || win?.localStorage;
+  const measurementId = analyticsMeasurementId(win);
+  if (!win || !doc || !measurementId || analyticsConsent(storage) !== "accepted") {
+    return false;
+  }
+  win.dataLayer = win.dataLayer || [];
+  if (typeof win.gtag !== "function") {
+    win.gtag = function gtag() {
+      win.dataLayer.push(arguments);
+    };
+  }
+  if (!doc.querySelector?.(`script[data-gamcryp-ga="${measurementId}"]`)) {
+    const script = doc.createElement("script");
+    script.async = true;
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}`;
+    script.dataset.gamcrypGa = measurementId;
+    doc.head?.appendChild(script);
+  }
+  if (initializedAnalyticsId !== measurementId) {
+    win.gtag("js", new Date());
+    win.gtag("config", measurementId, { send_page_view: false });
+    initializedAnalyticsId = measurementId;
+  }
+  return true;
+}
+
+export function trackAnalyticsEvent(name, params = {}, context = {}) {
+  const win = context.win || globalThis.window;
+  if (!ANALYTICS_ALLOWED_EVENTS.has(name) || !initializeAnalytics(context) || typeof win?.gtag !== "function") {
+    return false;
+  }
+  const safeParams = {};
+  for (const [key, value] of Object.entries(params || {})) {
+    if (ANALYTICS_ALLOWED_PARAMS.has(key) && value !== null && value !== undefined && String(value).trim() !== "") {
+      safeParams[key] = String(value).slice(0, 120);
+    }
+  }
+  try {
+    win.gtag("event", name, safeParams);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function resetAnalyticsForTests() {
+  initializedAnalyticsId = null;
+  lastTrackedPage = null;
+}
+
+function trackPageView(path = globalThis.window?.location?.pathname || "", title = globalThis.document?.title || "") {
+  const key = `${path}|${title}`;
+  if (lastTrackedPage === key) {
+    return false;
+  }
+  lastTrackedPage = key;
+  return trackAnalyticsEvent("page_view", { page_path: path, page_title: title });
+}
+
+function trackRouteView(path) {
+  if (path.startsWith("/opportunities/")) {
+    trackAnalyticsEvent("opportunity_view", { opportunity_id: decodeURIComponent(path.replace("/opportunities/", "")), page_path: path });
+  } else if (path.startsWith("/strategies/")) {
+    trackAnalyticsEvent("strategy_view", { strategy_id: decodeURIComponent(path.replace("/strategies/", "")), page_path: path });
+  }
+  trackPageView(path);
+}
+
+function mountAnalyticsConsent() {
+  if (typeof document === "undefined" || !document.body || !renderAnalyticsConsentBanner()) {
+    return;
+  }
+  if (!document.querySelector("[data-analytics-consent-banner]")) {
+    document.body.insertAdjacentHTML("beforeend", renderAnalyticsConsentBanner());
+  }
+}
+
+function bindAnalyticsConsentClick(event) {
+  const button = event.target.closest("[data-analytics-consent]");
+  if (!button) {
+    return;
+  }
+  setAnalyticsConsent(button.getAttribute("data-analytics-consent"));
+  document.querySelector("[data-analytics-consent-banner]")?.remove();
+  trackPageView(window.location.pathname);
+}
+
+function bindOutboundAnalytics(event) {
+  const link = event.target.closest("a[data-analytics-link='outbound']");
+  if (!link) {
+    return;
+  }
+  const params = {
+    opportunity_id: link.dataset.opportunityId,
+    strategy_id: link.dataset.strategyId,
+    opportunity_type: link.dataset.opportunityType,
+    placement: link.dataset.placement,
+    referral_status: link.dataset.referralStatus,
+  };
+  trackAnalyticsEvent("start_click", params);
+  trackAnalyticsEvent("outbound_click", params);
+}
+
 export function escapeHtml(value) {
   return String(value)
     .replace(/&/g, "&amp;")
@@ -1274,10 +1573,12 @@ async function renderCurrentRoute() {
     } else {
       root.innerHTML = renderError(new ApiError(404, "The requested page does not exist."));
     }
+    trackRouteView(path);
   } catch (error) {
     root.innerHTML = renderError(error);
   }
   root.focus({ preventScroll: true });
+  mountAnalyticsConsent();
 }
 
 function bindFinder(root) {
@@ -1326,6 +1627,8 @@ function setActiveNav() {
 if (typeof window !== "undefined") {
   window.addEventListener("popstate", renderCurrentRoute);
   document.addEventListener("click", (event) => {
+    bindAnalyticsConsentClick(event);
+    bindOutboundAnalytics(event);
     const link = event.target.closest("a[data-link]");
     if (!link || link.origin !== window.location.origin) {
       return;
@@ -1334,5 +1637,8 @@ if (typeof window !== "undefined") {
     window.history.pushState({}, "", link.href);
     renderCurrentRoute();
   });
+  if (analyticsConsent() === "accepted") {
+    initializeAnalytics();
+  }
   renderCurrentRoute();
 }
