@@ -403,6 +403,63 @@ input[type="range"] {
   overflow: hidden;
 }
 
+.answer-card {
+  overflow: hidden;
+  border: 1px solid rgba(32, 246, 255, 0.24);
+  border-radius: 10px;
+  background:
+    radial-gradient(circle at 4% 0%, rgba(32, 246, 255, 0.08), transparent 18rem),
+    rgba(7, 17, 31, 0.9);
+  box-shadow: var(--shadow);
+}
+
+.answer-card .section-header {
+  border-bottom-color: rgba(32, 246, 255, 0.18);
+}
+
+.answer-summary {
+  color: var(--muted-strong);
+  line-height: 1.55;
+  overflow-wrap: break-word;
+}
+
+.answer-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 14px 0 0;
+}
+
+.answer-item {
+  min-width: 0;
+  border: 1px solid rgba(142, 188, 255, 0.16);
+  border-radius: 9px;
+  background: rgba(3, 9, 20, 0.48);
+  padding: 11px 12px;
+}
+
+.answer-item dt {
+  color: var(--muted);
+  font-size: 0.73rem;
+  font-weight: 850;
+  line-height: 1.24;
+  text-transform: uppercase;
+}
+
+.answer-item dd {
+  margin: 5px 0 0;
+  color: var(--ink);
+  font-size: 0.94rem;
+  line-height: 1.32;
+  overflow-wrap: break-word;
+}
+
+.answer-item .money,
+.answer-item .ratio,
+.answer-item .break-even {
+  color: #9ffcff;
+}
+
 .ranking-section,
 .opportunity-section {
   border: 0;
@@ -986,7 +1043,8 @@ tr:last-child td {
   .metric-grid,
   .method-grid,
   .game-grid,
-  .classification-grid {
+  .classification-grid,
+  .answer-grid {
     grid-template-columns: 1fr;
   }
 
