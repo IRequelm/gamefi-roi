@@ -1,0 +1,82 @@
+{
+  "policy_version": "modeling-queue-v1",
+  "purpose": "Rank candidate opportunities for future financial modeling work without affecting public organic rankings.",
+  "admission_checklist": [
+    "active official project",
+    "currently accessible opportunity",
+    "understandable earning or reward mechanism",
+    "official source references",
+    "opportunity type is GAME, DEPIN_NODE, or POINTS",
+    "reward type is identified",
+    "required hardware or platform is described",
+    "capital requirement is known or explicitly unknown",
+    "time and effort characteristics are known or explicitly unknown",
+    "withdrawal or reward status is documented",
+    "financial model feasibility is GO, PARTIAL, PARKED, or REJECTED",
+    "referral availability is documented",
+    "major risk notes are documented",
+    "last reviewed timestamp is present"
+  ],
+  "modeling_priority_factors": [
+    {
+      "name": "entry_cost_reproducibility",
+      "weight": 20,
+      "description": "Entry capital can be sourced from on-chain, official API, reputable market API, or explicit official docs."
+    },
+    {
+      "name": "earning_rate_reproducibility",
+      "weight": 25,
+      "description": "Reward formula, rate, probability, or production output is public, authorized, and reproducible."
+    },
+    {
+      "name": "realizable_value_route",
+      "weight": 25,
+      "description": "Reward value has a lawful transfer, withdrawal, market, or executable quote route."
+    },
+    {
+      "name": "cost_observability",
+      "weight": 10,
+      "description": "Transaction, operating, subscription, repair, device, or network costs can be modeled without fake zeroes."
+    },
+    {
+      "name": "timing_caps_and_change_detection",
+      "weight": 10,
+      "description": "Caps, seasons, claim cadence, uptime, eligibility windows, and rule changes can be detected or manually reviewed safely."
+    },
+    {
+      "name": "machine_readability_and_terms_feasibility",
+      "weight": 10,
+      "description": "Required inputs are on-chain, official API, reputable market API, or otherwise lawfully collectable."
+    }
+  ],
+  "priority_labels": [
+    {
+      "label": "MODEL_NEXT",
+      "minimum_score": 80,
+      "meaning": "Candidate appears ready for a Data Feasibility Check and possible adapter work."
+    },
+    {
+      "label": "RESEARCH_MORE",
+      "minimum_score": 50,
+      "meaning": "Candidate is useful for the catalog but needs more evidence before adapter work."
+    },
+    {
+      "label": "WATCHLIST_ONLY",
+      "minimum_score": 0,
+      "meaning": "Candidate may remain public as an opportunity record, but financial ROI must stay unavailable."
+    }
+  ],
+  "disallowed_priority_inputs": [
+    "referral_status",
+    "referral_url",
+    "referral_code",
+    "affiliate_program",
+    "commercial_relationship",
+    "sponsor_status",
+    "sponsored_placement",
+    "click_count",
+    "conversion_count",
+    "revenue",
+    "earnings_per_click"
+  ]
+}

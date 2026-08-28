@@ -29,6 +29,8 @@ G18 is complete. The public beta now serves the expanded V1 surface with 26 oppo
 
 Post-G18 launch polish is an Operations/Growth patch, not a gate reopen. It cleans public-facing labels, opportunity-card explanations, CTA relationship text, footer contact links, and optional consent-gated GA4 readiness while preserving ROI formulas, adapters, scoring, snapshots, API contracts, referral routing, monetization separation, and organic ranking order.
 
+Post-G18 catalog/referral expansion preparation is an Operations/Growth planning patch, not a gate reopen. It audits the current 26-opportunity catalog, freezes a structured Work research handoff schema, and defines a modeling queue priority policy for moving toward 50+ high-quality opportunities. It does not add unverified opportunities, implement new adapters, deploy production changes, or alter ROI, Risk, Confidence, snapshots, APIs, referral isolation, organic rankings, SEO/AEO/GEO, or existing public URLs.
+
 ## Gate board
 
 | Gate | Name | Status |

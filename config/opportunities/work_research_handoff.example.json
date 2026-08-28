@@ -1,0 +1,180 @@
+{
+  "handoff_version": "work-research-handoff-v1",
+  "prepared_at": "2026-08-28T00:00:00Z",
+  "prepared_by": "Work research",
+  "notes": "Example only. Do not ingest without human review.",
+  "opportunities": [
+    {
+      "opportunity_id": "example-network",
+      "name": "Example Network",
+      "opportunity_type": "DEPIN_NODE",
+      "publication_status_recommendation": "candidate",
+      "official_project_status": "active",
+      "currently_accessible": true,
+      "official_url": "https://example.com/",
+      "short_description": "Example bandwidth contribution network with points-only rewards.",
+      "platforms": [
+        "browser-extension"
+      ],
+      "chains": [],
+      "economy_types": [
+        "bandwidth-contribution",
+        "points-program"
+      ],
+      "reward_asset_or_points_type": [
+        "Example Points"
+      ],
+      "earning_mechanism_summary": "Users run an extension and earn points based on contribution quality.",
+      "required_hardware_or_platform": "Desktop browser extension; residential internet connection.",
+      "capital_requirement_summary": "No token/NFT entry cost identified; user-borne device/network costs may apply.",
+      "time_effort_profile": "Passive once installed; requires uptime and account eligibility.",
+      "withdrawal_reward_status": "No current cash/token withdrawal route verified.",
+      "value_realization_status": "future_airdrop_claim",
+      "financial_model_feasibility": "PARTIAL",
+      "major_risk_notes": [
+        "Reward value is not currently realizable.",
+        "Account-level eligibility and contribution score are not publicly reproducible."
+      ],
+      "source_references": [
+        {
+          "label": "Official site",
+          "url": "https://example.com/",
+          "source_type": "official_site",
+          "retrieved_at": "2026-08-28T00:00:00Z",
+          "notes": "Official project homepage."
+        }
+      ],
+      "modeling_evidence": {
+        "reward_formula_or_rate": {
+          "status": "partial",
+          "summary": "Points are described, but a complete reproducible rate is not public.",
+          "source_urls": [
+            "https://example.com/"
+          ],
+          "machine_readable": false,
+          "collection_allowed": "unclear",
+          "operator_notes": "Do not calculate financial ROI until value route exists."
+        },
+        "entry_requirements": {
+          "status": "confirmed",
+          "summary": "Browser extension and account are required.",
+          "source_urls": [
+            "https://example.com/"
+          ],
+          "machine_readable": false,
+          "collection_allowed": "yes",
+          "operator_notes": "Document device/network burden separately."
+        },
+        "entry_asset_or_capital_price": {
+          "status": "not_applicable",
+          "summary": "No NFT/token entry asset identified.",
+          "source_urls": [],
+          "machine_readable": false,
+          "collection_allowed": "not_applicable",
+          "operator_notes": "Zero entry asset is not the same as zero operating cost."
+        },
+        "reward_asset_identity": {
+          "status": "confirmed",
+          "summary": "Points name is documented by the project.",
+          "source_urls": [
+            "https://example.com/"
+          ],
+          "machine_readable": false,
+          "collection_allowed": "yes",
+          "operator_notes": "Points are not a financial asset in this example."
+        },
+        "realizable_exit_route": {
+          "status": "missing",
+          "summary": "No lawful cash/token exit route verified.",
+          "source_urls": [],
+          "machine_readable": false,
+          "collection_allowed": "not_applicable",
+          "operator_notes": "ROI must remain unavailable."
+        },
+        "market_price_or_quote_route": {
+          "status": "missing",
+          "summary": "No market or executable quote route exists for points.",
+          "source_urls": [],
+          "machine_readable": false,
+          "collection_allowed": "not_applicable",
+          "operator_notes": "Do not infer OTC or speculative value."
+        },
+        "liquidity_or_slippage_inputs": {
+          "status": "not_applicable",
+          "summary": "No tradable reward route exists.",
+          "source_urls": [],
+          "machine_readable": false,
+          "collection_allowed": "not_applicable",
+          "operator_notes": "Becomes required if a transferable token launches."
+        },
+        "recurring_or_operating_costs": {
+          "status": "partial",
+          "summary": "Device/network/user costs are user-specific.",
+          "source_urls": [],
+          "machine_readable": false,
+          "collection_allowed": "not_applicable",
+          "operator_notes": "Document but do not fake a universal number."
+        },
+        "claim_or_transaction_costs": {
+          "status": "missing",
+          "summary": "No claim route exists yet.",
+          "source_urls": [],
+          "machine_readable": false,
+          "collection_allowed": "not_applicable",
+          "operator_notes": "Required before financial model."
+        },
+        "caps_season_or_timing_rules": {
+          "status": "partial",
+          "summary": "Campaign may have eligibility windows.",
+          "source_urls": [
+            "https://example.com/"
+          ],
+          "machine_readable": false,
+          "collection_allowed": "yes",
+          "operator_notes": "Work should provide exact dates if official."
+        },
+        "update_change_detection": {
+          "status": "partial",
+          "summary": "Manual review of official docs/site currently required.",
+          "source_urls": [
+            "https://example.com/"
+          ],
+          "machine_readable": false,
+          "collection_allowed": "yes",
+          "operator_notes": "Automated collection not assumed."
+        },
+        "historical_or_snapshot_feasibility": {
+          "status": "partial",
+          "summary": "Forward snapshots could preserve catalog review state, not financial ROI.",
+          "source_urls": [],
+          "machine_readable": false,
+          "collection_allowed": "not_applicable",
+          "operator_notes": "No adapter until GO."
+        },
+        "terms_collection_feasibility": {
+          "status": "partial",
+          "summary": "Terms must be reviewed before automated collection.",
+          "source_urls": [
+            "https://example.com/"
+          ],
+          "machine_readable": false,
+          "collection_allowed": "unclear",
+          "operator_notes": "Escalate terms uncertainty before provider automation."
+        }
+      },
+      "referral_program": {
+        "status": "unknown",
+        "program_name": null,
+        "program_url": null,
+        "application_url": null,
+        "requires_account": false,
+        "referral_code_available": false,
+        "commercial_terms_summary": "No commercial relationship verified.",
+        "evidence_urls": [],
+        "notes": "Referral absence must not block publication."
+      },
+      "last_reviewed_at": "2026-08-28T00:00:00Z",
+      "reviewer_decision_notes": "Publish as candidate only after human review; financial ROI unavailable."
+    }
+  ]
+}

@@ -1,0 +1,409 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gamcryp.com/schemas/work-research-handoff-v1.json",
+  "title": "GamCryp Work Research Handoff v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "handoff_version",
+    "prepared_at",
+    "prepared_by",
+    "opportunities"
+  ],
+  "properties": {
+    "handoff_version": {
+      "const": "work-research-handoff-v1"
+    },
+    "prepared_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC timestamp when the research package was prepared."
+    },
+    "prepared_by": {
+      "type": "string",
+      "minLength": 1
+    },
+    "notes": {
+      "type": "string"
+    },
+    "opportunities": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/opportunity_candidate"
+      }
+    }
+  },
+  "$defs": {
+    "source_reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "label",
+        "url",
+        "source_type",
+        "retrieved_at",
+        "notes"
+      ],
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "source_type": {
+          "enum": [
+            "official_site",
+            "official_docs",
+            "official_api",
+            "onchain",
+            "market_api",
+            "marketplace",
+            "terms",
+            "partner_page",
+            "other"
+          ]
+        },
+        "retrieved_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "evidence_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "summary",
+        "source_urls",
+        "machine_readable",
+        "collection_allowed",
+        "operator_notes"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "confirmed",
+            "partial",
+            "missing",
+            "not_applicable",
+            "conflicting"
+          ]
+        },
+        "summary": {
+          "type": "string"
+        },
+        "source_urls": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "machine_readable": {
+          "type": "boolean"
+        },
+        "collection_allowed": {
+          "enum": [
+            "yes",
+            "no",
+            "unclear",
+            "not_applicable"
+          ]
+        },
+        "operator_notes": {
+          "type": "string"
+        }
+      }
+    },
+    "referral_program": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "program_name",
+        "program_url",
+        "application_url",
+        "requires_account",
+        "referral_code_available",
+        "commercial_terms_summary",
+        "evidence_urls",
+        "notes"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "unknown",
+            "no_program_found",
+            "application_required",
+            "pending",
+            "available_after_signup",
+            "verified_active",
+            "rejected",
+            "not_allowed"
+          ]
+        },
+        "program_name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "program_url": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uri"
+        },
+        "application_url": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uri"
+        },
+        "requires_account": {
+          "type": "boolean"
+        },
+        "referral_code_available": {
+          "type": "boolean"
+        },
+        "commercial_terms_summary": {
+          "type": "string"
+        },
+        "evidence_urls": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "opportunity_candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "opportunity_id",
+        "name",
+        "opportunity_type",
+        "publication_status_recommendation",
+        "official_project_status",
+        "currently_accessible",
+        "official_url",
+        "short_description",
+        "platforms",
+        "chains",
+        "economy_types",
+        "reward_asset_or_points_type",
+        "earning_mechanism_summary",
+        "required_hardware_or_platform",
+        "capital_requirement_summary",
+        "time_effort_profile",
+        "withdrawal_reward_status",
+        "value_realization_status",
+        "financial_model_feasibility",
+        "major_risk_notes",
+        "source_references",
+        "modeling_evidence",
+        "referral_program",
+        "last_reviewed_at",
+        "reviewer_decision_notes"
+      ],
+      "properties": {
+        "opportunity_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "opportunity_type": {
+          "enum": [
+            "GAME",
+            "DEPIN_NODE",
+            "POINTS"
+          ]
+        },
+        "publication_status_recommendation": {
+          "enum": [
+            "candidate",
+            "parked",
+            "rejected"
+          ]
+        },
+        "official_project_status": {
+          "enum": [
+            "active",
+            "paused",
+            "closed",
+            "unclear"
+          ]
+        },
+        "currently_accessible": {
+          "type": "boolean"
+        },
+        "official_url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "short_description": {
+          "type": "string"
+        },
+        "platforms": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "chains": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "economy_types": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "reward_asset_or_points_type": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "earning_mechanism_summary": {
+          "type": "string"
+        },
+        "required_hardware_or_platform": {
+          "type": "string"
+        },
+        "capital_requirement_summary": {
+          "type": "string"
+        },
+        "time_effort_profile": {
+          "type": "string"
+        },
+        "withdrawal_reward_status": {
+          "type": "string"
+        },
+        "value_realization_status": {
+          "enum": [
+            "realizable",
+            "non_transferable_points",
+            "future_airdrop_claim",
+            "unknown"
+          ]
+        },
+        "financial_model_feasibility": {
+          "enum": [
+            "GO",
+            "PARTIAL",
+            "PARKED",
+            "REJECTED"
+          ]
+        },
+        "major_risk_notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "source_references": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/source_reference"
+          }
+        },
+        "modeling_evidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "reward_formula_or_rate",
+            "entry_requirements",
+            "entry_asset_or_capital_price",
+            "reward_asset_identity",
+            "realizable_exit_route",
+            "market_price_or_quote_route",
+            "liquidity_or_slippage_inputs",
+            "recurring_or_operating_costs",
+            "claim_or_transaction_costs",
+            "caps_season_or_timing_rules",
+            "update_change_detection",
+            "historical_or_snapshot_feasibility",
+            "terms_collection_feasibility"
+          ],
+          "properties": {
+            "reward_formula_or_rate": {
+              "$ref": "#/$defs/evidence_item"
+            },
+            "entry_requirements": {
+              "$ref": "#/$defs/evidence_item"
+            },
+            "entry_asset_or_capital_price": {
+              "$ref": "#/$defs/evidence_item"
+            },
+            "reward_asset_identity": {
+              "$ref": "#/$defs/evidence_item"
+            },
+            "realizable_exit_route": {
+              "$ref": "#/$defs/evidence_item"
+            },
+            "market_price_or_quote_route": {
+              "$ref": "#/$defs/evidence_item"
+            },
+            "liquidity_or_slippage_inputs": {
+              "$ref": "#/$defs/evidence_item"
+            },
+            "recurring_or_operating_costs": {
+              "$ref": "#/$defs/evidence_item"
+            },
+            "claim_or_transaction_costs": {
+              "$ref": "#/$defs/evidence_item"
+            },
+            "caps_season_or_timing_rules": {
+              "$ref": "#/$defs/evidence_item"
+            },
+            "update_change_detection": {
+              "$ref": "#/$defs/evidence_item"
+            },
+            "historical_or_snapshot_feasibility": {
+              "$ref": "#/$defs/evidence_item"
+            },
+            "terms_collection_feasibility": {
+              "$ref": "#/$defs/evidence_item"
+            }
+          }
+        },
+        "referral_program": {
+          "$ref": "#/$defs/referral_program"
+        },
+        "last_reviewed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "reviewer_decision_notes": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

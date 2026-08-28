@@ -145,7 +145,7 @@ test("static shell uses the official GamCryp logo asset without placeholder mark
 });
 
 test("GamCryp brand stylesheet uses dark navy base and restrained accent palette", () => {
-  const css = readFileSync(new URL("../assets/styles.css", import.meta.url), "utf8");
+  const css = readFileSync(new URL("../assets/styles.css", import.meta.url), "utf8").replace(/\r\n/g, "\n");
 
   assert.match(css, /--bg:\s*#020711/);
   assert.match(css, /--cyan:\s*#20f6ff/);
