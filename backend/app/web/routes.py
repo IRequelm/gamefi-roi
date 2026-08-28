@@ -21,7 +21,14 @@ from app.monetization.referral_operations import (
     destination_with_operator_referral,
     program_for_destination,
 )
-from app.search.canonical import CURATED_RANKING_PAGES, canonical_page_inventory, canonical_url, lastmod_date
+from app.search.canonical import (
+    canonical_page_inventory,
+    canonical_url,
+    curated_rankings_for_page,
+    get_curated_ranking_page,
+    is_curated_ranking_page_publishable,
+    lastmod_date,
+)
 from app.storage.monetization import MonetizationRepository
 from app.strategies.catalog import get_outbound_destination
 from app.web.seo import (
@@ -78,11 +85,14 @@ def serve_curated_rankings(
     settings: Settings = Depends(get_settings),
     engine: Engine = Depends(get_database_engine),
 ) -> HTMLResponse:
-    landing = next((page for page in CURATED_RANKING_PAGES if page.slug == landing_slug), None)
+    landing = get_curated_ranking_page(landing_slug)
     if landing is None:
         raise HTTPException(status_code=404, detail=f"Unknown ranking landing page: {landing_slug}")
     service = ApiDataService(engine)
-    page = curated_rankings_page(service, settings=settings, request=request, landing=landing)
+    rankings = curated_rankings_for_page(service, landing)
+    if not is_curated_ranking_page_publishable(landing, rankings):
+        raise HTTPException(status_code=404, detail=f"Ranking landing page is not publishable yet: {landing_slug}")
+    page = curated_rankings_page(service, settings=settings, request=request, landing=landing, rankings=rankings)
     return _html_response(page, request=request, settings=settings, engine=engine)
 
 

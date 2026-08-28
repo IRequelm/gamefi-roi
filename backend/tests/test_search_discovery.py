@@ -7,10 +7,13 @@ from html.parser import HTMLParser
 from xml.etree import ElementTree
 
 import httpx
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 import pytest
 
 from app.search.canonical import canonical_page_inventory
 from app.search.indexnow import INDEXNOW_ENDPOINT, IndexNowClient, IndexNowError
+from app.storage.models import StrategySnapshotRecord
 from app.storage.monetization import MonetizationRepository
 from app.strategies.catalog import list_opportunities
 from app.strategies.defi_kingdoms import DFK_CJEWEL_MAX_LOCK_V1
@@ -93,6 +96,87 @@ def test_curated_landing_page_is_indexable(monkeypatch, tmp_path) -> None:
     assert "Answer-ready comparison" in response.text
     assert "Citation-ready" in response.text
     assert SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1.name in response.text
+
+
+def test_best_passive_gamefi_landing_page_is_publishable(monkeypatch, tmp_path) -> None:
+    client, engine = _seeded_client(monkeypatch, tmp_path, "seo-passive-gamefi.db")
+
+    response = client.get("/rankings/best-passive-gamefi")
+    paths = [page.path for page in canonical_page_inventory(engine)]
+
+    assert response.status_code == 200
+    html = response.text
+    assert '<meta name="robots" content="index,follow">' in html
+    assert "Best passive GameFi ROI strategies" in html
+    assert "Answer-ready comparison" in html
+    assert DFK_CJEWEL_MAX_LOCK_V1.name in html
+    assert FARMERS_WORLD_AXE_WOOD_V1.name not in html
+    assert "/rankings/best-passive-gamefi" in paths
+
+
+def test_curated_ranking_pages_read_latest_snapshot_data(monkeypatch, tmp_path) -> None:
+    client, engine = _seeded_client(monkeypatch, tmp_path, "seo-snapshot-source.db")
+    with Session(engine) as session:
+        record = session.scalar(
+            select(StrategySnapshotRecord).where(
+                StrategySnapshotRecord.strategy_id == DFK_CJEWEL_MAX_LOCK_V1.strategy_id
+            )
+        )
+        assert record is not None
+        capital = dict(record.capital_metrics_json)
+        capital["total_capital"] = {"amount": "777.77", "currency": "USD"}
+        record.capital_metrics_json = capital
+        roi_outputs = dict(record.roi_outputs_json)
+        roi_total_30d = dict(roi_outputs["roi_total_30d"])
+        roi_total_30d["value"] = "0.1234"
+        roi_outputs["roi_total_30d"] = roi_total_30d
+        record.roi_outputs_json = roi_outputs
+        session.commit()
+
+    response = client.get("/rankings/best-passive-gamefi")
+
+    assert response.status_code == 200
+    assert 'title="777.77 USD"' in response.text
+    assert "12.34%" in response.text
+
+
+def test_itemlist_json_ld_matches_visible_ranking_order(monkeypatch, tmp_path) -> None:
+    client, _engine = _seeded_client(monkeypatch, tmp_path, "seo-itemlist.db")
+
+    response = client.get("/rankings/gamefi-under-100")
+
+    assert response.status_code == 200
+    visible_strategy_ids = _visible_strategy_ids(response.text)
+    payloads = _json_ld_payloads(response.text)
+    itemlist = next(payload for payload in payloads if payload.get("@type") == "ItemList")
+    elements = itemlist["itemListElement"]
+
+    assert itemlist["numberOfItems"] == len(visible_strategy_ids)
+    assert [element["position"] for element in elements] == list(range(1, len(elements) + 1))
+    assert [element["url"] for element in elements] == [
+        f"http://localhost:8000/strategies/{strategy_id}" for strategy_id in visible_strategy_ids
+    ]
+    visible_entries = json.dumps(itemlist["itemListElement"])
+    assert "250.00" not in visible_entries
+    assert "$" not in visible_entries
+
+
+def test_insufficient_data_curated_pages_are_not_published_or_indexed(monkeypatch, tmp_path) -> None:
+    client, engine = _seeded_client(monkeypatch, tmp_path, "seo-thin-pages.db")
+    blocked_slugs = (
+        "best-depin-under-100",
+        "phone-depin",
+        "pc-depin",
+        "no-hardware-depin",
+    )
+
+    sitemap = client.get("/sitemap.xml").text
+    inventory_paths = {page.path for page in canonical_page_inventory(engine)}
+
+    for slug in blocked_slugs:
+        assert client.get(f"/rankings/{slug}").status_code == 404
+        assert f"/rankings/{slug}" not in inventory_paths
+        assert f"/rankings/{slug}" not in sitemap
 
 
 def test_robots_disallows_api_go_and_query_traps_without_blocking_ai_search_bots(monkeypatch, tmp_path) -> None:
@@ -293,6 +377,9 @@ def _json_ld_payloads(html: str) -> list[dict]:
     scripts = re.findall(r'<script type="application/ld\+json">(.*?)</script>', html, flags=re.DOTALL)
     return [json.loads(script) for script in scripts]
 
+
+def _visible_strategy_ids(html: str) -> list[str]:
+    return re.findall(r'<h3><a class="strategy-link" href="/strategies/([^"]+)">', html)
 
 def _anchors(html: str) -> list[str]:
     parser = _AnchorParser()

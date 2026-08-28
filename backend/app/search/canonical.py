@@ -12,7 +12,9 @@ from sqlalchemy import Engine
 from app.api.v1.service import ApiDataService
 from app.config.settings import Settings
 from app.storage.history import HistoryRepository
-from app.strategies.catalog import CATALOG_REVIEWED_AT, list_games, list_opportunities, list_strategies
+from app.strategies.catalog import CATALOG_REVIEWED_AT, get_opportunity, list_games, list_opportunities, list_strategies
+
+CURATED_RANKING_MIN_RESULTS = 2
 
 
 @dataclass(frozen=True)
@@ -21,6 +23,10 @@ class CuratedRankingPage:
     title: str
     description: str
     filters: dict[str, object]
+    min_results: int = CURATED_RANKING_MIN_RESULTS
+    required_platforms: tuple[str, ...] = ()
+    excluded_platforms: tuple[str, ...] = ()
+    activation_note: str = ""
 
     @property
     def path(self) -> str:
@@ -87,7 +93,90 @@ CURATED_RANKING_PAGES: tuple[CuratedRankingPage, ...] = (
         description="Modeled GAME strategies in organic ROI ranking order using latest successful stored snapshots.",
         filters={"opportunity_type": "GAME"},
     ),
+    CuratedRankingPage(
+        slug="best-passive-gamefi",
+        title="Best passive GameFi ROI strategies",
+        description="Modeled GAME strategies with passive or lock/yield-style economics, ranked from latest stored snapshots.",
+        filters={"opportunity_type": "GAME", "economy_type": "locked-yield-reward"},
+        activation_note="Publish only when at least two passive GameFi strategy snapshots qualify.",
+    ),
+    CuratedRankingPage(
+        slug="best-depin-under-100",
+        title="Best DePIN opportunities under $100",
+        description="Modeled DePIN / node strategies under $100 capital, ranked only when reproducible snapshots exist.",
+        filters={"opportunity_type": "DEPIN_NODE", "capital_max": Decimal("100")},
+        activation_note="Blocked until at least two modeled DePIN strategy snapshots under $100 qualify.",
+    ),
+    CuratedRankingPage(
+        slug="phone-depin",
+        title="Phone-friendly DePIN earning opportunities",
+        description="Modeled DePIN strategies for mobile-supported opportunities, published only when current snapshots qualify.",
+        filters={"opportunity_type": "DEPIN_NODE"},
+        required_platforms=("mobile",),
+        activation_note="Blocked until at least two modeled DePIN strategy snapshots on mobile-supported opportunities qualify.",
+    ),
+    CuratedRankingPage(
+        slug="pc-depin",
+        title="PC DePIN earning opportunities",
+        description="Modeled DePIN strategies for desktop, browser-extension, CLI, or node software opportunities.",
+        filters={"opportunity_type": "DEPIN_NODE"},
+        required_platforms=("desktop", "browser-extension", "cli", "docker-node"),
+        activation_note="Blocked until at least two modeled DePIN strategy snapshots for PC-compatible opportunities qualify.",
+    ),
+    CuratedRankingPage(
+        slug="no-hardware-depin",
+        title="No-hardware DePIN earning opportunities",
+        description="Modeled DePIN strategies that do not require a dedicated hardware-node opportunity profile.",
+        filters={"opportunity_type": "DEPIN_NODE"},
+        required_platforms=("browser-extension", "desktop", "web", "cli", "docker-node"),
+        excluded_platforms=("hardware-node",),
+        activation_note="Blocked until at least two modeled no-dedicated-hardware DePIN strategy snapshots qualify.",
+    ),
 )
+
+
+def get_curated_ranking_page(slug: str) -> CuratedRankingPage | None:
+    return next((page for page in CURATED_RANKING_PAGES if page.slug == slug), None)
+
+
+def curated_rankings_for_page(service: ApiDataService, page: CuratedRankingPage):
+    rankings = service.rankings_page(limit=100, offset=0, **page.filters)
+    if not page.required_platforms and not page.excluded_platforms:
+        return rankings
+
+    items = [item for item in rankings.items if _ranking_item_matches_catalog_constraints(item, page)]
+    reranked_items = [item.model_copy(update={"rank": index + 1}) for index, item in enumerate(items)]
+    return rankings.model_copy(
+        update={
+            "items": reranked_items,
+            "page": rankings.page.model_copy(update={"limit": rankings.page.limit, "offset": 0, "total": len(items)}),
+        }
+    )
+
+
+def is_curated_ranking_page_publishable(page: CuratedRankingPage, rankings) -> bool:
+    return rankings.page.total >= page.min_results
+
+
+def published_curated_ranking_pages(service: ApiDataService) -> tuple[CuratedRankingPage, ...]:
+    published = []
+    for page in CURATED_RANKING_PAGES:
+        rankings = curated_rankings_for_page(service, page)
+        if is_curated_ranking_page_publishable(page, rankings):
+            published.append(page)
+    return tuple(published)
+
+
+def _ranking_item_matches_catalog_constraints(item, page: CuratedRankingPage) -> bool:
+    opportunity = get_opportunity(item.strategy.opportunity_id)
+    if opportunity is None:
+        return False
+    platforms = set(opportunity.platforms)
+    if page.required_platforms and platforms.isdisjoint(page.required_platforms):
+        return False
+    if page.excluded_platforms and not platforms.isdisjoint(page.excluded_platforms):
+        return False
+    return True
 
 
 def canonical_url(settings: Settings, path: str) -> str:
@@ -149,8 +238,8 @@ def canonical_page_inventory(engine: Engine) -> list[CanonicalPage]:
 
     service = ApiDataService(engine)
     for page in CURATED_RANKING_PAGES:
-        rankings = service.rankings_page(limit=50, offset=0, **page.filters)
-        if rankings.items:
+        rankings = curated_rankings_for_page(service, page)
+        if is_curated_ranking_page_publishable(page, rankings):
             pages.append(
                 CanonicalPage(
                     page.path,

@@ -8,6 +8,7 @@ const CURATED_RANKING_FILTERS = {
   "/rankings/gamefi-under-100": "opportunity_type=GAME&capital_max=100",
   "/rankings/lowest-capital-gamefi": "opportunity_type=GAME&capital_max=25",
   "/rankings/highest-roi-gamefi": "opportunity_type=GAME",
+  "/rankings/best-passive-gamefi": "opportunity_type=GAME&economy_type=locked-yield-reward",
 };
 const CURATED_RANKING_TITLES = {
   "/rankings/under-25": "Web3 strategies under $25 capital",
@@ -18,6 +19,7 @@ const CURATED_RANKING_TITLES = {
   "/rankings/gamefi-under-100": "GameFi strategies under $100 capital",
   "/rankings/lowest-capital-gamefi": "Lowest-capital modeled GameFi strategies",
   "/rankings/highest-roi-gamefi": "Highest modeled GameFi ROI strategies",
+  "/rankings/best-passive-gamefi": "Best passive GameFi ROI strategies",
 };
 const RANKING_FILTER_KEYS = new Set([
   "capital_min",
@@ -407,12 +409,25 @@ export function renderRankingsPage(rankings, options = {}) {
         <p class="lede">The order is supplied by the API: 30D ROI, confidence, risk, last calculation time, then strategy id. Brand or referral metadata never changes this order.</p>
       </section>
       ${renderRankingsAnswerBlock(rankings, { title })}
+      ${renderCuratedRankingLinks()}
       ${renderRankingsTable(rankings)}
       ${renderSponsoredPlacements(rankings.sponsored_placements || [])}
     </div>
   `;
 }
 
+function renderCuratedRankingLinks() {
+  return `
+    <section class="section-panel">
+      <div class="section-header"><h2>Curated views</h2></div>
+      <div class="section-body button-row">
+        ${Object.entries(CURATED_RANKING_TITLES)
+          .map(([path, title]) => `<a class="secondary-button" href="${escapeHtml(path)}" data-link>${escapeHtml(title)}</a>`)
+          .join("")}
+      </div>
+    </section>
+  `;
+}
 export function renderOpportunitiesPage(opportunitiesPage = { items: [], page: { total: 0 } }) {
   return `
     <div class="page-shell">

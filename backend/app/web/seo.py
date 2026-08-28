@@ -23,7 +23,13 @@ from app.api.v1.schemas import (
 )
 from app.api.v1.service import ApiDataService
 from app.config.settings import Settings
-from app.search.canonical import CURATED_RANKING_PAGES, CuratedRankingPage, canonical_url, lastmod_date
+from app.search.canonical import (
+    CuratedRankingPage,
+    canonical_url,
+    curated_rankings_for_page,
+    lastmod_date,
+    published_curated_ranking_pages,
+)
 from app.storage.monetization import MonetizationRepository, normalize_acquisition_channel
 from app.strategies.catalog import CATALOG_REVIEWED_AT
 
@@ -160,7 +166,7 @@ def rankings_page(service: ApiDataService, *, settings: Settings, request: Reque
           <p class="muted">Organic order is supplied by stored strategy snapshots and risk/confidence scores. Commercial metadata is separate.</p>
         </section>
         {_render_rankings_answer_block(rankings, "Current Web3 ROI strategy rankings")}
-        {_render_curated_links()}
+        {_render_curated_links(service)}
         {_render_ranking_cards(rankings.items, heading="Ranked strategies")}
       </div>
     """
@@ -171,9 +177,13 @@ def rankings_page(service: ApiDataService, *, settings: Settings, request: Reque
         title="Web3 ROI Rankings, Risk & Confidence | GamCryp",
         description=description,
         body_html=body,
-        json_ld=(
-            _webpage_json(settings, "/rankings", "Web3 ROI Rankings", description),
-            _breadcrumb_json(settings, [("/", "Home"), ("/rankings", "Rankings")]),
+        json_ld=_ranking_json_ld(
+            settings,
+            "/rankings",
+            "Web3 ROI Rankings",
+            description,
+            rankings.items,
+            [("/", "Home"), ("/rankings", "Rankings")],
         ),
         lastmod=_rankings_lastmod(rankings),
     )
@@ -185,8 +195,9 @@ def curated_rankings_page(
     settings: Settings,
     request: Request,
     landing: CuratedRankingPage,
+    rankings: RankingsPage | None = None,
 ) -> SeoPage:
-    rankings = service.rankings_page(limit=50, offset=0, **landing.filters)
+    rankings = rankings or curated_rankings_for_page(service, landing)
     body = f"""
       <div class="page-shell">
         <section class="page-head">
@@ -206,9 +217,13 @@ def curated_rankings_page(
         title=f"{landing.title} | GamCryp",
         description=landing.description,
         body_html=body,
-        json_ld=(
-            _webpage_json(settings, landing.path, landing.title, landing.description),
-            _breadcrumb_json(settings, [("/", "Home"), ("/rankings", "Rankings"), (landing.path, landing.title)]),
+        json_ld=_ranking_json_ld(
+            settings,
+            landing.path,
+            landing.title,
+            landing.description,
+            rankings.items,
+            [("/", "Home"), ("/rankings", "Rankings"), (landing.path, landing.title)],
         ),
         lastmod=_rankings_lastmod(rankings),
     )
@@ -861,10 +876,10 @@ def _render_related_opportunities(opportunity: OpportunityDetail) -> str:
     return f'<section class="section-panel"><div class="section-header"><h2>Related pages</h2></div><div class="section-body button-row">{"".join(links)}</div></section>'
 
 
-def _render_curated_links() -> str:
+def _render_curated_links(service: ApiDataService) -> str:
     links = "".join(
         f'<a class="secondary-button" href="{escape(page.path)}">{escape(page.title)}</a>'
-        for page in CURATED_RANKING_PAGES
+        for page in published_curated_ranking_pages(service)
     )
     return f'<section class="section-panel"><div class="section-header"><h2>Curated views</h2></div><div class="section-body button-row">{links}</div></section>'
 
@@ -1149,6 +1164,43 @@ def _website_json(settings: Settings) -> dict:
         "publisher": {"@id": f"{settings.public_base_url}/#organization"},
     }
 
+
+def _ranking_json_ld(
+    settings: Settings,
+    path: str,
+    name: str,
+    description: str,
+    items: list[RankingItem],
+    breadcrumbs: list[tuple[str, str]],
+) -> tuple[dict, ...]:
+    payloads = (
+        _webpage_json(settings, path, name, description),
+        _breadcrumb_json(settings, breadcrumbs),
+    )
+    if items:
+        payloads += (_itemlist_json(settings, path, name, items),)
+    return payloads
+
+
+def _itemlist_json(settings: Settings, path: str, name: str, items: list[RankingItem]) -> dict:
+    return {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        "@id": f"{canonical_url(settings, path)}#itemlist",
+        "name": name,
+        "url": canonical_url(settings, path),
+        "itemListOrder": "https://schema.org/ItemListOrderDescending",
+        "numberOfItems": len(items),
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": index + 1,
+                "name": item.strategy.name,
+                "url": canonical_url(settings, f"/strategies/{item.strategy.strategy_id}"),
+            }
+            for index, item in enumerate(items)
+        ],
+    }
 
 def _webpage_json(settings: Settings, path: str, name: str, description: str) -> dict:
     return {

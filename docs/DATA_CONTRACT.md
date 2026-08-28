@@ -844,7 +844,12 @@ Structured data is limited to truthful schema types that match the page:
 - `Organization`,
 - `WebSite`,
 - `WebPage`,
-- `BreadcrumbList`.
+- `BreadcrumbList`,
+- `ItemList` only for ranking/comparison pages whose visible cards form a real ordered list.
+
+`ItemList` entries must match the visible ordering and must point only to canonical opportunity or strategy detail pages. Do not use hidden SEO-only items or financial values that are not visible on the page.
+
+`Dataset` markup is not appropriate until GamCryp exposes a stable public catalog/snapshot dataset as a dataset surface. Do not use `Dataset` for transient live financial claims or ordinary ranking pages.
 
 Do not use `Product`, `Review`, `Offer`, `FAQ`, `HowTo`, aggregate ratings, or review snippets unless future gates add evidence and review processes that satisfy those schemas.
 

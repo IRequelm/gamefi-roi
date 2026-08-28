@@ -22,9 +22,11 @@ Canonical public pages:
 - `/rankings/gamefi-under-100`
 - `/rankings/lowest-capital-gamefi`
 - `/rankings/highest-roi-gamefi`
+- `/rankings/best-passive-gamefi`
 - `/methodology`
 
 Normal page requests read persisted API-service data only. They must not trigger adapters, live providers, recalculation, scoring, or blockchain/market-data calls.
+Curated ranking pages are publishable only when the page has at least two qualifying modeled strategy snapshots from the authoritative catalog/history/ranking layer. One item is a strategy detail, not a meaningful comparison. Planned DePIN comparison slugs such as `/rankings/best-depin-under-100`, `/rankings/phone-depin`, `/rankings/pc-depin`, and `/rankings/no-hardware-depin` stay unpublished and out of the sitemap until at least two qualifying modeled DePIN strategy snapshots exist for the page-specific filter.
 
 Canonical opportunity, strategy, ranking, and catalog pages include a visible `Answer-ready` block near the top of the page. These blocks are generated from existing API-service payloads and stored snapshots. They are intended for humans, search engines, and AI answer systems to quote consistently; they must not hard-code live values in static prose or invent ROI where the model marks ROI unavailable.
 
@@ -55,7 +57,7 @@ Every canonical public page must include:
 - Twitter metadata,
 - truthful JSON-LD.
 
-JSON-LD is limited to `Organization`, `WebSite`, `WebPage`, and `BreadcrumbList`. Do not use product, offer, review, FAQ, or rating schemas unless a future gate adds evidence and compliance controls for them.
+JSON-LD is limited to `Organization`, `WebSite`, `WebPage`, `BreadcrumbList`, and `ItemList` on ranking/comparison pages that visibly render a real ordered list. `ItemList` entries must match visible strategy cards in the same order and point only to canonical GamCryp detail pages. Do not use product, offer, review, FAQ, or rating schemas unless a future gate adds evidence and compliance controls for them. `Dataset` markup is intentionally not used yet because GamCryp does not expose a stable public downloadable catalog or snapshot dataset; transient financial rankings should not be described as a dataset.
 
 SEO copy must not promise returns, imply investment advice, or present unavailable ROI as zero.
 

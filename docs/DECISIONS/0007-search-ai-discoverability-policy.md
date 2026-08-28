@@ -52,6 +52,8 @@ Inbound acquisition attribution is privacy-minimal and stores only landing path,
 - Acquisition measurement can support traffic diagnostics without weakening product integrity.
 - Future SEO/content growth must use the canonical inventory and truthful metadata rules instead of adding arbitrary indexed routes.
 
+Post-G18 AEO/GEO gap sprint amendment: curated comparison pages require at least two qualifying modeled strategy snapshots before they are indexable or included in the sitemap. `ItemList` JSON-LD is allowed only when it exactly matches a visible ranking/comparison list. `Dataset` JSON-LD remains unavailable until a stable public dataset surface exists; transient ranking pages are not datasets.
+
 ## External References
 
 - OpenAI crawler documentation: https://developers.openai.com/api/docs/bots

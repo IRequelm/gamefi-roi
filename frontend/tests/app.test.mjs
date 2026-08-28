@@ -24,6 +24,7 @@ import {
   renderOpportunityAnswerBlock,
   renderOpportunityDetail,
   renderRankingsAnswerBlock,
+  renderRankingsPage,
   renderRankingsTable,
   renderStrategyAnswerBlock,
   renderScoreBadge,
@@ -63,6 +64,12 @@ test("rankings rendering includes card metrics and stored API values", () => {
   assert.doesNotMatch(html, /<tr/);
 });
 
+test("rankings page exposes only published curated links", () => {
+  const html = renderRankingsPage(rankingPayload());
+
+  assert.match(html, /Best passive GameFi ROI strategies/);
+  assert.doesNotMatch(html, /best-depin-under-100|phone-depin|pc-depin|no-hardware-depin/);
+});
 test("home renders results as cards before filters without table ranking markup", () => {
   const html = renderHomeShell([{ game_id: "defi-kingdoms", name: "DeFi Kingdoms", economy_types: ["locked-yield-reward"] }], rankingPayload(), [
     opportunityPayload(),
@@ -164,7 +171,7 @@ test("GamCryp brand stylesheet uses dark navy base and restrained accent palette
   assert.match(css, /\.opportunity-grid\s*{[\s\S]*minmax\(min\(100%, 300px\), 1fr\)/);
   assert.match(css, /\.opportunity-facts\s*{[\s\S]*grid-template-columns:\s*1fr/);
   assert.match(css, /\.watchlist-note\s*{[\s\S]*line-height:\s*1\.42/);
-  assert.match(css, /\.button,\n\.secondary-button\s*{[\s\S]*justify-content:\s*center/);
+  assert.match(css, /\.button,\r?\n\.secondary-button\s*{[\s\S]*justify-content:\s*center/);
   assert.match(css, /\.answer-card\s*{/);
   assert.match(css, /\.answer-grid\s*{[\s\S]*repeat\(3, minmax\(0, 1fr\)\)/);
   assert.match(css, /@media \(max-width: 900px\)[\s\S]*\.answer-grid\s*{[\s\S]*grid-template-columns:\s*1fr/);
@@ -199,6 +206,11 @@ test("curated ranking landing pages keep organic filters and ignore tracking par
     curatedRankingQuery("/rankings/gamefi-under-100", "?utm_campaign=ai&confidence_min=50"),
     "?opportunity_type=GAME&capital_max=100&confidence_min=50",
   );
+  assert.equal(
+    curatedRankingQuery("/rankings/best-passive-gamefi", "?utm_source=chatgpt&risk_max=90"),
+    "?opportunity_type=GAME&economy_type=locked-yield-reward&risk_max=90",
+  );
+  assert.equal(curatedRankingQuery("/rankings/best-depin-under-100", "?risk_max=50"), "?risk_max=50");
 });
 
 test("strategy detail renders capital, earnings, scores, classification, warnings, and versions", () => {
