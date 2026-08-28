@@ -1,0 +1,274 @@
+{
+  "review_version": "expansion-batch-1-review-v1",
+  "source_package": {
+    "filename": "gamcryp_post_launch_research_package.md",
+    "sha256": "5466AA3C643F1B2850A47DEF0233F28E7DC9B3BB9BDDA0F669D9A24EB401AE15",
+    "prepared_date": "2026-08-28",
+    "format": "markdown",
+    "scope": "external research handoff; not a production catalog import"
+  },
+  "validation": {
+    "schema": "config/opportunities/work_research_handoff.schema.json",
+    "strict_schema_valid": false,
+    "strict_schema_reason": "The Work package is Markdown, not the required work-research-handoff-v1 JSON object. It was content-reviewed against the schema fields, but it is not directly machine-ingestible.",
+    "content_reviewed_against_schema": true,
+    "missing_schema_requirements": [
+      "top-level handoff_version/prepared_at/prepared_by/opportunities JSON fields",
+      "canonical opportunity_id for every new candidate",
+      "schema enum values for opportunity_type, publication_status_recommendation, financial_model_feasibility, and referral_program.status",
+      "typed source_reference objects with source_type and retrieved_at",
+      "per-field modeling_evidence objects with status, machine_readable, collection_allowed, and operator_notes",
+      "candidate-level last_reviewed_at timestamps"
+    ],
+    "modeling_queue_policy": "config/opportunities/modeling_queue_policy.json",
+    "queue_policy_validated": true,
+    "referral_not_used_for_admission": true,
+    "commercial_inputs_used_for_modeling_priority": []
+  },
+  "cross_check": {
+    "existing_catalog_opportunity_count": 26,
+    "existing_modeled_strategy_count": 10,
+    "existing_catalog_duplicates_in_top_24": [],
+    "existing_catalog_overlap_notes": [
+      "Grass, Teneo, and ARO Network are already in the existing 26-opportunity catalog and are audited for referral coverage in the Work package; they are not part of the new top-24 additions.",
+      "The Work package top-24 list is additive relative to the current catalog."
+    ],
+    "proposed_top_24_candidates_reviewed": 24,
+    "additional_watchlist_rows_not_auto_selected": [
+      "Flux",
+      "Pipe Network",
+      "Meson Network",
+      "Helium Mobile mapping",
+      "GamerHash",
+      "Salad",
+      "PacketStream",
+      "Sweat Economy",
+      "Upland",
+      "The Sandbox",
+      "Parallel",
+      "MetalCore"
+    ],
+    "stale_or_dead_candidates_identified": [
+      "Gradient Network Sentry Node",
+      "CryptoBlades",
+      "Pegaxy",
+      "Thetan Arena",
+      "Bomb Crypto",
+      "Crabada"
+    ],
+    "unsupported_or_human_verified_referral_claims": [
+      "Big Time referral leaderboard appears historical and must be dashboard-verified before use.",
+      "Bless Network mentions referral bonuses without a public rate in the reviewed source.",
+      "Gods Unchained referral details may be historical and must be verified before publication.",
+      "Nodepay referral mechanics need dashboard/account verification.",
+      "Pirate Nation has signup referral-code flow but unclear public reward schedule.",
+      "Sunflower Land supporter referral claim needs current terms verification before any GamCryp referral use.",
+      "Teneo referral rate needs current dashboard verification.",
+      "WeatherXM is an application/partner channel, not a ready public referral URL."
+    ],
+    "roi_feasibility_overstatement_notes": [
+      "Likely feasible in the Work package means ready for a formal Data Feasibility Check, not adapter approval.",
+      "Marketplace provider economies such as Akash, Nosana, and Golem need utilization/demand evidence before public ROI.",
+      "Mobile, movement, and points economies such as NATIX, Nodle, Roam, Silencio, MapMetrics, STEPN, and Genopets are not reproducible until account, geography, season, and realization routes are pinned down.",
+      "Points-only or pre-token rewards must keep financial ROI unavailable unless a lawful, reproducible, realizable value route exists."
+    ]
+  },
+  "batch_1": [
+    {
+      "opportunity_id": "hivemapper",
+      "name": "Hivemapper",
+      "opportunity_type": "DEPIN_NODE",
+      "reviewed_opportunity": true,
+      "roi_modeling_status": "GO",
+      "referral": "UNKNOWN",
+      "required_human_action": "Verify device availability, regional restrictions, and any referral or partner status.",
+      "reason_for_inclusion": "High-quality mapping DePIN with official reward-type evidence and clear device-based earning path.",
+      "evidence_urls": ["https://docs.hivemapper.com/honey-token/earning-honey/reward-types/", "https://docs.hivemapper.com/contribute/driving/", "https://www.hivemapper.com/tos"]
+    },
+    {
+      "opportunity_id": "dimo",
+      "name": "DIMO",
+      "opportunity_type": "DEPIN_NODE",
+      "reviewed_opportunity": true,
+      "roi_modeling_status": "GO",
+      "referral": "AVAILABLE",
+      "required_human_action": "Verify account eligibility, referral terms, vehicle eligibility, and rewards API access.",
+      "reason_for_inclusion": "Vehicle-data DePIN with official weekly reward docs, rewards API evidence, and clear user story.",
+      "evidence_urls": ["https://support.drivedimo.com/en-US/how-can-i-earn-dollardimo-297391", "https://support.drivedimo.com/en-US/claiming-a-referral-bonus-287687", "https://github.com/DIMO-Network/rewards-api"]
+    },
+    {
+      "opportunity_id": "geodnet",
+      "name": "GEODNET",
+      "opportunity_type": "DEPIN_NODE",
+      "reviewed_opportunity": true,
+      "roi_modeling_status": "GO",
+      "referral": "UNKNOWN",
+      "required_human_action": "Verify station pricing, official destination, territory constraints, and partner/referral availability.",
+      "reason_for_inclusion": "Hardware DePIN with public mining basics, station tracking, and measurable station strategy.",
+      "evidence_urls": ["https://docs.geodnet.com/geod-mining/the-geod-mining-basics", "https://docs.geodnet.com/geodnet-console-platform-basics/track-your-stations-performance-and-rewards", "https://geodnet.com/network"]
+    },
+    {
+      "opportunity_id": "weatherxm",
+      "name": "WeatherXM",
+      "opportunity_type": "DEPIN_NODE",
+      "reviewed_opportunity": true,
+      "roi_modeling_status": "GO",
+      "referral": "APPLICATION REQUIRED",
+      "required_human_action": "Review/apply for partner terms only if commercially desired; verify station pricing and claim costs separately.",
+      "reason_for_inclusion": "Weather-station DePIN with official reward mechanism and claim documentation.",
+      "evidence_urls": ["https://docs.weatherxm.com/rewards/reward-mechanism", "https://docs.weatherxm.com/rewards/rewards-claiming", "https://weatherxm.com/lets-talk-partnerships/"]
+    },
+    {
+      "opportunity_id": "mysterium-node",
+      "name": "Mysterium Network Node",
+      "opportunity_type": "DEPIN_NODE",
+      "reviewed_opportunity": true,
+      "roi_modeling_status": "GO",
+      "referral": "UNKNOWN",
+      "required_human_action": "Review traffic/legal restrictions and dashboard/API availability.",
+      "reason_for_inclusion": "dVPN node economy with documented rewards, fees, withdrawals, and platform support.",
+      "evidence_urls": ["https://docs.mysterium.network/faq"]
+    },
+    {
+      "opportunity_id": "storj-storage-node",
+      "name": "Storj Storage Node",
+      "opportunity_type": "DEPIN_NODE",
+      "reviewed_opportunity": true,
+      "roi_modeling_status": "GO",
+      "referral": "NONE FOUND",
+      "required_human_action": "Verify payout docs, held-back schedule, payout threshold route, and official destination.",
+      "reason_for_inclusion": "Clean storage-node modeling candidate with public payout rates and settlement rules.",
+      "evidence_urls": ["https://storj.dev/node/payouts"]
+    },
+    {
+      "opportunity_id": "sia-hostd",
+      "name": "Sia hostd",
+      "opportunity_type": "DEPIN_NODE",
+      "reviewed_opportunity": true,
+      "roi_modeling_status": "GO",
+      "referral": "NONE FOUND",
+      "required_human_action": "Verify hostd setup path, Siacoin market route, collateral rules, and utilization observability.",
+      "reason_for_inclusion": "Storage hosting with public setup, pricing, collateral, and reward mechanics.",
+      "evidence_urls": ["https://sia.tech/provide-storage", "https://docs.sia.tech/legacy/hosting/hostd/about-hosting-on-sia", "https://docs.sia.tech/legacy/hosting/hostd/setup-guides/linux"]
+    },
+    {
+      "opportunity_id": "akash-provider",
+      "name": "Akash Provider",
+      "opportunity_type": "DEPIN_NODE",
+      "reviewed_opportunity": true,
+      "roi_modeling_status": "RESEARCH REQUIRED",
+      "referral": "UNKNOWN",
+      "required_human_action": "Verify provider demand/utilization observability, hardware assumptions, and terms.",
+      "reason_for_inclusion": "Credible decentralized compute marketplace, but utilization evidence is needed before ROI.",
+      "evidence_urls": ["https://akash.network/providers/", "https://akash.network/docs/providers/getting-started/", "https://provider-console.akash.network/get-started"]
+    },
+    {
+      "opportunity_id": "nosana-gpu-host",
+      "name": "Nosana GPU Host",
+      "opportunity_type": "DEPIN_NODE",
+      "reviewed_opportunity": true,
+      "roi_modeling_status": "RESEARCH REQUIRED",
+      "referral": "UNKNOWN",
+      "required_human_action": "Verify GPU requirements, real utilization/earnings history, and estimator terms.",
+      "reason_for_inclusion": "GPU-hosting candidate with strong Web3 AI/compute demand, pending utilization proof.",
+      "evidence_urls": ["https://nosana.com/gpu-providers/", "https://learn.nosana.com/about/getting-started"]
+    },
+    {
+      "opportunity_id": "honeygain",
+      "name": "Honeygain",
+      "opportunity_type": "DEPIN_NODE",
+      "reviewed_opportunity": true,
+      "roi_modeling_status": "GO",
+      "referral": "AVAILABLE",
+      "required_human_action": "Confirm bandwidth-sharing taxonomy fit and current payout/referral terms.",
+      "reason_for_inclusion": "Simple bandwidth-sharing benchmark with official referral and terms pages.",
+      "evidence_urls": ["https://support.honeygain.com/hc/en-us/articles/360011222379-How-do-referrals-work", "https://www.honeygain.com/terms-of-use/?lang=en"]
+    },
+    {
+      "opportunity_id": "earnapp",
+      "name": "EarnApp",
+      "opportunity_type": "DEPIN_NODE",
+      "reviewed_opportunity": true,
+      "roi_modeling_status": "GO",
+      "referral": "AVAILABLE",
+      "required_human_action": "Verify supported regions, payout methods, device/IP limits, and account referral link.",
+      "reason_for_inclusion": "Clear bandwidth-sharing earning mechanism with official referral terms.",
+      "evidence_urls": ["https://help.earnapp.com/hc/en-us/articles/10232037405073-How-does-the-referral-program-work", "https://help.earnapp.com/hc/en-us/sections/10088362659345-EarnApp"]
+    },
+    {
+      "opportunity_id": "sunflower-land",
+      "name": "Sunflower Land",
+      "opportunity_type": "GAME",
+      "reviewed_opportunity": true,
+      "roi_modeling_status": "RESEARCH REQUIRED",
+      "referral": "UNKNOWN",
+      "required_human_action": "Verify supporter/referral terms and select a narrow crop/crafting strategy.",
+      "reason_for_inclusion": "Active Web3 farming economy with earnable SFL and market route.",
+      "evidence_urls": ["https://docs.sunflower-land.com/fundamentals/sunflower-land-token", "https://docs.sunflower-land.com/support", "https://sunflower-land.com/stepn"]
+    },
+    {
+      "opportunity_id": "star-atlas-sage-labs",
+      "name": "Star Atlas SAGE Labs",
+      "opportunity_type": "GAME",
+      "reviewed_opportunity": true,
+      "roi_modeling_status": "GO",
+      "referral": "UNKNOWN",
+      "required_human_action": "Verify marketplace, fleet, crew, resource, FIC, SOL fee, and ATLAS liquidity inputs.",
+      "reason_for_inclusion": "Deep on-chain game economy with resource/crafting loops and token reward routes.",
+      "evidence_urls": ["https://support.staratlas.com/hc/en-us/articles/47061460246163-How-to-Earn-ATLAS-in-Star-Atlas", "https://staratlas.com/game/sage-labs/", "https://support.staratlas.com/hc/en-us/articles/47053533098387-How-to-start-playing-SAGE"]
+    }
+  ],
+  "top_modeling_queue": [
+    {"rank": 1, "opportunity_id": "storj-storage-node", "roi_modeling_status": "GO", "policy_band": "MODEL_NEXT", "referral_status_not_used_for_priority": true},
+    {"rank": 2, "opportunity_id": "mysterium-node", "roi_modeling_status": "GO", "policy_band": "MODEL_NEXT", "referral_status_not_used_for_priority": true},
+    {"rank": 3, "opportunity_id": "honeygain", "roi_modeling_status": "GO", "policy_band": "MODEL_NEXT", "referral_status_not_used_for_priority": true},
+    {"rank": 4, "opportunity_id": "earnapp", "roi_modeling_status": "GO", "policy_band": "MODEL_NEXT", "referral_status_not_used_for_priority": true},
+    {"rank": 5, "opportunity_id": "hivemapper", "roi_modeling_status": "GO", "policy_band": "MODEL_NEXT", "referral_status_not_used_for_priority": true},
+    {"rank": 6, "opportunity_id": "dimo", "roi_modeling_status": "GO", "policy_band": "MODEL_NEXT", "referral_status_not_used_for_priority": true},
+    {"rank": 7, "opportunity_id": "geodnet", "roi_modeling_status": "GO", "policy_band": "MODEL_NEXT", "referral_status_not_used_for_priority": true},
+    {"rank": 8, "opportunity_id": "weatherxm", "roi_modeling_status": "GO", "policy_band": "MODEL_NEXT", "referral_status_not_used_for_priority": true},
+    {"rank": 9, "opportunity_id": "sia-hostd", "roi_modeling_status": "GO", "policy_band": "MODEL_NEXT", "referral_status_not_used_for_priority": true},
+    {"rank": 10, "opportunity_id": "star-atlas-sage-labs", "roi_modeling_status": "GO", "policy_band": "MODEL_NEXT", "referral_status_not_used_for_priority": true}
+  ],
+  "deferred_candidates": [
+    {"name": "Pawns.app", "reason": "Strong referral and payout evidence, but survey/game/bandwidth mix and Web3 taxonomy fit need review."},
+    {"name": "Golem Provider", "reason": "Credible compute marketplace, but demand/utilization evidence should be reviewed after Akash/Nosana."},
+    {"name": "NATIX Drive&", "reason": "Regional reward rules, app status, and value route need review."},
+    {"name": "STEPN / STEPN GO", "reason": "Sneaker/energy/user behavior and invite mechanics need a narrower strategy."},
+    {"name": "Nodle App", "reason": "Value realization and phone/location assumptions are unresolved."},
+    {"name": "Roam Network", "reason": "Points/airdrop opportunity should remain non-financial until realizable value exists."},
+    {"name": "Silencio", "reason": "Points/tokenomics evidence needs current realization and terms review."},
+    {"name": "MapMetrics", "reason": "Drive-to-earn mechanics require account/geography/activity verification."},
+    {"name": "Genopets", "reason": "Move-to-earn and Habitat/KI economics need a narrower adapter thesis."},
+    {"name": "Theta Edge Node", "reason": "Demand/staking reward observability is weaker than Batch #1 node candidates."},
+    {"name": "Titan Network", "reason": "Testnet status and current reward activity must be rechecked before admission."}
+  ],
+  "rejected_or_watchlist_candidates": [
+    {"name": "Gradient Network Sentry Node", "decision": "REJECT", "reason": "Work package states official Sentry Node rewards ended."},
+    {"name": "CryptoBlades", "decision": "REJECT", "reason": "Historical GameFi with weak current earning/activity quality."},
+    {"name": "Pegaxy", "decision": "REJECT", "reason": "Historical play-to-earn collapse risk."},
+    {"name": "Thetan Arena", "decision": "REJECT", "reason": "Earning path and token economics are not strong enough for current expansion."},
+    {"name": "Bomb Crypto", "decision": "REJECT", "reason": "Too much abandoned/scam-risk baggage relative to the quality bar."},
+    {"name": "Crabada", "decision": "REJECT", "reason": "Historic Avalanche GameFi with weak current mainstream earning thesis."},
+    {"name": "Upland", "decision": "WATCHLIST", "reason": "Active enough for monitoring, but ordinary-user ROI is not reproducible."},
+    {"name": "The Sandbox", "decision": "WATCHLIST", "reason": "Strong brand and content value, weak ordinary earning thesis."},
+    {"name": "Parallel", "decision": "WATCHLIST", "reason": "Strong game, but ordinary reproducible earning path is unclear."},
+    {"name": "MetalCore", "decision": "WATCHLIST", "reason": "Needs active season reward mechanics before addition."}
+  ],
+  "top_referral_actions": [
+    {"opportunity_id": "dimo", "action": "Verify/create ordinary account referral only after reviewing program terms."},
+    {"opportunity_id": "honeygain", "action": "Verify payout/referral terms and taxonomy fit."},
+    {"opportunity_id": "earnapp", "action": "Verify account referral link, regions, and device/IP restrictions."},
+    {"opportunity_id": "weatherxm", "action": "Review partner/application path; do not mark active until accepted and verified."},
+    {"opportunity_id": "splinterlands", "action": "Existing catalog target: review Ambassador Program eligibility."},
+    {"opportunity_id": "pixels", "action": "Existing catalog target: review creator-code eligibility."},
+    {"opportunity_id": "grass", "action": "Existing catalog target: verify current public referral-code terms."},
+    {"opportunity_id": "aro-network", "action": "Existing catalog target: verify testnet referral status and reward caveats."}
+  ],
+  "merge_readiness": {
+    "ready_after_tests": true,
+    "production_catalog_changed": false,
+    "new_financial_adapters_added": false,
+    "deployment_required": false
+  }
+}

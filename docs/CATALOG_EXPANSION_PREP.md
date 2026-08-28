@@ -231,3 +231,14 @@ Before any catalog expansion merge:
 - Several points/DePIN candidates are useful discovery records but remain non-financial until value realization is lawful and reproducible.
 - Terms/ToS feasibility must be reviewed per candidate before automated collection.
 - Native program referral rewards must remain separate from GamCryp commercial referral metadata.
+
+## Work Package Review
+
+The first attached Work research handoff was reviewed in:
+
+```text
+docs/CATALOG_EXPANSION_BATCH_1_REVIEW.md
+config/opportunities/expansion_batch_1_recommendation.json
+```
+
+The package was usable as an operator research memo, but it was Markdown and does not strictly validate against `config/opportunities/work_research_handoff.schema.json`. Future Work handoffs should use the schema JSON format before automated catalog ingestion is considered.
