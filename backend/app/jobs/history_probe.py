@@ -35,6 +35,8 @@ from app.adapters.farmers_world import (
     TRANSACTION_COST_DAY_USD as FARMERS_TRANSACTION_COST_DAY_USD,
     FarmersWorldAxeAdapter,
 )
+from app.adapters.scenario_yield import ScenarioYieldAdapter
+from app.adapters.scenario_yield_probe import load_fixture_observations as load_scenario_yield_observations
 from app.adapters.splinterlands import (
     BATTLES_PER_DAY,
     CARD_RENTAL_COST_DAY_USD,
@@ -58,6 +60,7 @@ from app.storage.database import create_database_engine
 from app.storage.history import HistoryRepository
 from app.strategies.defi_kingdoms import DFK_JEWELER_STRATEGIES, DfkJewelerStrategyDefinition
 from app.strategies.farmers_world import FARMERS_WORLD_AXE_STRATEGIES, FarmersWorldAxeStrategyDefinition
+from app.strategies.scenario_yield import SCENARIO_YIELD_STRATEGIES, ScenarioYieldStrategyDefinition
 from app.strategies.splinterlands import (
     SPLINTERLANDS_MODERN_RANKED_STRATEGIES,
     SplinterlandsModernRankedStrategyDefinition,
@@ -101,7 +104,19 @@ def build_history_probe_tasks() -> tuple[StrategyCalculationTask, ...]:
         )
         for strategy in SPLINTERLANDS_MODERN_RANKED_STRATEGIES
     )
-    return (*dfk_tasks, *farmers_tasks, *splinterlands_tasks)
+    scenario_yield_tasks = tuple(
+        StrategyCalculationTask(
+            strategy_id=strategy.strategy_id,
+            strategy_version=strategy.strategy_version,
+            adapter=ScenarioYieldAdapter(strategy),
+            load_observations=lambda active_time, strategy=strategy: _scenario_yield_observations(
+                active_time,
+                strategy=strategy,
+            ),
+        )
+        for strategy in SCENARIO_YIELD_STRATEGIES
+    )
+    return (*dfk_tasks, *farmers_tasks, *splinterlands_tasks, *scenario_yield_tasks)
 
 
 def main() -> int:
@@ -329,8 +344,15 @@ def _splinterlands_observations(
     return (*live, *configs)
 
 
-def _config(strategy_id: str, metric: str, value: str, unit: str, active_time: datetime) -> Observation:
-    return verified_config_observation(
+def _scenario_yield_observations(
+    active_time: datetime,
+    *,
+    strategy: ScenarioYieldStrategyDefinition,
+) -> tuple[Observation, ...]:
+    return load_scenario_yield_observations(active_time, strategy=strategy)
+
+
+def _config(strategy_id: str, metric: str, value: str, unit: str, active_time: datetime) -> Observation:    return verified_config_observation(
         strategy_id=strategy_id,
         metric=metric,
         value=value,

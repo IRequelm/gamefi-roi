@@ -5,6 +5,7 @@ import { readFileSync } from "node:fs";
 import {
   ApiError,
   analyticsMeasurementId,
+  applyCuratedRankingConstraints,
   buildRankingsPath,
   curatedRankingQuery,
   formatBreakEven,
@@ -68,7 +69,10 @@ test("rankings page exposes only published curated links", () => {
   const html = renderRankingsPage(rankingPayload());
 
   assert.match(html, /Best passive GameFi ROI strategies/);
-  assert.doesNotMatch(html, /best-depin-under-100|phone-depin|pc-depin|no-hardware-depin/);
+  assert.match(html, /best-depin-under-100/);
+  assert.match(html, /pc-depin/);
+  assert.match(html, /no-hardware-depin/);
+  assert.doesNotMatch(html, /phone-depin/);
 });
 test("home renders results as cards before filters without table ranking markup", () => {
   const html = renderHomeShell([{ game_id: "defi-kingdoms", name: "DeFi Kingdoms", economy_types: ["locked-yield-reward"] }], rankingPayload(), [
@@ -210,7 +214,42 @@ test("curated ranking landing pages keep organic filters and ignore tracking par
     curatedRankingQuery("/rankings/best-passive-gamefi", "?utm_source=chatgpt&risk_max=90"),
     "?opportunity_type=GAME&economy_type=locked-yield-reward&risk_max=90",
   );
-  assert.equal(curatedRankingQuery("/rankings/best-depin-under-100", "?risk_max=50"), "?risk_max=50");
+  assert.equal(
+    curatedRankingQuery("/rankings/best-depin-under-100", "?risk_max=50"),
+    "?opportunity_type=DEPIN_NODE&capital_max=100&risk_max=50",
+  );
+});
+
+test("curated DePIN page constraints filter by authoritative opportunity platforms", () => {
+  const rankings = {
+    items: [
+      { rank: 1, strategy: { opportunity_id: "storj-storage-node" } },
+      { rank: 2, strategy: { opportunity_id: "geodnet" } },
+      { rank: 3, strategy: { opportunity_id: "dimo" } },
+      { rank: 4, strategy: { opportunity_id: "mysterium-network-node" } },
+    ],
+    page: { limit: 100, offset: 0, total: 4 },
+  };
+  const opportunities = [
+    { opportunity_id: "storj-storage-node", platforms: ["desktop", "server"] },
+    { opportunity_id: "geodnet", platforms: ["hardware-node"] },
+    { opportunity_id: "dimo", platforms: ["mobile", "web"] },
+    { opportunity_id: "mysterium-network-node", platforms: ["desktop"] },
+  ];
+
+  const pc = applyCuratedRankingConstraints(rankings, opportunities, "/rankings/pc-depin");
+  const noHardware = applyCuratedRankingConstraints(rankings, opportunities, "/rankings/no-hardware-depin");
+
+  assert.deepEqual(pc.items.map((item) => item.strategy.opportunity_id), ["storj-storage-node", "mysterium-network-node"]);
+  assert.deepEqual(pc.items.map((item) => item.rank), [1, 2]);
+  assert.equal(pc.page.total, 2);
+  assert.deepEqual(noHardware.items.map((item) => item.strategy.opportunity_id), [
+    "storj-storage-node",
+    "dimo",
+    "mysterium-network-node",
+  ]);
+  assert.deepEqual(noHardware.items.map((item) => item.rank), [1, 2, 3]);
+  assert.equal(noHardware.page.total, 3);
 });
 
 test("strategy detail renders capital, earnings, scores, classification, warnings, and versions", () => {

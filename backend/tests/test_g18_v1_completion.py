@@ -87,7 +87,7 @@ def test_v1_all_modeled_strategies_match_manual_golden_fixture() -> None:
 
         actual = _roi_fields(roi_result)
         assert {field: actual[field] for field in expected_fields} == {
-            field: Decimal(value) for field, value in expected_fields.items()
+            field: Decimal(value) if value is not None else None for field, value in expected_fields.items()
         }
 
 

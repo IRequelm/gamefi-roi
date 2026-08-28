@@ -8,6 +8,7 @@ from datetime import UTC, datetime
 
 from app.strategies.defi_kingdoms import DFK_CJEWEL_MAX_LOCK_V1, DFK_JEWELER_STRATEGIES
 from app.strategies.farmers_world import FARMERS_WORLD_AXE_STRATEGIES, FARMERS_WORLD_AXE_WOOD_V1
+from app.strategies.scenario_yield import SCENARIO_YIELD_STRATEGIES
 from app.strategies.splinterlands import (
     SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1,
     SPLINTERLANDS_MODERN_RANKED_STRATEGIES,
@@ -149,6 +150,25 @@ def _strategy_catalogs(
     )
 
 
+def _scenario_strategy_catalogs(strategies: Iterable[object]) -> tuple[StrategyCatalogEntry, ...]:
+    return tuple(
+        StrategyCatalogEntry(
+            strategy_id=str(strategy.strategy_id),
+            strategy_version=str(strategy.strategy_version),
+            opportunity_id=str(strategy.opportunity_id),
+            opportunity_type=str(strategy.opportunity_type),
+            game_id=str(strategy.game_id_alias),
+            game_name=str(strategy.opportunity_name),
+            name=str(strategy.name),
+            chain=str(strategy.chain),
+            economy_type=str(strategy.economy_type),
+            description=str(strategy.description),
+            outbound_destination_slugs=(f"{strategy.opportunity_id}-official",),
+        )
+        for strategy in strategies
+    )
+
+
 def _opportunity(
     *,
     opportunity_id: str,
@@ -247,6 +267,7 @@ SPLINTERLANDS_STRATEGY_CATALOGS = _strategy_catalogs(
     description="Modern Ranked SPS expected-value strategy with explicit win-rate uncertainty.",
     outbound_destination_slug="splinterlands-play",
 )
+SCENARIO_YIELD_STRATEGY_CATALOGS = _scenario_strategy_catalogs(SCENARIO_YIELD_STRATEGIES)
 
 DFK_STRATEGY_CATALOG = next(
     strategy for strategy in DFK_STRATEGY_CATALOGS if strategy.strategy_id == DFK_CJEWEL_MAX_LOCK_V1.strategy_id
@@ -262,7 +283,12 @@ SPLINTERLANDS_STRATEGY_CATALOG = next(
     if strategy.strategy_id == SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1.strategy_id
 )
 
-STRATEGIES = (*DFK_STRATEGY_CATALOGS, *FARMERS_WORLD_STRATEGY_CATALOGS, *SPLINTERLANDS_STRATEGY_CATALOGS)
+STRATEGIES = (
+    *DFK_STRATEGY_CATALOGS,
+    *FARMERS_WORLD_STRATEGY_CATALOGS,
+    *SPLINTERLANDS_STRATEGY_CATALOGS,
+    *SCENARIO_YIELD_STRATEGY_CATALOGS,
+)
 
 OPPORTUNITIES = (
     _opportunity(
@@ -315,6 +341,124 @@ OPPORTUNITIES = (
         strategy_ids=_strategy_ids(SPLINTERLANDS_MODERN_RANKED_STRATEGIES),
         outbound_destination_slug="splinterlands-play",
         legacy_game_id="splinterlands",
+    ),
+    _opportunity(
+        opportunity_id="storj-storage-node",
+        opportunity_type="DEPIN_NODE",
+        name="Storj Storage Node",
+        status="active",
+        platforms=("desktop", "server"),
+        chains=("ethereum",),
+        economy_types=("storage-node",),
+        reward_asset_or_points_type=("STORJ payout value",),
+        value_realization_status="realizable",
+        source_references=(
+            ("Node overview", "https://storj.dev/node"),
+            ("Payouts", "https://storj.dev/node/payouts"),
+            ("Held-back amount", "https://storj.dev/node/faq/held-back-amount"),
+        ),
+        data_feasibility_status="GO",
+        feasibility_summary="Official payout rates, minimum node requirements, dashboard fields, and held-back schedule support an existing-hardware storage-node scenario with explicit utilization assumptions.",
+        strategy_ids=("storj-existing-hardware-storage-node",),
+        outbound_destination_slug="storj-storage-node-official",
+    ),
+    _opportunity(
+        opportunity_id="geodnet",
+        opportunity_type="DEPIN_NODE",
+        name="GEODNET",
+        status="active",
+        platforms=("hardware-node",),
+        chains=("polygon",),
+        economy_types=("geospatial-node",),
+        reward_asset_or_points_type=("GEOD",),
+        value_realization_status="realizable",
+        source_references=(
+            ("Official store", "https://geodnet.com/store"),
+            ("Token metrics", "https://docs.geodnet.com/docs/geodnet-token-metrics"),
+            ("Quality requirements", "https://docs.geodnet.com/docs/geodnet-quality-of-data-requirements"),
+        ),
+        data_feasibility_status="GO",
+        feasibility_summary="Official hardware price, daily reward schedule, performance thresholds, and GEOD market pricing support a location-sensitive triple-band station scenario.",
+        strategy_ids=("geodnet-empty-hex-triple-band-base-station",),
+        outbound_destination_slug="geodnet-official",
+    ),
+    _opportunity(
+        opportunity_id="weatherxm",
+        opportunity_type="DEPIN_NODE",
+        name="WeatherXM",
+        status="active",
+        platforms=("hardware-node",),
+        chains=("arbitrum",),
+        economy_types=("weather-station",),
+        reward_asset_or_points_type=("WXM",),
+        value_realization_status="realizable",
+        source_references=(
+            ("Official site", "https://weatherxm.com/"),
+            ("Rewards mechanism", "https://docs.weatherxm.com/rewards/rewards-mechanism"),
+            ("Claim rewards", "https://docs.weatherxm.com/rewards/claim-rewards"),
+        ),
+        data_feasibility_status="GO",
+        feasibility_summary="Official hardware price, reward mechanism, claim path, WXM market pricing, and API availability support a station scenario with visible cell-level limitations.",
+        strategy_ids=("weatherxm-d1-wifi-station",),
+        outbound_destination_slug="weatherxm-official",
+    ),
+    _opportunity(
+        opportunity_id="dimo",
+        opportunity_type="DEPIN_NODE",
+        name="DIMO",
+        status="active",
+        platforms=("mobile", "web"),
+        chains=("polygon",),
+        economy_types=("vehicle-data",),
+        reward_asset_or_points_type=("DIMO",),
+        value_realization_status="realizable",
+        source_references=(
+            ("DIMO support", "https://support.dimo.org/"),
+            ("User rewards API", "https://github.com/DIMO-Network/user-rewards-api"),
+            ("DIMO shop", "https://shop.dimo.org/"),
+        ),
+        data_feasibility_status="GO",
+        feasibility_summary="Official reward logic, vehicle requirements, subscription costs, and DIMO market pricing support a narrow software-only compatible-car strategy with explicit network-share assumptions.",
+        strategy_ids=("dimo-software-only-compatible-car",),
+        outbound_destination_slug="dimo-official",
+    ),
+    _opportunity(
+        opportunity_id="mysterium-network-node",
+        opportunity_type="DEPIN_NODE",
+        name="Mysterium Network Node",
+        status="active",
+        platforms=("desktop",),
+        chains=("ethereum",),
+        economy_types=("bandwidth-node",),
+        reward_asset_or_points_type=("MYST",),
+        value_realization_status="realizable",
+        source_references=(
+            ("Mysterium FAQ", "https://docs.mysterium.network/faq"),
+            ("Mystnodes", "https://mystnodes.com/"),
+        ),
+        data_feasibility_status="GO",
+        feasibility_summary="Official device support, network fee, settlement threshold, and dashboard availability support a B2B-only existing-device strategy with explicit demand assumptions.",
+        strategy_ids=("mysterium-b2b-existing-device",),
+        outbound_destination_slug="mysterium-network-node-official",
+    ),
+    _opportunity(
+        opportunity_id="star-atlas-sage-labs",
+        opportunity_type="GAME",
+        name="Star Atlas SAGE Labs",
+        status="candidate",
+        platforms=("web",),
+        chains=("solana",),
+        economy_types=("strategy-game", "crafting", "player-market"),
+        reward_asset_or_points_type=("ATLAS", "resources", "FIC"),
+        value_realization_status="unknown",
+        source_references=(
+            ("How to earn", "https://support.staratlas.com/hc/en-us/articles/47061460246163-How-to-Earn-ATLAS-in-Star-Atlas"),
+            ("How to start SAGE", "https://support.staratlas.com/hc/en-us/articles/47053533098387-How-to-start-playing-SAGE"),
+            ("APIs and data", "https://build.staratlas.com/dev-resources/apis-and-data"),
+        ),
+        data_feasibility_status="PARKED",
+        feasibility_summary="Official APIs and economy mechanics exist, but the handoff lacks a narrow starter fleet/activity loop and reproducible FIC or crafting production rate, so no financial strategy is modeled yet.",
+        outbound_destination_slug="star-atlas-sage-labs-official",
     ),
     _opportunity(
         opportunity_id="aavegotchi",
@@ -743,6 +887,12 @@ OUTBOUND_DESTINATIONS = (
         game_id="splinterlands",
         destination_type="play",
     ),
+    _destination(opportunity_id="storj-storage-node", opportunity_type="DEPIN_NODE", slug="storj-storage-node-official", label="Open Storj Node", official_url="https://storj.dev/node"),
+    _destination(opportunity_id="geodnet", opportunity_type="DEPIN_NODE", slug="geodnet-official", label="Open GEODNET", official_url="https://geodnet.com/"),
+    _destination(opportunity_id="weatherxm", opportunity_type="DEPIN_NODE", slug="weatherxm-official", label="Open WeatherXM", official_url="https://weatherxm.com/"),
+    _destination(opportunity_id="dimo", opportunity_type="DEPIN_NODE", slug="dimo-official", label="Open DIMO", official_url="https://drivedimo.com/"),
+    _destination(opportunity_id="mysterium-network-node", opportunity_type="DEPIN_NODE", slug="mysterium-network-node-official", label="Open Mysterium", official_url="https://docs.mysterium.network/faq"),
+    _destination(opportunity_id="star-atlas-sage-labs", opportunity_type="GAME", slug="star-atlas-sage-labs-official", label="Open Star Atlas SAGE Labs", official_url="https://staratlas.com/game/sage-labs/"),
     _destination(opportunity_id="aavegotchi", opportunity_type="GAME", slug="aavegotchi-official", label="Open Aavegotchi", official_url="https://aavegotchi.com/"),
     _destination(opportunity_id="alien-worlds", opportunity_type="GAME", slug="alien-worlds-official", label="Open Alien Worlds", official_url="https://alienworlds.io/"),
     _destination(opportunity_id="axie-infinity", opportunity_type="GAME", slug="axie-infinity-official", label="Open Axie Infinity", official_url="https://axieinfinity.com/"),

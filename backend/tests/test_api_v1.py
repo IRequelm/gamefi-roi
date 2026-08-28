@@ -126,13 +126,18 @@ def test_rankings_order_and_tie_breaking_policy(monkeypatch, tmp_path) -> None:
         FARMERS_WORLD_AXE_WOOD_V1.strategy_id,
         "farmers-world-axe-wood-production-10x",
         "farmers-world-axe-wood-production-3x",
+        "geodnet-empty-hex-triple-band-base-station",
         "splinterlands-modern-ranked-active-sps-ev",
         "dfk-crystalvale-jeweler-cjewel-5000-max-lock",
         DFK_CJEWEL_MAX_LOCK_V1.strategy_id,
         SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1.strategy_id,
         "dfk-crystalvale-jeweler-cjewel-100-max-lock",
         "splinterlands-modern-ranked-grinder-sps-ev",
+        "weatherxm-d1-wifi-station",
+        "mysterium-b2b-existing-device",
         "splinterlands-modern-ranked-casual-sps-ev",
+        "storj-existing-hardware-storage-node",
+        "dimo-software-only-compatible-car",
     ]
 
 
@@ -171,7 +176,13 @@ def test_rankings_filters_use_only_modeled_fields(monkeypatch, tmp_path) -> None
         "splinterlands-modern-ranked-grinder-sps-ev",
         "splinterlands-modern-ranked-casual-sps-ev",
     ]
-    assert _ranking_ids(client, "/api/v1/rankings?opportunity_type=DEPIN_NODE") == []
+    assert _ranking_ids(client, "/api/v1/rankings?opportunity_type=DEPIN_NODE") == [
+        "geodnet-empty-hex-triple-band-base-station",
+        "weatherxm-d1-wifi-station",
+        "mysterium-b2b-existing-device",
+        "storj-existing-hardware-storage-node",
+        "dimo-software-only-compatible-car",
+    ]
     assert _ranking_ids(client, "/api/v1/rankings?chain=wax") == [
         FARMERS_WORLD_AXE_WOOD_V1.strategy_id,
         "farmers-world-axe-wood-production-10x",
@@ -188,7 +199,9 @@ def test_rankings_filters_use_only_modeled_fields(monkeypatch, tmp_path) -> None
         "splinterlands-modern-ranked-active-sps-ev",
         SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1.strategy_id,
         "splinterlands-modern-ranked-grinder-sps-ev",
+        "mysterium-b2b-existing-device",
         "splinterlands-modern-ranked-casual-sps-ev",
+        "dimo-software-only-compatible-car",
     ]
 
 

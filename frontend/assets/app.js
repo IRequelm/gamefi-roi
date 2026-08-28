@@ -1,4 +1,5 @@
 const API_BASE = "/api/v1";
+const CURATED_RANKING_MIN_RESULTS = 2;
 const CURATED_RANKING_FILTERS = {
   "/rankings/under-25": "capital_max=25",
   "/rankings/high-confidence": "confidence_min=80",
@@ -9,6 +10,9 @@ const CURATED_RANKING_FILTERS = {
   "/rankings/lowest-capital-gamefi": "opportunity_type=GAME&capital_max=25",
   "/rankings/highest-roi-gamefi": "opportunity_type=GAME",
   "/rankings/best-passive-gamefi": "opportunity_type=GAME&economy_type=locked-yield-reward",
+  "/rankings/best-depin-under-100": "opportunity_type=DEPIN_NODE&capital_max=100",
+  "/rankings/pc-depin": "opportunity_type=DEPIN_NODE",
+  "/rankings/no-hardware-depin": "opportunity_type=DEPIN_NODE",
 };
 const CURATED_RANKING_TITLES = {
   "/rankings/under-25": "Web3 strategies under $25 capital",
@@ -20,6 +24,16 @@ const CURATED_RANKING_TITLES = {
   "/rankings/lowest-capital-gamefi": "Lowest-capital modeled GameFi strategies",
   "/rankings/highest-roi-gamefi": "Highest modeled GameFi ROI strategies",
   "/rankings/best-passive-gamefi": "Best passive GameFi ROI strategies",
+  "/rankings/best-depin-under-100": "Best DePIN opportunities under $100",
+  "/rankings/pc-depin": "PC DePIN earning opportunities",
+  "/rankings/no-hardware-depin": "No-hardware DePIN earning opportunities",
+};
+const CURATED_RANKING_CONSTRAINTS = {
+  "/rankings/pc-depin": { requiredPlatforms: ["desktop", "browser-extension", "cli", "docker-node"] },
+  "/rankings/no-hardware-depin": {
+    requiredPlatforms: ["browser-extension", "desktop", "web", "cli", "docker-node"],
+    excludedPlatforms: ["hardware-node"],
+  },
 };
 const RANKING_FILTER_KEYS = new Set([
   "capital_min",
@@ -104,6 +118,34 @@ export function curatedRankingQuery(path, currentSearch = "") {
   }
   const query = params.toString();
   return query ? `?${query}` : "";
+}
+
+export function applyCuratedRankingConstraints(rankings, opportunities = [], path = "") {
+  const constraints = CURATED_RANKING_CONSTRAINTS[path];
+  if (!constraints) {
+    return rankings;
+  }
+  const opportunitiesById = new Map((opportunities || []).map((opportunity) => [opportunity.opportunity_id, opportunity]));
+  const required = constraints.requiredPlatforms || [];
+  const excluded = constraints.excludedPlatforms || [];
+  const items = (rankings.items || [])
+    .filter((item) => {
+      const opportunity = opportunitiesById.get(item.strategy?.opportunity_id || item.strategy?.game_id);
+      const platforms = new Set(opportunity?.platforms || []);
+      if (required.length > 0 && !required.some((platform) => platforms.has(platform))) {
+        return false;
+      }
+      if (excluded.some((platform) => platforms.has(platform))) {
+        return false;
+      }
+      return true;
+    })
+    .map((item, index) => ({ ...item, rank: index + 1 }));
+  return {
+    ...rankings,
+    items,
+    page: { ...(rankings.page || {}), offset: 0, total: items.length },
+  };
 }
 
 export function renderHomeShell(games = [], rankings = { items: [], page: { total: 0 } }, opportunities = []) {
@@ -1761,7 +1803,18 @@ async function renderCurrentRoute() {
     } else if (path === "/rankings") {
       root.innerHTML = renderRankingsPage(await apiGet(`/rankings${window.location.search}`));
     } else if (CURATED_RANKING_FILTERS[path]) {
-      root.innerHTML = renderRankingsPage(await apiGet(`/rankings${curatedRankingQuery(path, window.location.search)}`), {
+      const query = curatedRankingQuery(path, window.location.search);
+      const constraints = CURATED_RANKING_CONSTRAINTS[path];
+      const [rankings, opportunities] = constraints
+        ? await Promise.all([apiGet(`/rankings${query}`), apiGet("/opportunities")])
+        : [await apiGet(`/rankings${query}`), { items: [] }];
+      const visibleRankings = applyCuratedRankingConstraints(rankings, opportunities.items || [], path);
+      const visibleCount = visibleRankings.page?.total ?? visibleRankings.items?.length ?? 0;
+      if (visibleCount < CURATED_RANKING_MIN_RESULTS) {
+        root.innerHTML = renderError(new ApiError(404, "Not enough authoritative data to publish this comparison page yet."));
+        return;
+      }
+      root.innerHTML = renderRankingsPage(visibleRankings, {
         title: CURATED_RANKING_TITLES[path] || "Curated organic rankings",
         filters: CURATED_RANKING_FILTERS[path],
       });

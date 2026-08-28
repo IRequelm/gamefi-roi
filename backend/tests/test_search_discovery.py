@@ -161,23 +161,30 @@ def test_itemlist_json_ld_matches_visible_ranking_order(monkeypatch, tmp_path) -
     assert "$" not in visible_entries
 
 
-def test_insufficient_data_curated_pages_are_not_published_or_indexed(monkeypatch, tmp_path) -> None:
+def test_depin_curated_pages_publish_only_when_authoritative_data_qualifies(monkeypatch, tmp_path) -> None:
     client, engine = _seeded_client(monkeypatch, tmp_path, "seo-thin-pages.db")
-    blocked_slugs = (
+    published_slugs = (
         "best-depin-under-100",
-        "phone-depin",
         "pc-depin",
         "no-hardware-depin",
     )
+    blocked_slugs = ("phone-depin",)
 
     sitemap = client.get("/sitemap.xml").text
     inventory_paths = {page.path for page in canonical_page_inventory(engine)}
+
+    for slug in published_slugs:
+        response = client.get(f"/rankings/{slug}")
+        assert response.status_code == 200
+        assert '<meta name="robots" content="index,follow">' in response.text
+        assert "Answer-ready comparison" in response.text
+        assert f"/rankings/{slug}" in inventory_paths
+        assert f"/rankings/{slug}" in sitemap
 
     for slug in blocked_slugs:
         assert client.get(f"/rankings/{slug}").status_code == 404
         assert f"/rankings/{slug}" not in inventory_paths
         assert f"/rankings/{slug}" not in sitemap
-
 
 def test_robots_disallows_api_go_and_query_traps_without_blocking_ai_search_bots(monkeypatch, tmp_path) -> None:
     client, _engine = _seeded_client(monkeypatch, tmp_path, "seo-robots.db")

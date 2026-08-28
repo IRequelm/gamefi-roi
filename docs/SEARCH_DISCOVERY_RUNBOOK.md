@@ -23,10 +23,13 @@ Canonical public pages:
 - `/rankings/lowest-capital-gamefi`
 - `/rankings/highest-roi-gamefi`
 - `/rankings/best-passive-gamefi`
+- `/rankings/best-depin-under-100`
+- `/rankings/pc-depin`
+- `/rankings/no-hardware-depin`
 - `/methodology`
 
 Normal page requests read persisted API-service data only. They must not trigger adapters, live providers, recalculation, scoring, or blockchain/market-data calls.
-Curated ranking pages are publishable only when the page has at least two qualifying modeled strategy snapshots from the authoritative catalog/history/ranking layer. One item is a strategy detail, not a meaningful comparison. Planned DePIN comparison slugs such as `/rankings/best-depin-under-100`, `/rankings/phone-depin`, `/rankings/pc-depin`, and `/rankings/no-hardware-depin` stay unpublished and out of the sitemap until at least two qualifying modeled DePIN strategy snapshots exist for the page-specific filter.
+Curated ranking pages are publishable only when the page has at least two qualifying modeled strategy snapshots from the authoritative catalog/history/ranking layer. One item is a strategy detail, not a meaningful comparison. Batch #1 modeled DePIN coverage makes `/rankings/best-depin-under-100`, `/rankings/pc-depin`, and `/rankings/no-hardware-depin` publishable when current snapshots qualify. `/rankings/phone-depin` remains unpublished and out of the sitemap until at least two qualifying phone/mobile-first modeled DePIN strategy snapshots exist; a hardware station with a companion mobile app does not satisfy that threshold by itself.
 
 Canonical opportunity, strategy, ranking, and catalog pages include a visible `Answer-ready` block near the top of the page. These blocks are generated from existing API-service payloads and stored snapshots. They are intended for humans, search engines, and AI answer systems to quote consistently; they must not hard-code live values in static prose or invent ROI where the model marks ROI unavailable.
 

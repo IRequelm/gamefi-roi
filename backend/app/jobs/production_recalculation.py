@@ -17,6 +17,8 @@ from app.adapters.defi_kingdoms_jeweler import DfkJewelerAdapter
 from app.adapters.defi_kingdoms_jeweler_probe import load_live_observations as load_dfk_observations
 from app.adapters.farmers_world import FarmersWorldAxeAdapter
 from app.adapters.farmers_world_probe import load_live_observations as load_farmers_world_observations
+from app.adapters.scenario_yield import ScenarioYieldAdapter
+from app.adapters.scenario_yield_probe import load_live_observations as load_scenario_yield_observations
 from app.adapters.splinterlands import SplinterlandsModernRankedAdapter
 from app.adapters.splinterlands_probe import load_live_observations as load_splinterlands_observations
 from app.config.settings import Settings, get_settings
@@ -28,6 +30,7 @@ from app.storage.history import CalculationWindow, HistoryRepository, StrategySn
 from app.storage.scoring import ScoringRepository
 from app.strategies.defi_kingdoms import DFK_JEWELER_STRATEGIES
 from app.strategies.farmers_world import FARMERS_WORLD_AXE_STRATEGIES
+from app.strategies.scenario_yield import SCENARIO_YIELD_STRATEGIES
 from app.strategies.splinterlands import SPLINTERLANDS_MODERN_RANKED_STRATEGIES
 
 logger = logging.getLogger(__name__)
@@ -102,7 +105,23 @@ def build_production_tasks(settings: Settings | None = None) -> tuple[StrategyCa
         )
         for strategy in SPLINTERLANDS_MODERN_RANKED_STRATEGIES
     )
-    return (*dfk_tasks, *farmers_tasks, *splinterlands_tasks)
+    scenario_yield_tasks = tuple(
+        StrategyCalculationTask(
+            strategy_id=strategy.strategy_id,
+            strategy_version=strategy.strategy_version,
+            adapter=ScenarioYieldAdapter(strategy),
+            load_observations=with_hard_stale_check(
+                lambda active_time, strategy=strategy: load_scenario_yield_observations(
+                    active_time,
+                    strategy=strategy,
+                    settings=active_settings,
+                ),
+                hard_stale=hard_stale,
+            ),
+        )
+        for strategy in SCENARIO_YIELD_STRATEGIES
+    )
+    return (*dfk_tasks, *farmers_tasks, *splinterlands_tasks, *scenario_yield_tasks)
 
 
 def run_production_recalculation(
