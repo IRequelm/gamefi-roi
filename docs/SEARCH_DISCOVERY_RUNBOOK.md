@@ -17,9 +17,16 @@ Canonical public pages:
 - `/rankings/under-25`
 - `/rankings/high-confidence`
 - `/rankings/gamefi`
+- `/rankings/gamefi-under-10`
+- `/rankings/gamefi-under-50`
+- `/rankings/gamefi-under-100`
+- `/rankings/lowest-capital-gamefi`
+- `/rankings/highest-roi-gamefi`
 - `/methodology`
 
 Normal page requests read persisted API-service data only. They must not trigger adapters, live providers, recalculation, scoring, or blockchain/market-data calls.
+
+Canonical opportunity, strategy, ranking, and catalog pages include a visible `Answer-ready` block near the top of the page. These blocks are generated from existing API-service payloads and stored snapshots. They are intended for humans, search engines, and AI answer systems to quote consistently; they must not hard-code live values in static prose or invent ROI where the model marks ROI unavailable.
 
 ## Configuration
 

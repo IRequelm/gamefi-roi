@@ -30,6 +30,11 @@ def test_strategy_page_contains_meaningful_server_rendered_content(monkeypatch, 
     assert DFK_CJEWEL_MAX_LOCK_V1.name in html
     assert "30-day ROI" in html
     assert "Risk and Confidence" in html
+    assert 'data-ai-answer-block="true"' in html
+    assert "Answer-ready strategy summary" in html
+    assert "Estimated gross earnings/day" in html
+    assert "Required time/effort" in html
+    assert "Major assumptions" in html
     assert f'<link rel="canonical" href="http://localhost:8000/strategies/{DFK_CJEWEL_MAX_LOCK_V1.strategy_id}">' in html
     assert '<a class="button cta" href="/go/defi-kingdoms-play"' in html
     assert 'data-analytics-link="outbound"' in html
@@ -46,6 +51,8 @@ def test_unavailable_points_roi_is_crawlable_and_not_zero(monkeypatch, tmp_path)
     assert "Grass" in html
     assert "ROI not measurable yet" in html
     assert "Points cannot currently be converted to cash reliably" in html
+    assert "Answer-ready opportunity summary" in html
+    assert "Value route" in html
     assert "DePIN / Nodes" in html
     assert "DEPIN_NODE" not in html
     assert "$0" not in html
@@ -83,6 +90,8 @@ def test_curated_landing_page_is_indexable(monkeypatch, tmp_path) -> None:
     assert response.status_code == 200
     assert '<meta name="robots" content="index,follow">' in response.text
     assert "Web3 strategies under $25 capital" in response.text
+    assert "Answer-ready comparison" in response.text
+    assert "Citation-ready" in response.text
     assert SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1.name in response.text
 
 
@@ -131,6 +140,8 @@ def test_json_ld_payloads_are_parseable_and_truthful(monkeypatch, tmp_path) -> N
     assert {"Organization", "WebSite", "WebPage"} <= types
     assert "Product" not in types
     assert "Review" not in types
+    assert "Dataset" not in types
+    assert "ItemList" not in types
     assert any(payload.get("url") == "http://localhost:8000" for payload in payloads)
 
 
@@ -260,6 +271,8 @@ def test_canonical_inventory_has_no_api_go_or_query_urls(monkeypatch, tmp_path) 
     assert "/" in paths
     assert "/rankings" in paths
     assert "/rankings/gamefi" in paths
+    assert "/rankings/gamefi-under-100" in paths
+    assert "/rankings/highest-roi-gamefi" in paths
     assert all(not path.startswith(("/api", "/go")) and "?" not in path for path in paths)
 
 

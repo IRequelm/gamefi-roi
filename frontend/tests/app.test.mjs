@@ -19,9 +19,13 @@ import {
   renderError,
   renderFreshnessAlert,
   renderHistory,
+  renderHomeAnswerBlock,
   renderHomeShell,
+  renderOpportunityAnswerBlock,
   renderOpportunityDetail,
+  renderRankingsAnswerBlock,
   renderRankingsTable,
+  renderStrategyAnswerBlock,
   renderScoreBadge,
   renderSponsoredPlacements,
   renderStrategySignals,
@@ -78,6 +82,29 @@ test("home renders results as cards before filters without table ranking markup"
   assert.match(html, /finder-results/);
   assert.match(html, /filter-panel/);
   assert.doesNotMatch(html, /<table/);
+});
+
+test("answer-ready blocks expose stored values without changing calculations", () => {
+  const rankings = rankingPayload();
+  const strategy = strategyPayload();
+  const opportunity = { ...opportunityPayload(), strategies: [strategy] };
+
+  const home = renderHomeAnswerBlock(rankings, [opportunityPayload()]);
+  const ranking = renderRankingsAnswerBlock(rankings, { title: "GameFi strategies under $100 capital", filters: "opportunity_type=GAME&capital_max=100" });
+  const opportunityHtml = renderOpportunityAnswerBlock(opportunity);
+  const strategyHtml = renderStrategyAnswerBlock(strategy, strategy.latest_snapshot);
+
+  assert.match(home, /Answer-ready overview/);
+  assert.match(ranking, /Answer-ready comparison/);
+  assert.match(ranking, /Capital up to \$100/);
+  assert.match(opportunityHtml, /Answer-ready opportunity summary/);
+  assert.match(strategyHtml, /Answer-ready strategy summary/);
+  assert.match(strategyHtml, /Estimated gross earnings\/day/);
+  assert.match(strategyHtml, /Required time\/effort/);
+  assert.match(strategyHtml, /Major assumptions/);
+  assert.match(strategyHtml, /5\.86%/);
+  assert.doesNotMatch(strategyHtml, /0\.05862 30-day ROI/);
+  assert.doesNotMatch(opportunityHtml, /DEPIN_NODE|PARTIAL|NONE/);
 });
 
 test("catalog stats summarize V1 coverage without financial recomputation", () => {
@@ -138,6 +165,9 @@ test("GamCryp brand stylesheet uses dark navy base and restrained accent palette
   assert.match(css, /\.opportunity-facts\s*{[\s\S]*grid-template-columns:\s*1fr/);
   assert.match(css, /\.watchlist-note\s*{[\s\S]*line-height:\s*1\.42/);
   assert.match(css, /\.button,\n\.secondary-button\s*{[\s\S]*justify-content:\s*center/);
+  assert.match(css, /\.answer-card\s*{/);
+  assert.match(css, /\.answer-grid\s*{[\s\S]*repeat\(3, minmax\(0, 1fr\)\)/);
+  assert.match(css, /@media \(max-width: 900px\)[\s\S]*\.answer-grid\s*{[\s\S]*grid-template-columns:\s*1fr/);
   assert.doesNotMatch(css, /#f6f7f2|#fff5e6|#e9f5ed|#edf4fb/);
 });
 
@@ -164,6 +194,10 @@ test("curated ranking landing pages keep organic filters and ignore tracking par
   assert.equal(
     curatedRankingQuery("/rankings/gamefi", "?utm_source=perplexity&risk_max=80"),
     "?opportunity_type=GAME&risk_max=80",
+  );
+  assert.equal(
+    curatedRankingQuery("/rankings/gamefi-under-100", "?utm_campaign=ai&confidence_min=50"),
+    "?opportunity_type=GAME&capital_max=100&confidence_min=50",
   );
 });
 
@@ -201,7 +235,7 @@ test("opportunity detail shows unavailable ROI in public language without invent
   assert.match(html, /Grass Points/);
   assert.match(html, /\/go\/grass-official/);
   assert.doesNotMatch(html, /DEPIN_NODE|PARTIAL|Financial ROI unavailable/);
-  assert.doesNotMatch(html, />0<\/|0\.00/);
+  assert.doesNotMatch(html, /\$0(?:\.00)?|>0(?:\.00)?%/);
 });
 
 test("risk and confidence badges preserve unavailable scores", () => {

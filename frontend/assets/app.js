@@ -3,6 +3,21 @@ const CURATED_RANKING_FILTERS = {
   "/rankings/under-25": "capital_max=25",
   "/rankings/high-confidence": "confidence_min=80",
   "/rankings/gamefi": "opportunity_type=GAME",
+  "/rankings/gamefi-under-10": "opportunity_type=GAME&capital_max=10",
+  "/rankings/gamefi-under-50": "opportunity_type=GAME&capital_max=50",
+  "/rankings/gamefi-under-100": "opportunity_type=GAME&capital_max=100",
+  "/rankings/lowest-capital-gamefi": "opportunity_type=GAME&capital_max=25",
+  "/rankings/highest-roi-gamefi": "opportunity_type=GAME",
+};
+const CURATED_RANKING_TITLES = {
+  "/rankings/under-25": "Web3 strategies under $25 capital",
+  "/rankings/high-confidence": "High-confidence modeled Web3 strategies",
+  "/rankings/gamefi": "GameFi ROI rankings",
+  "/rankings/gamefi-under-10": "GameFi strategies under $10 capital",
+  "/rankings/gamefi-under-50": "GameFi strategies under $50 capital",
+  "/rankings/gamefi-under-100": "GameFi strategies under $100 capital",
+  "/rankings/lowest-capital-gamefi": "Lowest-capital modeled GameFi strategies",
+  "/rankings/highest-roi-gamefi": "Highest modeled GameFi ROI strategies",
 };
 const RANKING_FILTER_KEYS = new Set([
   "capital_min",
@@ -104,6 +119,7 @@ export function renderHomeShell(games = [], rankings = { items: [], page: { tota
           <span>Freshness stays visible</span>
         </div>
       </section>
+      ${renderHomeAnswerBlock(rankings, opportunities)}
       ${renderTopRankingSummary(rankings)}
       ${renderCatalogStats(rankings, opportunities)}
       <section class="finder-grid" aria-label="ROI finder">
@@ -212,14 +228,185 @@ export function renderTopRankingSummary(rankings = { items: [] }) {
   `;
 }
 
-export function renderRankingsPage(rankings) {
+export function renderHomeAnswerBlock(rankings = { items: [], page: { total: 0 } }, opportunities = []) {
+  const unavailableCount = opportunities.filter((opportunity) => !opportunity.strategy_count).length;
+  const fields = [
+    ["Reviewed opportunities", escapeHtml(String(opportunities.length))],
+    ["Modeled strategies", escapeHtml(String(rankings.page?.total ?? (rankings.items || []).length))],
+    ["Opportunity coverage", escapeHtml(Array.from(new Set(opportunities.map((item) => opportunityTypeLabel(item.opportunity_type)))).sort().join(", ") || "Unavailable")],
+    ["Current top answer", escapeHtml(rankingsSummary(rankings))],
+    ["Unavailable ROI policy", escapeHtml(`${unavailableCount} opportunities remain unavailable, not zero, until value is reproducible.`)],
+    ["Data source", "Stored snapshots served through /api/v1; page requests do not call live providers."],
+  ];
+  return renderAnswerBlock(
+    "Answer-ready overview",
+    "GamCryp is a Web3 opportunity intelligence source for modeled ROI, risk, confidence, freshness, and explicit unavailable states.",
+    fields,
+  );
+}
+
+export function renderRankingsAnswerBlock(rankings = { items: [], page: { total: 0 } }, options = {}) {
+  const fields = [
+    ["Comparison page", escapeHtml(options.title || "Current strategy cards")],
+    ["Matching modeled strategies", escapeHtml(String(rankings.page?.total ?? (rankings.items || []).length))],
+    ["Ranking basis", "30D ROI descending, confidence descending, risk ascending, latest calculation descending, then strategy id."],
+    ["Filters", escapeHtml(filterSummary(options.filters || ""))],
+    ["Last snapshot update", escapeHtml(latestSnapshotTime(rankings))],
+    ["Data source", "Latest successful persisted strategy snapshots from /api/v1/rankings."],
+    ["Commercial policy", "Referral, affiliate, and sponsor metadata never changes organic ranking order or analytical scores."],
+  ];
+  return renderAnswerBlock("Answer-ready comparison", rankingsSummary(rankings), fields);
+}
+
+export function renderOpportunityAnswerBlock(opportunity) {
+  const strategies = opportunity.strategies || [];
+  const strategy = strategies.find((item) => item.latest_snapshot) || strategies[0];
+  const snapshot = strategy?.latest_snapshot;
+  if (strategy && snapshot) {
+    const fields = strategyAnswerFields(strategy, snapshot);
+    fields.unshift(["Opportunity page", escapeHtml(opportunity.name)]);
+    return renderAnswerBlock("Answer-ready opportunity summary", rankingAnswer(snapshot, strategy), fields);
+  }
+  const destination = opportunity.primary_destination;
+  const fields = [
+    ["Opportunity", escapeHtml(opportunity.name)],
+    ["Opportunity type", escapeHtml(opportunityTypeLabel(opportunity.opportunity_type))],
+    ["ROI status", escapeHtml(valueStatusText(opportunity.value_realization_status, opportunity.strategy_count))],
+    ["Review state", escapeHtml(feasibilityLabel(opportunity.data_feasibility_status))],
+    ["Reward type", escapeHtml((opportunity.reward_asset_or_points_type || []).join(", ") || "Unspecified")],
+    ["Value route", escapeHtml(plainUnavailableReason(opportunity))],
+    ["Modeled strategies", escapeHtml(String(opportunity.strategy_count || 0))],
+    ["Reviewed outbound link", escapeHtml(destination ? `${destination.label}; ${destination.verification_status}; reviewed ${formatDateTime(destination.reviewed_at)}` : "No reviewed outbound destination.")],
+  ];
+  return renderAnswerBlock("Answer-ready opportunity summary", `ROI for ${opportunity.name} is not measurable yet. ${plainUnavailableReason(opportunity)}`, fields);
+}
+
+export function renderStrategyAnswerBlock(strategy, snapshot) {
+  if (!snapshot) {
+    return renderAnswerBlock("Answer-ready strategy summary", `${strategy.name} has no successful stored calculation yet.`, [
+      ["Strategy", escapeHtml(strategy.name)],
+      ["Strategy version", escapeHtml(strategy.strategy_version)],
+      ["Opportunity", escapeHtml(strategy.game_name)],
+      ["Opportunity type", escapeHtml(opportunityTypeLabel(strategy.opportunity_type))],
+      ["ROI status", "No successful stored calculation yet."],
+    ]);
+  }
+  return renderAnswerBlock("Answer-ready strategy summary", rankingAnswer(snapshot, strategy), strategyAnswerFields(strategy, snapshot));
+}
+
+function strategyAnswerFields(strategy, snapshot) {
+  return [
+    ["Opportunity", escapeHtml(strategy.game_name)],
+    ["Opportunity type", escapeHtml(opportunityTypeLabel(strategy.opportunity_type))],
+    ["Strategy", escapeHtml(strategy.name)],
+    ["Strategy version", escapeHtml(strategy.strategy_version)],
+    ["Starting capital", formatMoney(snapshot.capital.total_capital)],
+    ["Estimated gross earnings/day", formatMoney(snapshot.earnings.gross_nominal_earnings_day, { perDay: true })],
+    ["Estimated realizable earnings/day", formatMoney(snapshot.earnings.realizable_earnings_day, { perDay: true })],
+    ["Estimated net earnings/day", formatMoney(snapshot.earnings.net_earnings_day, { perDay: true })],
+    ["30D ROI", formatRatio(snapshot.roi.roi_total_30d)],
+    ["Break-even", formatBreakEven(snapshot.roi.break_even)],
+    ["Risk", escapeHtml(scoreText(snapshot.risk))],
+    ["Confidence", escapeHtml(scoreText(snapshot.confidence))],
+    ["Data status", escapeHtml(labelize(snapshot.freshness?.overall_status || "unknown"))],
+    ["Snapshot timestamp", formatDateTime(snapshot.calculated_at)],
+    ["Required time/effort", "Not separately quantified in this strategy snapshot."],
+    ["Major assumptions", escapeHtml(majorAssumptions(snapshot))],
+    ["Warnings", escapeHtml(warningSummary(snapshot.warnings || []))],
+    ["Financial data source", "Latest successful persisted snapshot; no live provider call during page view."],
+  ];
+}
+
+function renderAnswerBlock(title, summary, fields) {
+  return `
+    <section class="answer-card" data-ai-answer-block="true">
+      <div class="section-header"><h2>${escapeHtml(title)}</h2><span class="badge info">Citation-ready</span></div>
+      <div class="section-body">
+        <p class="answer-summary">${escapeHtml(summary)}</p>
+        <dl class="answer-grid">
+          ${fields.map(([label, value]) => `<div class="answer-item"><dt>${escapeHtml(label)}</dt><dd>${value}</dd></div>`).join("")}
+        </dl>
+      </div>
+    </section>
+  `;
+}
+
+function rankingsSummary(rankings = { items: [] }) {
+  const top = (rankings.items || [])[0];
+  if (!top) {
+    return "No successful stored strategy snapshots currently match this page.";
+  }
+  return rankingAnswer(top.latest_snapshot, top.strategy);
+}
+
+function rankingAnswer(snapshot, strategy) {
+  return `GamCryp currently models ${strategy.name} at ${textFromHtml(formatRatio(snapshot.roi.roi_total_30d))} 30-day ROI using ${textFromHtml(formatMoney(snapshot.capital.total_capital))} capital. Net earnings are ${textFromHtml(formatMoney(snapshot.earnings.net_earnings_day, { perDay: true }))}. Risk is ${scoreText(snapshot.risk)} and Confidence is ${scoreText(snapshot.confidence)}. Latest modeled snapshot was calculated at ${formatDateTime(snapshot.calculated_at)}.`;
+}
+
+function latestSnapshotTime(rankings = { items: [] }) {
+  const times = (rankings.items || [])
+    .map((item) => item.latest_snapshot?.calculated_at)
+    .filter(Boolean)
+    .sort();
+  return times.length ? formatDateTime(times[times.length - 1]) : "Unavailable";
+}
+
+function filterSummary(query) {
+  const params = new URLSearchParams(query);
+  if (![...params.keys()].length) {
+    return "No additional filters.";
+  }
+  const labels = [];
+  if (params.has("opportunity_type")) {
+    labels.push(`Opportunity type: ${opportunityTypeLabel(params.get("opportunity_type"))}`);
+  }
+  if (params.has("capital_max")) {
+    labels.push(`Capital up to $${params.get("capital_max")}`);
+  }
+  if (params.has("capital_min")) {
+    labels.push(`Capital at least $${params.get("capital_min")}`);
+  }
+  if (params.has("confidence_min")) {
+    labels.push(`Confidence at least ${params.get("confidence_min")}`);
+  }
+  if (params.has("risk_max")) {
+    labels.push(`Risk up to ${params.get("risk_max")}`);
+  }
+  return labels.join("; ") || "Filtered organic strategy results.";
+}
+
+function majorAssumptions(snapshot) {
+  const counts = snapshot.classification_summary?.counts || {};
+  return `${counts.LIVE ?? 0} live observations, ${counts.CONFIG ?? 0} configured assumptions, and ${counts.DERIVED ?? 0} derived metrics are attached to this snapshot.`;
+}
+
+function warningSummary(warnings = []) {
+  if (!warnings.length) {
+    return "No warnings attached.";
+  }
+  return warnings.slice(0, 2).map((warning) => warning.message).join(" ");
+}
+
+function textFromHtml(html) {
+  return String(html)
+    .replace(/<[^>]*>/g, "")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, "&");
+}
+
+export function renderRankingsPage(rankings, options = {}) {
+  const title = options.title || "Current strategy cards";
   return `
     <div class="page-shell">
       <section class="page-head">
         <p class="eyebrow">Organic rankings</p>
-        <h1>Current strategy cards</h1>
+        <h1>${escapeHtml(title)}</h1>
         <p class="lede">The order is supplied by the API: 30D ROI, confidence, risk, last calculation time, then strategy id. Brand or referral metadata never changes this order.</p>
       </section>
+      ${renderRankingsAnswerBlock(rankings, { title })}
       ${renderRankingsTable(rankings)}
       ${renderSponsoredPlacements(rankings.sponsored_placements || [])}
     </div>
@@ -252,6 +439,7 @@ export function renderOpportunityDetail(opportunity) {
           ${opportunity.legacy_game_id ? `<a class="secondary-button" href="/games/${encodeURIComponent(opportunity.legacy_game_id)}" data-link>Game view</a>` : ""}
         </div>
       </section>
+      ${renderOpportunityAnswerBlock(opportunity)}
       <section class="game-grid">
         <div class="game-card">
           <h3>Opportunity type</h3>
@@ -500,6 +688,7 @@ export function renderStrategyDetail(strategy, historyPage = { items: [] }) {
           ${renderDestinationButton(strategy.primary_destination, "Start", { sourcePage: "strategy_detail", placement: "primary_cta" })}
         </div>
       </section>
+      ${renderStrategyAnswerBlock(strategy, snapshot)}
       ${renderFreshnessAlert(snapshot)}
       ${renderStrategySignals(snapshot)}
       ${renderOverviewMetrics(snapshot)}
@@ -1071,7 +1260,7 @@ export function scoreText(score) {
   if (!score?.available) {
     return "Unavailable";
   }
-  return `${score.score} ${score.label}`;
+  return `${score.score} ${publicScoreLabel(score.label)}`;
 }
 
 export function renderFreshnessPill(freshness, options = {}) {
@@ -1129,6 +1318,11 @@ export function renderValueStatus(status, strategyCount = 0) {
   const measurable = normalized === "realizable" && strategyCount > 0;
   const label = measurable ? "ROI can be measured" : "ROI not measurable yet";
   return `<span class="badge ${measurable ? "good" : "warning"}">${escapeHtml(label)}</span>`;
+}
+
+function valueStatusText(status, strategyCount = 0) {
+  const normalized = String(status || "unknown");
+  return normalized === "realizable" && strategyCount > 0 ? "ROI can be measured" : "ROI not measurable yet";
 }
 
 function unavailableRoiReason(opportunity) {
@@ -1552,7 +1746,10 @@ async function renderCurrentRoute() {
     } else if (path === "/rankings") {
       root.innerHTML = renderRankingsPage(await apiGet(`/rankings${window.location.search}`));
     } else if (CURATED_RANKING_FILTERS[path]) {
-      root.innerHTML = renderRankingsPage(await apiGet(`/rankings${curatedRankingQuery(path, window.location.search)}`));
+      root.innerHTML = renderRankingsPage(await apiGet(`/rankings${curatedRankingQuery(path, window.location.search)}`), {
+        title: CURATED_RANKING_TITLES[path] || "Curated organic rankings",
+        filters: CURATED_RANKING_FILTERS[path],
+      });
     } else if (path === "/opportunities") {
       root.innerHTML = renderOpportunitiesPage(await apiGet("/opportunities"));
     } else if (path.startsWith("/opportunities/")) {

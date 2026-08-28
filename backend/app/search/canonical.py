@@ -57,6 +57,36 @@ CURATED_RANKING_PAGES: tuple[CuratedRankingPage, ...] = (
         description="Organic rankings for currently modeled GAME opportunities.",
         filters={"opportunity_type": "GAME"},
     ),
+    CuratedRankingPage(
+        slug="gamefi-under-10",
+        title="GameFi strategies under $10 capital",
+        description="Modeled GAME strategies whose latest stored capital requirement is under $10.",
+        filters={"opportunity_type": "GAME", "capital_max": Decimal("10")},
+    ),
+    CuratedRankingPage(
+        slug="gamefi-under-50",
+        title="GameFi strategies under $50 capital",
+        description="Modeled GAME strategies whose latest stored capital requirement is under $50.",
+        filters={"opportunity_type": "GAME", "capital_max": Decimal("50")},
+    ),
+    CuratedRankingPage(
+        slug="gamefi-under-100",
+        title="GameFi strategies under $100 capital",
+        description="Modeled GAME strategies whose latest stored capital requirement is under $100.",
+        filters={"opportunity_type": "GAME", "capital_max": Decimal("100")},
+    ),
+    CuratedRankingPage(
+        slug="lowest-capital-gamefi",
+        title="Lowest-capital modeled GameFi strategies",
+        description="Modeled GAME strategies under $25 capital, shown in organic API order with capital clearly visible.",
+        filters={"opportunity_type": "GAME", "capital_max": Decimal("25")},
+    ),
+    CuratedRankingPage(
+        slug="highest-roi-gamefi",
+        title="Highest modeled GameFi ROI strategies",
+        description="Modeled GAME strategies in organic ROI ranking order using latest successful stored snapshots.",
+        filters={"opportunity_type": "GAME"},
+    ),
 )
 
 

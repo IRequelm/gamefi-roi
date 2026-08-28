@@ -125,6 +125,7 @@ def home_page(service: ApiDataService, *, settings: Settings, request: Request) 
             <span>Unavailable ROI stays unavailable</span>
           </div>
         </section>
+        {_render_home_answer_block(rankings, opportunities)}
         {_render_catalog_stats(rankings, opportunities)}
         {_render_ranking_cards(rankings.items[:3], heading="Current organic leaders")}
         {_render_opportunity_cards(opportunities, heading="Opportunity radar")}
@@ -158,6 +159,7 @@ def rankings_page(service: ApiDataService, *, settings: Settings, request: Reque
           <p class="lede">{escape(_rankings_summary(rankings))}</p>
           <p class="muted">Organic order is supplied by stored strategy snapshots and risk/confidence scores. Commercial metadata is separate.</p>
         </section>
+        {_render_rankings_answer_block(rankings, "Current Web3 ROI strategy rankings")}
         {_render_curated_links()}
         {_render_ranking_cards(rankings.items, heading="Ranked strategies")}
       </div>
@@ -193,6 +195,7 @@ def curated_rankings_page(
           <p class="lede">{escape(_rankings_summary(rankings))}</p>
           <p class="muted">{escape(landing.description)} Sponsored and affiliate relationships never affect these results.</p>
         </section>
+        {_render_rankings_answer_block(rankings, landing.title, landing.filters)}
         {_render_ranking_cards(rankings.items, heading="Matching modeled strategies")}
       </div>
     """
@@ -221,6 +224,7 @@ def opportunities_page(service: ApiDataService, *, settings: Settings, request: 
           <h1>Games, DePIN nodes, and points programs under review</h1>
           <p class="lede">GamCryp publishes financial ROI only when reward value, costs, timing, and exit route are lawful and reproducible. Points-only opportunities remain unavailable, not zero.</p>
         </section>
+        {_render_opportunity_index_answer_block(opportunities)}
         {_render_opportunity_cards(opportunities, heading="Reviewed opportunities")}
       </div>
     """
@@ -260,6 +264,7 @@ def opportunity_page(
             {_destination_button(opportunity.primary_destination, "Open official link")}
           </div>
         </section>
+        {_render_opportunity_answer_block(opportunity, strategy, snapshot)}
         <section class="section-panel">
           <div class="section-header"><h2>Executive Summary</h2></div>
           <div class="section-body metric-grid">
@@ -355,6 +360,7 @@ def strategy_page(
             {_destination_button(strategy.primary_destination, "Start")}
           </div>
         </section>
+        {_render_strategy_answer_block(strategy, snapshot)}
         {_render_snapshot_detail(snapshot) if snapshot is not None else _empty("No stored snapshot", "This strategy has not produced a valid stored calculation yet.")}
         {_render_history_context(history_items)}
         <section class="section-panel">
@@ -494,6 +500,179 @@ def _rankings_summary(rankings: RankingsPage) -> str:
         return "No successful stored strategy snapshots currently match this page."
     top = rankings.items[0]
     return _ranking_answer(top.latest_snapshot, top.strategy)
+
+
+def _render_home_answer_block(rankings: RankingsPage, opportunities: list[OpportunitySummary]) -> str:
+    unavailable_count = sum(1 for opportunity in opportunities if opportunity.strategy_count == 0)
+    fields = [
+        ("Reviewed opportunities", escape(str(len(opportunities)))),
+        ("Modeled strategies", escape(str(rankings.page.total))),
+        ("Opportunity coverage", escape(", ".join(sorted({opportunity_type_label(item.opportunity_type) for item in opportunities})) or "Unavailable")),
+        ("Current top answer", escape(_rankings_summary(rankings))),
+        ("Unavailable ROI policy", escape(f"{unavailable_count} opportunities remain unavailable, not zero, until value is reproducible.")),
+        ("Data source", "Stored snapshots served through /api/v1; page requests do not call live providers."),
+    ]
+    return _render_answer_block(
+        "Answer-ready overview",
+        "GamCryp is a Web3 opportunity intelligence source for modeled ROI, risk, confidence, freshness, and explicit unavailable states.",
+        fields,
+    )
+
+
+def _render_rankings_answer_block(
+    rankings: RankingsPage,
+    title: str,
+    filters: dict[str, object] | None = None,
+) -> str:
+    fields = [
+        ("Comparison page", escape(title)),
+        ("Matching modeled strategies", escape(str(rankings.page.total))),
+        ("Ranking basis", "30D ROI descending, confidence descending, risk ascending, latest calculation descending, then strategy id."),
+        ("Filters", escape(_filter_summary(filters))),
+        ("Last snapshot update", escape(format_datetime(_rankings_lastmod(rankings)))),
+        ("Data source", "Latest successful persisted strategy snapshots from /api/v1/rankings."),
+        ("Commercial policy", "Referral, affiliate, and sponsor metadata never changes organic ranking order or analytical scores."),
+    ]
+    return _render_answer_block(
+        "Answer-ready comparison",
+        _rankings_summary(rankings),
+        fields,
+    )
+
+
+def _render_opportunity_index_answer_block(opportunities: list[OpportunitySummary]) -> str:
+    modeled_count = sum(1 for opportunity in opportunities if opportunity.strategy_count > 0)
+    unavailable_count = len(opportunities) - modeled_count
+    fields = [
+        ("Catalog size", escape(str(len(opportunities)))),
+        ("Modeled opportunities", escape(str(modeled_count))),
+        ("ROI unavailable opportunities", escape(str(unavailable_count))),
+        ("Opportunity types", escape(", ".join(sorted({opportunity_type_label(item.opportunity_type) for item in opportunities})) or "Unavailable")),
+        ("Financial ROI rule", "Only opportunities with reproducible reward value, costs, timing, and exit route receive ROI."),
+        ("Points rule", "Points and future claims are shown as unavailable unless a lawful realizable value route exists."),
+    ]
+    return _render_answer_block(
+        "Answer-ready catalog summary",
+        "GamCryp tracks Games, DePIN / Nodes, and Points programs in one opportunity catalog with modeled ROI only where the data supports it.",
+        fields,
+    )
+
+
+def _render_opportunity_answer_block(
+    opportunity: OpportunityDetail,
+    strategy: StrategySummary | None,
+    snapshot: StrategySnapshotPayload | None,
+) -> str:
+    reward_type = ", ".join(opportunity.reward_asset_or_points_type) or "Unspecified"
+    if strategy is not None and snapshot is not None:
+        fields = _strategy_answer_fields(strategy, snapshot)
+        fields.insert(0, ("Opportunity page", escape(opportunity.name)))
+        return _render_answer_block("Answer-ready opportunity summary", _ranking_answer(snapshot, strategy), fields)
+
+    fields = [
+        ("Opportunity", escape(opportunity.name)),
+        ("Opportunity type", escape(opportunity_type_label(opportunity.opportunity_type))),
+        ("ROI status", escape(value_status_label(opportunity.value_realization_status, opportunity.strategy_count))),
+        ("Review state", escape(feasibility_label(opportunity.data_feasibility_status))),
+        ("Reward type", escape(reward_type)),
+        ("Value route", escape(plain_unavailable_reason(opportunity))),
+        ("Modeled strategies", escape(str(opportunity.strategy_count))),
+        ("Reviewed outbound link", escape(_destination_status_text(opportunity.primary_destination))),
+        ("Last reviewed", escape(format_datetime(getattr(opportunity.primary_destination, "reviewed_at", None)))),
+    ]
+    return _render_answer_block("Answer-ready opportunity summary", _opportunity_answer(opportunity, strategy, snapshot), fields)
+
+
+def _render_strategy_answer_block(strategy: StrategySummary, snapshot: StrategySnapshotPayload | None) -> str:
+    if snapshot is None:
+        fields = [
+            ("Strategy", escape(strategy.name)),
+            ("Strategy version", escape(strategy.strategy_version)),
+            ("Opportunity", escape(strategy.game_name)),
+            ("Opportunity type", escape(opportunity_type_label(strategy.opportunity_type))),
+            ("ROI status", "No successful stored calculation yet."),
+        ]
+        return _render_answer_block("Answer-ready strategy summary", f"{strategy.name} has no successful stored calculation yet.", fields)
+    return _render_answer_block("Answer-ready strategy summary", _ranking_answer(snapshot, strategy), _strategy_answer_fields(strategy, snapshot))
+
+
+def _strategy_answer_fields(strategy: StrategySummary, snapshot: StrategySnapshotPayload) -> list[tuple[str, str]]:
+    return [
+        ("Opportunity", escape(strategy.game_name)),
+        ("Opportunity type", escape(opportunity_type_label(strategy.opportunity_type))),
+        ("Strategy", escape(strategy.name)),
+        ("Strategy version", escape(strategy.strategy_version)),
+        ("Starting capital", format_money_html(snapshot.capital.total_capital)),
+        ("Estimated gross earnings/day", format_money_html(snapshot.earnings.gross_nominal_earnings_day, per_day=True)),
+        ("Estimated realizable earnings/day", format_money_html(snapshot.earnings.realizable_earnings_day, per_day=True)),
+        ("Estimated net earnings/day", format_money_html(snapshot.earnings.net_earnings_day, per_day=True)),
+        ("30D ROI", format_ratio_html(snapshot.roi.roi_total_30d)),
+        ("Break-even", format_break_even_html(snapshot.roi.break_even)),
+        ("Risk", escape(score_text(snapshot.risk))),
+        ("Confidence", escape(score_text(snapshot.confidence))),
+        ("Data status", escape(labelize(snapshot.freshness.overall_status))),
+        ("Snapshot timestamp", escape(format_datetime(snapshot.calculated_at))),
+        ("Required time/effort", "Not separately quantified in this strategy snapshot."),
+        ("Major assumptions", escape(_major_assumptions(snapshot))),
+        ("Warnings", escape(_warning_summary(snapshot.warnings))),
+        ("Financial data source", "Latest successful persisted snapshot; no live provider call during page view."),
+    ]
+
+
+def _render_answer_block(title: str, summary: str, fields: list[tuple[str, str]]) -> str:
+    items = "".join(
+        f'<div class="answer-item"><dt>{escape(label)}</dt><dd>{value}</dd></div>'
+        for label, value in fields
+    )
+    return f"""
+      <section class="answer-card" data-ai-answer-block="true">
+        <div class="section-header"><h2>{escape(title)}</h2><span class="badge info">Citation-ready</span></div>
+        <div class="section-body">
+          <p class="answer-summary">{escape(summary)}</p>
+          <dl class="answer-grid">{items}</dl>
+        </div>
+      </section>
+    """
+
+
+def _filter_summary(filters: dict[str, object] | None) -> str:
+    if not filters:
+        return "No additional filters."
+    parts = []
+    for key, value in filters.items():
+        if key == "opportunity_type":
+            parts.append(f"Opportunity type: {opportunity_type_label(str(value))}")
+        elif key == "capital_max":
+            parts.append(f"Capital up to ${_trim_decimal(Decimal(str(value)))}")
+        elif key == "capital_min":
+            parts.append(f"Capital at least ${_trim_decimal(Decimal(str(value)))}")
+        elif key == "confidence_min":
+            parts.append(f"Confidence at least {value}")
+        elif key == "risk_max":
+            parts.append(f"Risk up to {value}")
+        else:
+            parts.append(f"{labelize(key)}: {value}")
+    return "; ".join(parts)
+
+
+def _major_assumptions(snapshot: StrategySnapshotPayload) -> str:
+    counts = snapshot.classification_summary.counts
+    live = counts.get("LIVE", 0)
+    config = counts.get("CONFIG", 0)
+    derived = counts.get("DERIVED", 0)
+    return f"{live} live observations, {config} configured assumptions, and {derived} derived metrics are attached to this snapshot."
+
+
+def _warning_summary(warnings) -> str:
+    if not warnings:
+        return "No warnings attached."
+    return " ".join(warning.message for warning in warnings[:2])
+
+
+def _destination_status_text(destination) -> str:
+    if destination is None:
+        return "No reviewed outbound destination."
+    return f"{destination.label}; {destination.verification_status}; reviewed {format_datetime(destination.reviewed_at)}."
 
 
 def _render_ranking_cards(items: list[RankingItem], *, heading: str) -> str:
@@ -758,7 +937,7 @@ def format_break_even_html(metric) -> str:
 def score_text(score) -> str:
     if not score.available:
         return "Unavailable"
-    return f"{score.score} {score.label}"
+    return f"{score.score} {labelize(score.label)}"
 
 
 def score_class(score, kind: str) -> str:
