@@ -13,6 +13,7 @@ from app.adapters.scenario_yield_probe import (
     REWARD_TOKEN_PRICE_USD,
     build_scenario_observations,
     load_fixture_observations,
+    load_live_observations,
 )
 from app.engine.calculator import MODEL_VERSION, calculate_strategy_roi
 from app.sources.observations import Observation, ObservationStatus, SourceType
@@ -21,6 +22,7 @@ from app.strategies.scenario_yield import (
     DIMO_SOFTWARE_ONLY_V1,
     SCENARIO_YIELD_STRATEGIES,
     ScenarioYieldStrategyDefinition,
+    WEATHERXM_D1_WIFI_V1,
     scenario_metric,
 )
 
@@ -82,6 +84,77 @@ def test_scenario_yield_preserves_live_config_and_derived_provenance() -> None:
     assert any(observation.source_type == SourceType.OFFICIAL_DOCS for observation in observations)
     assert any(observation.source_type == SourceType.VERIFIED_CONFIG for observation in observations)
     assert set(adapter_result.economics_input.input_observation_ids) == {observation.observation_id for observation in observations}
+
+
+def test_weatherxm_live_loader_uses_coingecko_api_id_and_supplies_required_economics(monkeypatch) -> None:
+    class FakeSettings:
+        market_data_price_freshness_seconds = 300
+
+    class FakeCoinGeckoMarketDataSource:
+        def __init__(self, settings):
+            self.settings = settings
+
+        def get_token_prices(self, request):
+            assert request.provider_asset_ids == ("weatherxm-network",)
+            return [
+                live_observation(
+                    provider="coingecko",
+                    entity_type="asset",
+                    entity_id="coingecko:weatherxm-network",
+                    metric="token.price",
+                    value=Decimal("0.10"),
+                    unit="USD",
+                    source_locator="coingecko:/simple/price?ids=weatherxm-network&vs_currencies=usd",
+                    source_type=SourceType.MARKET_API,
+                    retrieved_at=CALCULATED_AT,
+                    observed_at=CALCULATED_AT,
+                    freshness=timedelta(minutes=5),
+                    metadata={"provider_asset_id": "weatherxm-network"},
+                )
+            ]
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr("app.adapters.scenario_yield_probe.CoinGeckoMarketDataSource", FakeCoinGeckoMarketDataSource)
+
+    observations = load_live_observations(
+        CALCULATED_AT,
+        strategy=WEATHERXM_D1_WIFI_V1,
+        settings=FakeSettings(),
+    )
+    adapter_result = ScenarioYieldAdapter(WEATHERXM_D1_WIFI_V1).build_engine_input(
+        observations,
+        calculated_at=CALCULATED_AT,
+    )
+
+    required_metrics = {
+        scenario_metric(WEATHERXM_D1_WIFI_V1, suffix)
+        for suffix in (
+            "capital.sunk_cost_usd",
+            "capital.recoverable_entry_cost_usd",
+            "capital.current_recoverable_value_usd",
+            "capital.initial_operating_reserve_usd",
+            "capital.capital_at_risk_usd",
+            "earnings.gross_nominal_value_day_usd",
+            "earnings.realizable_value_day_usd",
+            "costs.operating_cost_day_usd",
+            "costs.transaction_cost_day_usd",
+            "costs.other_cost_day_usd",
+        )
+    }
+
+    assert required_metrics <= {observation.metric for observation in observations}
+    assert (
+        adapter_result.classifications[scenario_metric(WEATHERXM_D1_WIFI_V1, REWARD_TOKEN_PRICE_USD)]
+        is ValueClassification.LIVE
+    )
+    assert any(observation.source_type == SourceType.OFFICIAL_DOCS for observation in observations)
+    assert any(observation.source_type == SourceType.VERIFIED_CONFIG for observation in observations)
+    assert all(
+        adapter_result.classifications[metric] is ValueClassification.DERIVED
+        for metric in required_metrics
+    )
 
 
 def test_missing_required_market_price_fails_without_fake_zero_roi() -> None:
