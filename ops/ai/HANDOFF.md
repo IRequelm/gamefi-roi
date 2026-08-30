@@ -30,7 +30,7 @@ Current checkpoint:
 - Execution stopped only because OpenAI Work reached usage limit
 
 Next exact step:
-Continue Sentry account/project creation from the approved EU configuration, then proceed with secure Render env configuration, merge/deploy and production smoke.
+Continue Sentry account/project creation from the approved EU configuration, then proceed with secure Render env configuration, deploy existing master and production smoke.
 
 At task completion:
 Update CURRENT_STATE.md and this HANDOFF.md with the final commit, deployment result, blockers and next action.

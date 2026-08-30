@@ -49,8 +49,8 @@ Next exact action:
 2. Retrieve Sentry DSN values securely
 3. Retrieve/use existing GamCryp PostHog project configuration
 4. Configure Render production environment variables without exposing secrets
-5. Merge the already-tested instrumentation branch if still clean
-6. Deploy exact resulting master commit
+5. Merge step is already DONE; master and origin/master are already at the instrumentation commit
+6. Deploy existing master commit after Render env configuration
 7. Run production smoke tests
 8. Verify Sentry, PostHog, GA4 and referral routing
 
