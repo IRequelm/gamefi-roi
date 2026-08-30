@@ -111,11 +111,11 @@ test("answer-ready blocks expose stored values without changing calculations", (
   const opportunityHtml = renderOpportunityAnswerBlock(opportunity);
   const strategyHtml = renderStrategyAnswerBlock(strategy, strategy.latest_snapshot);
 
-  assert.match(home, /Answer-ready overview/);
-  assert.match(ranking, /Answer-ready comparison/);
+  assert.match(home, /Quick overview/);
+  assert.match(ranking, /Quick comparison/);
   assert.match(ranking, /Capital up to \$100/);
-  assert.match(opportunityHtml, /Answer-ready opportunity summary/);
-  assert.match(strategyHtml, /Answer-ready strategy summary/);
+  assert.match(opportunityHtml, /Quick opportunity summary/);
+  assert.match(strategyHtml, /Quick strategy summary/);
   assert.match(strategyHtml, /Estimated gross earnings\/day/);
   assert.match(strategyHtml, /Required time\/effort/);
   assert.match(strategyHtml, /Major assumptions/);
@@ -278,7 +278,7 @@ test("strategy detail renders capital, earnings, scores, classification, warning
   assert.match(html, /2 snapshots/);
   assert.match(html, /0.05862/);
   assert.match(html, /5.86%/);
-  assert.match(html, /Start/);
+  assert.match(html, /Open project/);
   assert.doesNotMatch(html, /5.862%/);
 });
 
@@ -334,7 +334,7 @@ test("error state distinguishes not found from API unavailable", () => {
 test("history no-history state is explicit", () => {
   const html = renderHistory(historyPayload([snapshotPayload()]));
 
-  assert.match(html, /Insufficient history/);
+  assert.match(html, /At least two stored snapshots are needed/);
   assert.doesNotMatch(html, /snapshots<\/span>/);
 });
 
@@ -381,7 +381,7 @@ test("long strategy names stay in card structure with CTA behavior", () => {
 
   assert.match(html, /ranking-card/);
   assert.match(html, /View strategy/);
-  assert.match(html, /Start/);
+  assert.match(html, /Open project/);
   assert.match(html, /\/go\/defi-kingdoms-play/);
   assert.doesNotMatch(html, /<table/);
 });

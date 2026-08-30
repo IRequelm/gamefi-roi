@@ -328,7 +328,7 @@ def game_page(game, *, settings: Settings, request: Request) -> SeoPage:
           <h1>{escape(game.name)} ROI strategies</h1>
           <p class="lede">{escape(description)}</p>
           <div class="button-row">
-            {_destination_button(game.primary_destination, "Start")}
+            {_destination_button(game.primary_destination, cta_label_for_snapshot(snapshot, "Start"))}
             <a class="secondary-button" href="/opportunities/{escape(game.opportunity_id)}">Canonical opportunity</a>
           </div>
         </section>
@@ -372,7 +372,7 @@ def strategy_page(
           <div class="button-row">
             <a class="secondary-button" href="/opportunities/{escape(strategy.opportunity_id)}">Parent opportunity</a>
             <a class="secondary-button" href="/games/{escape(strategy.game_id)}">Game view</a>
-            {_destination_button(strategy.primary_destination, "Start")}
+            {_destination_button(strategy.primary_destination, cta_label_for_snapshot(snapshot, "Start"))}
           </div>
         </section>
         {_render_strategy_answer_block(strategy, snapshot)}
@@ -528,7 +528,7 @@ def _render_home_answer_block(rankings: RankingsPage, opportunities: list[Opport
         ("Data source", "Stored snapshots served through /api/v1; page requests do not call live providers."),
     ]
     return _render_answer_block(
-        "Answer-ready overview",
+        "Quick overview",
         "GamCryp is a Web3 opportunity intelligence source for modeled ROI, risk, confidence, freshness, and explicit unavailable states.",
         fields,
     )
@@ -549,7 +549,7 @@ def _render_rankings_answer_block(
         ("Commercial policy", "Referral, affiliate, and sponsor metadata never changes organic ranking order or analytical scores."),
     ]
     return _render_answer_block(
-        "Answer-ready comparison",
+        "Quick comparison",
         _rankings_summary(rankings),
         fields,
     )
@@ -567,7 +567,7 @@ def _render_opportunity_index_answer_block(opportunities: list[OpportunitySummar
         ("Points rule", "Points and future claims are shown as unavailable unless a lawful realizable value route exists."),
     ]
     return _render_answer_block(
-        "Answer-ready catalog summary",
+        "Quick catalog summary",
         "GamCryp tracks Games, DePIN / Nodes, and Points programs in one opportunity catalog with modeled ROI only where the data supports it.",
         fields,
     )
@@ -582,7 +582,7 @@ def _render_opportunity_answer_block(
     if strategy is not None and snapshot is not None:
         fields = _strategy_answer_fields(strategy, snapshot)
         fields.insert(0, ("Opportunity page", escape(opportunity.name)))
-        return _render_answer_block("Answer-ready opportunity summary", _ranking_answer(snapshot, strategy), fields)
+        return _render_answer_block("Quick opportunity summary", _ranking_answer(snapshot, strategy), fields)
 
     fields = [
         ("Opportunity", escape(opportunity.name)),
@@ -595,7 +595,7 @@ def _render_opportunity_answer_block(
         ("Reviewed outbound link", escape(_destination_status_text(opportunity.primary_destination))),
         ("Last reviewed", escape(format_datetime(getattr(opportunity.primary_destination, "reviewed_at", None)))),
     ]
-    return _render_answer_block("Answer-ready opportunity summary", _opportunity_answer(opportunity, strategy, snapshot), fields)
+    return _render_answer_block("Quick opportunity summary", _opportunity_answer(opportunity, strategy, snapshot), fields)
 
 
 def _render_strategy_answer_block(strategy: StrategySummary, snapshot: StrategySnapshotPayload | None) -> str:
@@ -607,8 +607,8 @@ def _render_strategy_answer_block(strategy: StrategySummary, snapshot: StrategyS
             ("Opportunity type", escape(opportunity_type_label(strategy.opportunity_type))),
             ("ROI status", "No successful stored calculation yet."),
         ]
-        return _render_answer_block("Answer-ready strategy summary", f"{strategy.name} has no successful stored calculation yet.", fields)
-    return _render_answer_block("Answer-ready strategy summary", _ranking_answer(snapshot, strategy), _strategy_answer_fields(strategy, snapshot))
+        return _render_answer_block("Quick strategy summary", f"{strategy.name} has no successful stored calculation yet.", fields)
+    return _render_answer_block("Quick strategy summary", _ranking_answer(snapshot, strategy), _strategy_answer_fields(strategy, snapshot))
 
 
 def _strategy_answer_fields(strategy: StrategySummary, snapshot: StrategySnapshotPayload) -> list[tuple[str, str]]:
@@ -641,7 +641,7 @@ def _render_answer_block(title: str, summary: str, fields: list[tuple[str, str]]
     )
     return f"""
       <section class="answer-card" data-ai-answer-block="true">
-        <div class="section-header"><h2>{escape(title)}</h2><span class="badge info">Citation-ready</span></div>
+        <div class="section-header"><h2>{escape(title)}</h2><span class="badge info">Source-ready</span></div>
         <div class="section-body">
           <p class="answer-summary">{escape(summary)}</p>
           <dl class="answer-grid">{items}</dl>
@@ -722,7 +722,7 @@ def _render_ranking_cards(items: list[RankingItem], *, heading: str) -> str:
               </div>
               <div class="card-actions">
                 <a class="secondary-button" href="/strategies/{escape(strategy.strategy_id)}">View strategy</a>
-                {_destination_button(strategy.primary_destination, "Start")}
+                {_destination_button(strategy.primary_destination, cta_label_for_snapshot(snapshot, "Start"))}
               </div>
             </article>
             """
@@ -893,7 +893,7 @@ def _destination_button(destination, label: str) -> str:
         return '<span class="badge">No reviewed link</span>'
     relationship = destination_relationship_label(destination)
     relationship_html = f"<span>{escape(relationship)}</span>" if relationship else ""
-    return f'<a class="button cta" href="{escape(destination.redirect_url)}"{analytics_attributes(destination)}>{escape(label)}{relationship_html}</a>'
+    return f'<a class="button cta" href="{escape(destination.redirect_url)}" target="_blank" rel="noopener noreferrer"{analytics_attributes(destination)}>{escape(label)}{relationship_html}</a>'
 
 
 def _summary(label: str, value: str) -> str:
@@ -962,6 +962,40 @@ def score_class(score, kind: str) -> str:
     if kind == "confidence":
         return "good" if label == "high" else "medium" if label == "moderate" else "low-confidence"
     return "good" if label == "low" else "medium" if label == "medium" else label
+
+
+def is_elevated_risk(snapshot) -> bool:
+    if not snapshot or not hasattr(snapshot, "risk") or not snapshot.risk.available:
+        return False
+    label = str(snapshot.risk.label or "").upper()
+    return label in ["HIGH", "VERY HIGH"]
+
+
+def cta_label_for_snapshot(snapshot, fallback: str = "Start") -> str:
+    return "Open project" if is_elevated_risk(snapshot) else fallback
+
+
+def strategy_risk_summary(snapshot) -> str:
+    if not snapshot:
+        return "No snapshot available for risk assessment."
+    if hasattr(snapshot, "freshness") and hasattr(snapshot.freshness, "overall_status"):
+        if snapshot.freshness.overall_status and snapshot.freshness.overall_status != "fresh":
+            return "The latest stored data is stale, so treat the result as outdated until a fresh snapshot appears."
+    if is_elevated_risk(snapshot):
+        return "Elevated risk: this CTA opens the project, not a recommendation to start."
+    if hasattr(snapshot, "confidence") and snapshot.confidence.available:
+        if snapshot.confidence.label == "LOW":
+            return "Low confidence means the calculation depends on weaker or incomplete evidence."
+    if hasattr(snapshot, "warnings") and snapshot.warnings:
+        return snapshot.warnings[0].message
+    return "No critical warning is attached, but ROI is still an estimate rather than a promise."
+
+
+def human_list(values: list[str] | None, fallback: str) -> str:
+    if not values:
+        return fallback
+    labels = [labelize(value) for value in values if value]
+    return ", ".join(labels) if labels else fallback
 
 
 def format_datetime(value: datetime | str | None) -> str:

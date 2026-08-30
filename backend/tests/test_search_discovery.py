@@ -34,7 +34,7 @@ def test_strategy_page_contains_meaningful_server_rendered_content(monkeypatch, 
     assert "30-day ROI" in html
     assert "Risk and Confidence" in html
     assert 'data-ai-answer-block="true"' in html
-    assert "Answer-ready strategy summary" in html
+    assert "Quick strategy summary" in html
     assert "Estimated gross earnings/day" in html
     assert "Required time/effort" in html
     assert "Major assumptions" in html
@@ -54,7 +54,7 @@ def test_unavailable_points_roi_is_crawlable_and_not_zero(monkeypatch, tmp_path)
     assert "Grass" in html
     assert "ROI not measurable yet" in html
     assert "Points cannot currently be converted to cash reliably" in html
-    assert "Answer-ready opportunity summary" in html
+    assert "Quick opportunity summary" in html
     assert "Value route" in html
     assert "DePIN / Nodes" in html
     assert "DEPIN_NODE" not in html
@@ -93,8 +93,8 @@ def test_curated_landing_page_is_indexable(monkeypatch, tmp_path) -> None:
     assert response.status_code == 200
     assert '<meta name="robots" content="index,follow">' in response.text
     assert "Web3 strategies under $25 capital" in response.text
-    assert "Answer-ready comparison" in response.text
-    assert "Citation-ready" in response.text
+    assert "Quick comparison" in response.text
+    assert "Source-ready" in response.text
     assert SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1.name in response.text
 
 
@@ -108,7 +108,7 @@ def test_best_passive_gamefi_landing_page_is_publishable(monkeypatch, tmp_path) 
     html = response.text
     assert '<meta name="robots" content="index,follow">' in html
     assert "Best passive GameFi ROI strategies" in html
-    assert "Answer-ready comparison" in html
+    assert "Quick comparison" in html
     assert DFK_CJEWEL_MAX_LOCK_V1.name in html
     assert FARMERS_WORLD_AXE_WOOD_V1.name not in html
     assert "/rankings/best-passive-gamefi" in paths
@@ -177,7 +177,7 @@ def test_depin_curated_pages_publish_only_when_authoritative_data_qualifies(monk
         response = client.get(f"/rankings/{slug}")
         assert response.status_code == 200
         assert '<meta name="robots" content="index,follow">' in response.text
-        assert "Answer-ready comparison" in response.text
+        assert "Quick comparison" in response.text
         assert f"/rankings/{slug}" in inventory_paths
         assert f"/rankings/{slug}" in sitemap
 

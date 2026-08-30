@@ -313,6 +313,7 @@ export function renderTopRankingSummary(rankings = { items: [] }) {
         <p class="muted">Ranked by modeled 30D ROI, then confidence, risk, and recency according to the organic ranking methodology.</p>
         ${renderStrategySignals(snapshot)}
         <p class="updated-note">${formatUpdatedAge(snapshot.calculated_at)} · Organic ranking from API</p>
+        ${renderCtaRiskNotice(snapshot)}
       </div>
       <div class="choice-metrics">
         ${summaryItem("Estimated starting capital", formatMoney(snapshot.capital.total_capital))}
@@ -321,7 +322,7 @@ export function renderTopRankingSummary(rankings = { items: [] }) {
       </div>
       <div class="top-opportunity-actions">
         <a class="secondary-button" href="/strategies/${encodeURIComponent(strategy.strategy_id)}" data-link${strategyClickAnalytics}>View strategy</a>
-        ${renderDestinationButton(strategy.primary_destination, "Start", { sourcePage: "home", placement: "top_opportunity" })}
+        ${renderDestinationButton(strategy.primary_destination, ctaLabelForSnapshot(snapshot, "Start"), { sourcePage: "home", placement: "top_opportunity" })}
       </div>
     </section>
   `;
@@ -338,7 +339,7 @@ export function renderHomeAnswerBlock(rankings = { items: [], page: { total: 0 }
     ["Data source", "Stored snapshots served through /api/v1; page requests do not call live providers."],
   ];
   return renderAnswerBlock(
-    "Answer-ready overview",
+    "Quick overview",
     "GamCryp is a Web3 opportunity intelligence source for modeled ROI, risk, confidence, freshness, and explicit unavailable states.",
     fields,
   );
@@ -354,7 +355,7 @@ export function renderRankingsAnswerBlock(rankings = { items: [], page: { total:
     ["Data source", "Latest successful persisted strategy snapshots from /api/v1/rankings."],
     ["Commercial policy", "Referral, affiliate, and sponsor metadata never changes organic ranking order or analytical scores."],
   ];
-  return renderAnswerBlock("Answer-ready comparison", rankingsSummary(rankings), fields);
+  return renderAnswerBlock("Quick comparison", rankingsSummary(rankings), fields);
 }
 
 export function renderOpportunityAnswerBlock(opportunity) {
@@ -364,7 +365,7 @@ export function renderOpportunityAnswerBlock(opportunity) {
   if (strategy && snapshot) {
     const fields = strategyAnswerFields(strategy, snapshot);
     fields.unshift(["Opportunity page", escapeHtml(opportunity.name)]);
-    return renderAnswerBlock("Answer-ready opportunity summary", rankingAnswer(snapshot, strategy), fields);
+    return renderAnswerBlock("Quick opportunity summary", rankingAnswer(snapshot, strategy), fields);
   }
   const destination = opportunity.primary_destination;
   const fields = [
@@ -377,12 +378,89 @@ export function renderOpportunityAnswerBlock(opportunity) {
     ["Modeled strategies", escapeHtml(String(opportunity.strategy_count || 0))],
     ["Reviewed outbound link", escapeHtml(destination ? `${destination.label}; ${destination.verification_status}; reviewed ${formatDateTime(destination.reviewed_at)}` : "No reviewed outbound destination.")],
   ];
-  return renderAnswerBlock("Answer-ready opportunity summary", `ROI for ${opportunity.name} is not measurable yet. ${plainUnavailableReason(opportunity)}`, fields);
+  return renderAnswerBlock("Quick opportunity summary", `ROI for ${opportunity.name} is not measurable yet. ${plainUnavailableReason(opportunity)}`, fields);
+}
+
+
+export function renderOpportunityHumanSummary(opportunity) {
+  const strategies = opportunity.strategies || [];
+  const primaryStrategy = strategies.find((item) => item.latest_snapshot) || strategies[0];
+  const rewardTypes = humanList(opportunity.reward_asset_or_points_type, "Reward type not specified yet");
+  const access = humanList([...(opportunity.platforms || []), ...(opportunity.chains || [])], "Check the official project page for access requirements");
+  const modeled = opportunity.strategy_count > 0 && primaryStrategy?.latest_snapshot;
+  const items = [
+    ["What it is", escapeHtml(`${opportunity.name} is tracked as ${opportunityTypeLabel(opportunity.opportunity_type).toLowerCase()}.`)],
+    ["How it may earn", escapeHtml(rewardTypes)],
+    ["What you need", escapeHtml(access)],
+    ["Cost and return", modeled ? `Modeled in ${escapeHtml(primaryStrategy.name)}; open the strategy for current capital, costs, and ROI.` : escapeHtml(plainUnavailableReason(opportunity))],
+    ["Cash-out", modeled ? "Realizable value is modeled inside the strategy snapshot where market data supports it." : escapeHtml(plainUnavailableReason(opportunity))],
+    ["Main catch", escapeHtml(opportunity.data_feasibility_status === "GO" ? "Review risk, confidence, and freshness before acting." : plainUnavailableReason(opportunity))],
+  ];
+  return renderHumanSummary("Plain-language summary", items);
+}
+
+export function renderStrategyHumanSummary(strategy, snapshot) {
+  const items = [
+    ["What it is", escapeHtml(`${strategy.name} is a modeled strategy for ${strategy.game_name}.`)],
+    ["How it may earn", escapeHtml(`${labelize(strategy.economy_type)} economics are converted into the generic ROI model.`)],
+    ["What you need", `Estimated starting capital is ${formatMoney(snapshot.capital.total_capital)}.`],
+    ["Expected return", `${formatMoney(snapshot.earnings.net_earnings_day, { perDay: true })} estimated net earnings and ${formatRatio(snapshot.roi.roi_total_30d)} modeled 30-day ROI.`],
+    ["Cash-out", `Recoverable value is ${formatMoney(snapshot.capital.recoverable_capital)}; exit-adjusted P&L is ${formatMoney(snapshot.roi.exit_adjusted_pnl)}.`],
+    ["Main catch", escapeHtml(strategyRiskSummary(snapshot))],
+  ];
+  return renderHumanSummary("Plain-language summary", items);
+}
+
+function renderHumanSummary(title, items) {
+  return `
+    <section class="section-panel human-summary">
+      <div class="section-header"><h2>${escapeHtml(title)}</h2></div>
+      <div class="section-body human-summary-grid">
+        ${items.map(([label, value]) => `<article class="human-line"><span>${escapeHtml(label)}</span><p>${value}</p></article>`).join("")}
+      </div>
+    </section>
+  `;
+}
+
+function humanList(values = [], fallback) {
+  const labels = values.map((value) => labelize(value)).filter(Boolean);
+  return labels.length ? labels.join(", ") : fallback;
+}
+
+function strategyRiskSummary(snapshot) {
+  if (snapshot.freshness?.overall_status && snapshot.freshness.overall_status !== "fresh") {
+    return "The latest stored data is stale, so treat the result as outdated until a fresh snapshot appears.";
+  }
+  if (snapshot.risk?.available && ["HIGH", "VERY HIGH"].includes(snapshot.risk.label)) {
+    return `${publicScoreLabel(snapshot.risk.label)} risk: this CTA opens the project, not a recommendation to start.`;
+  }
+  if (snapshot.confidence?.available && snapshot.confidence.label === "LOW") {
+    return "Low confidence means the calculation depends on weaker or incomplete evidence.";
+  }
+  if ((snapshot.warnings || []).length) {
+    return snapshot.warnings[0].message;
+  }
+  return "No critical warning is attached, but ROI is still an estimate rather than a promise.";
+}
+
+function isElevatedRisk(snapshot) {
+  return snapshot?.risk?.available && ["HIGH", "VERY HIGH"].includes(snapshot.risk.label);
+}
+
+function ctaLabelForSnapshot(snapshot, fallback = "Start") {
+  return isElevatedRisk(snapshot) ? "Open project" : fallback;
+}
+
+function renderCtaRiskNotice(snapshot) {
+  if (!isElevatedRisk(snapshot)) {
+    return "";
+  }
+  return '<p class="cta-risk-note">High-risk strategy. Opening the project is not a recommendation; review the assumptions first.</p>';
 }
 
 export function renderStrategyAnswerBlock(strategy, snapshot) {
   if (!snapshot) {
-    return renderAnswerBlock("Answer-ready strategy summary", `${strategy.name} has no successful stored calculation yet.`, [
+    return renderAnswerBlock("Quick strategy summary", `${strategy.name} has no successful stored calculation yet.`, [
       ["Strategy", escapeHtml(strategy.name)],
       ["Strategy version", escapeHtml(strategy.strategy_version)],
       ["Opportunity", escapeHtml(strategy.game_name)],
@@ -390,7 +468,7 @@ export function renderStrategyAnswerBlock(strategy, snapshot) {
       ["ROI status", "No successful stored calculation yet."],
     ]);
   }
-  return renderAnswerBlock("Answer-ready strategy summary", rankingAnswer(snapshot, strategy), strategyAnswerFields(strategy, snapshot));
+  return renderAnswerBlock("Quick strategy summary", rankingAnswer(snapshot, strategy), strategyAnswerFields(strategy, snapshot));
 }
 
 function strategyAnswerFields(strategy, snapshot) {
@@ -419,7 +497,7 @@ function strategyAnswerFields(strategy, snapshot) {
 function renderAnswerBlock(title, summary, fields) {
   return `
     <section class="answer-card" data-ai-answer-block="true">
-      <div class="section-header"><h2>${escapeHtml(title)}</h2><span class="badge info">Citation-ready</span></div>
+      <div class="section-header"><h2>${escapeHtml(title)}</h2><span class="badge info">Source-ready</span></div>
       <div class="section-body">
         <p class="answer-summary">${escapeHtml(summary)}</p>
         <dl class="answer-grid">
@@ -552,6 +630,7 @@ export function renderOpportunityDetail(opportunity) {
         </div>
       </section>
       ${renderOpportunityAnswerBlock(opportunity)}
+      ${renderOpportunityHumanSummary(opportunity)}
       <section class="game-grid">
         <div class="game-card">
           <h3>Opportunity type</h3>
@@ -696,6 +775,7 @@ export function renderRankingCard(item, options = {}) {
         ${metricItem("Current break-even", formatBreakEven(snapshot.roi.break_even))}
       </div>
       ${renderNetEarningsInterpretation(snapshot)}
+      <p class="muted ranking-context">Organic comparison, not a recommendation.</p>
       <div class="card-badges">
         ${renderScoreBadge(snapshot.confidence, "confidence")}
         ${renderScoreBadge(snapshot.risk, "risk")}
@@ -703,9 +783,10 @@ export function renderRankingCard(item, options = {}) {
         ${renderWarningsIndicator(snapshot.warnings, { hideEmpty: true })}
       </div>
       <p class="updated-note">${formatUpdatedAge(snapshot.calculated_at)}</p>
+      ${renderCtaRiskNotice(snapshot)}
       <div class="card-actions">
         <a class="secondary-button" href="/strategies/${encodeURIComponent(strategy.strategy_id)}" data-link${strategyClickAnalytics}>View strategy</a>
-        ${renderDestinationButton(strategy.primary_destination, "Start", { sourcePage: rankingSlug, placement: "strategy_card" })}
+        ${renderDestinationButton(strategy.primary_destination, ctaLabelForSnapshot(snapshot, "Start"), { sourcePage: rankingSlug, placement: "strategy_card" })}
       </div>
     </article>
   `;
@@ -813,13 +894,14 @@ export function renderStrategyDetail(strategy, historyPage = { items: [] }) {
         <h1>${escapeHtml(strategy.name)}</h1>
         <p class="lede">${escapeHtml(strategy.description)}</p>
         <div class="button-row">
-          <span class="badge info">${escapeHtml(strategy.strategy_id)}</span>
-          <span class="badge">${escapeHtml(strategy.strategy_version)}</span>
+          <span class="badge">Strategy version ${escapeHtml(strategy.strategy_version)}</span>
           <a class="secondary-button" href="/games/${encodeURIComponent(strategy.game_id)}" data-link>${escapeHtml(strategy.game_name)}</a>
-          ${renderDestinationButton(strategy.primary_destination, "Start", { sourcePage: "strategy_detail", placement: "primary_cta" })}
+          ${renderDestinationButton(strategy.primary_destination, ctaLabelForSnapshot(snapshot, "Start"), { sourcePage: "strategy_detail", placement: "primary_cta" })}
         </div>
+        ${renderCtaRiskNotice(snapshot)}
       </section>
       ${renderStrategyAnswerBlock(strategy, snapshot)}
+      ${renderStrategyHumanSummary(strategy, snapshot)}
       ${renderFreshnessAlert(snapshot)}
       ${renderStrategySignals(snapshot)}
       ${renderOverviewMetrics(snapshot)}
@@ -864,20 +946,89 @@ export function renderStrategyDetail(strategy, historyPage = { items: [] }) {
         ${renderScoreDetails(snapshot.confidence, "Confidence")}
         ${renderScoreDetails(snapshot.risk, "Risk")}
       </section>
-      ${renderClassificationSummary(snapshot.classification_summary)}
       ${renderWarnings(snapshot.warnings)}
       ${renderHistory(historyPage)}
-      <section class="section-panel">
-        <div class="section-header"><h2>Versions</h2></div>
-        <div class="section-body metric-grid">
-          ${metricItem("Adapter contract", snapshot.versions.adapter_contract_version)}
-          ${metricItem("ROI model", snapshot.versions.model_version)}
-          ${metricItem("Scoring methodology", snapshot.versions.scoring_methodology_version || "Unavailable")}
-          ${metricItem("Last calculated", `${formatUpdatedAge(snapshot.calculated_at)} (${formatDateTime(snapshot.calculated_at)})`)}
-        </div>
-      </section>
+      ${renderAdvancedSnapshotDetails(strategy, snapshot)}
     </div>
   `;
+}
+
+
+function renderAdvancedSnapshotDetails(strategy, snapshot) {
+  return `
+    <details class="advanced-panel snapshot-advanced">
+      <summary>Technical snapshot details</summary>
+      <div class="advanced-panel-body">
+        <section class="section-panel">
+          <div class="section-header"><h2>Versions</h2></div>
+          <div class="section-body metric-grid">
+            ${metricItem("Strategy ID", escapeHtml(strategy.strategy_id))}
+            ${metricItem("Adapter contract", snapshot.versions.adapter_contract_version)}
+            ${metricItem("ROI model", snapshot.versions.model_version)}
+            ${metricItem("Scoring methodology", snapshot.versions.scoring_methodology_version || "Unavailable")}
+            ${metricItem("Last calculated", `${formatUpdatedAge(snapshot.calculated_at)} (${formatDateTime(snapshot.calculated_at)})`)}
+          </div>
+        </section>
+        ${renderClassificationSummary(snapshot.classification_summary)}
+      </div>
+    </details>
+  `;
+}
+
+function historyTrendSummary(items) {
+  const latest = items[items.length - 1];
+  const previous = items[items.length - 2];
+  const comparison = compareDecimalMetric(latest.roi?.roi_total_30d?.value, previous.roi?.roi_total_30d?.value);
+  const latestRoi = textFromHtml(formatRatio(latest.roi.roi_total_30d));
+  const previousRoi = textFromHtml(formatRatio(previous.roi.roi_total_30d));
+  if (comparison > 0) {
+    return `Recent 30-day ROI moved up from ${previousRoi} to ${latestRoi}.`;
+  }
+  if (comparison < 0) {
+    return `Recent 30-day ROI moved down from ${previousRoi} to ${latestRoi}.`;
+  }
+  return `Recent 30-day ROI is unchanged at ${latestRoi}.`;
+}
+
+function compareDecimalMetric(left, right) {
+  if (left === null || left === undefined || right === null || right === undefined) {
+    return 0;
+  }
+  const leftNormalized = normalizeDecimalString(String(left));
+  const rightNormalized = normalizeDecimalString(String(right));
+  const leftSign = decimalSign(leftNormalized);
+  const rightSign = decimalSign(rightNormalized);
+  if (leftSign !== rightSign) {
+    return leftSign > rightSign ? 1 : -1;
+  }
+  const comparison = comparePositiveDecimals(leftNormalized.replace(/^-/, ""), rightNormalized.replace(/^-/, ""));
+  return leftSign < 0 ? comparison * -1 : comparison;
+}
+
+function historyBarHeight(value) {
+  const normalized = normalizeDecimalString(String(value ?? "0"));
+  const absolute = normalized.startsWith("-") ? normalized.slice(1) : normalized;
+  if (!absolute || decimalSign(absolute) === 0) {
+    return 12;
+  }
+  const buckets = [
+    ["0.20", 92],
+    ["0.10", 78],
+    ["0.05", 64],
+    ["0.02", 48],
+    ["0.01", 36],
+    ["0.001", 24],
+  ];
+  const match = buckets.find(([threshold]) => comparePositiveDecimals(absolute, threshold) >= 0);
+  return match ? match[1] : 16;
+}
+
+function formatHistoryShortDate(value) {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return "Date unavailable";
+  }
+  return parsed.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
 export function renderSponsoredPlacements(placements = []) {
@@ -1037,7 +1188,7 @@ export function renderWarnings(warnings = []) {
           .map(
             (warning) => `
               <article class="contributor">
-                <strong>${escapeHtml(warning.code)} (${escapeHtml(warning.severity)})</strong>
+                <strong>${escapeHtml(labelize(warning.code))} (${escapeHtml(labelize(warning.severity))})</strong>
                 <span>${escapeHtml(warning.message)}</span>
               </article>
             `,
@@ -1049,40 +1200,61 @@ export function renderWarnings(warnings = []) {
 }
 
 export function renderHistory(historyPage = { items: [] }) {
-  const items = historyPage.items || [];
+  const items = [...(historyPage.items || [])].sort((left, right) => Date.parse(left.calculated_at) - Date.parse(right.calculated_at));
   if (items.length < 2) {
     return `
       <section class="section-panel">
         <div class="section-header"><h2>History</h2></div>
         <div class="section-body">
-          <p class="muted">Insufficient history for a trend view. At least two stored snapshots are needed before showing a time-series table.</p>
+          <p class="muted">At least two stored snapshots are needed before GamCryp can show a recent trend.</p>
         </div>
       </section>
     `;
   }
+  const recent = items.slice(-6);
   return `
-    <section class="section-panel">
+    <section class="section-panel history-panel">
       <div class="section-header"><h2>History</h2><span class="badge info">${escapeHtml(String(items.length))} snapshots</span></div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Calculated</th><th>Net/day</th><th>30D ROI</th><th>Confidence</th><th>Risk</th><th>Freshness</th></tr></thead>
-          <tbody>
-            ${items
-              .map(
-                (snapshot) => `
-                  <tr>
-                    <td>${formatDateTime(snapshot.calculated_at)}</td>
-                    <td class="metric">${formatMoney(snapshot.earnings.net_earnings_day, { perDay: true })}</td>
-                    <td class="metric">${formatRatio(snapshot.roi.roi_total_30d)}</td>
-                    <td>${renderScoreBadge(snapshot.confidence, "confidence")}</td>
-                    <td>${renderScoreBadge(snapshot.risk, "risk")}</td>
-                    <td>${renderFreshnessPill(snapshot.freshness)}</td>
-                  </tr>
-                `,
-              )
-              .join("")}
-          </tbody>
-        </table>
+      <div class="section-body">
+        <p class="history-summary">${escapeHtml(historyTrendSummary(items))}</p>
+        <div class="history-bars" aria-label="Recent 30-day ROI history">
+          ${recent
+            .map(
+              (snapshot) => `
+                <article class="history-bar ${decimalSign(snapshot.roi?.roi_total_30d?.value ?? "0") < 0 ? "negative" : "positive"}" style="--bar: ${historyBarHeight(snapshot.roi?.roi_total_30d?.value)};">
+                  <div class="history-bar-fill" aria-hidden="true"></div>
+                  <strong>${formatRatio(snapshot.roi.roi_total_30d)}</strong>
+                  <span>${escapeHtml(formatHistoryShortDate(snapshot.calculated_at))}</span>
+                  <small>${formatMoney(snapshot.earnings.net_earnings_day, { perDay: true })}</small>
+                </article>
+              `,
+            )
+            .join("")}
+        </div>
+        <details class="advanced-panel history-advanced">
+          <summary>Show full snapshot table</summary>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Calculated</th><th>Net/day</th><th>30D ROI</th><th>Confidence</th><th>Risk</th><th>Freshness</th></tr></thead>
+              <tbody>
+                ${items
+                  .map(
+                    (snapshot) => `
+                      <tr>
+                        <td>${formatDateTime(snapshot.calculated_at)}</td>
+                        <td class="metric">${formatMoney(snapshot.earnings.net_earnings_day, { perDay: true })}</td>
+                        <td class="metric">${formatRatio(snapshot.roi.roi_total_30d)}</td>
+                        <td>${renderScoreBadge(snapshot.confidence, "confidence")}</td>
+                        <td>${renderScoreBadge(snapshot.risk, "risk")}</td>
+                        <td>${renderFreshnessPill(snapshot.freshness)}</td>
+                      </tr>
+                    `,
+                  )
+                  .join("")}
+              </tbody>
+            </table>
+          </div>
+        </details>
       </div>
     </section>
   `;
@@ -1421,7 +1593,7 @@ export function renderDestinationButton(destination, label = "Open", context = {
   const href = redirectWithContext(destination.redirect_url, context);
   const analytics = analyticsAttributes(destination, context);
   return `
-    <a class="button cta" href="${escapeHtml(href)}" title="${escapeHtml(destination.disclosure_text)}"${analytics}>
+    <a class="button cta" href="${escapeHtml(href)}" title="${escapeHtml(destination.disclosure_text)}" target="_blank" rel="noopener noreferrer"${analytics}>
       ${escapeHtml(label)}
       ${relationship ? `<span>${escapeHtml(relationship)}</span>` : ""}
     </a>
@@ -1515,14 +1687,45 @@ function valueOrUnavailable(value) {
 }
 
 function evidenceSummary(evidence) {
-  const entries = Object.entries(evidence);
+  const entries = Object.entries(evidence || {});
   if (!entries.length) {
     return "No detailed evidence payload";
   }
   return entries
     .slice(0, 3)
-    .map(([key, value]) => `${labelize(key)}: ${String(value)}`)
+    .map(([key, value]) => `${labelize(key)}: ${summarizeEvidenceValue(value)}`)
     .join("; ");
+}
+
+function summarizeEvidenceValue(value) {
+  if (value === null || value === undefined || value === "") {
+    return "Unavailable";
+  }
+  if (Array.isArray(value)) {
+    const text = value.slice(0, 3).map(summarizeEvidenceValue).join(", ");
+    return value.length > 3 ? `${text}, and ${value.length - 3} more` : text;
+  }
+  if (typeof value === "object") {
+    const entries = Object.entries(value);
+    if (!entries.length) {
+      return "No details";
+    }
+    return entries
+      .slice(0, 3)
+      .map(([key, nested]) => `${labelize(key)} ${primitiveEvidenceText(nested)}`)
+      .join(", ");
+  }
+  return String(value);
+}
+
+function primitiveEvidenceText(value) {
+  if (value === null || value === undefined || value === "") {
+    return "Unavailable";
+  }
+  if (typeof value === "object") {
+    return Array.isArray(value) ? value.slice(0, 3).map(primitiveEvidenceText).join(", ") : "available";
+  }
+  return String(value);
 }
 
 export function formatUpdatedAge(value, now = new Date()) {
@@ -1544,7 +1747,7 @@ export function formatUpdatedAge(value, now = new Date()) {
     return `Updated ${elapsedHours}h ago`;
   }
   const elapsedDays = Math.floor(elapsedHours / 24);
-  if (elapsedDays < 14) {
+  if (elapsedDays < 30) {
     return `Updated ${elapsedDays}d ago`;
   }
   return `Updated ${formatDateTime(value)}`;
