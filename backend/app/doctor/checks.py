@@ -33,6 +33,8 @@ REQUIRED_IMPORTS = (
     "app.monetization.models",
     "app.monetization.referral_operations",
     "app.operator.routes",
+    "app.observability.posthog",
+    "app.observability.sentry",
     "app.storage.database",
     "app.storage.history",
     "app.storage.metadata",

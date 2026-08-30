@@ -47,6 +47,8 @@ const RANKING_FILTER_KEYS = new Set([
   "economy_type",
 ]);
 const ANALYTICS_CONSENT_KEY = "gamcryp.analyticsConsent.v1";
+const PRODUCT_ANALYTICS_DISTINCT_ID_KEY = "gamcryp.productAnalyticsDistinctId.v1";
+const SENTRY_BROWSER_SDK_URL = "https://browser.sentry-cdn.com/8.55.0/bundle.tracing.min.js";
 const ANALYTICS_ALLOWED_EVENTS = new Set([
   "page_view",
   "opportunity_view",
@@ -63,7 +65,51 @@ const ANALYTICS_ALLOWED_PARAMS = new Set([
   "page_path",
   "page_title",
 ]);
+const PRODUCT_ANALYTICS_ALLOWED_EVENTS = new Set([
+  "opportunity_view",
+  "strategy_view",
+  "ranking_view",
+  "opportunity_to_strategy_click",
+  "ranking_to_strategy_click",
+  "internal_compare_or_next_click",
+  "outbound_go_click",
+  "referral_outbound_click",
+  "official_fallback_outbound_click",
+  "opportunity_search_used",
+  "ranking_filter_used",
+]);
+const PRODUCT_ANALYTICS_ALLOWED_PARAMS = new Set([
+  "opportunity_slug",
+  "opportunity_id",
+  "opportunity_type",
+  "strategy_slug",
+  "strategy_id",
+  "ranking_slug",
+  "destination_slug",
+  "target_url_kind",
+  "referral_status",
+  "commercial_relationship",
+  "is_affiliate",
+  "placement",
+  "source_page",
+  "page_path",
+  "snapshot_id",
+  "snapshot_timestamp",
+  "utm_source",
+  "utm_medium",
+  "utm_campaign",
+  "capital_min",
+  "capital_max",
+  "confidence_min",
+  "risk_max",
+  "game_id",
+  "chain",
+  "economy_type",
+]);
+const SENSITIVE_ANALYTICS_KEY_PATTERN = /(authorization|cookie|password|passwd|secret|token|api[_-]?key|credential|wallet|private|signature|body|payload)/i;
 let initializedAnalyticsId = null;
+let initializedProductAnalyticsKey = null;
+let initializedSentryDsn = null;
 let lastTrackedPage = null;
 
 export class ApiError extends Error {
@@ -249,6 +295,15 @@ export function renderTopRankingSummary(rankings = { items: [] }) {
   }
   const snapshot = top.latest_snapshot;
   const strategy = top.strategy;
+  const strategyClickAnalytics = productClickAttributes("ranking_to_strategy_click", {
+    opportunityId: strategy.opportunity_id || strategy.game_id,
+    opportunityType: snapshot.opportunity_type,
+    strategyId: strategy.strategy_id,
+    rankingSlug: "home",
+    snapshot,
+    sourcePage: "home",
+    placement: "top_opportunity",
+  });
   return `
     <section class="top-opportunity-card" aria-label="Top ranked organic strategy">
       <div class="top-opportunity-copy">
@@ -265,7 +320,7 @@ export function renderTopRankingSummary(rankings = { items: [] }) {
         ${summaryItem("30-day modeled ROI", formatRatio(snapshot.roi.roi_total_30d))}
       </div>
       <div class="top-opportunity-actions">
-        <a class="secondary-button" href="/strategies/${encodeURIComponent(strategy.strategy_id)}" data-link>View strategy</a>
+        <a class="secondary-button" href="/strategies/${encodeURIComponent(strategy.strategy_id)}" data-link${strategyClickAnalytics}>View strategy</a>
         ${renderDestinationButton(strategy.primary_destination, "Start", { sourcePage: "home", placement: "top_opportunity" })}
       </div>
     </section>
@@ -518,7 +573,7 @@ export function renderOpportunityDetail(opportunity) {
       </section>
       ${
         hasStrategies
-          ? renderStrategyList(opportunity.strategies)
+          ? renderStrategyList(opportunity.strategies, { clickEvent: "opportunity_to_strategy_click", rankingSlug: "opportunity_detail" })
           : `<section class="empty-state"><h2>ROI not measurable yet</h2><p class="muted">${escapeHtml(unavailableRoiReason(opportunity))}</p></section>`
       }
       <section class="section-panel">
@@ -574,7 +629,12 @@ export function renderOpportunityCard(opportunity) {
       </div>
       <p class="muted watchlist-note">${opportunity.strategy_count > 0 ? "Review the modeled strategy for assumptions and current freshness." : escapeHtml(conciseUnavailableRoiReason(opportunity))}</p>
       <div class="card-actions">
-        <a class="secondary-button" href="/opportunities/${encodeURIComponent(opportunity.opportunity_id)}" data-link>Learn more</a>
+        <a class="secondary-button" href="/opportunities/${encodeURIComponent(opportunity.opportunity_id)}" data-link${productClickAttributes("internal_compare_or_next_click", {
+          opportunityId: opportunity.opportunity_id,
+          opportunityType: opportunity.opportunity_type,
+          sourcePage: "opportunity_watchlist",
+          placement: "opportunity_card",
+        })}>Learn more</a>
         ${renderDestinationButton(opportunity.primary_destination, "Open", { sourcePage: "opportunity_watchlist", placement: "opportunity_card" })}
       </div>
     </article>
@@ -598,22 +658,33 @@ export function renderRankingsTable(rankings, options = {}) {
         <span class="badge info">${escapeHtml(String(rankings.page?.total ?? items.length))} stored</span>
       </div>
       <div class="ranking-card-grid">
-        ${items.map(renderRankingCard).join("")}
+        ${items.map((item) => renderRankingCard(item, options)).join("")}
       </div>
     </section>
   `;
 }
 
-export function renderRankingCard(item) {
+export function renderRankingCard(item, options = {}) {
   const snapshot = item.latest_snapshot;
   const strategy = item.strategy;
+  const rankingSlug = options.rankingSlug || (options.compact ? "home" : "rankings");
+  const strategyClickEvent = options.clickEvent || "ranking_to_strategy_click";
+  const strategyClickAnalytics = productClickAttributes(strategyClickEvent, {
+    opportunityId: strategy.opportunity_id || strategy.game_id,
+    opportunityType: snapshot.opportunity_type,
+    strategyId: strategy.strategy_id,
+    rankingSlug,
+    snapshot,
+    sourcePage: rankingSlug,
+    placement: "strategy_card",
+  });
   return `
     <article class="ranking-card">
       <div class="ranking-card-head">
         <span class="rank-chip">#${escapeHtml(String(item.rank))}</span>
         <div>
           <a class="game-link" href="/games/${encodeURIComponent(strategy.game_id)}" data-link>${escapeHtml(snapshot.game_name)}</a>
-          <h3><a class="strategy-link" href="/strategies/${encodeURIComponent(strategy.strategy_id)}" data-link>${escapeHtml(strategy.name)}</a></h3>
+          <h3><a class="strategy-link" href="/strategies/${encodeURIComponent(strategy.strategy_id)}" data-link${strategyClickAnalytics}>${escapeHtml(strategy.name)}</a></h3>
           <p class="muted">${escapeHtml(strategy.strategy_version)} | ${escapeHtml(labelize(strategy.economy_type))}</p>
         </div>
       </div>
@@ -633,8 +704,8 @@ export function renderRankingCard(item) {
       </div>
       <p class="updated-note">${formatUpdatedAge(snapshot.calculated_at)}</p>
       <div class="card-actions">
-        <a class="secondary-button" href="/strategies/${encodeURIComponent(strategy.strategy_id)}" data-link>View strategy</a>
-        ${renderDestinationButton(strategy.primary_destination, "Start", { sourcePage: "rankings", placement: "strategy_card" })}
+        <a class="secondary-button" href="/strategies/${encodeURIComponent(strategy.strategy_id)}" data-link${strategyClickAnalytics}>View strategy</a>
+        ${renderDestinationButton(strategy.primary_destination, "Start", { sourcePage: rankingSlug, placement: "strategy_card" })}
       </div>
     </article>
   `;
@@ -694,7 +765,7 @@ export function renderGameDetail(game) {
   `;
 }
 
-export function renderStrategyList(strategies) {
+export function renderStrategyList(strategies, options = {}) {
   if (!strategies.length) {
     return `
       <section class="empty-state">
@@ -713,7 +784,10 @@ export function renderStrategyList(strategies) {
       })),
     page: { total: strategies.length },
   };
-  return renderRankingsTable(rankings);
+  return renderRankingsTable(rankings, {
+    rankingSlug: options.rankingSlug || "strategy_list",
+    clickEvent: options.clickEvent || "ranking_to_strategy_click",
+  });
 }
 
 export function renderStrategyDetail(strategy, historyPage = { items: [] }) {
@@ -1597,16 +1671,44 @@ function destinationRelationshipLabel(destination) {
 function analyticsAttributes(destination, context = {}) {
   const attributes = {
     "data-analytics-link": "outbound",
+    "data-destination-slug": destination.destination_slug,
     "data-opportunity-id": destination.opportunity_id,
     "data-strategy-id": destination.strategy_id,
     "data-opportunity-type": opportunityTypeLabel(destination.opportunity_type),
     "data-placement": context.placement,
+    "data-source-page": context.sourcePage,
+    "data-target-url-kind": destinationTargetKind(destination),
     "data-referral-status": String(destination.referral_status || (destination.is_affiliate ? "affiliate" : "none")).toLowerCase(),
+    "data-commercial-relationship": destination.commercial_relationship,
+    "data-is-affiliate": destination.is_affiliate ? "true" : "false",
   };
   return Object.entries(attributes)
     .filter(([, value]) => value !== null && value !== undefined && String(value).trim() !== "")
     .map(([key, value]) => ` ${key}="${escapeHtml(String(value))}"`)
     .join("");
+}
+
+function productClickAttributes(eventName, values = {}) {
+  const attributes = {
+    "data-product-click": eventName,
+    "data-opportunity-id": values.opportunityId,
+    "data-opportunity-type": values.opportunityType,
+    "data-strategy-id": values.strategyId,
+    "data-ranking-slug": values.rankingSlug,
+    "data-snapshot-id": values.snapshotId || values.snapshot?.snapshot_id,
+    "data-snapshot-timestamp": values.snapshotTimestamp || values.snapshot?.calculated_at,
+    "data-placement": values.placement,
+    "data-source-page": values.sourcePage,
+  };
+  return Object.entries(attributes)
+    .filter(([, value]) => value !== null && value !== undefined && String(value).trim() !== "")
+    .map(([key, value]) => ` ${key}="${escapeHtml(String(value))}"`)
+    .join("");
+}
+
+function destinationTargetKind(destination) {
+  const referralStatus = String(destination.referral_status || "").toUpperCase();
+  return destination.referral_url && referralStatus === "ACTIVE" ? "referral" : "official";
 }
 
 function renderNetEarningsInterpretation(snapshot) {
@@ -1630,6 +1732,45 @@ export function analyticsMeasurementId(win = globalThis.window) {
   return /^G-[A-Z0-9]{6,20}$/.test(text) ? text : "";
 }
 
+export function posthogProjectApiKey(win = globalThis.window) {
+  const value = publicConfig(win).posthogProjectApiKey;
+  const text = typeof value === "string" ? value.trim() : "";
+  return /^[A-Za-z0-9_-]{8,128}$/.test(text) ? text : "";
+}
+
+export function posthogHost(win = globalThis.window) {
+  const value = publicConfig(win).posthogHost || "https://us.i.posthog.com";
+  try {
+    const parsed = new URL(value);
+    if (parsed.protocol !== "https:" || !parsed.host || parsed.pathname !== "/" || parsed.search || parsed.hash) {
+      return "";
+    }
+    return `${parsed.protocol}//${parsed.host}`;
+  } catch {
+    return "";
+  }
+}
+
+export function sentryFrontendDsn(win = globalThis.window) {
+  const value = publicConfig(win).sentryFrontendDsn;
+  if (typeof value !== "string" || !value.trim()) {
+    return "";
+  }
+  try {
+    const parsed = new URL(value.trim());
+    if (parsed.protocol !== "https:" || !parsed.host || parsed.search || parsed.hash) {
+      return "";
+    }
+    return value.trim();
+  } catch {
+    return "";
+  }
+}
+
+export function hasConsentGatedAnalytics(win = globalThis.window) {
+  return Boolean(analyticsMeasurementId(win) || posthogProjectApiKey(win));
+}
+
 export function analyticsConsent(storage = globalThis.window?.localStorage) {
   try {
     return storage?.getItem(ANALYTICS_CONSENT_KEY) || null;
@@ -1639,7 +1780,7 @@ export function analyticsConsent(storage = globalThis.window?.localStorage) {
 }
 
 export function renderAnalyticsConsentBanner(win = globalThis.window) {
-  if (!analyticsMeasurementId(win) || analyticsConsent(win?.localStorage)) {
+  if (!hasConsentGatedAnalytics(win) || analyticsConsent(win?.localStorage)) {
     return "";
   }
   return `
@@ -1667,6 +1808,7 @@ export function setAnalyticsConsent(preference, context = {}) {
   }
   if (normalized === "accepted") {
     initializeAnalytics(context);
+    initializeProductAnalytics(context);
   }
   return true;
 }
@@ -1700,6 +1842,37 @@ export function initializeAnalytics(context = {}) {
   return true;
 }
 
+export function initializeProductAnalytics(context = {}) {
+  const win = context.win || globalThis.window;
+  const storage = context.storage || win?.localStorage;
+  const key = posthogProjectApiKey(win);
+  if (!win || !key || !posthogHost(win) || analyticsConsent(storage) !== "accepted") {
+    return false;
+  }
+  if (!productAnalyticsDistinctId(context)) {
+    return false;
+  }
+  initializedProductAnalyticsKey = key;
+  return true;
+}
+
+export function productAnalyticsDistinctId(context = {}) {
+  const win = context.win || globalThis.window;
+  const storage = context.storage || win?.localStorage;
+  try {
+    const existing = storage?.getItem(PRODUCT_ANALYTICS_DISTINCT_ID_KEY);
+    if (existing) {
+      return String(existing).slice(0, 128);
+    }
+    const generator = context.idGenerator || (() => (globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : `${Date.now()}-${Math.random()}`));
+    const generated = `visitor:${String(generator()).slice(0, 120)}`;
+    storage?.setItem(PRODUCT_ANALYTICS_DISTINCT_ID_KEY, generated);
+    return generated.slice(0, 128);
+  } catch {
+    return "visitor:ephemeral";
+  }
+}
+
 export function trackAnalyticsEvent(name, params = {}, context = {}) {
   const win = context.win || globalThis.window;
   if (!ANALYTICS_ALLOWED_EVENTS.has(name) || !initializeAnalytics(context) || typeof win?.gtag !== "function") {
@@ -1719,8 +1892,203 @@ export function trackAnalyticsEvent(name, params = {}, context = {}) {
   }
 }
 
+export function trackProductAnalyticsEvent(name, params = {}, context = {}) {
+  const win = context.win || globalThis.window;
+  const fetcher = context.fetcher || win?.fetch || globalThis.fetch;
+  if (!PRODUCT_ANALYTICS_ALLOWED_EVENTS.has(name) || !initializeProductAnalytics(context)) {
+    return false;
+  }
+  const host = posthogHost(win);
+  const payload = {
+    api_key: posthogProjectApiKey(win),
+    event: name,
+    distinct_id: productAnalyticsDistinctId(context),
+    timestamp: new Date().toISOString(),
+    properties: safeProductAnalyticsParams(params, context),
+  };
+  const url = `${host}/capture/`;
+  try {
+    const body = JSON.stringify(payload);
+    if (typeof win?.navigator?.sendBeacon === "function" && win.navigator.sendBeacon(url, body)) {
+      return true;
+    }
+    if (typeof fetcher === "function") {
+      Promise.resolve(fetcher(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body,
+        mode: "cors",
+        keepalive: true,
+      })).catch(() => {});
+      return true;
+    }
+  } catch {
+    return false;
+  }
+  return false;
+}
+
+function safeProductAnalyticsParams(params = {}, context = {}) {
+  const win = context.win || globalThis.window;
+  const safeParams = { "$process_person_profile": false };
+  const search = win?.location?.search || "";
+  try {
+    const urlParams = new URLSearchParams(search);
+    for (const key of ["utm_source", "utm_medium", "utm_campaign"]) {
+      const value = urlParams.get(key);
+      if (value) {
+        safeParams[key] = value.slice(0, 160);
+      }
+    }
+  } catch {
+    // Ignore malformed client URLs; analytics must stay best-effort.
+  }
+  for (const [key, value] of Object.entries(params || {})) {
+    if (!PRODUCT_ANALYTICS_ALLOWED_PARAMS.has(key) || SENSITIVE_ANALYTICS_KEY_PATTERN.test(key)) {
+      continue;
+    }
+    const cleaned = safeAnalyticsValue(value);
+    if (cleaned !== null) {
+      safeParams[key] = cleaned;
+    }
+  }
+  return safeParams;
+}
+
+function safeAnalyticsValue(value) {
+  if (value === null || value === undefined) {
+    return null;
+  }
+  if (typeof value === "boolean" || typeof value === "number") {
+    return value;
+  }
+  const text = String(value).trim();
+  return text ? text.slice(0, 160) : null;
+}
+
+export function initializeErrorTracking(context = {}) {
+  const win = context.win || globalThis.window;
+  const doc = context.doc || win?.document || globalThis.document;
+  const dsn = sentryFrontendDsn(win);
+  if (!win || !doc || !dsn) {
+    return false;
+  }
+  if (typeof win.Sentry?.init === "function") {
+    return initializeSentryBrowserGlobal(win, dsn);
+  }
+  if (doc.querySelector?.("script[data-gamcryp-sentry='browser']")) {
+    return true;
+  }
+  try {
+    const script = doc.createElement("script");
+    script.async = true;
+    script.crossOrigin = "anonymous";
+    script.src = SENTRY_BROWSER_SDK_URL;
+    script.dataset.gamcrypSentry = "browser";
+    script.onload = () => initializeSentryBrowserGlobal(win, dsn);
+    script.onerror = () => {};
+    doc.head?.appendChild(script);
+    initializedSentryDsn = dsn;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function initializeSentryBrowserGlobal(win, dsn) {
+  if (initializedSentryDsn === dsn) {
+    return true;
+  }
+  const config = publicConfig(win);
+  const tracesSampleRate = boundedRate(config.sentryTracesSampleRate, 0.02);
+  const options = {
+    dsn,
+    environment: config.sentryEnvironment || "production",
+    release: config.sentryRelease || undefined,
+    sendDefaultPii: false,
+    tracesSampleRate,
+    replaysSessionSampleRate: 0,
+    replaysOnErrorSampleRate: 0,
+    beforeSend: sanitizeBrowserSentryEvent,
+  };
+  if (tracesSampleRate > 0 && typeof win.Sentry.browserTracingIntegration === "function") {
+    options.integrations = [win.Sentry.browserTracingIntegration()];
+  }
+  try {
+    win.Sentry.init(options);
+    initializedSentryDsn = dsn;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function boundedRate(value, fallback) {
+  const text = typeof value === "number" ? String(value) : String(value ?? "").trim();
+  const parsed = /^0(?:\.\d+)?$|^1(?:\.0+)?$/.test(text) ? +text : NaN;
+  if (!Number.isFinite(parsed)) {
+    return fallback;
+  }
+  return Math.min(1, Math.max(0, parsed));
+}
+
+export function sanitizeBrowserSentryEvent(event = {}) {
+  const request = event.request;
+  if (request && typeof request === "object") {
+    delete request.data;
+    delete request.cookies;
+    delete request.query_string;
+    delete request.env;
+    if (typeof request.url === "string") {
+      request.url = stripQueryAndHash(request.url);
+    }
+    if (request.headers && typeof request.headers === "object") {
+      request.headers = scrubSensitiveMap(request.headers);
+    }
+  }
+  if (event.user && typeof event.user === "object") {
+    delete event.user.email;
+    delete event.user.username;
+    delete event.user.ip_address;
+    if (!Object.keys(event.user).length) {
+      delete event.user;
+    }
+  }
+  for (const key of ["extra", "contexts", "tags"]) {
+    if (event[key] && typeof event[key] === "object") {
+      event[key] = scrubSensitiveMap(event[key]);
+    }
+  }
+  return event;
+}
+
+function scrubSensitiveMap(values) {
+  const scrubbed = {};
+  for (const [key, value] of Object.entries(values || {})) {
+    if (SENSITIVE_ANALYTICS_KEY_PATTERN.test(key)) {
+      scrubbed[key] = "[Filtered]";
+    } else if (value && typeof value === "object" && !Array.isArray(value)) {
+      scrubbed[key] = scrubSensitiveMap(value);
+    } else {
+      scrubbed[key] = value;
+    }
+  }
+  return scrubbed;
+}
+
+function stripQueryAndHash(value) {
+  try {
+    const parsed = new URL(value);
+    return `${parsed.protocol}//${parsed.host}${parsed.pathname}`;
+  } catch {
+    return value.split("?")[0].split("#")[0];
+  }
+}
+
 export function resetAnalyticsForTests() {
   initializedAnalyticsId = null;
+  initializedProductAnalyticsKey = null;
+  initializedSentryDsn = null;
   lastTrackedPage = null;
 }
 
@@ -1733,13 +2101,66 @@ function trackPageView(path = globalThis.window?.location?.pathname || "", title
   return trackAnalyticsEvent("page_view", { page_path: path, page_title: title });
 }
 
-function trackRouteView(path) {
+function trackRouteView(path, routeContext = {}) {
   if (path.startsWith("/opportunities/")) {
-    trackAnalyticsEvent("opportunity_view", { opportunity_id: decodeURIComponent(path.replace("/opportunities/", "")), page_path: path });
+    const opportunityId = routeContext.opportunity_id || decodeURIComponent(path.replace("/opportunities/", ""));
+    const params = { ...routeContext, opportunity_id: opportunityId, opportunity_slug: opportunityId, page_path: path };
+    trackAnalyticsEvent("opportunity_view", { opportunity_id: opportunityId, page_path: path });
+    trackProductAnalyticsEvent("opportunity_view", params);
   } else if (path.startsWith("/strategies/")) {
-    trackAnalyticsEvent("strategy_view", { strategy_id: decodeURIComponent(path.replace("/strategies/", "")), page_path: path });
+    const strategyId = routeContext.strategy_id || decodeURIComponent(path.replace("/strategies/", ""));
+    const params = { ...routeContext, strategy_id: strategyId, strategy_slug: strategyId, page_path: path };
+    trackAnalyticsEvent("strategy_view", { strategy_id: strategyId, page_path: path });
+    trackProductAnalyticsEvent("strategy_view", params);
+  } else if (path === "/" || path === "/rankings" || path.startsWith("/rankings/")) {
+    const rankingSlug = routeContext.ranking_slug || rankingSlugForPath(path);
+    trackProductAnalyticsEvent("ranking_view", { ...routeContext, ranking_slug: rankingSlug, page_path: path });
   }
   trackPageView(path);
+}
+
+function rankingSlugForPath(path) {
+  if (path === "/") {
+    return "home";
+  }
+  if (path === "/rankings") {
+    return "rankings";
+  }
+  return path.replace(/^\/rankings\/?/, "") || "rankings";
+}
+
+function rankingAnalyticsContext(rankings, rankingSlug) {
+  const snapshot = rankings?.items?.[0]?.latest_snapshot;
+  return {
+    ranking_slug: rankingSlug,
+    snapshot_id: snapshot?.snapshot_id,
+    snapshot_timestamp: snapshot?.calculated_at,
+  };
+}
+
+function opportunityAnalyticsContext(opportunity) {
+  const strategy = (opportunity?.strategies || []).find((item) => item.latest_snapshot);
+  return {
+    opportunity_id: opportunity?.opportunity_id,
+    opportunity_slug: opportunity?.opportunity_id,
+    opportunity_type: opportunity?.opportunity_type,
+    strategy_id: strategy?.strategy_id,
+    strategy_slug: strategy?.strategy_id,
+    snapshot_id: strategy?.latest_snapshot?.snapshot_id,
+    snapshot_timestamp: strategy?.latest_snapshot?.calculated_at,
+  };
+}
+
+function strategyAnalyticsContext(strategy) {
+  return {
+    opportunity_id: strategy?.opportunity_id || strategy?.game_id,
+    opportunity_slug: strategy?.opportunity_id || strategy?.game_id,
+    opportunity_type: strategy?.opportunity_type,
+    strategy_id: strategy?.strategy_id,
+    strategy_slug: strategy?.strategy_id,
+    snapshot_id: strategy?.latest_snapshot?.snapshot_id,
+    snapshot_timestamp: strategy?.latest_snapshot?.calculated_at,
+  };
 }
 
 function mountAnalyticsConsent() {
@@ -1773,8 +2194,44 @@ function bindOutboundAnalytics(event) {
     placement: link.dataset.placement,
     referral_status: link.dataset.referralStatus,
   };
+  const productParams = {
+    ...params,
+    opportunity_slug: link.dataset.opportunityId,
+    strategy_slug: link.dataset.strategyId,
+    destination_slug: link.dataset.destinationSlug,
+    target_url_kind: link.dataset.targetUrlKind,
+    commercial_relationship: link.dataset.commercialRelationship,
+    is_affiliate: link.dataset.isAffiliate === "true",
+    source_page: link.dataset.sourcePage,
+    page_path: window.location.pathname,
+  };
   trackAnalyticsEvent("start_click", params);
   trackAnalyticsEvent("outbound_click", params);
+  trackProductAnalyticsEvent("outbound_go_click", productParams);
+  trackProductAnalyticsEvent(
+    link.dataset.targetUrlKind === "referral" ? "referral_outbound_click" : "official_fallback_outbound_click",
+    productParams,
+  );
+}
+
+function bindProductAnalyticsClick(event) {
+  const link = event.target.closest("a[data-product-click]");
+  if (!link) {
+    return;
+  }
+  trackProductAnalyticsEvent(link.dataset.productClick, {
+    opportunity_id: link.dataset.opportunityId,
+    opportunity_slug: link.dataset.opportunityId,
+    opportunity_type: link.dataset.opportunityType,
+    strategy_id: link.dataset.strategyId,
+    strategy_slug: link.dataset.strategyId,
+    ranking_slug: link.dataset.rankingSlug,
+    snapshot_id: link.dataset.snapshotId,
+    snapshot_timestamp: link.dataset.snapshotTimestamp,
+    placement: link.dataset.placement,
+    source_page: link.dataset.sourcePage,
+    page_path: window.location.pathname,
+  });
 }
 
 export function escapeHtml(value) {
@@ -1790,6 +2247,7 @@ async function renderCurrentRoute() {
   const root = document.getElementById("app");
   root.innerHTML = renderLoading();
   setActiveNav();
+  let routeAnalyticsContext = {};
   try {
     const path = window.location.pathname;
     if (path === "/") {
@@ -1799,9 +2257,12 @@ async function renderCurrentRoute() {
         apiGet("/opportunities"),
       ]);
       root.innerHTML = renderHomeShell(games.items, rankings, opportunities.items);
+      routeAnalyticsContext = rankingAnalyticsContext(rankings, "home");
       bindFinder(root);
     } else if (path === "/rankings") {
-      root.innerHTML = renderRankingsPage(await apiGet(`/rankings${window.location.search}`));
+      const rankings = await apiGet(`/rankings${window.location.search}`);
+      root.innerHTML = renderRankingsPage(rankings);
+      routeAnalyticsContext = rankingAnalyticsContext(rankings, "rankings");
     } else if (CURATED_RANKING_FILTERS[path]) {
       const query = curatedRankingQuery(path, window.location.search);
       const constraints = CURATED_RANKING_CONSTRAINTS[path];
@@ -1818,11 +2279,14 @@ async function renderCurrentRoute() {
         title: CURATED_RANKING_TITLES[path] || "Curated organic rankings",
         filters: CURATED_RANKING_FILTERS[path],
       });
+      routeAnalyticsContext = rankingAnalyticsContext(visibleRankings, rankingSlugForPath(path));
     } else if (path === "/opportunities") {
       root.innerHTML = renderOpportunitiesPage(await apiGet("/opportunities"));
     } else if (path.startsWith("/opportunities/")) {
       const opportunityId = decodeURIComponent(path.replace("/opportunities/", ""));
-      root.innerHTML = renderOpportunityDetail(await apiGet(`/opportunities/${encodeURIComponent(opportunityId)}`));
+      const opportunity = await apiGet(`/opportunities/${encodeURIComponent(opportunityId)}`);
+      root.innerHTML = renderOpportunityDetail(opportunity);
+      routeAnalyticsContext = opportunityAnalyticsContext(opportunity);
     } else if (path.startsWith("/games/")) {
       const gameId = decodeURIComponent(path.replace("/games/", ""));
       root.innerHTML = renderGameDetail(await apiGet(`/games/${encodeURIComponent(gameId)}`));
@@ -1833,12 +2297,13 @@ async function renderCurrentRoute() {
         apiGet(`/strategies/${encodeURIComponent(strategyId)}/history`),
       ]);
       root.innerHTML = renderStrategyDetail(strategy, history);
+      routeAnalyticsContext = strategyAnalyticsContext(strategy);
     } else if (path === "/methodology") {
       root.innerHTML = renderMethodologyPage();
     } else {
       root.innerHTML = renderError(new ApiError(404, "The requested page does not exist."));
     }
-    trackRouteView(path);
+    trackRouteView(path, routeAnalyticsContext);
   } catch (error) {
     root.innerHTML = renderError(error);
   }
@@ -1870,6 +2335,16 @@ function bindFinder(root) {
       opportunityType: data.get("opportunityType"),
       economyType: data.get("economyType"),
     };
+    trackProductAnalyticsEvent("ranking_filter_used", {
+      capital_max: filters.capitalMax,
+      confidence_min: filters.confidenceMin,
+      risk_max: filters.riskMax,
+      game_id: filters.gameId,
+      opportunity_type: filters.opportunityType,
+      economy_type: filters.economyType,
+      ranking_slug: "home",
+      page_path: window.location.pathname,
+    });
     results.innerHTML = renderLoading();
     try {
       const rankings = await apiGet(buildRankingsPath(filters));
@@ -1894,6 +2369,7 @@ if (typeof window !== "undefined") {
   document.addEventListener("click", (event) => {
     bindAnalyticsConsentClick(event);
     bindOutboundAnalytics(event);
+    bindProductAnalyticsClick(event);
     const link = event.target.closest("a[data-link]");
     if (!link || link.origin !== window.location.origin) {
       return;
@@ -1902,8 +2378,10 @@ if (typeof window !== "undefined") {
     window.history.pushState({}, "", link.href);
     renderCurrentRoute();
   });
+  initializeErrorTracking();
   if (analyticsConsent() === "accepted") {
     initializeAnalytics();
+    initializeProductAnalytics();
   }
   renderCurrentRoute();
 }

@@ -1028,6 +1028,12 @@ def _verification_meta(settings: Settings) -> str:
 def _public_config_script(settings: Settings) -> str:
     payload = {
         "gaMeasurementId": settings.ga_measurement_id,
+        "posthogProjectApiKey": settings.posthog_project_api_key,
+        "posthogHost": settings.posthog_host,
+        "sentryFrontendDsn": settings.sentry_frontend_dsn,
+        "sentryEnvironment": settings.sentry_environment or settings.environment,
+        "sentryRelease": settings.sentry_release,
+        "sentryTracesSampleRate": settings.sentry_traces_sample_rate,
         "xUrl": settings.public_x_url or "https://x.com/GamCryp",
         "youtubeUrl": settings.public_youtube_url,
         "contactEmail": settings.public_contact_email,
@@ -1128,13 +1134,22 @@ def destination_relationship_label(destination) -> str:
 
 
 def analytics_attributes(destination) -> str:
+    target_url_kind = getattr(destination, "target_url_kind", None)
+    if not target_url_kind:
+        referral_status = str(getattr(destination, "referral_status", "") or "").upper()
+        target_url_kind = "referral" if getattr(destination, "referral_url", None) and referral_status == "ACTIVE" else "official"
     attributes = {
         "data-analytics-link": "outbound",
+        "data-destination-slug": destination.destination_slug,
         "data-opportunity-id": destination.opportunity_id,
         "data-strategy-id": getattr(destination, "strategy_id", None),
         "data-opportunity-type": opportunity_type_label(destination.opportunity_type),
         "data-placement": "server_rendered_cta",
+        "data-source-page": "server_rendered",
+        "data-target-url-kind": target_url_kind,
         "data-referral-status": str(getattr(destination, "referral_status", "") or "none").lower(),
+        "data-commercial-relationship": getattr(destination, "commercial_relationship", "none"),
+        "data-is-affiliate": "true" if getattr(destination, "is_affiliate", False) else "false",
     }
     return "".join(
         f' {key}="{escape(str(value))}"'

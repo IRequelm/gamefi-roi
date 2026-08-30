@@ -11,6 +11,7 @@ from app import __version__
 from app.api.routes.health import router as health_router
 from app.api.v1.routes import router as api_v1_router
 from app.config.settings import get_settings
+from app.observability.sentry import initialize_sentry
 from app.operator.routes import router as operator_router
 from app.web.routes import frontend_assets, router as web_router
 
@@ -18,6 +19,7 @@ from app.web.routes import frontend_assets, router as web_router
 def create_app() -> FastAPI:
     settings = get_settings()
     _configure_logging(settings.log_level)
+    initialize_sentry(settings)
     api = FastAPI(title=settings.api_title, version=__version__)
     if settings.allowed_cors_origin_values:
         api.add_middleware(

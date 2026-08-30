@@ -223,3 +223,62 @@ def test_splinterlands_source_config_defaults_are_present(monkeypatch) -> None:
 
     assert settings.splinterlands_base_url == "https://api.splinterlands.com"
     assert settings.splinterlands_observation_freshness_seconds == 300
+
+
+def test_observability_config_is_optional_and_validated(monkeypatch) -> None:
+    monkeypatch.setenv("GAMEFI_ENVIRONMENT", "test")
+    monkeypatch.setenv("GAMEFI_DATABASE_URL", "sqlite+pysqlite:///:memory:")
+    monkeypatch.setenv("GAMEFI_ALLOW_SQLITE_FOR_TESTS", "true")
+    monkeypatch.setenv("GAMEFI_SENTRY_DSN", "")
+    monkeypatch.setenv("GAMEFI_SENTRY_FRONTEND_DSN", "")
+    monkeypatch.setenv("GAMEFI_SENTRY_ENVIRONMENT", "")
+    monkeypatch.setenv("GAMEFI_SENTRY_RELEASE", "")
+    monkeypatch.setenv("GAMEFI_POSTHOG_PROJECT_API_KEY", "")
+
+    settings = get_settings()
+
+    assert settings.sentry_dsn is None
+    assert settings.sentry_frontend_dsn is None
+    assert settings.sentry_environment is None
+    assert settings.sentry_release is None
+    assert settings.sentry_traces_sample_rate == 0.02
+    assert settings.sentry_error_sample_rate == 1.0
+    assert settings.posthog_project_api_key is None
+    assert settings.posthog_host == "https://us.i.posthog.com"
+    assert settings.posthog_timeout_seconds == 2
+
+    from app.config.settings import clear_settings_cache
+
+    clear_settings_cache()
+    monkeypatch.setenv("GAMEFI_SENTRY_DSN", "https://public@example.ingest.sentry.io/123")
+    monkeypatch.setenv("GAMEFI_SENTRY_FRONTEND_DSN", "https://browser@example.ingest.sentry.io/456")
+    monkeypatch.setenv("GAMEFI_SENTRY_ENVIRONMENT", "Production")
+    monkeypatch.setenv("GAMEFI_SENTRY_RELEASE", "gamcryp@abc123")
+    monkeypatch.setenv("GAMEFI_POSTHOG_PROJECT_API_KEY", "phc_test_key")
+    monkeypatch.setenv("GAMEFI_POSTHOG_HOST", "https://eu.i.posthog.com/")
+
+    settings = get_settings()
+
+    assert settings.sentry_dsn == "https://public@example.ingest.sentry.io/123"
+    assert settings.sentry_frontend_dsn == "https://browser@example.ingest.sentry.io/456"
+    assert settings.sentry_environment == "production"
+    assert settings.sentry_release == "gamcryp@abc123"
+    assert settings.posthog_project_api_key == "phc_test_key"
+    assert settings.posthog_host == "https://eu.i.posthog.com"
+
+    clear_settings_cache()
+    monkeypatch.setenv("GAMEFI_SENTRY_DSN", "http://example.invalid/1")
+    with pytest.raises(ValidationError):
+        get_settings()
+
+    clear_settings_cache()
+    monkeypatch.setenv("GAMEFI_SENTRY_DSN", "")
+    monkeypatch.setenv("GAMEFI_POSTHOG_HOST", "https://us.i.posthog.com/capture/")
+    with pytest.raises(ValidationError):
+        get_settings()
+
+    clear_settings_cache()
+    monkeypatch.setenv("GAMEFI_POSTHOG_HOST", "https://us.i.posthog.com")
+    monkeypatch.setenv("GAMEFI_POSTHOG_PROJECT_API_KEY", "bad key")
+    with pytest.raises(ValidationError):
+        get_settings()

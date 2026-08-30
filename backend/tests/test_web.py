@@ -51,17 +51,29 @@ def test_ga_config_is_inert_when_absent_and_public_when_configured(monkeypatch, 
     html = client.get("/").text
 
     assert '"gaMeasurementId":null' in html
+    assert '"posthogProjectApiKey":null' in html
+    assert '"posthogHost":"https://us.i.posthog.com"' in html
+    assert '"sentryFrontendDsn":null' in html
+    assert '"sentryTracesSampleRate":0.02' in html
     assert "googletagmanager.com/gtag/js" not in html
+    assert "browser.sentry-cdn.com" not in html
 
     from app.config.settings import clear_settings_cache
 
     clear_settings_cache()
     monkeypatch.setenv("GAMEFI_GA_MEASUREMENT_ID", "G-TEST1234")
+    monkeypatch.setenv("GAMEFI_POSTHOG_PROJECT_API_KEY", "phc_test_key")
+    monkeypatch.setenv("GAMEFI_SENTRY_FRONTEND_DSN", "https://browser@example.ingest.sentry.io/456")
+    monkeypatch.setenv("GAMEFI_SENTRY_ENVIRONMENT", "production")
     configured_client, _configured_engine = _seeded_client(monkeypatch, tmp_path, "web-ga-present.db")
     configured_html = configured_client.get("/").text
 
     assert '"gaMeasurementId":"G-TEST1234"' in configured_html
+    assert '"posthogProjectApiKey":"phc_test_key"' in configured_html
+    assert '"sentryFrontendDsn":"https://browser@example.ingest.sentry.io/456"' in configured_html
+    assert '"sentryEnvironment":"production"' in configured_html
     assert "googletagmanager.com/gtag/js" not in configured_html
+    assert "browser.sentry-cdn.com" not in configured_html
 
 
 def test_outbound_redirect_resolves_reviewed_destination_without_tracking_cookie(monkeypatch, tmp_path) -> None:

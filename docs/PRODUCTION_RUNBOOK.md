@@ -86,15 +86,24 @@ Security:
 - `GAMEFI_SECURITY_HEADERS_ENABLED=true`
 - `GAMEFI_ALLOWED_CORS_ORIGINS=` blank unless a separate trusted origin is introduced.
 
-Public brand and analytics:
+Public brand, analytics, and observability:
 
 - `GAMEFI_PUBLIC_BASE_URL`: canonical public origin.
 - `GAMEFI_GA_MEASUREMENT_ID`: optional GA4 measurement id such as `G-XXXXXXXXXX`; leave blank to disable Google Analytics and avoid loading Google scripts.
+- `GAMEFI_SENTRY_DSN`: optional backend/job Sentry DSN. Store only in Render/GitHub secrets; never commit or paste into chat.
+- `GAMEFI_SENTRY_FRONTEND_DSN`: optional browser Sentry DSN exposed through the public HTML config. Store in Render env even though browser DSNs are public by design.
+- `GAMEFI_SENTRY_ENVIRONMENT=production`: normalized Sentry environment label.
+- `GAMEFI_SENTRY_RELEASE`: optional release/commit identifier. If omitted, Render/GitHub commit env values are used where available.
+- `GAMEFI_SENTRY_TRACES_SAMPLE_RATE=0.02`: conservative request tracing sample rate.
+- `GAMEFI_SENTRY_ERROR_SAMPLE_RATE=1.0`: error-event sample rate.
+- `GAMEFI_POSTHOG_PROJECT_API_KEY`: optional PostHog project API key for consent-gated explicit product events.
+- `GAMEFI_POSTHOG_HOST=https://us.i.posthog.com`: PostHog capture host. Use the EU host only if the project was created in the EU region.
+- `GAMEFI_POSTHOG_TIMEOUT_SECONDS=2`: bounded server-side capture timeout.
 - `GAMEFI_PUBLIC_X_URL=https://x.com/GamCryp`: official public X profile URL.
 - `GAMEFI_PUBLIC_YOUTUBE_URL=https://www.youtube.com/@GamCryp`
 - `GAMEFI_PUBLIC_CONTACT_EMAIL=info@gamcryp.com`
 
-GA4 consent is handled in the frontend. Google Analytics is additive only and must not replace first-party `/go/...` records or influence ROI, Risk, Confidence, snapshots, or organic rankings.
+GA4 consent is handled in the frontend and remains the acquisition analytics surface. PostHog is consent-gated product/funnel analytics with explicit named events only; autocapture and session replay are not enabled. Sentry is production error and request-health instrumentation with request bodies, cookies, tokens, wallet data, and obvious sensitive fields scrubbed. These systems are additive only and must not replace first-party `/go/...` records or influence ROI, Risk, Confidence, snapshots, referrals, or organic rankings.
 
 Operator console:
 

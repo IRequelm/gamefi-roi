@@ -12,7 +12,10 @@ import {
   formatMoney,
   formatRatio,
   formatUpdatedAge,
+  hasConsentGatedAnalytics,
   initializeAnalytics,
+  initializeErrorTracking,
+  initializeProductAnalytics,
   opportunityTypeLabel,
   renderAnalyticsConsentBanner,
   renderCatalogStats,
@@ -33,8 +36,11 @@ import {
   renderStrategySignals,
   renderStrategyDetail,
   resetAnalyticsForTests,
+  sanitizeBrowserSentryEvent,
+  sentryFrontendDsn,
   setAnalyticsConsent,
   trackAnalyticsEvent,
+  trackProductAnalyticsEvent,
 } from "../assets/app.js";
 
 test("rankings rendering includes card metrics and stored API values", () => {
@@ -149,6 +155,8 @@ test("static shell uses the official GamCryp logo asset without placeholder mark
   assert.match(html, />info@gamcryp.com</);
   assert.match(html, /https:\/\/www.youtube.com\/@GamCryp/);
   assert.match(html, /gaMeasurementId: null/);
+  assert.match(html, /posthogProjectApiKey: null/);
+  assert.match(html, /sentryFrontendDsn: null/);
   assert.doesNotMatch(html, /gamcryp@gmail.com/);
   assert.doesNotMatch(html, /googletagmanager\.com|gtag\/js/);
   assert.doesNotMatch(html, /data-logo-placeholder/);
@@ -386,6 +394,8 @@ test("public CTA never renders None and preserves /go route", () => {
 
   assert.match(html, /href="\/go\/grass-official\?source_page=opportunity_watchlist&amp;placement=opportunity_card"/);
   assert.match(html, /data-analytics-link="outbound"/);
+  assert.match(html, /data-destination-slug="grass-official"/);
+  assert.match(html, /data-target-url-kind="official"/);
   assert.doesNotMatch(html, />None<|Open\s*\|\s*None|Start\s*\|\s*None/);
 });
 
@@ -401,8 +411,10 @@ test("analytics is absent without measurement id and gated by consent", () => {
   const context = fakeAnalyticsContext(null, storage);
 
   assert.equal(analyticsMeasurementId(context.win), "");
+  assert.equal(hasConsentGatedAnalytics(context.win), false);
   assert.equal(renderAnalyticsConsentBanner(context.win), "");
   assert.equal(initializeAnalytics(context), false);
+  assert.equal(initializeProductAnalytics(context), false);
   assert.equal(trackAnalyticsEvent("opportunity_view", { opportunity_id: "grass" }, context), false);
   assert.equal(context.doc.scripts.length, 0);
 });
@@ -448,6 +460,122 @@ test("accept consent initializes GA once and sends safe engagement events", () =
   assert.equal(event[2].opportunity_id, "grass");
   assert.equal(event[2].placement, "opportunity_card");
   assert.equal(event[2].raw_financial_payload, undefined);
+});
+
+test("PostHog product analytics is consent gated, explicit, and privacy safe", () => {
+  resetAnalyticsForTests();
+  const storage = fakeStorage();
+  const sent = [];
+  const context = fakeAnalyticsContext("G-TEST1234", storage, {
+    posthogProjectApiKey: "phc_test_key",
+    posthogHost: "https://us.i.posthog.com",
+  });
+  context.win.location = { pathname: "/rankings/gamefi-under-50", search: "?utm_source=x&utm_medium=social" };
+  context.win.navigator = { sendBeacon: (url, body) => sent.push({ url, payload: JSON.parse(body) }) > 0 };
+  context.idGenerator = () => "stable-id";
+
+  assert.match(renderAnalyticsConsentBanner(context.win), /Accept analytics/);
+  assert.equal(trackProductAnalyticsEvent("ranking_view", { ranking_slug: "gamefi-under-50" }, context), false);
+  assert.equal(setAnalyticsConsent("accepted", context), true);
+  assert.equal(initializeProductAnalytics(context), true);
+  assert.equal(
+    trackProductAnalyticsEvent(
+      "ranking_view",
+      {
+        ranking_slug: "gamefi-under-50",
+        snapshot_id: "snapshot-1",
+        snapshot_timestamp: "2026-08-16T12:00:00Z",
+        raw_financial_payload: "do-not-send",
+        wallet_address: "do-not-send",
+      },
+      context,
+    ),
+    true,
+  );
+
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0].url, "https://us.i.posthog.com/capture/");
+  assert.equal(sent[0].payload.event, "ranking_view");
+  assert.equal(sent[0].payload.distinct_id, "visitor:stable-id");
+  assert.equal(sent[0].payload.properties.ranking_slug, "gamefi-under-50");
+  assert.equal(sent[0].payload.properties.snapshot_id, "snapshot-1");
+  assert.equal(sent[0].payload.properties.snapshot_timestamp, "2026-08-16T12:00:00Z");
+  assert.equal(sent[0].payload.properties.utm_source, "x");
+  assert.equal(sent[0].payload.properties.utm_medium, "social");
+  assert.equal(sent[0].payload.properties.raw_financial_payload, undefined);
+  assert.equal(sent[0].payload.properties.wallet_address, undefined);
+  assert.equal(sent[0].payload.properties.$process_person_profile, false);
+});
+
+test("outbound CTAs expose referral versus official fallback metadata without changing /go", () => {
+  const officialHtml = renderDestinationButton(destinationPayload("grass-official"), "Open", {
+    sourcePage: "opportunity_watchlist",
+    placement: "opportunity_card",
+  });
+  const referralDestination = {
+    ...destinationPayload("partner-play"),
+    referral_url: "https://example.com/ref",
+    referral_status: "ACTIVE",
+    is_affiliate: true,
+    commercial_relationship: "affiliate",
+  };
+  const referralHtml = renderDestinationButton(referralDestination, "Start", {
+    sourcePage: "rankings",
+    placement: "strategy_card",
+  });
+
+  assert.match(officialHtml, /href="\/go\/grass-official\?source_page=opportunity_watchlist&amp;placement=opportunity_card"/);
+  assert.match(officialHtml, /data-target-url-kind="official"/);
+  assert.match(referralHtml, /href="\/go\/partner-play\?source_page=rankings&amp;placement=strategy_card"/);
+  assert.match(referralHtml, /data-target-url-kind="referral"/);
+  assert.match(referralHtml, /data-is-affiliate="true"/);
+});
+
+test("Sentry browser initialization is optional and sanitizes sensitive event fields", () => {
+  resetAnalyticsForTests();
+  const inert = fakeAnalyticsContext(null, fakeStorage());
+  assert.equal(sentryFrontendDsn(inert.win), "");
+  assert.equal(initializeErrorTracking(inert), false);
+
+  const storage = fakeStorage();
+  const context = fakeAnalyticsContext(null, storage, {
+    sentryFrontendDsn: "https://public@example.ingest.sentry.io/123",
+    sentryEnvironment: "production",
+    sentryRelease: "abc123",
+    sentryTracesSampleRate: 0.01,
+  });
+  const initCalls = [];
+  context.win.Sentry = {
+    browserTracingIntegration: () => "browser-tracing",
+    init: (options) => initCalls.push(options),
+  };
+  assert.equal(initializeErrorTracking(context), true);
+  assert.equal(initCalls.length, 1);
+  assert.equal(initCalls[0].dsn, "https://public@example.ingest.sentry.io/123");
+  assert.equal(initCalls[0].sendDefaultPii, false);
+  assert.equal(initCalls[0].replaysSessionSampleRate, 0);
+  assert.equal(initCalls[0].replaysOnErrorSampleRate, 0);
+  assert.deepEqual(initCalls[0].integrations, ["browser-tracing"]);
+
+  const event = sanitizeBrowserSentryEvent({
+    request: {
+      url: "https://gamcryp.com/strategies/demo?token=secret",
+      data: { password: "secret" },
+      cookies: "session=secret",
+      headers: { Authorization: "Bearer secret", "User-Agent": "test" },
+    },
+    user: { email: "user@example.com", id: "public-id", ip_address: "127.0.0.1" },
+    extra: { api_key: "secret", safe: "ok" },
+  });
+
+  assert.equal(event.request.url, "https://gamcryp.com/strategies/demo");
+  assert.equal(event.request.data, undefined);
+  assert.equal(event.request.cookies, undefined);
+  assert.equal(event.request.headers.Authorization, "[Filtered]");
+  assert.equal(event.request.headers["User-Agent"], "test");
+  assert.deepEqual(event.user, { id: "public-id" });
+  assert.equal(event.extra.api_key, "[Filtered]");
+  assert.equal(event.extra.safe, "ok");
 });
 
 test("analytics event module does not throw when GA is unavailable", () => {
@@ -585,7 +713,7 @@ function fakeStorage() {
   };
 }
 
-function fakeAnalyticsContext(measurementId, storage) {
+function fakeAnalyticsContext(measurementId, storage, configOverrides = {}) {
   const doc = {
     scripts: [],
     head: {
@@ -597,19 +725,30 @@ function fakeAnalyticsContext(measurementId, storage) {
       return { tag, dataset: {} };
     },
     querySelector(selector) {
-      const match = selector.match(/script\[data-gamcryp-ga="([^"]+)"\]/);
-      if (!match) {
-        return null;
+      const gaMatch = selector.match(/script\[data-gamcryp-ga="([^\"]+)"\]/);
+      if (gaMatch) {
+        return doc.scripts.find((script) => script.dataset.gamcrypGa === gaMatch[1]) || null;
       }
-      return doc.scripts.find((script) => script.dataset.gamcrypGa === match[1]) || null;
+      if (selector === "script[data-gamcryp-sentry='browser']") {
+        return doc.scripts.find((script) => script.dataset.gamcrypSentry === "browser") || null;
+      }
+      return null;
     },
   };
   const win = {
     GAMCRYP_PUBLIC_CONFIG: {
       gaMeasurementId: measurementId,
+      posthogProjectApiKey: null,
+      posthogHost: "https://us.i.posthog.com",
+      sentryFrontendDsn: null,
+      sentryEnvironment: "test",
+      sentryRelease: null,
+      sentryTracesSampleRate: 0.02,
+      ...configOverrides,
     },
     localStorage: storage,
     dataLayer: [],
+    location: { pathname: "/", search: "" },
   };
   return { win, doc, storage };
 }

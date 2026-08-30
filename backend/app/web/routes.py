@@ -21,6 +21,7 @@ from app.monetization.referral_operations import (
     destination_with_operator_referral,
     program_for_destination,
 )
+from app.observability import posthog as product_analytics
 from app.search.canonical import (
     canonical_page_inventory,
     canonical_url,
@@ -222,6 +223,7 @@ def outbound_redirect(
     destination_slug: str,
     request: Request,
     engine: Engine = Depends(get_database_engine),
+    settings: Settings = Depends(get_settings),
 ) -> RedirectResponse:
     destination = get_outbound_destination(destination_slug)
     if destination is None or not destination.is_active() or "redirect" not in destination.allowed_surfaces:
@@ -244,20 +246,31 @@ def outbound_redirect(
     if parsed.scheme != "https" or not parsed.netloc:
         raise HTTPException(status_code=404, detail="Outbound destination is not reviewed for redirect.")
 
+    click_event_id = None
+    coarse_session_id = request.headers.get("x-gamcryp-session")
     try:
-        repository.record_outbound_click(
+        click = repository.record_outbound_click(
             destination=destination,
             target_url_kind=destination.target_url_kind,
             source_page=request.query_params.get("source_page"),
             placement=request.query_params.get("placement"),
-            coarse_session_id=request.headers.get("x-gamcryp-session"),
+            coarse_session_id=coarse_session_id,
             user_agent_category=_user_agent_category(request.headers.get("user-agent", "")),
         )
+        click_event_id = click.event_id
     except SQLAlchemyError as exc:
         logger.warning(
             "outbound_click_persistence_failed",
             extra={"destination_slug": destination.destination_slug, "error": str(exc)},
         )
+
+    _track_outbound_product_analytics(
+        settings=settings,
+        destination=destination,
+        distinct_id=product_analytics.distinct_id_for_outbound_click(coarse_session_id, click_event_id),
+        source_page=request.query_params.get("source_page"),
+        placement=request.query_params.get("placement"),
+    )
 
     logger.info(
         "outbound_redirect",
@@ -274,6 +287,46 @@ def outbound_redirect(
         status_code=302,
         headers={"Cache-Control": "no-store", "X-Robots-Tag": "noindex, nofollow"},
     )
+
+
+def _track_outbound_product_analytics(
+    *,
+    settings: Settings,
+    destination,
+    distinct_id: str,
+    source_page: str | None,
+    placement: str | None,
+) -> None:
+    properties = {
+        "destination_slug": destination.destination_slug,
+        "opportunity_id": destination.opportunity_id,
+        "opportunity_slug": destination.opportunity_id,
+        "opportunity_type": destination.opportunity_type,
+        "strategy_id": destination.strategy_id,
+        "strategy_slug": destination.strategy_id,
+        "target_url_kind": destination.target_url_kind,
+        "referral_status": destination.referral_status,
+        "commercial_relationship": destination.commercial_relationship,
+        "is_affiliate": destination.is_affiliate,
+        "source_page": source_page,
+        "placement": placement,
+        "page_path": f"/go/{destination.destination_slug}",
+    }
+    event_names = ["outbound_go_click"]
+    event_names.append("referral_outbound_click" if destination.target_url_kind == "referral" else "official_fallback_outbound_click")
+    for event_name in event_names:
+        try:
+            product_analytics.track_product_event(
+                settings,
+                event_name=event_name,
+                distinct_id=distinct_id,
+                properties=properties,
+            )
+        except Exception as exc:  # Analytics must never block outbound redirects.
+            logger.warning(
+                "posthog_outbound_event_failed",
+                extra={"event_name": event_name, "destination_slug": destination.destination_slug, "error": str(exc)},
+            )
 
 
 def _html_response(page, *, request: Request, settings: Settings, engine: Engine) -> HTMLResponse:
