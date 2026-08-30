@@ -1,4 +1,4 @@
-﻿$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Stop"
 
 $Base = Split-Path -Parent $MyInvocation.MyCommand.Path
 $Bundle = Join-Path $Base "FAILOVER_BUNDLE.md"
@@ -8,7 +8,9 @@ $Files = @(
     "CURRENT_STATE.md",
     "WORK_QUEUE.md",
     "DECISIONS.md",
-    "HANDOFF.md"
+    "WORKER_CAPABILITIES.md",
+    "HANDOFF.md",
+    "ACCESS.md"
 )
 
 $Header = @"
@@ -24,6 +26,15 @@ IMPORTANT:
 
 Generated from the canonical files in ops/ai.
 
+Health check command:
+````powershell
+powershell -ExecutionPolicy Bypass -File ops/ai/Test-FailoverHealth.ps1
+````
+
+Portable bundle regeneration command:
+````powershell
+powershell -ExecutionPolicy Bypass -File ops/ai/Update-FailoverBundle.ps1
+````
 "@
 
 Set-Content -Path $Bundle -Value $Header -Encoding UTF8
@@ -31,13 +42,13 @@ Set-Content -Path $Bundle -Value $Header -Encoding UTF8
 foreach ($File in $Files) {
     $Path = Join-Path $Base $File
 
-    if (-not (Test-Path $Path)) {
+    if (-not (Test-Path -LiteralPath $Path)) {
         throw "Missing required handoff file: $File"
     }
 
     Add-Content -Path $Bundle -Value "`n---`n" -Encoding UTF8
     Add-Content -Path $Bundle -Value "# $File`n" -Encoding UTF8
-    Get-Content $Path | Add-Content -Path $Bundle -Encoding UTF8
+    Get-Content -LiteralPath $Path | Add-Content -Path $Bundle -Encoding UTF8
 }
 
 Write-Host "FAILOVER_BUNDLE.md regenerated successfully."

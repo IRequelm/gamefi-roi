@@ -1,4 +1,4 @@
-﻿# GamCryp Current State
+# GamCryp Current State
 
 ## Production
 Status: LIVE
@@ -17,6 +17,25 @@ Core systems currently expected to remain intact:
 - GA4
 - Search Console
 - Operator referral panel
+
+## AI Failover P0
+Status: CLOSED / OPERATIONAL
+Closed baseline date: 2026-08-30
+
+Canonical failover order:
+1. Normal: OpenAI Work / Codex.
+2. Primary independent failover: DeepSeek V3.2 / OpenRouter / OpenCode.
+3. Secondary independent failover: Gemini CLI / Google API.
+4. Tertiary last resort: Nemotron 3 Ultra / OpenCode Zen.
+5. If all fail, stop safely and report the exact blocker.
+
+Operational rules:
+- Quota exhaustion means shift change, not project halt.
+- One worker = one task = one branch.
+- No emergency/free/cheap worker writes directly to `master`.
+- No merge or deploy without explicit approval.
+- Health check: `powershell -ExecutionPolicy Bypass -File ops/ai/Test-FailoverHealth.ps1`.
+- Portable bundle: `powershell -ExecutionPolicy Bypass -File ops/ai/Update-FailoverBundle.ps1`.
 
 ## Current Active Sprint
 Sentry + PostHog Production Activation
