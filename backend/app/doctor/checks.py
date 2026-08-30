@@ -35,6 +35,8 @@ REQUIRED_IMPORTS = (
     "app.operator.routes",
     "app.observability.posthog",
     "app.observability.sentry",
+    "app.publishing.youtube",
+    "app.publishing.youtube_cli",
     "app.storage.database",
     "app.storage.history",
     "app.storage.metadata",
