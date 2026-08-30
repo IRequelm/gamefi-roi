@@ -1,0 +1,204 @@
+﻿# GamCryp Failover Bundle
+
+This file is a portable read-only handoff snapshot for an AI worker that cannot access the repository directly.
+
+IMPORTANT:
+- Treat this bundle as context, not as permission.
+- Do not expose secrets.
+- Do not deploy, merge, create accounts or modify production unless explicitly authorized.
+- If repository access becomes available, verify this bundle against the live repository before making changes.
+
+Generated from the canonical files in ops/ai.
+
+
+---
+
+# AGENT_RULES.md
+
+# GamCryp AI Agent Rules
+
+1. Read CURRENT_STATE.md, WORK_QUEUE.md, HANDOFF.md and DECISIONS.md before doing any work.
+2. GitHub/repository is the operational source of truth.
+3. Never expose secrets, tokens, DSNs, passwords, cookies, API keys or private credentials.
+4. API-first. Browser automation is fallback only.
+5. Browser/platform blocker budget: maximum 3 minutes.
+6. Maximum retry policy: 1 normal attempt + 1 materially different fallback.
+7. If still blocked, stop that path and record the exact human action required.
+8. Never create duplicate accounts, projects, organizations or resources without checking for an existing GamCryp resource first.
+9. Never let two agents modify the same task/branch simultaneously.
+10. Preserve production behavior unless the active task explicitly requires a change.
+11. Test before merge or deploy.
+12. Do not merge or deploy unless the active task explicitly authorizes it.
+13. Do not restart completed research or implementation. Continue from the latest checkpoint.
+14. At the end of every meaningful task, update CURRENT_STATE.md and HANDOFF.md.
+15. Human approval is required for irreversible account, billing, legal, security, production-data or credential decisions.
+
+---
+
+# CURRENT_STATE.md
+
+# GamCryp Current State
+
+## Production
+Status: LIVE
+Domain: gamcryp.com
+
+Catalog:
+- 32 opportunities
+- 15 modeled strategies
+
+Core systems currently expected to remain intact:
+- ROI calculations
+- Risk / confidence
+- Rankings
+- Snapshot generation
+- Referral routing and official fallback
+- GA4
+- Search Console
+- Operator referral panel
+
+## Current Active Sprint
+Sentry + PostHog Production Activation
+
+Status: IN_PROGRESS
+
+Completed:
+- Sentry + PostHog instrumentation implemented by Codex
+- Branch: codex/sentry-posthog-instrumentation
+- Commit: 4a15eac3c63c28060837130bb98390189e477a47
+- Backend tests: 204 passed
+- Frontend tests: 31 passed
+- compileall passed
+- pip check passed
+- doctor passed
+- API probe passed
+- web probe passed
+- PostHog GamCryp organization confirmed
+- PostHog project confirmed
+- Sentry GitHub OAuth completed
+- User approved creation of new GamCryp Sentry organization/project
+- Sentry data region approved: EU
+- GitHub email use for Sentry account approved
+
+Current blocker:
+- OpenAI Work usage limit interrupted execution
+
+Next exact action:
+1. Create/finish GamCryp Sentry organization/project in EU
+2. Retrieve Sentry DSN values securely
+3. Retrieve/use existing GamCryp PostHog project configuration
+4. Configure Render production environment variables without exposing secrets
+5. Merge step is already DONE; master and origin/master are already at the instrumentation commit
+6. Deploy existing master commit after Render env configuration
+7. Run production smoke tests
+8. Verify Sentry, PostHog, GA4 and referral routing
+
+## Safety
+Do not expose secrets in repository files or chat.
+Do not restart completed instrumentation work.
+Do not create duplicate PostHog resources.
+
+---
+
+# WORK_QUEUE.md
+
+# GamCryp Work Queue
+
+## P0
+- AI Failover / Vendor-Independent Operations
+- Complete Sentry + PostHog production activation
+
+## P1
+- Human-First UX / Progressive Disclosure
+- Customer acquisition / distribution
+- Referral coverage expansion
+- What is this / How does it work / Where does the money come from?
+- YouTube API Publishing Layer
+- Content Scheduler + Autonomous Publishing
+
+## P2
+- Project Trust / Legitimacy Layer
+- Referral Independence / Trust Standard
+- Retention Layer
+- Weekly Product Truth Dashboard
+- Lightweight Compliance Check
+- Free / Premium + Stripe
+- Autopilot hardening
+
+## Parked / Later
+- Grok X Intelligence Layer
+- TikTok / Instagram / Bilibili
+- WalletConnect
+- 100+ opportunity catalog
+- B2B / API product
+
+## Rule
+Priority changes must be recorded here and in DECISIONS.md when they represent a durable product decision.
+
+---
+
+# DECISIONS.md
+
+# GamCryp Durable Decisions
+
+1. GitHub/repository is the operational source of truth.
+2. Primary/authoritative data only for financial modeling inputs.
+3. Referral availability must never affect organic ranking, ROI, risk or confidence.
+4. Human-First UX with progressive disclosure.
+5. API-first automation; browser automation is fallback only.
+6. GREEN content may become automatic after learning/validation.
+7. YELLOW content requires approval.
+8. RED content remains manual.
+9. AI vendors/workers must be replaceable without stopping GamCryp operations.
+10. No duplicate external resources should be created without checking existing GamCryp resources first.
+11. Product growth priority remains:
+    - Human-First UX
+    - Customer acquisition / distribution
+    before lower-priority feature expansion.
+12. Catalog growth must be demand- and quality-driven, not number-driven.
+13. Project legitimacy/trust is evaluated separately from ROI model performance.
+14. Premium/paywall comes after evidence of repeat usage and retention demand.
+15. YouTube publishing should migrate to an official API-based publishing layer instead of browser file-upload dependence.
+16. Final system should minimize founder/operator intervention and use exception-based control.
+17. Major milestones may receive an independent red-team / architecture audit.
+
+---
+
+# HANDOFF.md
+
+# GamCryp AI Handoff
+
+Status: IN_PROGRESS
+
+Current task:
+Sentry + PostHog production activation
+
+Primary execution owner:
+OpenAI Work, when quota is available.
+
+Failover rule:
+If the current AI worker becomes unavailable because of quota, outage or vendor limitation, another capable agent may continue from this checkpoint.
+
+Do not restart completed work.
+
+Before continuing:
+1. Read AGENT_RULES.md
+2. Read CURRENT_STATE.md
+3. Read WORK_QUEUE.md
+4. Read DECISIONS.md
+5. Confirm the active branch/task is not being modified simultaneously by another agent
+
+Current checkpoint:
+- Instrumentation code is already implemented and tested
+- PostHog GamCryp organization/project already exists
+- Sentry OAuth completed
+- New GamCryp Sentry org/project creation approved
+- Sentry region: EU
+- GitHub email use approved
+- Execution stopped only because OpenAI Work reached usage limit
+
+Next exact step:
+Continue Sentry account/project creation from the approved EU configuration, then proceed with secure Render env configuration, deploy existing master and production smoke.
+
+At task completion:
+Update CURRENT_STATE.md and this HANDOFF.md with the final commit, deployment result, blockers and next action.
