@@ -28,10 +28,11 @@ def test_paid_render_blueprint_preserves_production_cron_and_paid_database() -> 
     assert "plan: basic-256mb" in blueprint
     assert "schedule: \"*/30 * * * *\"" in blueprint
     assert "preDeployCommand" in blueprint
-    assert "python -m app.jobs.production_recalculation" in blueprint
+    assert "python -m app.jobs.snapshot_refresh" in blueprint
+    assert "python -m app.jobs.production_recalculation" not in blueprint
 
 
-def test_beta_scheduler_workflow_uses_existing_recalculation_with_overlap_guard() -> None:
+def test_beta_scheduler_workflow_uses_policy_aware_snapshot_refresh_with_overlap_guard() -> None:
     workflow = (ROOT / ".github/workflows/render-beta-recalculation.yml").read_text(encoding="utf-8")
 
     assert "cron: \"*/30 * * * *\"" in workflow
@@ -42,4 +43,5 @@ def test_beta_scheduler_workflow_uses_existing_recalculation_with_overlap_guard(
     assert "https://gamefi-roi-web.onrender.com" in workflow
     assert "GAMEFI_COINGECKO_API_KEY" in workflow
     assert "GAMEFI_DFK_CHAIN_RPC_URL" in workflow
-    assert "python -m app.jobs.production_recalculation" in workflow
+    assert "python -m app.jobs.snapshot_refresh" in workflow
+    assert "python -m app.jobs.production_recalculation" not in workflow

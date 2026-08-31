@@ -18,6 +18,8 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.strategies.refreshability import Refreshability, classify_refreshability
+
 CONTENT_PACK_VERSION = "content-pack-lite-v1"
 DISTRIBUTION_CAMPAIGN = "distribution-mvp"
 FINANCIAL_CLAIM_TOKEN_RE = re.compile(
@@ -67,6 +69,7 @@ class ContentSource(BaseModel):
     adapter_contract_version: str | None = None
     model_version: str | None = None
     scoring_methodology_version: str | None = None
+    refreshability: Refreshability | None = None
     official_source_refs: list[SourceReference] = Field(default_factory=list)
 
 
@@ -186,6 +189,8 @@ def expected_source_hash(pack: ContentPackLite) -> str:
 
     source = pack.source.model_dump(mode="json")
     source.pop("source_snapshot_hash", None)
+    if source.get("refreshability") is None:
+        source.pop("refreshability", None)
     return source_snapshot_hash(
         {
             "claims": [claim.model_dump(mode="json") for claim in pack.claims],
@@ -347,6 +352,16 @@ def validate_pack(pack: ContentPackLite) -> ContentPackValidation:
         warnings.append(f"confidence context: {pack.facts.confidence.label}")
     if pack.facts.freshness.display.lower() == "stale":
         warnings.append("source snapshot is stale")
+    authoritative_refreshability = _authoritative_refreshability(pack)
+    if _has_available_financial_claim(pack) and authoritative_refreshability != Refreshability.AUTO_REFRESHABLE:
+        label = authoritative_refreshability.value if authoritative_refreshability else "UNCLASSIFIED"
+        warnings.append(f"numeric publication blocked by refreshability: {label}")
+    if (
+        _has_available_financial_claim(pack)
+        and pack.source.refreshability is not None
+        and pack.source.refreshability != authoritative_refreshability
+    ):
+        warnings.append("content-pack refreshability metadata does not match the canonical strategy classification")
 
     return ContentPackValidation(
         content_id=pack.content_id,
@@ -395,6 +410,7 @@ def resolve_claim_source_value(pack: ContentPackLite, source_path: str) -> str:
         "source.adapter_contract_version": pack.source.adapter_contract_version,
         "source.model_version": pack.source.model_version,
         "source.scoring_methodology_version": pack.source.scoring_methodology_version,
+        "source.refreshability": pack.source.refreshability.value if pack.source.refreshability else None,
     }
     resolved.update({path: str(value) for path, value in source_values.items() if value is not None})
     if source_path not in resolved:
@@ -447,6 +463,15 @@ def derive_readiness(
         return ContentReadiness.RED
     if pack.source.strategy_id and not pack.source.snapshot_id:
         return ContentReadiness.RED
+    authoritative_refreshability = _authoritative_refreshability(pack)
+    if _has_available_financial_claim(pack) and authoritative_refreshability != Refreshability.AUTO_REFRESHABLE:
+        return ContentReadiness.RED
+    if (
+        _has_available_financial_claim(pack)
+        and pack.source.refreshability is not None
+        and pack.source.refreshability != authoritative_refreshability
+    ):
+        return ContentReadiness.RED
     if _has_available_financial_claim(pack) and pack.facts.freshness.display.lower() == "stale":
         return ContentReadiness.RED
     if pack.facts.modeled_return and pack.facts.modeled_return.status == "unavailable":
@@ -456,6 +481,12 @@ def derive_readiness(
     if pack.facts.confidence and pack.facts.confidence.label in {"LOW", "MODERATE"}:
         return ContentReadiness.YELLOW
     return ContentReadiness.GREEN
+
+
+def _authoritative_refreshability(pack: ContentPackLite) -> Refreshability | None:
+    if not pack.source.strategy_id:
+        return None
+    return classify_refreshability(pack.source.strategy_id).refreshability
 
 
 def unsupported_numeric_tokens(pack: ContentPackLite) -> list[str]:

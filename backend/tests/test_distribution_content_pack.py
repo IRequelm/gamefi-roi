@@ -15,11 +15,13 @@ from app.distribution.content_pack import (
     expected_source_hash,
     resolve_claim_source_value,
     serialize_batch,
+    set_expected_source_hash,
     source_snapshot_hash,
     validate_batch,
     validate_pack,
 )
 from app.distribution.learning_batch import LEARNING_BATCH_CREATED_AT, build_learning_batch
+from app.strategies.refreshability import Refreshability
 
 
 def test_source_snapshot_hash_is_deterministic() -> None:
@@ -151,6 +153,52 @@ def test_green_yellow_red_readiness_validation() -> None:
     assert validate_pack(roi_unavailable).readiness == ContentReadiness.YELLOW
 
 
+def test_partial_and_not_refreshable_numeric_packs_are_hard_red_even_when_recent() -> None:
+    packs = build_learning_batch(_rankings_payload(), _opportunities_payload())
+    by_strategy = {pack.source.strategy_id: pack for pack in packs if pack.source.strategy_id}
+
+    partial = by_strategy["geodnet-empty-hex-triple-band-base-station"]
+    not_refreshable = by_strategy["storj-existing-hardware-storage-node"]
+    assert partial.facts.freshness.display == "fresh"
+    assert partial.source.refreshability is Refreshability.PARTIAL_REFRESH_ONLY
+    assert validate_pack(partial).readiness is ContentReadiness.RED
+    assert "refreshability: PARTIAL_REFRESH_ONLY" in " ".join(validate_pack(partial).warnings)
+    assert not_refreshable.source.refreshability is Refreshability.NOT_REFRESHABLE
+    assert validate_pack(not_refreshable).readiness is ContentReadiness.RED
+    assert "refreshability: NOT_REFRESHABLE" in " ".join(validate_pack(not_refreshable).warnings)
+
+
+def test_partial_strategy_cannot_spoof_auto_refreshability_metadata() -> None:
+    packs = build_learning_batch(_rankings_payload(), _opportunities_payload())
+    partial = next(
+        pack
+        for pack in packs
+        if pack.source.strategy_id == "geodnet-empty-hex-triple-band-base-station"
+    )
+    spoofed = partial.model_copy(
+        update={"source": partial.source.model_copy(update={"refreshability": Refreshability.AUTO_REFRESHABLE})}
+    )
+    spoofed = set_expected_source_hash(spoofed)
+
+    validation = validate_pack(spoofed)
+
+    assert validation.readiness is ContentReadiness.RED
+    assert "refreshability: PARTIAL_REFRESH_ONLY" in " ".join(validation.warnings)
+    assert "does not match the canonical" in " ".join(validation.warnings)
+
+
+def test_auto_numeric_pack_can_qualify_and_methodology_pack_is_unaffected() -> None:
+    packs = build_learning_batch(_rankings_payload(), _opportunities_payload())
+    by_strategy = {pack.source.strategy_id: pack for pack in packs if pack.source.strategy_id}
+    splinterlands = by_strategy["splinterlands-modern-ranked-sps-ev"]
+    methodology = next(pack for pack in packs if pack.source.opportunity_id == "gamcryp-methodology")
+
+    assert splinterlands.source.refreshability is Refreshability.AUTO_REFRESHABLE
+    assert validate_pack(splinterlands).readiness is ContentReadiness.YELLOW
+    assert methodology.source.refreshability is None
+    assert validate_pack(methodology).readiness is ContentReadiness.GREEN
+
+
 def test_duplicate_content_id_prevention() -> None:
     pack = build_learning_batch(_rankings_payload(), _opportunities_payload())[0]
 
@@ -256,13 +304,21 @@ def test_distribution_code_does_not_import_financial_business_logic() -> None:
 
 def _pack_with(*, freshness: str, risk_label: str, confidence_label: str):
     payload = _rankings_payload()
-    item = payload["items"][0]
+    item = next(
+        item
+        for item in payload["items"]
+        if item["strategy"]["strategy_id"] == "splinterlands-modern-ranked-sps-ev"
+    )
     item["latest_snapshot"]["freshness"]["overall_status"] = freshness
     item["latest_snapshot"]["risk"]["label"] = risk_label
     item["latest_snapshot"]["risk"]["score"] = 20 if risk_label == "LOW" else 90
     item["latest_snapshot"]["confidence"]["label"] = confidence_label
     item["latest_snapshot"]["confidence"]["score"] = 90 if confidence_label == "HIGH" else 40
-    pack = build_learning_batch(payload, _opportunities_payload())[0]
+    pack = next(
+        pack
+        for pack in build_learning_batch(payload, _opportunities_payload())
+        if pack.source.strategy_id == "splinterlands-modern-ranked-sps-ev"
+    )
     expected = ContentReadiness.GREEN
     if freshness == "stale":
         expected = ContentReadiness.RED
