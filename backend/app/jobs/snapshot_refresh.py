@@ -24,7 +24,6 @@ AUTO_REFRESHABLE_ADAPTER_MODULES = frozenset(
     {
         "app.adapters.defi_kingdoms_jeweler",
         "app.adapters.farmers_world",
-        "app.adapters.scenario_yield",
         "app.adapters.splinterlands",
     }
 )

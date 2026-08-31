@@ -56,6 +56,46 @@ def test_partial_and_not_refreshable_strategies_are_never_eligible_for_refresh(m
     assert by_id["storj-existing-hardware-storage-node"].refreshability is Refreshability.NOT_REFRESHABLE
 
 
+def test_recalculation_time_cannot_renew_stale_config_evidence() -> None:
+    observations = load_fixture_observations(
+        CONFIG_EVIDENCE_ESTABLISHED_AT.replace(year=2027, month=9, day=1),
+        strategy=DIMO_SOFTWARE_ONLY_V1,
+    )
+    config_observation = next(
+        observation for observation in observations if observation.metadata.get("classification") == "CONFIG"
+    )
+    assert config_observation.status_at(CONFIG_EVIDENCE_ESTABLISHED_AT.replace(year=2027, month=9, day=1)).value == "stale"
+
+
+def test_refresh_plan_requires_explicit_registration_for_unknown_adapter() -> None:
+    class UnknownAdapter:
+        __module__ = "app.adapters.unknown"
+
+    class Task:
+        strategy_id = "unknown-strategy"
+        strategy_version = "v1"
+        adapter = UnknownAdapter()
+
+    entry = snapshot_refresh.build_refresh_plan((Task(),))[0]
+    assert entry.refreshability is Refreshability.NOT_REFRESHABLE
+    assert "No approved production refresh loader" in entry.reason
+
+
+def test_refresh_summary_separates_refresh_and_skip_categories(monkeypatch) -> None:
+    class SuccessfulSummary:
+        status = "ok"
+        snapshot_ids = ("snapshot-1",)
+        failure_ids = ()
+
+    monkeypatch.setattr(snapshot_refresh, "_database_engine", lambda settings: _DisposableEngine())
+    monkeypatch.setattr(snapshot_refresh, "run_recalculation_tasks", lambda **kwargs: SuccessfulSummary())
+    result = run_snapshot_refresh(settings=_test_settings())
+    assert result.auto_refreshed == 1
+    assert result.partial_skipped == 4
+    assert result.not_refreshable_skipped == 1
+    assert result.failed == 0
+
+
 def test_refresh_does_not_regenerate_distribution_after_strategy_failure(monkeypatch, tmp_path: Path) -> None:
     class FailedSummary:
         status = "ok"
