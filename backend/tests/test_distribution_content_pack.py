@@ -13,6 +13,7 @@ from app.distribution.content_pack import (
     ContentReadiness,
     build_utm_url,
     expected_source_hash,
+    resolve_claim_source_value,
     serialize_batch,
     source_snapshot_hash,
     validate_batch,
@@ -58,6 +59,84 @@ def test_unsupported_numeric_claim_rejects_pack() -> None:
     assert result.readiness == ContentReadiness.RED
     assert "$999/day" in result.unsupported_numeric_claims
     assert "editorial text contains unsupported numeric claim(s)" in result.errors
+
+
+def test_claim_source_path_resolves_and_value_matches() -> None:
+    pack = build_learning_batch(_rankings_payload(), _opportunities_payload())[0]
+    claim = pack.claims[0]
+
+    assert resolve_claim_source_value(pack, claim.source_path) == claim.source_value
+    assert not validate_pack(pack).errors
+
+
+def test_missing_claim_source_path_fails_closed() -> None:
+    pack = build_learning_batch(_rankings_payload(), _opportunities_payload())[0]
+    claim = pack.claims[0].model_copy(update={"source_path": "snapshot.missing.amount"})
+    edited = _replace_claim(pack, claim)
+
+    result = validate_pack(edited)
+
+    assert result.readiness == ContentReadiness.RED
+    assert any("source_path does not resolve" in error for error in result.errors)
+
+
+def test_wrong_claim_source_value_fails_closed() -> None:
+    pack = build_learning_batch(_rankings_payload(), _opportunities_payload())[0]
+    claim = pack.claims[0].model_copy(update={"source_value": "999"})
+    edited = _replace_claim(pack, claim)
+
+    result = validate_pack(edited)
+
+    assert result.readiness == ContentReadiness.RED
+    assert any("source_value does not match" in error for error in result.errors)
+
+
+def test_fabricated_registered_numeric_claim_fails_closed() -> None:
+    pack = build_learning_batch(_rankings_payload(), _opportunities_payload())[0]
+    fabricated = ContentClaim(
+        claim_id="fabricated",
+        text="Fabricated earnings are $999/day.",
+        source_path="snapshot.earnings.net_earnings_day.amount",
+        source_value=resolve_claim_source_value(pack, "snapshot.earnings.net_earnings_day.amount"),
+        display_value="$999/day",
+    )
+    edited = pack.model_copy(
+        update={
+            "claims": [*pack.claims, fabricated],
+            "editorial": pack.editorial.model_copy(
+                update={
+                    "x_post": f"{pack.editorial.x_post}\nFabricated earnings: $999/day.",
+                    "readiness": ContentReadiness.RED,
+                }
+            ),
+        }
+    )
+    edited = edited.model_copy(
+        update={"source": edited.source.model_copy(update={"source_snapshot_hash": expected_source_hash(edited)})}
+    )
+
+    result = validate_pack(edited)
+
+    assert result.readiness == ContentReadiness.RED
+    assert any("display_value does not represent" in error for error in result.errors)
+
+
+def test_valid_non_numeric_source_claim_passes() -> None:
+    pack = build_learning_batch(_rankings_payload(), _opportunities_payload())[0]
+    freshness_claim = ContentClaim(
+        claim_id="freshness",
+        text="Source status is fresh.",
+        source_path="snapshot.freshness.overall_status",
+        source_value="fresh",
+        display_value="fresh",
+    )
+    edited = pack.model_copy(update={"claims": [*pack.claims, freshness_claim]})
+    edited = edited.model_copy(
+        update={"source": edited.source.model_copy(update={"source_snapshot_hash": expected_source_hash(edited)})}
+    )
+
+    assert resolve_claim_source_value(edited, freshness_claim.source_path) == "fresh"
+    assert not validate_pack(edited).errors
 
 
 def test_green_yellow_red_readiness_validation() -> None:
@@ -132,6 +211,39 @@ def test_committed_learning_batch_artifact_is_valid() -> None:
     assert all(pack.distribution.x_utm_url.endswith(f"utm_source=x") for pack in packs)
 
 
+def test_publishable_drafts_interpolate_attribution_urls() -> None:
+    packs = build_learning_batch(_rankings_payload(), _opportunities_payload())
+    methodology = next(pack for pack in packs if pack.source.opportunity_id == "gamcryp-methodology")
+    grass = next(pack for pack in packs if pack.source.opportunity_id == "grass")
+
+    for pack in (methodology, grass):
+        assert pack.distribution.x_utm_url in pack.editorial.x_post
+        assert "{url}" not in pack.editorial.x_post
+        assert "utm_source=x" in pack.editorial.x_post
+        assert "utm_medium=social" in pack.editorial.x_post
+        assert "utm_campaign=distribution-mvp" in pack.editorial.x_post
+        assert f"utm_content={pack.content_id}" in pack.editorial.x_post
+
+    assert all(
+        "{url}" not in pack.editorial.x_post
+        for pack in packs
+        if pack.editorial.readiness != ContentReadiness.RED
+    )
+
+
+def test_methodology_pack_is_not_coupled_to_strategy_snapshot() -> None:
+    pack = next(
+        pack
+        for pack in build_learning_batch(_rankings_payload(), _opportunities_payload())
+        if pack.source.opportunity_id == "gamcryp-methodology"
+    )
+
+    assert pack.source.strategy_id is None
+    assert pack.source.snapshot_id is None
+    assert pack.source.snapshot_timestamp is None
+    assert pack.facts.freshness.display == "not applicable"
+
+
 def test_distribution_code_does_not_import_financial_business_logic() -> None:
     distribution_files = Path("backend/app/distribution").glob("*.py")
     source = "\n".join(path.read_text(encoding="utf-8") for path in distribution_files)
@@ -157,6 +269,13 @@ def _pack_with(*, freshness: str, risk_label: str, confidence_label: str):
     elif risk_label in {"HIGH", "VERY HIGH"} or confidence_label in {"LOW", "MODERATE"}:
         expected = ContentReadiness.YELLOW
     return pack.model_copy(update={"editorial": pack.editorial.model_copy(update={"readiness": expected})})
+
+
+def _replace_claim(pack: ContentPackLite, claim: ContentClaim) -> ContentPackLite:
+    edited = pack.model_copy(update={"claims": [claim, *pack.claims[1:]]})
+    return edited.model_copy(
+        update={"source": edited.source.model_copy(update={"source_snapshot_hash": expected_source_hash(edited)})}
+    )
 
 
 def _rankings_payload() -> dict[str, object]:

@@ -128,7 +128,7 @@
         },
         {
           "claim_id": "net_day",
-          "display_value": "$0.30/day",
+          "display_value": "-$0.30/day",
           "source_path": "snapshot.earnings.net_earnings_day.amount",
           "source_value": "-0.2993874002349686587029523810",
           "text": "Modeled net earnings are -$0.30/day."
@@ -235,7 +235,7 @@
         "scoring_methodology_version": "risk-confidence-v1",
         "snapshot_id": "8134908e-a6e2-5848-8720-bf073b945adb",
         "snapshot_timestamp": "2026-08-31T15:16:07.805757Z",
-        "source_snapshot_hash": "5b88d0db83231a5df638504c154cb2a6e8a629b05bedfdacbc8b3d77fb394324",
+        "source_snapshot_hash": "8435f72b0166073ef718a6b585ffae5635694e893fecfae1f09c9a5d4fdd38d9",
         "strategy_id": "dimo-software-only-compatible-car",
         "strategy_version": "v1"
       }
@@ -372,14 +372,14 @@
         "hook": "GamCryp ranks strategies, not hype.",
         "readiness": "GREEN",
         "visual_plan": [],
-        "x_post": "GamCryp ranks strategies, not hype.\n\nA high modeled ROI can still carry high risk. A low-cost opportunity can still have weak economics. And if rewards are not reproducible, ROI stays unavailable.\n\nThe goal is decision clarity, not a recommendation.\n\n{url}"
+        "x_post": "GamCryp ranks strategies, not hype.\n\nA high modeled ROI can still carry high risk. A low-cost opportunity can still have weak economics. And if rewards are not reproducible, ROI stays unavailable.\n\nThe goal is decision clarity, not a recommendation.\n\nhttps://gamcryp.com/methodology?utm_campaign=distribution-mvp&utm_content=x-gamcryp-methodology-not-recommendation-20260831&utm_medium=social&utm_source=x"
       },
       "facts": {
         "freshness": {
-          "display": "stale",
-          "source_path": "snapshot.freshness.overall_status",
+          "display": "not applicable",
+          "source_path": "facts.freshness.value",
           "status": "available",
-          "value": "stale"
+          "value": "not_applicable"
         },
         "major_catch": "Rank is a comparison signal, not a recommendation or guaranteed return.",
         "opportunity_type": "METHODOLOGY",
@@ -387,8 +387,6 @@
         "reward_source": "GamCryp compares modeled strategy-specific opportunity economics."
       },
       "source": {
-        "adapter_contract_version": "adapter-contract-v1",
-        "model_version": "roi-core-v1",
         "official_source_refs": [
           {
             "label": "GamCryp methodology",
@@ -396,10 +394,7 @@
           }
         ],
         "opportunity_id": "gamcryp-methodology",
-        "scoring_methodology_version": "risk-confidence-v1",
-        "snapshot_id": "5e54158c-3053-5eb5-b5b8-682dfc05f42f",
-        "snapshot_timestamp": "2026-08-31T15:16:07.805757Z",
-        "source_snapshot_hash": "ee556d358fd73578a8175d75fd69811c917cbf56fcb9714b42f1180a11ef1dec"
+        "source_snapshot_hash": "6224a976f706f8f8412fc57a29dde190c6e277ef2613c84e2fd3c9239de3ceef"
       }
     },
     {
@@ -549,7 +544,7 @@
           "Show GamCryp rule: no executable value route means no financial ROI.",
           "End on the Grass opportunity page."
         ],
-        "x_post": "Grass is useful for GamCryp because the honest answer is: ROI unavailable.\n\nThe project has points-based rewards, but GamCryp does not convert points into financial ROI unless there is a reproducible exit route.\n\nThat is the point of the model: no fake zero, no made-up yield.\n\n{url}",
+        "x_post": "Grass is useful for GamCryp because the honest answer is: ROI unavailable.\n\nThe project has points-based rewards, but GamCryp does not convert points into financial ROI unless there is a reproducible exit route.\n\nThat is the point of the model: no fake zero, no made-up yield.\n\nhttps://gamcryp.com/opportunities/grass?utm_campaign=distribution-mvp&utm_content=x-grass-roi-unavailable-20260831&utm_medium=social&utm_source=x",
         "youtube_description": "A GamCryp Short explaining why points-based opportunities like Grass may be useful to track while ROI remains unavailable.",
         "youtube_short_script": "Grass is a good example of a Web3 earning opportunity where GamCryp should not invent ROI. The user contributes bandwidth and may earn points. But points are not the same as a realizable market return. GamCryp marks ROI unavailable until a lawful, reproducible value route exists. That protects users from fake precision.",
         "youtube_title": "Grass: why GamCryp says ROI unavailable"
@@ -594,7 +589,7 @@
         },
         {
           "claim_id": "net_day",
-          "display_value": "$0.0068/day",
+          "display_value": "-$0.0068/day",
           "source_path": "snapshot.earnings.net_earnings_day.amount",
           "source_value": "-0.006758015240225208",
           "text": "Modeled net earnings are -$0.0068/day."
@@ -692,7 +687,7 @@
         "scoring_methodology_version": "risk-confidence-v1",
         "snapshot_id": "72e295b0-14ba-549f-8445-3bc2ac680b11",
         "snapshot_timestamp": "2026-08-31T15:16:07.805757Z",
-        "source_snapshot_hash": "29ac5291689668bc3f2e5604a6a078c34dfc40e8dea20d5688a949302e92c671",
+        "source_snapshot_hash": "7c116f1a5c76ff1d61ce5d73761c9cfbd7f15e0649938ee5f38108e9d5001cf7",
         "strategy_id": "mysterium-b2b-existing-device",
         "strategy_version": "v1"
       }
@@ -708,7 +703,7 @@
         },
         {
           "claim_id": "net_day",
-          "display_value": "$0.0007/day",
+          "display_value": "-$0.0007/day",
           "source_path": "snapshot.earnings.net_earnings_day.amount",
           "source_value": "-0.0006575461707646110610000",
           "text": "Modeled net earnings are -$0.0007/day."
@@ -806,7 +801,7 @@
         "scoring_methodology_version": "risk-confidence-v1",
         "snapshot_id": "f47fa673-15ad-5484-980b-e681695fa4bb",
         "snapshot_timestamp": "2026-08-31T15:16:07.805757Z",
-        "source_snapshot_hash": "cd81059f073000be6d5f013dbf29f6344dc3b23524fb87dbbeb3daa0315340e5",
+        "source_snapshot_hash": "a1c89aa756ed225f5ff4465e32409b861d297fccb53c74d9cb1e27cd71e4c4d3",
         "strategy_id": "splinterlands-modern-ranked-sps-ev",
         "strategy_version": "v1"
       }
@@ -822,7 +817,7 @@
         },
         {
           "claim_id": "net_day",
-          "display_value": "$0.0119/day",
+          "display_value": "-$0.0119/day",
           "source_path": "snapshot.earnings.net_earnings_day.amount",
           "source_value": "-0.01191666666666666666666666667",
           "text": "Modeled net earnings are -$0.0119/day."
@@ -920,7 +915,7 @@
         "scoring_methodology_version": "risk-confidence-v1",
         "snapshot_id": "ac7a324f-2169-5197-8448-6dc3ae23987b",
         "snapshot_timestamp": "2026-08-31T15:16:07.805757Z",
-        "source_snapshot_hash": "4af3edde43184135ff8a76b910cebc08283093134b71f76bd2ddb5e693a0fb6d",
+        "source_snapshot_hash": "485f1930b5271cafa7235b214dc1064c0301159a7bc27cd2c05c7749436cb897",
         "strategy_id": "storj-existing-hardware-storage-node",
         "strategy_version": "v1"
       }
@@ -936,10 +931,10 @@
         },
         {
           "claim_id": "net_day",
-          "display_value": "<$0.0001/day",
+          "display_value": "-$0.0003/day",
           "source_path": "snapshot.earnings.net_earnings_day.amount",
           "source_value": "-0.00026514037839080274",
-          "text": "Modeled net earnings are under $0.0001/day."
+          "text": "Modeled net earnings are -$0.0003/day."
         },
         {
           "claim_id": "roi_30d",
@@ -965,7 +960,7 @@
         "hook": "WeatherXM is not one universal ROI number.",
         "readiness": "RED",
         "visual_plan": [],
-        "x_post": "WeatherXM is not one universal ROI number.\n\nGamCryp's D1 WiFi Station model uses $139 capital, net/day under $0.0001/day, and 30D ROI of -0.01%.\n\nThe catch: station quality, cell-level rewards, and live reward access can change the result.\n\nhttps://gamcryp.com/strategies/weatherxm-d1-wifi-station?utm_campaign=distribution-mvp&utm_content=x-weatherxm-cell-quality-20260831&utm_medium=social&utm_source=x"
+        "x_post": "WeatherXM is not one universal ROI number.\n\nGamCryp's D1 WiFi Station model uses $139 capital, net/day of -$0.0003/day, and 30D ROI of -0.01%.\n\nThe catch: station quality, cell-level rewards, and live reward access can change the result.\n\nhttps://gamcryp.com/strategies/weatherxm-d1-wifi-station?utm_campaign=distribution-mvp&utm_content=x-weatherxm-cell-quality-20260831&utm_medium=social&utm_source=x"
       },
       "facts": {
         "break_even": {
@@ -1034,7 +1029,7 @@
         "scoring_methodology_version": "risk-confidence-v1",
         "snapshot_id": "1a89c67d-caa8-54a6-8ca8-b660d3db1a3c",
         "snapshot_timestamp": "2026-08-31T15:16:07.805757Z",
-        "source_snapshot_hash": "490de2507a856ed3977b2c17f9ab427983a7f4f2e62fc6c2522b4cf9f924581d",
+        "source_snapshot_hash": "75b282dd506808796da71f3be7f408dd71ef694ea3e7e60ee909533db2e6f926",
         "strategy_id": "weatherxm-d1-wifi-station",
         "strategy_version": "v1"
       }

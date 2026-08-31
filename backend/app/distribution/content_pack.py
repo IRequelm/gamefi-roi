@@ -10,6 +10,7 @@ import hashlib
 import json
 import re
 from dataclasses import dataclass
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -21,10 +22,15 @@ CONTENT_PACK_VERSION = "content-pack-lite-v1"
 DISTRIBUTION_CAMPAIGN = "distribution-mvp"
 FINANCIAL_CLAIM_TOKEN_RE = re.compile(
     r"(?<![\w])(?:<\s*)?(?:"
-    r"\$[0-9][0-9,]*(?:\.[0-9]+)?(?:/day)?"
+    r"[+-]?\$[0-9][0-9,]*(?:\.[0-9]+)?(?:/day)?"
     r"|[+-]?[0-9][0-9,]*(?:\.[0-9]+)?%"
     r"|[0-9][0-9,]*(?:\.[0-9]+)?\s+days"
     r")(?![\w])"
+)
+DISPLAY_NUMERIC_RE = re.compile(
+    r"^\s*(?P<threshold><)?\s*(?P<sign>[+-])?\s*\$?"
+    r"(?P<number>[0-9][0-9,]*(?:\.[0-9]+)?)"
+    r"(?P<suffix>/day|%|\s+days)?\s*$"
 )
 VALID_SOURCE_PATH_PREFIXES = (
     "facts.",
@@ -288,6 +294,7 @@ def validate_batch(packs: list[ContentPackLite]) -> tuple[ContentPackValidation,
 def validate_pack(pack: ContentPackLite) -> ContentPackValidation:
     errors: list[str] = []
     warnings: list[str] = []
+    claim_integrity_failed = False
 
     if pack.content_pack_version != CONTENT_PACK_VERSION:
         errors.append(f"Unsupported content_pack_version {pack.content_pack_version}")
@@ -305,12 +312,29 @@ def validate_pack(pack: ContentPackLite) -> ContentPackValidation:
     for claim in pack.claims:
         if not claim.source_path.startswith(VALID_SOURCE_PATH_PREFIXES):
             errors.append(f"claim {claim.claim_id} has invalid source_path {claim.source_path}")
+            claim_integrity_failed = True
         if not claim.source_value.strip():
             errors.append(f"claim {claim.claim_id} is missing source_value")
+            claim_integrity_failed = True
         if not claim.display_value.strip():
             errors.append(f"claim {claim.claim_id} is missing display_value")
+            claim_integrity_failed = True
+        try:
+            resolved_value = resolve_claim_source_value(pack, claim.source_path)
+        except KeyError:
+            errors.append(f"claim {claim.claim_id} source_path does not resolve: {claim.source_path}")
+            claim_integrity_failed = True
+        else:
+            if not source_values_match(resolved_value, claim.source_value):
+                errors.append(f"claim {claim.claim_id} source_value does not match {claim.source_path}")
+                claim_integrity_failed = True
+            elif not display_value_matches_source(resolved_value, claim.display_value):
+                errors.append(f"claim {claim.claim_id} display_value does not represent {claim.source_path}")
+                claim_integrity_failed = True
 
     derived_readiness = derive_readiness(pack, unsupported_numeric_claims=unsupported_numeric_claims)
+    if claim_integrity_failed:
+        derived_readiness = ContentReadiness.RED
     if pack.editorial.readiness != derived_readiness:
         errors.append(
             f"readiness must be rule-derived as {derived_readiness.value}, "
@@ -331,6 +355,84 @@ def validate_pack(pack: ContentPackLite) -> ContentPackValidation:
         warnings=tuple(warnings),
         unsupported_numeric_claims=unsupported_numeric_claims,
     )
+
+
+def resolve_claim_source_value(pack: ContentPackLite, source_path: str) -> str:
+    """Resolve a claim against explicit source-derived fields in the pack.
+
+    The resolver deliberately supports only declared fact paths. It never evaluates
+    arbitrary attributes or expressions supplied by content authors.
+    """
+
+    facts: tuple[MetricFact | ScoreFact | None, ...] = (
+        pack.facts.capital,
+        pack.facts.modeled_return,
+        pack.facts.net_earnings,
+        pack.facts.break_even,
+        pack.facts.risk,
+        pack.facts.confidence,
+        pack.facts.freshness,
+    )
+    resolved: dict[str, str] = {}
+    for fact in facts:
+        if fact is None:
+            continue
+        if isinstance(fact, MetricFact):
+            if fact.value is not None:
+                resolved[fact.source_path] = str(fact.value)
+            continue
+        if fact.score is not None:
+            resolved[f"{fact.source_path}.score"] = str(fact.score)
+        if fact.label is not None:
+            resolved[f"{fact.source_path}.label"] = fact.label
+
+    source_values = {
+        "source.opportunity_id": pack.source.opportunity_id,
+        "source.strategy_id": pack.source.strategy_id,
+        "source.snapshot_id": pack.source.snapshot_id,
+        "source.snapshot_timestamp": pack.source.snapshot_timestamp,
+        "source.strategy_version": pack.source.strategy_version,
+        "source.adapter_contract_version": pack.source.adapter_contract_version,
+        "source.model_version": pack.source.model_version,
+        "source.scoring_methodology_version": pack.source.scoring_methodology_version,
+    }
+    resolved.update({path: str(value) for path, value in source_values.items() if value is not None})
+    if source_path not in resolved:
+        raise KeyError(source_path)
+    return resolved[source_path]
+
+
+def source_values_match(resolved_value: str, claimed_value: str) -> bool:
+    """Compare exact source values, allowing only meaning-preserving decimals."""
+
+    if resolved_value == claimed_value:
+        return True
+    try:
+        return Decimal(resolved_value) == Decimal(claimed_value)
+    except (InvalidOperation, ValueError):
+        return False
+
+
+def display_value_matches_source(source_value: str, display_value: str) -> bool:
+    """Verify a displayed number is a faithful rounded or threshold source value."""
+
+    match = DISPLAY_NUMERIC_RE.fullmatch(display_value)
+    try:
+        source_decimal = Decimal(source_value)
+    except InvalidOperation:
+        return display_value == source_value
+    if match is None:
+        return False
+    rendered_number = match.group("number").replace(",", "")
+    displayed_decimal = Decimal(rendered_number)
+    if match.group("sign") == "-":
+        displayed_decimal = -displayed_decimal
+    source_for_display = source_decimal * Decimal("100") if match.group("suffix") == "%" else source_decimal
+    if match.group("threshold"):
+        return abs(source_for_display) < abs(displayed_decimal)
+    decimal_places = len(rendered_number.partition(".")[2])
+    quantum = Decimal("1").scaleb(-decimal_places)
+    return source_for_display.quantize(quantum, rounding=ROUND_HALF_UP) == displayed_decimal
 
 
 def derive_readiness(

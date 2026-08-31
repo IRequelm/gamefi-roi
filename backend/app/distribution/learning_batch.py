@@ -46,7 +46,7 @@ def build_learning_batch(
         _dimo_subscription_pack(ranking_items["dimo-software-only-compatible-car"], base_url, created_at),
         _mysterium_demand_pack(ranking_items["mysterium-b2b-existing-device"], base_url, created_at),
         _grass_unavailable_pack(opportunities["grass"], base_url, created_at),
-        _methodology_pack(ranking_items["geodnet-empty-hex-triple-band-base-station"], base_url, created_at),
+        _methodology_pack(base_url, created_at),
     ]
     return [_finalize_readiness(pack) for pack in packs]
 
@@ -173,7 +173,7 @@ def _weatherxm_location_pack(item: dict[str, Any], base_url: str, created_at: st
         ),
         x_post=(
             "WeatherXM is not one universal ROI number.\n\n"
-            "GamCryp's D1 WiFi Station model uses $139 capital, net/day under $0.0001/day, "
+            "GamCryp's D1 WiFi Station model uses $139 capital, net/day of -$0.0003/day, "
             "and 30D ROI of -0.01%.\n\n"
             "The catch: station quality, cell-level rewards, and live reward access can change the result.\n\n"
             "{url}"
@@ -183,7 +183,7 @@ def _weatherxm_location_pack(item: dict[str, Any], base_url: str, created_at: st
         pack,
         [
             _claim("capital", "Modeled capital is $139.", "snapshot.capital.total_capital.amount", _capital_value(item), "$139"),
-            _claim("net_day", "Modeled net earnings are under $0.0001/day.", "snapshot.earnings.net_earnings_day.amount", _net_day_value(item), "<$0.0001/day"),
+            _claim("net_day", "Modeled net earnings are -$0.0003/day.", "snapshot.earnings.net_earnings_day.amount", _net_day_value(item), "-$0.0003/day"),
             _claim("roi_30d", "Modeled 30D ROI is -0.01%.", "snapshot.roi.roi_total_30d.value", _roi_30d_value(item), "-0.01%"),
         ],
     )
@@ -213,7 +213,7 @@ def _splinterlands_ev_pack(item: dict[str, Any], base_url: str, created_at: str)
         pack,
         [
             _claim("capital", "Modeled capital is $10.", "snapshot.capital.total_capital.amount", _capital_value(item), "$10"),
-            _claim("net_day", "Modeled net earnings are -$0.0007/day.", "snapshot.earnings.net_earnings_day.amount", _net_day_value(item), "$0.0007/day"),
+            _claim("net_day", "Modeled net earnings are -$0.0007/day.", "snapshot.earnings.net_earnings_day.amount", _net_day_value(item), "-$0.0007/day"),
             _claim("roi_30d", "Modeled 30D ROI is -0.20%.", "snapshot.roi.roi_total_30d.value", _roi_30d_value(item), "-0.20%"),
         ],
     )
@@ -243,7 +243,7 @@ def _storj_existing_hardware_pack(item: dict[str, Any], base_url: str, created_a
         pack,
         [
             _claim("capital", "Modeled capital is $1.", "snapshot.capital.total_capital.amount", _capital_value(item), "$1"),
-            _claim("net_day", "Modeled net earnings are -$0.0119/day.", "snapshot.earnings.net_earnings_day.amount", _net_day_value(item), "$0.0119/day"),
+            _claim("net_day", "Modeled net earnings are -$0.0119/day.", "snapshot.earnings.net_earnings_day.amount", _net_day_value(item), "-$0.0119/day"),
             _claim("roi_30d", "Modeled 30D ROI is -35.75%.", "snapshot.roi.roi_total_30d.value", _roi_30d_value(item), "-35.75%"),
         ],
     )
@@ -290,7 +290,7 @@ def _dimo_subscription_pack(item: dict[str, Any], base_url: str, created_at: str
         pack,
         [
             _claim("capital", "Modeled capital is $8.99.", "snapshot.capital.total_capital.amount", _capital_value(item), "$8.99"),
-            _claim("net_day", "Modeled net earnings are -$0.30/day.", "snapshot.earnings.net_earnings_day.amount", _net_day_value(item), "$0.30/day"),
+            _claim("net_day", "Modeled net earnings are -$0.30/day.", "snapshot.earnings.net_earnings_day.amount", _net_day_value(item), "-$0.30/day"),
             _claim("roi_30d", "Modeled 30D ROI is -99.91%.", "snapshot.roi.roi_total_30d.value", _roi_30d_value(item), "-99.91%"),
         ],
     )
@@ -320,7 +320,7 @@ def _mysterium_demand_pack(item: dict[str, Any], base_url: str, created_at: str)
         pack,
         [
             _claim("capital", "Modeled capital is $2.", "snapshot.capital.total_capital.amount", _capital_value(item), "$2"),
-            _claim("net_day", "Modeled net earnings are -$0.0068/day.", "snapshot.earnings.net_earnings_day.amount", _net_day_value(item), "$0.0068/day"),
+            _claim("net_day", "Modeled net earnings are -$0.0068/day.", "snapshot.earnings.net_earnings_day.amount", _net_day_value(item), "-$0.0068/day"),
             _claim("roi_30d", "Modeled 30D ROI is -10.14%.", "snapshot.roi.roi_total_30d.value", _roi_30d_value(item), "-10.14%"),
         ],
     )
@@ -329,6 +329,7 @@ def _mysterium_demand_pack(item: dict[str, Any], base_url: str, created_at: str)
 def _grass_unavailable_pack(opportunity: dict[str, Any], base_url: str, created_at: str) -> ContentPackLite:
     canonical_url = f"{base_url}/opportunities/{opportunity['opportunity_id']}"
     content_id = "x-grass-roi-unavailable-20260831"
+    x_utm_url = build_utm_url(canonical_url, source="x", medium="social", content_id=content_id)
     pack = ContentPackLite(
         content_id=content_id,
         source=ContentSource(
@@ -371,7 +372,7 @@ def _grass_unavailable_pack(opportunity: dict[str, Any], base_url: str, created_
                 "unless there is a reproducible exit route.\n\n"
                 "That is the point of the model: no fake zero, no made-up yield.\n\n"
                 "{url}"
-            ),
+            ).format(url=x_utm_url),
             youtube_title="Grass: why GamCryp says ROI unavailable",
             youtube_short_script=(
                 "Grass is a good example of a Web3 earning opportunity where GamCryp should not invent ROI. "
@@ -394,7 +395,7 @@ def _grass_unavailable_pack(opportunity: dict[str, Any], base_url: str, created_
         distribution=DistributionLinks(
             canonical_site_url=canonical_url,
             content_id=content_id,
-            x_utm_url=build_utm_url(canonical_url, source="x", medium="social", content_id=content_id),
+            x_utm_url=x_utm_url,
             youtube_utm_url=build_utm_url(canonical_url, source="youtube", medium="short", content_id=content_id),
         ),
         created_at=created_at,
@@ -402,30 +403,25 @@ def _grass_unavailable_pack(opportunity: dict[str, Any], base_url: str, created_
     return set_expected_source_hash(pack)
 
 
-def _methodology_pack(item: dict[str, Any], base_url: str, created_at: str) -> ContentPackLite:
-    snapshot = item["latest_snapshot"]
+def _methodology_pack(base_url: str, created_at: str) -> ContentPackLite:
     canonical_url = f"{base_url}/methodology"
     content_id = "x-gamcryp-methodology-not-recommendation-20260831"
+    x_utm_url = build_utm_url(canonical_url, source="x", medium="social", content_id=content_id)
     pack = ContentPackLite(
         content_id=content_id,
         source=ContentSource(
             opportunity_id="gamcryp-methodology",
-            snapshot_id=snapshot["snapshot_id"],
-            snapshot_timestamp=snapshot["calculated_at"],
             source_snapshot_hash="",
-            adapter_contract_version=snapshot["versions"]["adapter_contract_version"],
-            model_version=snapshot["versions"]["model_version"],
-            scoring_methodology_version=snapshot["versions"].get("scoring_methodology_version"),
             official_source_refs=[SourceReference(label="GamCryp methodology", url=canonical_url)],
         ),
         facts=ContentFactSet(
             project_name="GamCryp",
             opportunity_type="METHODOLOGY",
             freshness=MetricFact(
-                value=snapshot["freshness"]["overall_status"],
+                value="not_applicable",
                 unit=None,
-                display=snapshot["freshness"]["overall_status"],
-                source_path="snapshot.freshness.overall_status",
+                display="not applicable",
+                source_path="facts.freshness.value",
                 status="available",
             ),
             reward_source="GamCryp compares modeled strategy-specific opportunity economics.",
@@ -445,13 +441,13 @@ def _methodology_pack(item: dict[str, Any], base_url: str, created_at: str) -> C
                 "And if rewards are not reproducible, ROI stays unavailable.\n\n"
                 "The goal is decision clarity, not a recommendation.\n\n"
                 "{url}"
-            ),
+            ).format(url=x_utm_url),
             disclosure="Draft educational content. Not investment advice. No guaranteed rewards or returns.",
         ),
         distribution=DistributionLinks(
             canonical_site_url=canonical_url,
             content_id=content_id,
-            x_utm_url=build_utm_url(canonical_url, source="x", medium="social", content_id=content_id),
+            x_utm_url=x_utm_url,
             youtube_utm_url=build_utm_url(canonical_url, source="youtube", medium="short", content_id=content_id),
         ),
         created_at=created_at,
