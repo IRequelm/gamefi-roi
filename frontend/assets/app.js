@@ -1096,9 +1096,9 @@ export function renderUncertainty(snapshot) {
                 (range) => `
                   <tr>
                     <td>${escapeHtml(range.metric)}</td>
-                    <td class="metric">${valueOrUnavailable(range.values?.low_metric)}</td>
-                    <td class="metric">${valueOrUnavailable(range.values?.base_metric)}</td>
-                    <td class="metric">${valueOrUnavailable(range.values?.high_metric)}</td>
+                    <td class="metric">${formatTechnicalValue(range.values?.low_metric)}</td>
+                    <td class="metric">${formatTechnicalValue(range.values?.base_metric)}</td>
+                    <td class="metric">${formatTechnicalValue(range.values?.high_metric)}</td>
                     <td>${escapeHtml(range.unit || "Unspecified")}</td>
                   </tr>
                 `,
@@ -1682,11 +1682,18 @@ function metricItem(label, value) {
   return `<div class="metric-item"><span>${escapeHtml(label)}</span><strong>${value}</strong></div>`;
 }
 
-function valueOrUnavailable(value) {
+function formatTechnicalValue(value) {
   if (value === null || value === undefined || value === "") {
     return '<span class="muted">Unavailable</span>';
   }
-  return escapeHtml(String(value));
+  const raw = String(value);
+  if (isDateTimeLike(raw)) {
+    return `<span class="technical-value" title="Exact timestamp: ${escapeHtml(raw)}">${formatDateTime(raw)}</span>`;
+  }
+  if (isDecimalLike(raw)) {
+    return `<span class="technical-value" title="Exact value: ${escapeHtml(raw)}">${escapeHtml(formatConciseDecimal(raw))}</span>`;
+  }
+  return escapeHtml(raw);
 }
 
 function evidenceSummary(evidence) {
@@ -1718,6 +1725,12 @@ function summarizeEvidenceValue(value) {
       .map(([key, nested]) => `${labelize(key)} ${primitiveEvidenceText(nested)}`)
       .join(", ");
   }
+  if (isDateTimeLike(value)) {
+    return textFromHtml(formatDateTime(value));
+  }
+  if (isDecimalLike(value)) {
+    return formatConciseDecimal(value);
+  }
   return String(value);
 }
 
@@ -1727,6 +1740,12 @@ function primitiveEvidenceText(value) {
   }
   if (typeof value === "object") {
     return Array.isArray(value) ? value.slice(0, 3).map(primitiveEvidenceText).join(", ") : "available";
+  }
+  if (isDateTimeLike(value)) {
+    return textFromHtml(formatDateTime(value));
+  }
+  if (isDecimalLike(value)) {
+    return formatConciseDecimal(value);
   }
   return String(value);
 }
@@ -1774,13 +1793,55 @@ function formatDateTime(value) {
   if (!value) {
     return "Unavailable";
   }
-  return escapeHtml(String(value).replace("T", " ").replace("Z", " UTC").replace(/:00 UTC$/, " UTC"));
+  const parsed = new Date(value);
+  if (!Number.isNaN(parsed.getTime())) {
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const display = `${months[parsed.getUTCMonth()]} ${parsed.getUTCDate()}, ${parsed.getUTCFullYear()} ${pad2(parsed.getUTCHours())}:${pad2(parsed.getUTCMinutes())} UTC`;
+    return escapeHtml(display);
+  }
+  return escapeHtml(stripTimestampNoise(value));
 }
 
 export function labelize(value) {
   return String(value)
     .replace(/[_-]+/g, " ")
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function isDecimalLike(value) {
+  return /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(String(value).trim());
+}
+
+function isDateTimeLike(value) {
+  return /^\d{4}-\d{2}-\d{2}[T ][\d:.+-]+Z?$/.test(String(value).trim());
+}
+
+function formatConciseDecimal(value) {
+  const normalized = normalizeDecimalString(value);
+  const sign = decimalSign(normalized);
+  const absolute = sign < 0 ? normalized.slice(1) : normalized;
+  if (!absolute || sign === 0) {
+    return "0";
+  }
+  if (comparePositiveDecimals(absolute, "0.0001") < 0) {
+    return `${sign < 0 ? "-" : ""}< 0.0001`;
+  }
+  const scale = comparePositiveDecimals(absolute, "1") < 0 ? 4 : 2;
+  return `${sign < 0 ? "-" : ""}${trimTrailingZeros(addThousands(roundDecimalString(absolute, scale)))}`;
+}
+
+function stripTimestampNoise(value) {
+  let text = String(value).replace("T", " ").replace("Z", " UTC");
+  const suffix = text.includes("+00:00") || text.includes(" UTC") ? " UTC" : "";
+  text = text.replace("+00:00", "");
+  if (text.includes(".")) {
+    text = text.split(".", 1)[0];
+  }
+  return `${text}${suffix}`.replace(/:00 UTC$/, " UTC");
+}
+
+function pad2(value) {
+  return String(value).padStart(2, "0");
 }
 
 export function opportunityTypeLabel(value) {

@@ -357,6 +357,49 @@ test("financial formatting preserves exact API Decimal strings", () => {
   );
   assert.equal(formatUpdatedAge("2026-08-16T11:36:00Z", new Date("2026-08-16T12:00:00Z")), "Updated 24m ago");
   assert.equal(formatUpdatedAge("2026-08-16T10:00:00Z", new Date("2026-08-16T12:00:00Z")), "Updated 2h ago");
+  assert.equal(formatUpdatedAge("2026-07-01T12:00:00.000000+00:00", new Date("2026-08-16T12:00:00Z")), "Updated Jul 1, 2026 12:00 UTC");
+});
+
+test("strategy detail keeps visible precision readable while preserving exact values", () => {
+  const strategy = strategyPayload();
+  const snapshot = strategy.latest_snapshot;
+  snapshot.calculated_at = "2026-08-16T12:00:00.000000+00:00";
+  snapshot.earnings.net_earnings_day.amount = "0.488500000000000000";
+  snapshot.roi.break_even.days = "511.7707000000";
+  snapshot.roi.roi_total_30d.value = "0.0586200000000000";
+  snapshot.risk.contributions[0].evidence = {
+    observed_at: "2026-08-16T12:00:00.000000+00:00",
+    slippage_ratio: "12.384728391",
+    nested: { exact_input: "0.488500000000000000" },
+  };
+  snapshot.uncertainty_ranges = [
+    {
+      metric: "example.expected_reward_day",
+      values: {
+        low_metric: "0.488500000000000000",
+        base_metric: "12.384728391",
+        high_metric: "0.0000000351",
+      },
+      unit: "USD/day",
+    },
+  ];
+
+  const html = renderStrategyDetail(strategy, historyPayload([snapshot, secondSnapshot()]));
+  const visible = visibleText(html);
+
+  assert.match(visible, /Aug 16, 2026 12:00 UTC/);
+  assert.match(visible, /\$0\.49\/day/);
+  assert.match(visible, /5\.86%/);
+  assert.match(visible, /512 days/);
+  assert.match(visible, /12\.38/);
+  assert.match(visible, /< 0\.0001/);
+  assert.doesNotMatch(visible, /0\.488500000000000000/);
+  assert.doesNotMatch(visible, /0\.0586200000000000/);
+  assert.doesNotMatch(visible, /511\.7707000000/);
+  assert.doesNotMatch(visible, /2026-08-16T12:00:00\.000000\+00:00/);
+  assert.match(html, /title="Exact value: 0\.488500000000000000"/);
+  assert.match(html, /title="Exact ratio: 0\.0586200000000000"/);
+  assert.match(html, /title="Exact days: 511\.7707000000"/);
 });
 
 test("negative return and warning signals are explicit", () => {
@@ -673,6 +716,18 @@ function strategyPayload() {
     primary_destination: destinationPayload("defi-kingdoms-play"),
     latest_snapshot: snapshotPayload(),
   };
+}
+
+function visibleText(html) {
+  return String(html)
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, "&")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function gamePayload(strategy = strategyPayload()) {

@@ -19,6 +19,7 @@ from app.strategies.catalog import list_opportunities
 from app.strategies.defi_kingdoms import DFK_CJEWEL_MAX_LOCK_V1
 from app.strategies.farmers_world import FARMERS_WORLD_AXE_WOOD_V1
 from app.strategies.splinterlands import SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1
+from app.web.seo import format_datetime
 from test_api_v1 import NOW, _seed_snapshots_and_scores, _seeded_client
 
 
@@ -39,6 +40,7 @@ def test_strategy_page_contains_meaningful_server_rendered_content(monkeypatch, 
     assert "Expected return" in html
     assert "High-risk strategy. Opening the project is not a recommendation; review the assumptions first." in html
     assert "Technical snapshot details" in html
+    assert "Aug 16, 2026 12:00 UTC" in html
     assert "Estimated gross earnings/day" in html
     assert "Required time/effort" in html
     assert "Major assumptions" in html
@@ -47,6 +49,11 @@ def test_strategy_page_contains_meaningful_server_rendered_content(monkeypatch, 
     assert ">Open project" in html
     assert 'data-analytics-link="outbound"' in html
     assert '"@type":"WebPage"' in html
+
+
+def test_server_timestamp_formatter_uses_readable_utc_without_fractional_noise() -> None:
+    assert format_datetime("2026-08-16T12:00:00.000000+00:00") == "Aug 16, 2026 12:00 UTC"
+    assert format_datetime("2026-08-16T12:00:00Z") == "Aug 16, 2026 12:00 UTC"
 
 
 def test_server_rendered_external_links_open_new_tab_and_internal_links_stay_same_tab(monkeypatch, tmp_path) -> None:

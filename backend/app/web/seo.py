@@ -35,6 +35,7 @@ from app.strategies.catalog import CATALOG_REVIEWED_AT
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 FRONTEND_ASSETS = PROJECT_ROOT / "frontend" / "assets"
+MONTH_NAMES = ("", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
 
 
 @dataclass(frozen=True)
@@ -1091,10 +1092,36 @@ def format_datetime(value: datetime | str | None) -> str:
     if value is None:
         return "Unavailable"
     if isinstance(value, str):
-        return value.replace("T", " ").replace("Z", " UTC").replace(":00 UTC", " UTC")
+        parsed = _parse_datetime(value)
+        if parsed is not None:
+            return _format_datetime_utc(parsed)
+        return _strip_timestamp_noise(value)
     if value.tzinfo is None or value.utcoffset() is None:
         value = value.replace(tzinfo=UTC)
-    return value.astimezone(UTC).strftime("%Y-%m-%d %H:%M UTC")
+    return _format_datetime_utc(value)
+
+
+def _parse_datetime(value: str) -> datetime | None:
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
+def _format_datetime_utc(value: datetime) -> str:
+    if value.tzinfo is None or value.utcoffset() is None:
+        value = value.replace(tzinfo=UTC)
+    utc_value = value.astimezone(UTC)
+    return f"{MONTH_NAMES[utc_value.month]} {utc_value.day}, {utc_value.year} {utc_value:%H:%M} UTC"
+
+
+def _strip_timestamp_noise(value: str) -> str:
+    text = str(value).replace("T", " ").replace("Z", " UTC")
+    suffix = " UTC" if "+00:00" in text or " UTC" in text else ""
+    text = text.replace("+00:00", "")
+    if "." in text:
+        text = text.split(".", 1)[0]
+    return f"{text}{suffix}".replace(":00 UTC", " UTC")
 
 
 def labelize(value: str) -> str:
