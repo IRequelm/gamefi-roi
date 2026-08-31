@@ -188,6 +188,32 @@ Before destructive schema changes in future gates:
 
 ## Scheduler
 
+### Snapshot Freshness Refresh
+
+The canonical operator command remains:
+
+```bash
+PYTHONPATH=backend python -m app.jobs.snapshot_refresh --dry-run
+PYTHONPATH=backend python -m app.jobs.snapshot_refresh --regenerate-distribution
+```
+
+`--dry-run` classifies the currently registered production strategy tasks without provider or database calls. A normal run delegates to the existing production recalculation pipeline: source loader, freshness validation, adapter, generic ROI engine, append-only history persistence, scoring, and PostgreSQL idempotency/lock protection. It does not publish content or deploy the application.
+
+The optional `--regenerate-distribution` flag writes the file-based learning batch only after the recalculation returns zero failures. It reads the public read-only API after that successful run; it never converts stale or missing values into fresh values and never publishes drafts.
+
+At the freshness audit on 2026-08-31, the distribution candidates' latest snapshots were calculated around `15:16 UTC` and had five-minute source deadlines around `15:21 UTC`. They were stale because no later successful recalculation had replaced them, not because the documented thresholds were loosened or because persisted source-status counts were changed.
+
+Current distribution-relevant modeled strategies are auto-refreshable through the existing configured loaders when their provider credentials/configuration are available: DFK Jeweler, Farmers World, Splinterlands, GEODNET, WeatherXM, DIMO, Mysterium Network Node, and Storj Storage Node. The command records provider failures and skips no current registered strategy; future unsupported tasks must be explicitly classified as `MANUAL_SOURCE_REFRESH` or `NOT_REFRESHABLE` rather than assigned guessed values.
+
+Refresh policy remains fail-closed:
+
+- fresh source observations can produce a new snapshot;
+- stale, missing, invalid, or provider-failed required inputs produce a failure, not a fresh snapshot;
+- identical source state and intended window remain idempotent;
+- historical snapshots are retained;
+- distribution numeric packs remain RED while their source snapshot is stale;
+- re-saving old data is never treated as a refresh.
+
 Shared recalculation command:
 
 ```bash
