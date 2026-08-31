@@ -66,7 +66,7 @@ def _geodnet_leader_pack(item: dict[str, Any], base_url: str, created_at: str) -
         ),
         x_post=(
             "GEODNET leads GamCryp's current modeled rankings, but it is not a recommendation.\n\n"
-            "Modeled capital: $695. Net/day: $2.59/day. 30D ROI: 11.16%.\n\n"
+            "Modeled capital: {capital}. Net/day: {net_day}. 30D ROI: {roi_30d}.\n\n"
             "Risk: VERY HIGH. Confidence: MODERATE. The catch: location, hex occupancy, and station quality "
             "can change the outcome materially.\n\n"
             "{url}"
@@ -74,8 +74,8 @@ def _geodnet_leader_pack(item: dict[str, Any], base_url: str, created_at: str) -
         youtube_title="GEODNET ROI looks strong. Here is the catch.",
         youtube_short_script=(
             "GEODNET is one of the clearest examples of why ROI alone is not enough. "
-            "The user runs a geospatial base station. GamCryp's current scenario uses $695 of modeled capital, "
-            "$2.59/day of net earnings, and 11.16% 30D ROI. But this is an empty-hex, quality-dependent model. "
+            "The user runs a geospatial base station. GamCryp's current scenario uses {capital} of modeled capital, "
+            "{net_day} of net earnings, and {roi_30d} 30D ROI. But this is an empty-hex, quality-dependent model. "
             "If your location, signal, or competition is worse, the result can change sharply. "
             "Use GamCryp to inspect the numbers, confidence, and risk before treating the model as useful."
         ),
@@ -91,14 +91,7 @@ def _geodnet_leader_pack(item: dict[str, Any], base_url: str, created_at: str) -
         ],
         thumbnail_text="GEODNET ROI: catch first",
     )
-    return _with_claims(
-        pack,
-        [
-            _claim("capital", "Modeled capital is $695.", "snapshot.capital.total_capital.amount", _capital_value(item), "$695"),
-            _claim("net_day", "Modeled net earnings are $2.59/day.", "snapshot.earnings.net_earnings_day.amount", _net_day_value(item), "$2.59/day"),
-            _claim("roi_30d", "Modeled 30D ROI is 11.16%.", "snapshot.roi.roi_total_30d.value", _roi_30d_value(item), "11.16%"),
-        ],
-    )
+    return _with_snapshot_financial_claims(pack)
 
 
 def _dfk_lock_pack(item: dict[str, Any], base_url: str, created_at: str) -> ContentPackLite:
@@ -115,20 +108,13 @@ def _dfk_lock_pack(item: dict[str, Any], base_url: str, created_at: str) -> Cont
         ),
         x_post=(
             "DeFi Kingdoms shows why confidence and risk are not the same.\n\n"
-            "GamCryp models the 5000 JEWEL max-lock strategy at $40.64 capital, $0.0136/day net, "
-            "and 1.00% 30D ROI.\n\n"
+            "GamCryp models the 5000 JEWEL max-lock strategy at {capital} capital, {net_day} net, "
+            "and {roi_30d} 30D ROI.\n\n"
             "Confidence: HIGH. Risk: VERY HIGH because the lock and emergency-exit terms dominate the catch.\n\n"
             "{url}"
         ),
     )
-    return _with_claims(
-        pack,
-        [
-            _claim("capital", "Modeled capital is $40.64.", "snapshot.capital.total_capital.amount", _capital_value(item), "$40.64"),
-            _claim("net_day", "Modeled net earnings are $0.0136/day.", "snapshot.earnings.net_earnings_day.amount", _net_day_value(item), "$0.0136/day"),
-            _claim("roi_30d", "Modeled 30D ROI is 1.00%.", "snapshot.roi.roi_total_30d.value", _roi_30d_value(item), "1.00%"),
-        ],
-    )
+    return _with_snapshot_financial_claims(pack)
 
 
 def _farmers_world_tiny_pack(item: dict[str, Any], base_url: str, created_at: str) -> ContentPackLite:
@@ -145,19 +131,12 @@ def _farmers_world_tiny_pack(item: dict[str, Any], base_url: str, created_at: st
         ),
         x_post=(
             "Farmers World is a useful reminder: cheap entry is not the same as good economics.\n\n"
-            "GamCryp's axe strategy shows capital under $0.01, net/day under $0.0001/day, and 30D ROI of -0.92%.\n\n"
+            "GamCryp's axe strategy shows capital {capital}, net/day {net_day}, and 30D ROI of {roi_30d}.\n\n"
             "This is why GamCryp separates modeled return from risk, liquidity, and confidence.\n\n"
             "{url}"
         ),
     )
-    return _with_claims(
-        pack,
-        [
-            _claim("capital", "Modeled capital is under $0.01.", "snapshot.capital.total_capital.amount", _capital_value(item), "<$0.01"),
-            _claim("net_day", "Modeled net earnings are under $0.0001/day.", "snapshot.earnings.net_earnings_day.amount", _net_day_value(item), "<$0.0001/day"),
-            _claim("roi_30d", "Modeled 30D ROI is -0.92%.", "snapshot.roi.roi_total_30d.value", _roi_30d_value(item), "-0.92%"),
-        ],
-    )
+    return _with_snapshot_financial_claims(pack)
 
 
 def _weatherxm_location_pack(item: dict[str, Any], base_url: str, created_at: str) -> ContentPackLite:
@@ -174,20 +153,13 @@ def _weatherxm_location_pack(item: dict[str, Any], base_url: str, created_at: st
         ),
         x_post=(
             "WeatherXM is not one universal ROI number.\n\n"
-            "GamCryp's D1 WiFi Station model uses $139 capital, net/day of -$0.0003/day, "
-            "and 30D ROI of -0.01%.\n\n"
+            "GamCryp's D1 WiFi Station model uses {capital} capital, net/day of {net_day}, "
+            "and 30D ROI of {roi_30d}.\n\n"
             "The catch: station quality, cell-level rewards, and live reward access can change the result.\n\n"
             "{url}"
         ),
     )
-    return _with_claims(
-        pack,
-        [
-            _claim("capital", "Modeled capital is $139.", "snapshot.capital.total_capital.amount", _capital_value(item), "$139"),
-            _claim("net_day", "Modeled net earnings are -$0.0003/day.", "snapshot.earnings.net_earnings_day.amount", _net_day_value(item), "-$0.0003/day"),
-            _claim("roi_30d", "Modeled 30D ROI is -0.01%.", "snapshot.roi.roi_total_30d.value", _roi_30d_value(item), "-0.01%"),
-        ],
-    )
+    return _with_snapshot_financial_claims(pack)
 
 
 def _splinterlands_ev_pack(item: dict[str, Any], base_url: str, created_at: str) -> ContentPackLite:
@@ -204,20 +176,13 @@ def _splinterlands_ev_pack(item: dict[str, Any], base_url: str, created_at: str)
         ),
         x_post=(
             "Splinterlands is modeled as expected value, not guaranteed income.\n\n"
-            "GamCryp's Modern Ranked SPS strategy uses $10 capital, -$0.0007/day net, "
-            "and -0.20% 30D ROI.\n\n"
+            "GamCryp's Modern Ranked SPS strategy uses {capital} capital, {net_day} net, "
+            "and {roi_30d} 30D ROI.\n\n"
             "The catch: win rate and SPS per win are assumptions, so confidence stays LOW and uncertainty is explicit.\n\n"
             "{url}"
         ),
     )
-    return _with_claims(
-        pack,
-        [
-            _claim("capital", "Modeled capital is $10.", "snapshot.capital.total_capital.amount", _capital_value(item), "$10"),
-            _claim("net_day", "Modeled net earnings are -$0.0007/day.", "snapshot.earnings.net_earnings_day.amount", _net_day_value(item), "-$0.0007/day"),
-            _claim("roi_30d", "Modeled 30D ROI is -0.20%.", "snapshot.roi.roi_total_30d.value", _roi_30d_value(item), "-0.20%"),
-        ],
-    )
+    return _with_snapshot_financial_claims(pack)
 
 
 def _storj_existing_hardware_pack(item: dict[str, Any], base_url: str, created_at: str) -> ContentPackLite:
@@ -234,20 +199,13 @@ def _storj_existing_hardware_pack(item: dict[str, Any], base_url: str, created_a
         ),
         x_post=(
             "Storj node economics depend on demand and held-back payouts.\n\n"
-            "GamCryp's existing-hardware scenario uses $1 capital, -$0.0119/day net, "
-            "and -35.75% 30D ROI.\n\n"
+            "GamCryp's existing-hardware scenario uses {capital} capital, {net_day} net, "
+            "and {roi_30d} 30D ROI.\n\n"
             "The catch: storage fill, egress, and held-back amounts matter more than a simple headline ROI.\n\n"
             "{url}"
         ),
     )
-    return _with_claims(
-        pack,
-        [
-            _claim("capital", "Modeled capital is $1.", "snapshot.capital.total_capital.amount", _capital_value(item), "$1"),
-            _claim("net_day", "Modeled net earnings are -$0.0119/day.", "snapshot.earnings.net_earnings_day.amount", _net_day_value(item), "-$0.0119/day"),
-            _claim("roi_30d", "Modeled 30D ROI is -35.75%.", "snapshot.roi.roi_total_30d.value", _roi_30d_value(item), "-35.75%"),
-        ],
-    )
+    return _with_snapshot_financial_claims(pack)
 
 
 def _dimo_subscription_pack(item: dict[str, Any], base_url: str, created_at: str) -> ContentPackLite:
@@ -264,15 +222,15 @@ def _dimo_subscription_pack(item: dict[str, Any], base_url: str, created_at: str
         ),
         x_post=(
             "DIMO looks lightweight, but the cost side matters.\n\n"
-            "GamCryp's software-only compatible-car model uses $8.99 capital, -$0.30/day net, "
-            "and -99.91% 30D ROI.\n\n"
+            "GamCryp's software-only compatible-car model uses {capital} capital, {net_day} net, "
+            "and {roi_30d} 30D ROI.\n\n"
             "The catch: rewards depend on network points and vehicle-specific eligibility.\n\n"
             "{url}"
         ),
         youtube_title="DIMO: vehicle data rewards need the cost side",
         youtube_short_script=(
             "DIMO is a DePIN vehicle-data project. The user connects a compatible car and may receive DIMO rewards. "
-            "GamCryp's software-only scenario uses $8.99 of capital, -$0.30/day net, and -99.91% 30D ROI. "
+            "GamCryp's software-only scenario uses {capital} of capital, {net_day} net, and {roi_30d} 30D ROI. "
             "That is not a verdict on the project. It is the current modeled scenario. The major catch is that rewards "
             "depend on vehicle eligibility, network points, and recurring costs."
         ),
@@ -287,14 +245,7 @@ def _dimo_subscription_pack(item: dict[str, Any], base_url: str, created_at: str
         ],
         thumbnail_text="DIMO cost vs reward",
     )
-    return _with_claims(
-        pack,
-        [
-            _claim("capital", "Modeled capital is $8.99.", "snapshot.capital.total_capital.amount", _capital_value(item), "$8.99"),
-            _claim("net_day", "Modeled net earnings are -$0.30/day.", "snapshot.earnings.net_earnings_day.amount", _net_day_value(item), "-$0.30/day"),
-            _claim("roi_30d", "Modeled 30D ROI is -99.91%.", "snapshot.roi.roi_total_30d.value", _roi_30d_value(item), "-99.91%"),
-        ],
-    )
+    return _with_snapshot_financial_claims(pack)
 
 
 def _mysterium_demand_pack(item: dict[str, Any], base_url: str, created_at: str) -> ContentPackLite:
@@ -311,20 +262,13 @@ def _mysterium_demand_pack(item: dict[str, Any], base_url: str, created_at: str)
         ),
         x_post=(
             "Mysterium node income is demand-dependent, not a fixed yield.\n\n"
-            "GamCryp's B2B existing-device model uses $2 capital, -$0.0068/day net, "
-            "and -10.14% 30D ROI.\n\n"
+            "GamCryp's B2B existing-device model uses {capital} capital, {net_day} net, "
+            "and {roi_30d} 30D ROI.\n\n"
             "The catch: region, IP quality, uptime, and traffic policy can materially change outcomes.\n\n"
             "{url}"
         ),
     )
-    return _with_claims(
-        pack,
-        [
-            _claim("capital", "Modeled capital is $2.", "snapshot.capital.total_capital.amount", _capital_value(item), "$2"),
-            _claim("net_day", "Modeled net earnings are -$0.0068/day.", "snapshot.earnings.net_earnings_day.amount", _net_day_value(item), "-$0.0068/day"),
-            _claim("roi_30d", "Modeled 30D ROI is -10.14%.", "snapshot.roi.roi_total_30d.value", _roi_30d_value(item), "-10.14%"),
-        ],
-    )
+    return _with_snapshot_financial_claims(pack)
 
 
 def _grass_unavailable_pack(opportunity: dict[str, Any], base_url: str, created_at: str) -> ContentPackLite:
@@ -474,11 +418,33 @@ def _strategy_pack(
 ) -> ContentPackLite:
     strategy = item["strategy"]
     snapshot = item["latest_snapshot"]
+    _validate_snapshot_context(strategy, snapshot)
     canonical_url = f"{base_url}/strategies/{strategy['strategy_id']}"
     risk = snapshot["risk"]
     confidence = snapshot["confidence"]
     primary_destination = strategy.get("primary_destination") or {}
     official_source = primary_destination.get("source_reference")
+    capital_fact = _money_fact(
+        snapshot["capital"]["total_capital"]["amount"],
+        snapshot["capital"]["total_capital"]["currency"],
+        "snapshot.capital.total_capital.amount",
+    )
+    modeled_return_fact = _ratio_fact(
+        snapshot["roi"]["roi_total_30d"]["value"],
+        "snapshot.roi.roi_total_30d.value",
+        label="30D ROI",
+    )
+    net_earnings_fact = _money_day_fact(
+        snapshot["earnings"]["net_earnings_day"]["amount"],
+        snapshot["earnings"]["net_earnings_day"]["currency"],
+        "snapshot.earnings.net_earnings_day.amount",
+    )
+    display_values = {
+        "capital": capital_fact.display,
+        "net_day": net_earnings_fact.display,
+        "roi_30d": modeled_return_fact.display,
+    }
+    x_utm_url = build_utm_url(canonical_url, source="x", medium="social", content_id=content_id)
     pack = ContentPackLite(
         content_id=content_id,
         source=ContentSource(
@@ -497,21 +463,9 @@ def _strategy_pack(
         facts=ContentFactSet(
             project_name=snapshot["game_name"],
             opportunity_type=strategy["opportunity_type"],
-            capital=_money_fact(
-                snapshot["capital"]["total_capital"]["amount"],
-                snapshot["capital"]["total_capital"]["currency"],
-                "snapshot.capital.total_capital.amount",
-            ),
-            modeled_return=_ratio_fact(
-                snapshot["roi"]["roi_total_30d"]["value"],
-                "snapshot.roi.roi_total_30d.value",
-                label="30D ROI",
-            ),
-            net_earnings=_money_day_fact(
-                snapshot["earnings"]["net_earnings_day"]["amount"],
-                snapshot["earnings"]["net_earnings_day"]["currency"],
-                "snapshot.earnings.net_earnings_day.amount",
-            ),
+            capital=capital_fact,
+            modeled_return=modeled_return_fact,
+            net_earnings=net_earnings_fact,
             break_even=_break_even_fact(snapshot["roi"]["break_even"]),
             risk=ScoreFact(
                 score=risk.get("score"),
@@ -540,11 +494,11 @@ def _strategy_pack(
             readiness=ContentReadiness.GREEN,
             hook=hook,
             core_message=core_message,
-            x_post=x_post.format(
-                url=build_utm_url(canonical_url, source="x", medium="social", content_id=content_id)
-            ),
+            x_post=x_post.format(url=x_utm_url, **display_values),
             youtube_title=youtube_title,
-            youtube_short_script=youtube_short_script,
+            youtube_short_script=(
+                youtube_short_script.format(**display_values) if youtube_short_script else None
+            ),
             youtube_description=youtube_description,
             visual_plan=visual_plan or [],
             thumbnail_text=thumbnail_text,
@@ -553,7 +507,7 @@ def _strategy_pack(
         distribution=DistributionLinks(
             canonical_site_url=canonical_url,
             content_id=content_id,
-            x_utm_url=build_utm_url(canonical_url, source="x", medium="social", content_id=content_id),
+            x_utm_url=x_utm_url,
             youtube_utm_url=build_utm_url(canonical_url, source="youtube", medium="short", content_id=content_id),
         ),
         created_at=created_at,
@@ -566,32 +520,49 @@ def _with_claims(pack: ContentPackLite, claims: list[ContentClaim]) -> ContentPa
     return set_expected_source_hash(updated)
 
 
+def _with_snapshot_financial_claims(pack: ContentPackLite) -> ContentPackLite:
+    facts = (
+        ("capital", "Modeled capital is {display}.", pack.facts.capital),
+        ("net_day", "Modeled net earnings are {display}.", pack.facts.net_earnings),
+        ("roi_30d", "Modeled 30D ROI is {display}.", pack.facts.modeled_return),
+    )
+    claims: list[ContentClaim] = []
+    for claim_id, text_template, fact in facts:
+        if fact is None or fact.value is None or fact.status != "available":
+            raise ValueError(f"Snapshot-backed claim {claim_id} requires an available source fact")
+        claims.append(
+            ContentClaim(
+                claim_id=claim_id,
+                text=text_template.format(display=fact.display),
+                source_path=fact.source_path,
+                source_value=fact.value,
+                display_value=fact.display,
+            )
+        )
+    return _with_claims(pack, claims)
+
+
 def _finalize_readiness(pack: ContentPackLite) -> ContentPackLite:
     readiness = derive_readiness(pack)
     updated = pack.model_copy(update={"editorial": pack.editorial.model_copy(update={"readiness": readiness})})
     return set_expected_source_hash(updated)
 
 
-def _claim(claim_id: str, text: str, source_path: str, source_value: str, display_value: str) -> ContentClaim:
-    return ContentClaim(
-        claim_id=claim_id,
-        text=text,
-        source_path=source_path,
-        source_value=source_value,
-        display_value=display_value,
-    )
-
-
-def _capital_value(item: dict[str, Any]) -> str:
-    return item["latest_snapshot"]["capital"]["total_capital"]["amount"]
-
-
-def _net_day_value(item: dict[str, Any]) -> str:
-    return item["latest_snapshot"]["earnings"]["net_earnings_day"]["amount"]
-
-
-def _roi_30d_value(item: dict[str, Any]) -> str:
-    return item["latest_snapshot"]["roi"]["roi_total_30d"]["value"]
+def _validate_snapshot_context(strategy: dict[str, Any], snapshot: dict[str, Any]) -> None:
+    expected = {
+        "strategy_id": strategy.get("strategy_id"),
+        "strategy_version": strategy.get("strategy_version"),
+        "opportunity_id": strategy.get("opportunity_id"),
+    }
+    for field, expected_value in expected.items():
+        if not expected_value or snapshot.get(field) != expected_value:
+            raise ValueError(f"Latest snapshot {field} does not match the selected strategy context")
+    if not snapshot.get("snapshot_id") or not snapshot.get("calculated_at"):
+        raise ValueError("Latest snapshot context requires snapshot_id and calculated_at")
+    declared_latest = strategy.get("latest_snapshot")
+    if isinstance(declared_latest, dict) and declared_latest.get("snapshot_id"):
+        if declared_latest["snapshot_id"] != snapshot["snapshot_id"]:
+            raise ValueError("Ranking strategy and selected latest snapshot IDs do not match")
 
 
 def _money_fact(amount: str, currency: str, source_path: str) -> MetricFact:
@@ -659,7 +630,7 @@ def _format_money(amount: str, currency: str) -> str:
     if absolute == 0:
         return f"{prefix}0"
     if absolute < Decimal("0.0001"):
-        return f"{sign}<{prefix}0.0001"
+        return f"<{prefix}0.0001"
     if absolute < Decimal("1"):
         formatted = absolute.quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
         return f"{sign}{prefix}{_trim_decimal(formatted)}"
@@ -675,7 +646,7 @@ def _format_ratio(value: str) -> str:
     absolute = abs(percent)
     sign = "-" if percent < 0 else ""
     if absolute != 0 and absolute < Decimal("0.01"):
-        return f"{sign}<0.01%"
+        return "<0.01%"
     formatted = absolute.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
     return f"{sign}{_trim_decimal(formatted)}%"
 

@@ -12,6 +12,7 @@ from app.distribution.content_pack import (
     ContentPackValidationError,
     ContentReadiness,
     build_utm_url,
+    display_value_matches_source,
     expected_source_hash,
     resolve_claim_source_value,
     serialize_batch,
@@ -69,6 +70,113 @@ def test_claim_source_path_resolves_and_value_matches() -> None:
 
     assert resolve_claim_source_value(pack, claim.source_path) == claim.source_value
     assert not validate_pack(pack).errors
+
+
+def test_refreshed_snapshot_replaces_stale_editorial_values_and_preserves_exact_source() -> None:
+    payload = _rankings_payload()
+    item = next(
+        item
+        for item in payload["items"]
+        if item["strategy"]["strategy_id"] == "farmers-world-axe-wood-production"
+    )
+    snapshot = item["latest_snapshot"]
+    snapshot["snapshot_id"] = "snapshot-farmers-refreshed"
+    snapshot["calculated_at"] = "2026-09-01T08:00:00Z"
+    snapshot["capital"]["total_capital"]["amount"] = "0.005432100000000000"
+    snapshot["earnings"]["net_earnings_day"]["amount"] = "-0.000002500000000000"
+    snapshot["roi"]["roi_total_30d"]["value"] = "-0.012345678900000000"
+
+    pack = next(
+        pack
+        for pack in build_learning_batch(payload, _opportunities_payload())
+        if pack.source.strategy_id == "farmers-world-axe-wood-production"
+    )
+    claims = {claim.claim_id: claim for claim in pack.claims}
+
+    assert pack.source.snapshot_id == "snapshot-farmers-refreshed"
+    assert pack.source.snapshot_timestamp == "2026-09-01T08:00:00Z"
+    assert claims["capital"].source_value == "0.005432100000000000"
+    assert claims["capital"].display_value == "$0.0054"
+    assert claims["roi_30d"].source_value == "-0.012345678900000000"
+    assert claims["roi_30d"].display_value == "-1.23%"
+    assert "$0.0054" in pack.editorial.x_post
+    assert "-1.23%" in pack.editorial.x_post
+    assert "-0.92%" not in pack.editorial.x_post
+    assert not validate_pack(pack).errors
+
+
+def test_snapshot_claims_resolve_exactly_while_displays_remain_human_readable() -> None:
+    packs = build_learning_batch(_rankings_payload(), _opportunities_payload())
+
+    for pack in (pack for pack in packs if pack.source.strategy_id):
+        for claim in pack.claims:
+            resolved = resolve_claim_source_value(pack, claim.source_path)
+            assert resolved == claim.source_value
+            assert display_value_matches_source(resolved, claim.display_value)
+            assert claim.display_value in claim.text
+        assert not validate_pack(pack).errors
+
+
+def test_mixed_snapshot_context_fails_closed() -> None:
+    payload = _rankings_payload()
+    item = payload["items"][0]
+    item["strategy"]["latest_snapshot"] = {"snapshot_id": "different-snapshot"}
+
+    with pytest.raises(ValueError, match="snapshot IDs do not match"):
+        build_learning_batch(payload, _opportunities_payload())
+
+
+def test_refreshed_youtube_script_uses_selected_snapshot_values() -> None:
+    payload = _rankings_payload()
+    item = next(
+        item
+        for item in payload["items"]
+        if item["strategy"]["strategy_id"] == "geodnet-empty-hex-triple-band-base-station"
+    )
+    item["latest_snapshot"]["earnings"]["net_earnings_day"]["amount"] = "3.14159265"
+    item["latest_snapshot"]["roi"]["roi_total_30d"]["value"] = "0.123456789"
+
+    pack = next(
+        pack
+        for pack in build_learning_batch(payload, _opportunities_payload())
+        if pack.source.strategy_id == "geodnet-empty-hex-triple-band-base-station"
+    )
+
+    assert "$3.14/day" in pack.editorial.youtube_short_script
+    assert "12.35%" in pack.editorial.youtube_short_script
+    assert "$2.59/day" not in pack.editorial.youtube_short_script
+    assert "11.16%" not in pack.editorial.youtube_short_script
+    assert validate_pack(pack).readiness is ContentReadiness.RED
+    assert not validate_pack(pack).errors
+
+
+def test_stale_editorial_numeric_value_cannot_survive_snapshot_replacement() -> None:
+    payload = _rankings_payload()
+    item = next(
+        item
+        for item in payload["items"]
+        if item["strategy"]["strategy_id"] == "farmers-world-axe-wood-production"
+    )
+    item["latest_snapshot"]["roi"]["roi_total_30d"]["value"] = "-0.0123456789"
+    pack = next(
+        pack
+        for pack in build_learning_batch(payload, _opportunities_payload())
+        if pack.source.strategy_id == "farmers-world-axe-wood-production"
+    )
+    edited = pack.model_copy(
+        update={
+            "editorial": pack.editorial.model_copy(
+                update={"x_post": f"{pack.editorial.x_post}\nOld snapshot ROI: -0.92%.", "readiness": ContentReadiness.RED}
+            )
+        }
+    )
+    edited = set_expected_source_hash(edited)
+
+    validation = validate_pack(edited)
+
+    assert validation.readiness is ContentReadiness.RED
+    assert "-0.92%" in validation.unsupported_numeric_claims
+    assert "editorial text contains unsupported numeric claim(s)" in validation.errors
 
 
 def test_missing_claim_source_path_fails_closed() -> None:
@@ -162,9 +270,11 @@ def test_partial_and_not_refreshable_numeric_packs_are_hard_red_even_when_recent
     assert partial.facts.freshness.display == "fresh"
     assert partial.source.refreshability is Refreshability.PARTIAL_REFRESH_ONLY
     assert validate_pack(partial).readiness is ContentReadiness.RED
+    assert not validate_pack(partial).errors
     assert "refreshability: PARTIAL_REFRESH_ONLY" in " ".join(validate_pack(partial).warnings)
     assert not_refreshable.source.refreshability is Refreshability.NOT_REFRESHABLE
     assert validate_pack(not_refreshable).readiness is ContentReadiness.RED
+    assert not validate_pack(not_refreshable).errors
     assert "refreshability: NOT_REFRESHABLE" in " ".join(validate_pack(not_refreshable).warnings)
 
 
@@ -195,6 +305,7 @@ def test_auto_numeric_pack_can_qualify_and_methodology_pack_is_unaffected() -> N
 
     assert splinterlands.source.refreshability is Refreshability.AUTO_REFRESHABLE
     assert validate_pack(splinterlands).readiness is ContentReadiness.YELLOW
+    assert not validate_pack(splinterlands).errors
     assert methodology.source.refreshability is None
     assert validate_pack(methodology).readiness is ContentReadiness.GREEN
 
