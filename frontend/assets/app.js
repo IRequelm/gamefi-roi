@@ -816,6 +816,8 @@ export function renderRankingRow(item) {
 }
 
 export function renderGameDetail(game) {
+  const strategies = game.strategies || [];
+  const snapshot = strategies[0]?.latest_snapshot;
   return `
     <div class="page-shell">
       <section class="page-head">
@@ -823,9 +825,10 @@ export function renderGameDetail(game) {
         <h1>${escapeHtml(game.name)}</h1>
         <p class="lede">${escapeHtml(game.status)} game with ${escapeHtml(String(game.strategy_count))} modeled strategy.</p>
         <div class="button-row">
-          ${renderDestinationButton(game.primary_destination, "Start", { sourcePage: "game_detail", placement: "primary_cta" })}
+          ${renderDestinationButton(game.primary_destination, ctaLabelForSnapshot(snapshot, "Start"), { sourcePage: "game_detail", placement: "primary_cta" })}
           <a class="secondary-button" href="/opportunities/${encodeURIComponent(game.opportunity_id)}" data-link>Opportunity record</a>
         </div>
+        ${renderCtaRiskNotice(snapshot)}
       </section>
       <section class="game-grid">
         <div class="game-card">
@@ -841,7 +844,7 @@ export function renderGameDetail(game) {
           <p>${escapeHtml(game.status)}</p>
         </div>
       </section>
-      ${renderStrategyList(game.strategies || [])}
+      ${renderStrategyList(strategies)}
     </div>
   `;
 }

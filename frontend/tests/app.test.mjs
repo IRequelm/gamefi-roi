@@ -22,6 +22,7 @@ import {
   renderDestinationButton,
   renderError,
   renderFreshnessAlert,
+  renderGameDetail,
   renderHistory,
   renderHomeAnswerBlock,
   renderHomeShell,
@@ -386,6 +387,28 @@ test("long strategy names stay in card structure with CTA behavior", () => {
   assert.doesNotMatch(html, /<table/);
 });
 
+
+test("legacy game detail CTA uses risk-aware wording without changing link behavior", () => {
+  const highRiskGame = gamePayload(strategyPayload());
+  const highRiskHtml = renderGameDetail(highRiskGame);
+
+  assert.match(highRiskHtml, /Open project/);
+  assert.match(highRiskHtml, /High-risk strategy\. Opening the project is not a recommendation; review the assumptions first\./);
+  assert.match(highRiskHtml, /href="\/go\/defi-kingdoms-play\?source_page=game_detail&amp;placement=primary_cta"/);
+  assert.match(highRiskHtml, /target="_blank"/);
+  assert.match(highRiskHtml, /rel="noopener noreferrer"/);
+  assert.match(highRiskHtml, /<a class="secondary-button" href="\/opportunities\/defi-kingdoms" data-link>Opportunity record<\/a>/);
+  assert.doesNotMatch(highRiskHtml, /<a class="secondary-button" href="\/opportunities\/defi-kingdoms"[^>]*target="_blank"/);
+
+  const normalSnapshot = snapshotPayload();
+  normalSnapshot.risk.score = 20;
+  normalSnapshot.risk.label = "LOW";
+  const normalHtml = renderGameDetail(gamePayload({ ...strategyPayload(), latest_snapshot: normalSnapshot }));
+
+  assert.match(normalHtml, />\s*Start\s*</);
+  assert.doesNotMatch(normalHtml, /High-risk strategy/);
+});
+
 test("public CTA never renders None and preserves /go route", () => {
   const html = renderDestinationButton(destinationPayload("grass-official"), "Open", {
     sourcePage: "opportunity_watchlist",
@@ -649,6 +672,21 @@ function strategyPayload() {
     description: "cJEWEL max-lock strategy.",
     primary_destination: destinationPayload("defi-kingdoms-play"),
     latest_snapshot: snapshotPayload(),
+  };
+}
+
+function gamePayload(strategy = strategyPayload()) {
+  return {
+    game_id: "defi-kingdoms",
+    opportunity_id: "defi-kingdoms",
+    opportunity_type: "GAME",
+    name: "DeFi Kingdoms",
+    chains: ["dfk-chain"],
+    economy_types: ["locked-yield-reward"],
+    status: "active",
+    strategy_count: 1,
+    primary_destination: destinationPayload("defi-kingdoms-play"),
+    strategies: [strategy],
   };
 }
 
