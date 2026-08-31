@@ -1,0 +1,1044 @@
+{
+  "batch_id": "distribution-learning-batch-001",
+  "content_pack_version": "content-pack-lite-v1",
+  "generated_at": "2026-08-31T18:00:00Z",
+  "packs": [
+    {
+      "claims": [
+        {
+          "claim_id": "capital",
+          "display_value": "$40.64",
+          "source_path": "snapshot.capital.total_capital.amount",
+          "source_value": "40.64045550630489442100105938",
+          "text": "Modeled capital is $40.64."
+        },
+        {
+          "claim_id": "net_day",
+          "display_value": "$0.0136/day",
+          "source_path": "snapshot.earnings.net_earnings_day.amount",
+          "source_value": "0.01361299918132749601471545559",
+          "text": "Modeled net earnings are $0.0136/day."
+        },
+        {
+          "claim_id": "roi_30d",
+          "display_value": "1.00%",
+          "source_path": "snapshot.roi.roi_total_30d.value",
+          "source_value": "0.01004885330029009938953579240",
+          "text": "Modeled 30D ROI is 1.00%."
+        }
+      ],
+      "content_id": "x-dfk-lock-risk-20260831",
+      "content_pack_version": "content-pack-lite-v1",
+      "created_at": "2026-08-31T18:00:00Z",
+      "distribution": {
+        "canonical_site_url": "https://gamcryp.com/strategies/dfk-crystalvale-jeweler-cjewel-5000-max-lock",
+        "content_id": "x-dfk-lock-risk-20260831",
+        "x_utm_url": "https://gamcryp.com/strategies/dfk-crystalvale-jeweler-cjewel-5000-max-lock?utm_campaign=distribution-mvp&utm_content=x-dfk-lock-risk-20260831&utm_medium=social&utm_source=x",
+        "youtube_utm_url": "https://gamcryp.com/strategies/dfk-crystalvale-jeweler-cjewel-5000-max-lock?utm_campaign=distribution-mvp&utm_content=x-dfk-lock-risk-20260831&utm_medium=short&utm_source=youtube"
+      },
+      "editorial": {
+        "content_angle": "high-confidence model with lock risk",
+        "core_message": "GamCryp can have high confidence in the DFK Jeweler calculation while still marking the strategy very high risk because capital is locked and exit penalties matter.",
+        "disclosure": "Draft educational content. Not investment advice. No guaranteed rewards or returns.",
+        "hook": "DeFi Kingdoms shows why confidence and risk are different.",
+        "readiness": "RED",
+        "visual_plan": [],
+        "x_post": "DeFi Kingdoms shows why confidence and risk are not the same.\n\nGamCryp models the 5000 JEWEL max-lock strategy at $40.64 capital, $0.0136/day net, and 1.00% 30D ROI.\n\nConfidence: HIGH. Risk: VERY HIGH because the lock and emergency-exit terms dominate the catch.\n\nhttps://gamcryp.com/strategies/dfk-crystalvale-jeweler-cjewel-5000-max-lock?utm_campaign=distribution-mvp&utm_content=x-dfk-lock-risk-20260831&utm_medium=social&utm_source=x"
+      },
+      "facts": {
+        "break_even": {
+          "display": "2,985 days",
+          "source_path": "snapshot.roi.break_even.days",
+          "status": "available",
+          "unit": "days",
+          "value": "2985.415261175514708252547079"
+        },
+        "capital": {
+          "display": "$40.64",
+          "source_path": "snapshot.capital.total_capital.amount",
+          "status": "available",
+          "unit": "USD",
+          "value": "40.64045550630489442100105938"
+        },
+        "confidence": {
+          "display": "HIGH 82/100",
+          "label": "HIGH",
+          "score": 82,
+          "source_path": "snapshot.confidence",
+          "status": "available"
+        },
+        "freshness": {
+          "display": "stale",
+          "source_path": "snapshot.freshness.overall_status",
+          "status": "available",
+          "value": "stale"
+        },
+        "major_catch": "Risk is VERY HIGH; review the strategy assumptions before acting.",
+        "modeled_return": {
+          "display": "1%",
+          "source_path": "snapshot.roi.roi_total_30d.value",
+          "status": "available",
+          "unit": "ratio",
+          "value": "0.01004885330029009938953579240"
+        },
+        "net_earnings": {
+          "display": "$0.0136/day",
+          "source_path": "snapshot.earnings.net_earnings_day.amount",
+          "status": "available",
+          "unit": "USD/day",
+          "value": "0.01361299918132749601471545559"
+        },
+        "opportunity_type": "GAME",
+        "project_name": "DeFi Kingdoms",
+        "reward_source": "GAME strategy using locked-yield-reward rewards.",
+        "risk": {
+          "display": "VERY HIGH 93/100",
+          "label": "VERY HIGH",
+          "score": 93,
+          "source_path": "snapshot.risk",
+          "status": "available"
+        }
+      },
+      "source": {
+        "adapter_contract_version": "adapter-contract-v1",
+        "model_version": "roi-core-v1",
+        "official_source_refs": [
+          {
+            "label": "Official site",
+            "url": "https://defikingdoms.com/"
+          }
+        ],
+        "opportunity_id": "defi-kingdoms",
+        "scoring_methodology_version": "risk-confidence-v1",
+        "snapshot_id": "32900c5f-70bb-57a1-a34b-a2fa31264594",
+        "snapshot_timestamp": "2026-08-31T15:16:07.805757Z",
+        "source_snapshot_hash": "20c9276b099a51b5ed4b6a6231eafafa25d9d222384fbbdc08db481beb848897",
+        "strategy_id": "dfk-crystalvale-jeweler-cjewel-5000-max-lock",
+        "strategy_version": "v1"
+      }
+    },
+    {
+      "claims": [
+        {
+          "claim_id": "capital",
+          "display_value": "$8.99",
+          "source_path": "snapshot.capital.total_capital.amount",
+          "source_value": "8.99",
+          "text": "Modeled capital is $8.99."
+        },
+        {
+          "claim_id": "net_day",
+          "display_value": "-$0.30/day",
+          "source_path": "snapshot.earnings.net_earnings_day.amount",
+          "source_value": "-0.2993874002349686587029523810",
+          "text": "Modeled net earnings are -$0.30/day."
+        },
+        {
+          "claim_id": "roi_30d",
+          "display_value": "-99.91%",
+          "source_path": "snapshot.roi.roi_total_30d.value",
+          "source_value": "-0.9990680764236996397206419833",
+          "text": "Modeled 30D ROI is -99.91%."
+        }
+      ],
+      "content_id": "x-dimo-subscription-catch-20260831",
+      "content_pack_version": "content-pack-lite-v1",
+      "created_at": "2026-08-31T18:00:00Z",
+      "distribution": {
+        "canonical_site_url": "https://gamcryp.com/strategies/dimo-software-only-compatible-car",
+        "content_id": "x-dimo-subscription-catch-20260831",
+        "x_utm_url": "https://gamcryp.com/strategies/dimo-software-only-compatible-car?utm_campaign=distribution-mvp&utm_content=x-dimo-subscription-catch-20260831&utm_medium=social&utm_source=x",
+        "youtube_utm_url": "https://gamcryp.com/strategies/dimo-software-only-compatible-car?utm_campaign=distribution-mvp&utm_content=x-dimo-subscription-catch-20260831&utm_medium=short&utm_source=youtube"
+      },
+      "editorial": {
+        "content_angle": "software-only cost versus reward",
+        "core_message": "GamCryp's DIMO software-only compatible-car model exposes the cost side first instead of turning vehicle data rewards into a blanket recommendation.",
+        "disclosure": "Draft educational content. Not investment advice. No guaranteed rewards or returns.",
+        "hook": "DIMO looks lightweight, but the subscription cost dominates this scenario.",
+        "readiness": "RED",
+        "thumbnail_text": "DIMO cost vs reward",
+        "visual_plan": [
+          "Open on DIMO name and a connected-car concept.",
+          "Show the cost line before the reward line.",
+          "Highlight the modeled negative 30D ROI without recommendation language.",
+          "End with GamCryp risk and confidence context."
+        ],
+        "x_post": "DIMO looks lightweight, but the cost side matters.\n\nGamCryp's software-only compatible-car model uses $8.99 capital, -$0.30/day net, and -99.91% 30D ROI.\n\nThe catch: rewards depend on network points and vehicle-specific eligibility.\n\nhttps://gamcryp.com/strategies/dimo-software-only-compatible-car?utm_campaign=distribution-mvp&utm_content=x-dimo-subscription-catch-20260831&utm_medium=social&utm_source=x",
+        "youtube_description": "A GamCryp Short showing why DIMO's vehicle-data rewards need cost, eligibility, risk, and confidence shown together.",
+        "youtube_short_script": "DIMO is a DePIN vehicle-data project. The user connects a compatible car and may receive DIMO rewards. GamCryp's software-only scenario uses $8.99 of capital, -$0.30/day net, and -99.91% 30D ROI. That is not a verdict on the project. It is the current modeled scenario. The major catch is that rewards depend on vehicle eligibility, network points, and recurring costs.",
+        "youtube_title": "DIMO: vehicle data rewards need the cost side"
+      },
+      "facts": {
+        "break_even": {
+          "display": "Break-even unavailable",
+          "reason": "Net earnings must be positive to calculate break-even days",
+          "source_path": "snapshot.roi.break_even.days",
+          "status": "unavailable",
+          "unit": "days"
+        },
+        "capital": {
+          "display": "$8.99",
+          "source_path": "snapshot.capital.total_capital.amount",
+          "status": "available",
+          "unit": "USD",
+          "value": "8.99"
+        },
+        "confidence": {
+          "display": "MODERATE 52/100",
+          "label": "MODERATE",
+          "score": 52,
+          "source_path": "snapshot.confidence",
+          "status": "available"
+        },
+        "freshness": {
+          "display": "stale",
+          "source_path": "snapshot.freshness.overall_status",
+          "status": "available",
+          "value": "stale"
+        },
+        "major_catch": "DIMO rewards depend on total network points; this model uses an explicit configured denominator.",
+        "modeled_return": {
+          "display": "-99.91%",
+          "source_path": "snapshot.roi.roi_total_30d.value",
+          "status": "available",
+          "unit": "ratio",
+          "value": "-0.9990680764236996397206419833"
+        },
+        "net_earnings": {
+          "display": "-$0.2994/day",
+          "source_path": "snapshot.earnings.net_earnings_day.amount",
+          "status": "available",
+          "unit": "USD/day",
+          "value": "-0.2993874002349686587029523810"
+        },
+        "opportunity_type": "DEPIN_NODE",
+        "project_name": "DIMO",
+        "reward_source": "DEPIN_NODE strategy using vehicle-data rewards.",
+        "risk": {
+          "display": "VERY HIGH 100/100",
+          "label": "VERY HIGH",
+          "score": 100,
+          "source_path": "snapshot.risk",
+          "status": "available"
+        }
+      },
+      "source": {
+        "adapter_contract_version": "adapter-contract-v1",
+        "model_version": "roi-core-v1",
+        "official_source_refs": [
+          {
+            "label": "Official site",
+            "url": "https://drivedimo.com/"
+          }
+        ],
+        "opportunity_id": "dimo",
+        "scoring_methodology_version": "risk-confidence-v1",
+        "snapshot_id": "8134908e-a6e2-5848-8720-bf073b945adb",
+        "snapshot_timestamp": "2026-08-31T15:16:07.805757Z",
+        "source_snapshot_hash": "8435f72b0166073ef718a6b585ffae5635694e893fecfae1f09c9a5d4fdd38d9",
+        "strategy_id": "dimo-software-only-compatible-car",
+        "strategy_version": "v1"
+      }
+    },
+    {
+      "claims": [
+        {
+          "claim_id": "capital",
+          "display_value": "<$0.01",
+          "source_path": "snapshot.capital.total_capital.amount",
+          "source_value": "0.0018906664685463456",
+          "text": "Modeled capital is under $0.01."
+        },
+        {
+          "claim_id": "net_day",
+          "display_value": "<$0.0001/day",
+          "source_path": "snapshot.earnings.net_earnings_day.amount",
+          "source_value": "-5.782212375793702466790210095E-7",
+          "text": "Modeled net earnings are under $0.0001/day."
+        },
+        {
+          "claim_id": "roi_30d",
+          "display_value": "-0.92%",
+          "source_path": "snapshot.roi.roi_total_30d.value",
+          "source_value": "-0.009174879554889557773141170400",
+          "text": "Modeled 30D ROI is -0.92%."
+        }
+      ],
+      "content_id": "x-farmers-world-tiny-economics-20260831",
+      "content_pack_version": "content-pack-lite-v1",
+      "created_at": "2026-08-31T18:00:00Z",
+      "distribution": {
+        "canonical_site_url": "https://gamcryp.com/strategies/farmers-world-axe-wood-production",
+        "content_id": "x-farmers-world-tiny-economics-20260831",
+        "x_utm_url": "https://gamcryp.com/strategies/farmers-world-axe-wood-production?utm_campaign=distribution-mvp&utm_content=x-farmers-world-tiny-economics-20260831&utm_medium=social&utm_source=x",
+        "youtube_utm_url": "https://gamcryp.com/strategies/farmers-world-axe-wood-production?utm_campaign=distribution-mvp&utm_content=x-farmers-world-tiny-economics-20260831&utm_medium=short&utm_source=youtube"
+      },
+      "editorial": {
+        "content_angle": "low-cost but weak economics",
+        "core_message": "GamCryp uses Farmers World to show that tiny capital and tiny earnings can produce weak or negative economics once market realization is considered.",
+        "disclosure": "Draft educational content. Not investment advice. No guaranteed rewards or returns.",
+        "hook": "Farmers World is cheap to model, but cheap is not the same as attractive.",
+        "readiness": "RED",
+        "visual_plan": [],
+        "x_post": "Farmers World is a useful reminder: cheap entry is not the same as good economics.\n\nGamCryp's axe strategy shows capital under $0.01, net/day under $0.0001/day, and 30D ROI of -0.92%.\n\nThis is why GamCryp separates modeled return from risk, liquidity, and confidence.\n\nhttps://gamcryp.com/strategies/farmers-world-axe-wood-production?utm_campaign=distribution-mvp&utm_content=x-farmers-world-tiny-economics-20260831&utm_medium=social&utm_source=x"
+      },
+      "facts": {
+        "break_even": {
+          "display": "Break-even unavailable",
+          "reason": "Net earnings must be positive to calculate break-even days",
+          "source_path": "snapshot.roi.break_even.days",
+          "status": "unavailable",
+          "unit": "days"
+        },
+        "capital": {
+          "display": "$0.0019",
+          "source_path": "snapshot.capital.total_capital.amount",
+          "status": "available",
+          "unit": "USD",
+          "value": "0.0018906664685463456"
+        },
+        "confidence": {
+          "display": "MODERATE 77/100",
+          "label": "MODERATE",
+          "score": 77,
+          "source_path": "snapshot.confidence",
+          "status": "available"
+        },
+        "freshness": {
+          "display": "stale",
+          "source_path": "snapshot.freshness.overall_status",
+          "status": "available",
+          "value": "stale"
+        },
+        "major_catch": "Risk is HIGH; review the strategy assumptions before acting.",
+        "modeled_return": {
+          "display": "-0.92%",
+          "source_path": "snapshot.roi.roi_total_30d.value",
+          "status": "available",
+          "unit": "ratio",
+          "value": "-0.009174879554889557773141170400"
+        },
+        "net_earnings": {
+          "display": "-<$0.0001/day",
+          "source_path": "snapshot.earnings.net_earnings_day.amount",
+          "status": "available",
+          "unit": "USD/day",
+          "value": "-5.782212375793702466790210095E-7"
+        },
+        "opportunity_type": "GAME",
+        "project_name": "Farmers World",
+        "reward_source": "GAME strategy using resource-production rewards.",
+        "risk": {
+          "display": "HIGH 55/100",
+          "label": "HIGH",
+          "score": 55,
+          "source_path": "snapshot.risk",
+          "status": "available"
+        }
+      },
+      "source": {
+        "adapter_contract_version": "adapter-contract-v1",
+        "model_version": "roi-core-v1",
+        "official_source_refs": [
+          {
+            "label": "Official site",
+            "url": "https://farmersworld.io/"
+          }
+        ],
+        "opportunity_id": "farmers-world",
+        "scoring_methodology_version": "risk-confidence-v1",
+        "snapshot_id": "c0afe19d-0635-557e-97f3-663409915d85",
+        "snapshot_timestamp": "2026-08-31T15:16:07.805757Z",
+        "source_snapshot_hash": "3749b2bf987efc68b7500f360a2784968f4c40c273e2ce94ad4b83f9876021c0",
+        "strategy_id": "farmers-world-axe-wood-production",
+        "strategy_version": "v1"
+      }
+    },
+    {
+      "claims": [],
+      "content_id": "x-gamcryp-methodology-not-recommendation-20260831",
+      "content_pack_version": "content-pack-lite-v1",
+      "created_at": "2026-08-31T18:00:00Z",
+      "distribution": {
+        "canonical_site_url": "https://gamcryp.com/methodology",
+        "content_id": "x-gamcryp-methodology-not-recommendation-20260831",
+        "x_utm_url": "https://gamcryp.com/methodology?utm_campaign=distribution-mvp&utm_content=x-gamcryp-methodology-not-recommendation-20260831&utm_medium=social&utm_source=x",
+        "youtube_utm_url": "https://gamcryp.com/methodology?utm_campaign=distribution-mvp&utm_content=x-gamcryp-methodology-not-recommendation-20260831&utm_medium=short&utm_source=youtube"
+      },
+      "editorial": {
+        "content_angle": "methodology explanation",
+        "core_message": "GamCryp content should explain capital, realizable earnings, confidence, risk, and freshness from the same source chain users see on the site.",
+        "disclosure": "Draft educational content. Not investment advice. No guaranteed rewards or returns.",
+        "hook": "GamCryp ranks strategies, not hype.",
+        "readiness": "GREEN",
+        "visual_plan": [],
+        "x_post": "GamCryp ranks strategies, not hype.\n\nA high modeled ROI can still carry high risk. A low-cost opportunity can still have weak economics. And if rewards are not reproducible, ROI stays unavailable.\n\nThe goal is decision clarity, not a recommendation.\n\nhttps://gamcryp.com/methodology?utm_campaign=distribution-mvp&utm_content=x-gamcryp-methodology-not-recommendation-20260831&utm_medium=social&utm_source=x"
+      },
+      "facts": {
+        "freshness": {
+          "display": "not applicable",
+          "source_path": "facts.freshness.value",
+          "status": "available",
+          "value": "not_applicable"
+        },
+        "major_catch": "Rank is a comparison signal, not a recommendation or guaranteed return.",
+        "opportunity_type": "METHODOLOGY",
+        "project_name": "GamCryp",
+        "reward_source": "GamCryp compares modeled strategy-specific opportunity economics."
+      },
+      "source": {
+        "official_source_refs": [
+          {
+            "label": "GamCryp methodology",
+            "url": "https://gamcryp.com/methodology"
+          }
+        ],
+        "opportunity_id": "gamcryp-methodology",
+        "source_snapshot_hash": "6224a976f706f8f8412fc57a29dde190c6e277ef2613c84e2fd3c9239de3ceef"
+      }
+    },
+    {
+      "claims": [
+        {
+          "claim_id": "capital",
+          "display_value": "$695",
+          "source_path": "snapshot.capital.total_capital.amount",
+          "source_value": "695",
+          "text": "Modeled capital is $695."
+        },
+        {
+          "claim_id": "net_day",
+          "display_value": "$2.59/day",
+          "source_path": "snapshot.earnings.net_earnings_day.amount",
+          "source_value": "2.5863626413797332680",
+          "text": "Modeled net earnings are $2.59/day."
+        },
+        {
+          "claim_id": "roi_30d",
+          "display_value": "11.16%",
+          "source_path": "snapshot.roi.roi_total_30d.value",
+          "source_value": "0.1116415528653122273956834532",
+          "text": "Modeled 30D ROI is 11.16%."
+        }
+      ],
+      "content_id": "x-geodnet-rank-risk-20260831",
+      "content_pack_version": "content-pack-lite-v1",
+      "created_at": "2026-08-31T18:00:00Z",
+      "distribution": {
+        "canonical_site_url": "https://gamcryp.com/strategies/geodnet-empty-hex-triple-band-base-station",
+        "content_id": "x-geodnet-rank-risk-20260831",
+        "x_utm_url": "https://gamcryp.com/strategies/geodnet-empty-hex-triple-band-base-station?utm_campaign=distribution-mvp&utm_content=x-geodnet-rank-risk-20260831&utm_medium=social&utm_source=x",
+        "youtube_utm_url": "https://gamcryp.com/strategies/geodnet-empty-hex-triple-band-base-station?utm_campaign=distribution-mvp&utm_content=x-geodnet-rank-risk-20260831&utm_medium=short&utm_source=youtube"
+      },
+      "editorial": {
+        "content_angle": "current rank leader with major risk",
+        "core_message": "GamCryp models GEODNET's empty-hex base-station scenario at high return potential with very high risk from location and signal-quality dependence.",
+        "disclosure": "Draft educational content. Not investment advice. No guaranteed rewards or returns.",
+        "hook": "GEODNET leads GamCryp's current modeled rankings, but the catch matters.",
+        "readiness": "RED",
+        "thumbnail_text": "GEODNET ROI: catch first",
+        "visual_plan": [
+          "Open with GEODNET name and a clean rank card.",
+          "Show capital, net/day, and 30D ROI as three compact data beats.",
+          "Cut to a map/hex-style visual labelled location quality.",
+          "End on the GamCryp strategy page with risk and confidence visible."
+        ],
+        "x_post": "GEODNET leads GamCryp's current modeled rankings, but it is not a recommendation.\n\nModeled capital: $695. Net/day: $2.59/day. 30D ROI: 11.16%.\n\nRisk: VERY HIGH. Confidence: MODERATE. The catch: location, hex occupancy, and station quality can change the outcome materially.\n\nhttps://gamcryp.com/strategies/geodnet-empty-hex-triple-band-base-station?utm_campaign=distribution-mvp&utm_content=x-geodnet-rank-risk-20260831&utm_medium=social&utm_source=x",
+        "youtube_description": "A GamCryp data-backed Short explaining GEODNET's modeled base-station economics and why high ROI can still carry very high risk.",
+        "youtube_short_script": "GEODNET is one of the clearest examples of why ROI alone is not enough. The user runs a geospatial base station. GamCryp's current scenario uses $695 of modeled capital, $2.59/day of net earnings, and 11.16% 30D ROI. But this is an empty-hex, quality-dependent model. If your location, signal, or competition is worse, the result can change sharply. Use GamCryp to inspect the numbers, confidence, and risk before treating the model as useful.",
+        "youtube_title": "GEODNET ROI looks strong. Here is the catch."
+      },
+      "facts": {
+        "break_even": {
+          "display": "269 days",
+          "source_path": "snapshot.roi.break_even.days",
+          "status": "available",
+          "unit": "days",
+          "value": "268.7171508281769826833682013"
+        },
+        "capital": {
+          "display": "$695",
+          "source_path": "snapshot.capital.total_capital.amount",
+          "status": "available",
+          "unit": "USD",
+          "value": "695"
+        },
+        "confidence": {
+          "display": "MODERATE 52/100",
+          "label": "MODERATE",
+          "score": 52,
+          "source_path": "snapshot.confidence",
+          "status": "available"
+        },
+        "freshness": {
+          "display": "stale",
+          "source_path": "snapshot.freshness.overall_status",
+          "status": "available",
+          "value": "stale"
+        },
+        "major_catch": "This is a maximum-reward empty-hex scenario; occupied hexes, low satellites, or multipath issues can reduce rewards to zero.",
+        "modeled_return": {
+          "display": "11.16%",
+          "source_path": "snapshot.roi.roi_total_30d.value",
+          "status": "available",
+          "unit": "ratio",
+          "value": "0.1116415528653122273956834532"
+        },
+        "net_earnings": {
+          "display": "$2.59/day",
+          "source_path": "snapshot.earnings.net_earnings_day.amount",
+          "status": "available",
+          "unit": "USD/day",
+          "value": "2.5863626413797332680"
+        },
+        "opportunity_type": "DEPIN_NODE",
+        "project_name": "GEODNET",
+        "reward_source": "DEPIN_NODE strategy using geospatial-node rewards.",
+        "risk": {
+          "display": "VERY HIGH 100/100",
+          "label": "VERY HIGH",
+          "score": 100,
+          "source_path": "snapshot.risk",
+          "status": "available"
+        }
+      },
+      "source": {
+        "adapter_contract_version": "adapter-contract-v1",
+        "model_version": "roi-core-v1",
+        "official_source_refs": [
+          {
+            "label": "Official site",
+            "url": "https://geodnet.com/"
+          }
+        ],
+        "opportunity_id": "geodnet",
+        "scoring_methodology_version": "risk-confidence-v1",
+        "snapshot_id": "5e54158c-3053-5eb5-b5b8-682dfc05f42f",
+        "snapshot_timestamp": "2026-08-31T15:16:07.805757Z",
+        "source_snapshot_hash": "acd5ec1d95ddfdf64394b293b433259316e0ce218632f2be71c0f20f93a53adf",
+        "strategy_id": "geodnet-empty-hex-triple-band-base-station",
+        "strategy_version": "v1"
+      }
+    },
+    {
+      "claims": [],
+      "content_id": "x-grass-roi-unavailable-20260831",
+      "content_pack_version": "content-pack-lite-v1",
+      "created_at": "2026-08-31T18:00:00Z",
+      "distribution": {
+        "canonical_site_url": "https://gamcryp.com/opportunities/grass",
+        "content_id": "x-grass-roi-unavailable-20260831",
+        "x_utm_url": "https://gamcryp.com/opportunities/grass?utm_campaign=distribution-mvp&utm_content=x-grass-roi-unavailable-20260831&utm_medium=social&utm_source=x",
+        "youtube_utm_url": "https://gamcryp.com/opportunities/grass?utm_campaign=distribution-mvp&utm_content=x-grass-roi-unavailable-20260831&utm_medium=short&utm_source=youtube"
+      },
+      "editorial": {
+        "content_angle": "ROI unavailable because points are not executable value",
+        "core_message": "GamCryp can explain Grass without pretending points are dollars. The current catalog marks Grass as a points-based DePIN opportunity with financial ROI unavailable.",
+        "disclosure": "Draft educational content. Not investment advice. No guaranteed rewards or returns.",
+        "hook": "Grass is useful for GamCryp precisely because ROI is unavailable.",
+        "readiness": "YELLOW",
+        "thumbnail_text": "Grass ROI unavailable",
+        "visual_plan": [
+          "Open with Grass name and ROI unavailable.",
+          "Show points are not dollars.",
+          "Show GamCryp rule: no executable value route means no financial ROI.",
+          "End on the Grass opportunity page."
+        ],
+        "x_post": "Grass is useful for GamCryp because the honest answer is: ROI unavailable.\n\nThe project has points-based rewards, but GamCryp does not convert points into financial ROI unless there is a reproducible exit route.\n\nThat is the point of the model: no fake zero, no made-up yield.\n\nhttps://gamcryp.com/opportunities/grass?utm_campaign=distribution-mvp&utm_content=x-grass-roi-unavailable-20260831&utm_medium=social&utm_source=x",
+        "youtube_description": "A GamCryp Short explaining why points-based opportunities like Grass may be useful to track while ROI remains unavailable.",
+        "youtube_short_script": "Grass is a good example of a Web3 earning opportunity where GamCryp should not invent ROI. The user contributes bandwidth and may earn points. But points are not the same as a realizable market return. GamCryp marks ROI unavailable until a lawful, reproducible value route exists. That protects users from fake precision.",
+        "youtube_title": "Grass: why GamCryp says ROI unavailable"
+      },
+      "facts": {
+        "freshness": {
+          "display": "PARTIAL",
+          "source_path": "opportunity.data_feasibility_status",
+          "status": "available",
+          "value": "PARTIAL"
+        },
+        "major_catch": "Grass points are not modeled as financial ROI unless a lawful, reproducible value route exists.",
+        "modeled_return": {
+          "display": "ROI unavailable",
+          "reason": "Points do not currently have a reproducible executable value route in GamCryp.",
+          "source_path": "opportunity.value_realization_status",
+          "status": "unavailable"
+        },
+        "opportunity_type": "DEPIN_NODE",
+        "project_name": "Grass",
+        "reward_source": "Bandwidth contribution and points program."
+      },
+      "source": {
+        "official_source_refs": [
+          {
+            "label": "Official site",
+            "url": "https://www.grass.io/"
+          }
+        ],
+        "opportunity_id": "grass",
+        "source_snapshot_hash": "d83dff37880370f02b02a7934fc912efc698740d544cd8601cfaff65e128d5c9"
+      }
+    },
+    {
+      "claims": [
+        {
+          "claim_id": "capital",
+          "display_value": "$2",
+          "source_path": "snapshot.capital.total_capital.amount",
+          "source_value": "2.00",
+          "text": "Modeled capital is $2."
+        },
+        {
+          "claim_id": "net_day",
+          "display_value": "-$0.0068/day",
+          "source_path": "snapshot.earnings.net_earnings_day.amount",
+          "source_value": "-0.006758015240225208",
+          "text": "Modeled net earnings are -$0.0068/day."
+        },
+        {
+          "claim_id": "roi_30d",
+          "display_value": "-10.14%",
+          "source_path": "snapshot.roi.roi_total_30d.value",
+          "source_value": "-0.10137022860337812",
+          "text": "Modeled 30D ROI is -10.14%."
+        }
+      ],
+      "content_id": "x-mysterium-demand-risk-20260831",
+      "content_pack_version": "content-pack-lite-v1",
+      "created_at": "2026-08-31T18:00:00Z",
+      "distribution": {
+        "canonical_site_url": "https://gamcryp.com/strategies/mysterium-b2b-existing-device",
+        "content_id": "x-mysterium-demand-risk-20260831",
+        "x_utm_url": "https://gamcryp.com/strategies/mysterium-b2b-existing-device?utm_campaign=distribution-mvp&utm_content=x-mysterium-demand-risk-20260831&utm_medium=social&utm_source=x",
+        "youtube_utm_url": "https://gamcryp.com/strategies/mysterium-b2b-existing-device?utm_campaign=distribution-mvp&utm_content=x-mysterium-demand-risk-20260831&utm_medium=short&utm_source=youtube"
+      },
+      "editorial": {
+        "content_angle": "demand-dependent node economics",
+        "core_message": "GamCryp's Mysterium model uses a B2B-only existing-device assumption and keeps location, demand, and policy sensitivity in the foreground.",
+        "disclosure": "Draft educational content. Not investment advice. No guaranteed rewards or returns.",
+        "hook": "Mysterium node income is demand-dependent, not a fixed yield.",
+        "readiness": "RED",
+        "visual_plan": [],
+        "x_post": "Mysterium node income is demand-dependent, not a fixed yield.\n\nGamCryp's B2B existing-device model uses $2 capital, -$0.0068/day net, and -10.14% 30D ROI.\n\nThe catch: region, IP quality, uptime, and traffic policy can materially change outcomes.\n\nhttps://gamcryp.com/strategies/mysterium-b2b-existing-device?utm_campaign=distribution-mvp&utm_content=x-mysterium-demand-risk-20260831&utm_medium=social&utm_source=x"
+      },
+      "facts": {
+        "break_even": {
+          "display": "Break-even unavailable",
+          "reason": "Net earnings must be positive to calculate break-even days",
+          "source_path": "snapshot.roi.break_even.days",
+          "status": "unavailable",
+          "unit": "days"
+        },
+        "capital": {
+          "display": "$2",
+          "source_path": "snapshot.capital.total_capital.amount",
+          "status": "available",
+          "unit": "USD",
+          "value": "2.00"
+        },
+        "confidence": {
+          "display": "LOW 45/100",
+          "label": "LOW",
+          "score": 45,
+          "source_path": "snapshot.confidence",
+          "status": "available"
+        },
+        "freshness": {
+          "display": "stale",
+          "source_path": "snapshot.freshness.overall_status",
+          "status": "available",
+          "value": "stale"
+        },
+        "major_catch": "Node earnings are region, IP-quality, uptime, and demand dependent; this model uses a configured observed-earnings proxy.",
+        "modeled_return": {
+          "display": "-10.14%",
+          "source_path": "snapshot.roi.roi_total_30d.value",
+          "status": "available",
+          "unit": "ratio",
+          "value": "-0.10137022860337812"
+        },
+        "net_earnings": {
+          "display": "-$0.0068/day",
+          "source_path": "snapshot.earnings.net_earnings_day.amount",
+          "status": "available",
+          "unit": "USD/day",
+          "value": "-0.006758015240225208"
+        },
+        "opportunity_type": "DEPIN_NODE",
+        "project_name": "Mysterium Network Node",
+        "reward_source": "DEPIN_NODE strategy using bandwidth-node rewards.",
+        "risk": {
+          "display": "VERY HIGH 100/100",
+          "label": "VERY HIGH",
+          "score": 100,
+          "source_path": "snapshot.risk",
+          "status": "available"
+        }
+      },
+      "source": {
+        "adapter_contract_version": "adapter-contract-v1",
+        "model_version": "roi-core-v1",
+        "official_source_refs": [
+          {
+            "label": "Official site",
+            "url": "https://docs.mysterium.network/faq"
+          }
+        ],
+        "opportunity_id": "mysterium-network-node",
+        "scoring_methodology_version": "risk-confidence-v1",
+        "snapshot_id": "72e295b0-14ba-549f-8445-3bc2ac680b11",
+        "snapshot_timestamp": "2026-08-31T15:16:07.805757Z",
+        "source_snapshot_hash": "7c116f1a5c76ff1d61ce5d73761c9cfbd7f15e0649938ee5f38108e9d5001cf7",
+        "strategy_id": "mysterium-b2b-existing-device",
+        "strategy_version": "v1"
+      }
+    },
+    {
+      "claims": [
+        {
+          "claim_id": "capital",
+          "display_value": "$10",
+          "source_path": "snapshot.capital.total_capital.amount",
+          "source_value": "10",
+          "text": "Modeled capital is $10."
+        },
+        {
+          "claim_id": "net_day",
+          "display_value": "-$0.0007/day",
+          "source_path": "snapshot.earnings.net_earnings_day.amount",
+          "source_value": "-0.0006575461707646110610000",
+          "text": "Modeled net earnings are -$0.0007/day."
+        },
+        {
+          "claim_id": "roi_30d",
+          "display_value": "-0.20%",
+          "source_path": "snapshot.roi.roi_total_30d.value",
+          "source_value": "-0.0019726385122938331830000",
+          "text": "Modeled 30D ROI is -0.20%."
+        }
+      ],
+      "content_id": "x-splinterlands-expected-value-20260831",
+      "content_pack_version": "content-pack-lite-v1",
+      "created_at": "2026-08-31T18:00:00Z",
+      "distribution": {
+        "canonical_site_url": "https://gamcryp.com/strategies/splinterlands-modern-ranked-sps-ev",
+        "content_id": "x-splinterlands-expected-value-20260831",
+        "x_utm_url": "https://gamcryp.com/strategies/splinterlands-modern-ranked-sps-ev?utm_campaign=distribution-mvp&utm_content=x-splinterlands-expected-value-20260831&utm_medium=social&utm_source=x",
+        "youtube_utm_url": "https://gamcryp.com/strategies/splinterlands-modern-ranked-sps-ev?utm_campaign=distribution-mvp&utm_content=x-splinterlands-expected-value-20260831&utm_medium=short&utm_source=youtube"
+      },
+      "editorial": {
+        "content_angle": "expected value is not guaranteed earnings",
+        "core_message": "GamCryp treats Splinterlands ranked SPS rewards as a performance-dependent expected-value model, so win assumptions and reward uncertainty stay visible.",
+        "disclosure": "Draft educational content. Not investment advice. No guaranteed rewards or returns.",
+        "hook": "Splinterlands is modeled as expected value, not guaranteed income.",
+        "readiness": "RED",
+        "visual_plan": [],
+        "x_post": "Splinterlands is modeled as expected value, not guaranteed income.\n\nGamCryp's Modern Ranked SPS strategy uses $10 capital, -$0.0007/day net, and -0.20% 30D ROI.\n\nThe catch: win rate and SPS per win are assumptions, so confidence stays LOW and uncertainty is explicit.\n\nhttps://gamcryp.com/strategies/splinterlands-modern-ranked-sps-ev?utm_campaign=distribution-mvp&utm_content=x-splinterlands-expected-value-20260831&utm_medium=social&utm_source=x"
+      },
+      "facts": {
+        "break_even": {
+          "display": "Break-even unavailable",
+          "reason": "Net earnings must be positive to calculate break-even days",
+          "source_path": "snapshot.roi.break_even.days",
+          "status": "unavailable",
+          "unit": "days"
+        },
+        "capital": {
+          "display": "$10",
+          "source_path": "snapshot.capital.total_capital.amount",
+          "status": "available",
+          "unit": "USD",
+          "value": "10"
+        },
+        "confidence": {
+          "display": "LOW 39/100",
+          "label": "LOW",
+          "score": 39,
+          "source_path": "snapshot.confidence",
+          "status": "available"
+        },
+        "freshness": {
+          "display": "stale",
+          "source_path": "snapshot.freshness.overall_status",
+          "status": "available",
+          "value": "stale"
+        },
+        "major_catch": "Performance-dependent SPS rewards are modeled as expected value, not guaranteed earnings.",
+        "modeled_return": {
+          "display": "-0.2%",
+          "source_path": "snapshot.roi.roi_total_30d.value",
+          "status": "available",
+          "unit": "ratio",
+          "value": "-0.0019726385122938331830000"
+        },
+        "net_earnings": {
+          "display": "-$0.0007/day",
+          "source_path": "snapshot.earnings.net_earnings_day.amount",
+          "status": "available",
+          "unit": "USD/day",
+          "value": "-0.0006575461707646110610000"
+        },
+        "opportunity_type": "GAME",
+        "project_name": "Splinterlands",
+        "reward_source": "GAME strategy using probabilistic-performance rewards.",
+        "risk": {
+          "display": "VERY HIGH 100/100",
+          "label": "VERY HIGH",
+          "score": 100,
+          "source_path": "snapshot.risk",
+          "status": "available"
+        }
+      },
+      "source": {
+        "adapter_contract_version": "adapter-contract-v1",
+        "model_version": "roi-core-v1",
+        "official_source_refs": [
+          {
+            "label": "Official site",
+            "url": "https://splinterlands.com/"
+          }
+        ],
+        "opportunity_id": "splinterlands",
+        "scoring_methodology_version": "risk-confidence-v1",
+        "snapshot_id": "f47fa673-15ad-5484-980b-e681695fa4bb",
+        "snapshot_timestamp": "2026-08-31T15:16:07.805757Z",
+        "source_snapshot_hash": "a1c89aa756ed225f5ff4465e32409b861d297fccb53c74d9cb1e27cd71e4c4d3",
+        "strategy_id": "splinterlands-modern-ranked-sps-ev",
+        "strategy_version": "v1"
+      }
+    },
+    {
+      "claims": [
+        {
+          "claim_id": "capital",
+          "display_value": "$1",
+          "source_path": "snapshot.capital.total_capital.amount",
+          "source_value": "1.00",
+          "text": "Modeled capital is $1."
+        },
+        {
+          "claim_id": "net_day",
+          "display_value": "-$0.0119/day",
+          "source_path": "snapshot.earnings.net_earnings_day.amount",
+          "source_value": "-0.01191666666666666666666666667",
+          "text": "Modeled net earnings are -$0.0119/day."
+        },
+        {
+          "claim_id": "roi_30d",
+          "display_value": "-35.75%",
+          "source_path": "snapshot.roi.roi_total_30d.value",
+          "source_value": "-0.3575000000000000000000000001",
+          "text": "Modeled 30D ROI is -35.75%."
+        }
+      ],
+      "content_id": "x-storj-existing-hardware-catch-20260831",
+      "content_pack_version": "content-pack-lite-v1",
+      "created_at": "2026-08-31T18:00:00Z",
+      "distribution": {
+        "canonical_site_url": "https://gamcryp.com/strategies/storj-existing-hardware-storage-node",
+        "content_id": "x-storj-existing-hardware-catch-20260831",
+        "x_utm_url": "https://gamcryp.com/strategies/storj-existing-hardware-storage-node?utm_campaign=distribution-mvp&utm_content=x-storj-existing-hardware-catch-20260831&utm_medium=social&utm_source=x",
+        "youtube_utm_url": "https://gamcryp.com/strategies/storj-existing-hardware-storage-node?utm_campaign=distribution-mvp&utm_content=x-storj-existing-hardware-catch-20260831&utm_medium=short&utm_source=youtube"
+      },
+      "editorial": {
+        "content_angle": "existing hardware and demand-driven earnings",
+        "core_message": "GamCryp's Storj strategy intentionally models an existing-hardware scenario and keeps the demand and held-back payout caveats visible.",
+        "disclosure": "Draft educational content. Not investment advice. No guaranteed rewards or returns.",
+        "hook": "Storj node economics depend on demand and held-back payouts.",
+        "readiness": "RED",
+        "visual_plan": [],
+        "x_post": "Storj node economics depend on demand and held-back payouts.\n\nGamCryp's existing-hardware scenario uses $1 capital, -$0.0119/day net, and -35.75% 30D ROI.\n\nThe catch: storage fill, egress, and held-back amounts matter more than a simple headline ROI.\n\nhttps://gamcryp.com/strategies/storj-existing-hardware-storage-node?utm_campaign=distribution-mvp&utm_content=x-storj-existing-hardware-catch-20260831&utm_medium=social&utm_source=x"
+      },
+      "facts": {
+        "break_even": {
+          "display": "Break-even unavailable",
+          "reason": "Net earnings must be positive to calculate break-even days",
+          "source_path": "snapshot.roi.break_even.days",
+          "status": "unavailable",
+          "unit": "days"
+        },
+        "capital": {
+          "display": "$1",
+          "source_path": "snapshot.capital.total_capital.amount",
+          "status": "available",
+          "unit": "USD",
+          "value": "1.00"
+        },
+        "confidence": {
+          "display": "LOW 47/100",
+          "label": "LOW",
+          "score": 47,
+          "source_path": "snapshot.confidence",
+          "status": "available"
+        },
+        "freshness": {
+          "display": "stale",
+          "source_path": "snapshot.freshness.overall_status",
+          "status": "available",
+          "value": "stale"
+        },
+        "major_catch": "Storage fill and egress are demand-driven; this is a configured scenario, not a universal node income.",
+        "modeled_return": {
+          "display": "-35.75%",
+          "source_path": "snapshot.roi.roi_total_30d.value",
+          "status": "available",
+          "unit": "ratio",
+          "value": "-0.3575000000000000000000000001"
+        },
+        "net_earnings": {
+          "display": "-$0.0119/day",
+          "source_path": "snapshot.earnings.net_earnings_day.amount",
+          "status": "available",
+          "unit": "USD/day",
+          "value": "-0.01191666666666666666666666667"
+        },
+        "opportunity_type": "DEPIN_NODE",
+        "project_name": "Storj Storage Node",
+        "reward_source": "DEPIN_NODE strategy using storage-node rewards.",
+        "risk": {
+          "display": "VERY HIGH 100/100",
+          "label": "VERY HIGH",
+          "score": 100,
+          "source_path": "snapshot.risk",
+          "status": "available"
+        }
+      },
+      "source": {
+        "adapter_contract_version": "adapter-contract-v1",
+        "model_version": "roi-core-v1",
+        "official_source_refs": [
+          {
+            "label": "Official site",
+            "url": "https://storj.dev/node"
+          }
+        ],
+        "opportunity_id": "storj-storage-node",
+        "scoring_methodology_version": "risk-confidence-v1",
+        "snapshot_id": "ac7a324f-2169-5197-8448-6dc3ae23987b",
+        "snapshot_timestamp": "2026-08-31T15:16:07.805757Z",
+        "source_snapshot_hash": "485f1930b5271cafa7235b214dc1064c0301159a7bc27cd2c05c7749436cb897",
+        "strategy_id": "storj-existing-hardware-storage-node",
+        "strategy_version": "v1"
+      }
+    },
+    {
+      "claims": [
+        {
+          "claim_id": "capital",
+          "display_value": "$139",
+          "source_path": "snapshot.capital.total_capital.amount",
+          "source_value": "139",
+          "text": "Modeled capital is $139."
+        },
+        {
+          "claim_id": "net_day",
+          "display_value": "-$0.0003/day",
+          "source_path": "snapshot.earnings.net_earnings_day.amount",
+          "source_value": "-0.00026514037839080274",
+          "text": "Modeled net earnings are -$0.0003/day."
+        },
+        {
+          "claim_id": "roi_30d",
+          "display_value": "-0.01%",
+          "source_path": "snapshot.roi.roi_total_30d.value",
+          "source_value": "-0.00005722454209873440431654676259",
+          "text": "Modeled 30D ROI is -0.01%."
+        }
+      ],
+      "content_id": "x-weatherxm-cell-quality-20260831",
+      "content_pack_version": "content-pack-lite-v1",
+      "created_at": "2026-08-31T18:00:00Z",
+      "distribution": {
+        "canonical_site_url": "https://gamcryp.com/strategies/weatherxm-d1-wifi-station",
+        "content_id": "x-weatherxm-cell-quality-20260831",
+        "x_utm_url": "https://gamcryp.com/strategies/weatherxm-d1-wifi-station?utm_campaign=distribution-mvp&utm_content=x-weatherxm-cell-quality-20260831&utm_medium=social&utm_source=x",
+        "youtube_utm_url": "https://gamcryp.com/strategies/weatherxm-d1-wifi-station?utm_campaign=distribution-mvp&utm_content=x-weatherxm-cell-quality-20260831&utm_medium=short&utm_source=youtube"
+      },
+      "editorial": {
+        "content_angle": "hardware node with location caveat",
+        "core_message": "GamCryp models a WeatherXM D1 WiFi Station scenario, but the station's cell, quality, and live reward feed are the central caveats.",
+        "disclosure": "Draft educational content. Not investment advice. No guaranteed rewards or returns.",
+        "hook": "WeatherXM is not one universal ROI number.",
+        "readiness": "RED",
+        "visual_plan": [],
+        "x_post": "WeatherXM is not one universal ROI number.\n\nGamCryp's D1 WiFi Station model uses $139 capital, net/day of -$0.0003/day, and 30D ROI of -0.01%.\n\nThe catch: station quality, cell-level rewards, and live reward access can change the result.\n\nhttps://gamcryp.com/strategies/weatherxm-d1-wifi-station?utm_campaign=distribution-mvp&utm_content=x-weatherxm-cell-quality-20260831&utm_medium=social&utm_source=x"
+      },
+      "facts": {
+        "break_even": {
+          "display": "Break-even unavailable",
+          "reason": "Net earnings must be positive to calculate break-even days",
+          "source_path": "snapshot.roi.break_even.days",
+          "status": "unavailable",
+          "unit": "days"
+        },
+        "capital": {
+          "display": "$139",
+          "source_path": "snapshot.capital.total_capital.amount",
+          "status": "available",
+          "unit": "USD",
+          "value": "139"
+        },
+        "confidence": {
+          "display": "MODERATE 59/100",
+          "label": "MODERATE",
+          "score": 59,
+          "source_path": "snapshot.confidence",
+          "status": "available"
+        },
+        "freshness": {
+          "display": "stale",
+          "source_path": "snapshot.freshness.overall_status",
+          "status": "available",
+          "value": "stale"
+        },
+        "major_catch": "This uses a configured network-average reward proxy; station quality and cell-level rewards can differ materially.",
+        "modeled_return": {
+          "display": "-<0.01%",
+          "source_path": "snapshot.roi.roi_total_30d.value",
+          "status": "available",
+          "unit": "ratio",
+          "value": "-0.00005722454209873440431654676259"
+        },
+        "net_earnings": {
+          "display": "-$0.0003/day",
+          "source_path": "snapshot.earnings.net_earnings_day.amount",
+          "status": "available",
+          "unit": "USD/day",
+          "value": "-0.00026514037839080274"
+        },
+        "opportunity_type": "DEPIN_NODE",
+        "project_name": "WeatherXM",
+        "reward_source": "DEPIN_NODE strategy using weather-station rewards.",
+        "risk": {
+          "display": "VERY HIGH 100/100",
+          "label": "VERY HIGH",
+          "score": 100,
+          "source_path": "snapshot.risk",
+          "status": "available"
+        }
+      },
+      "source": {
+        "adapter_contract_version": "adapter-contract-v1",
+        "model_version": "roi-core-v1",
+        "official_source_refs": [
+          {
+            "label": "Official site",
+            "url": "https://weatherxm.com/"
+          }
+        ],
+        "opportunity_id": "weatherxm",
+        "scoring_methodology_version": "risk-confidence-v1",
+        "snapshot_id": "1a89c67d-caa8-54a6-8ca8-b660d3db1a3c",
+        "snapshot_timestamp": "2026-08-31T15:16:07.805757Z",
+        "source_snapshot_hash": "75b282dd506808796da71f3be7f408dd71ef694ea3e7e60ee909533db2e6f926",
+        "strategy_id": "weatherxm-d1-wifi-station",
+        "strategy_version": "v1"
+      }
+    }
+  ],
+  "readiness_counts": {
+    "GREEN": 1,
+    "RED": 8,
+    "YELLOW": 1
+  },
+  "source_dataset": "https://gamcryp.com/api/v1/rankings?limit=100 + https://gamcryp.com/api/v1/opportunities?limit=100"
+}
