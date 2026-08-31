@@ -22,6 +22,7 @@ import {
   renderDestinationButton,
   renderError,
   renderFreshnessAlert,
+  renderGameDetail,
   renderHistory,
   renderHomeAnswerBlock,
   renderHomeShell,
@@ -111,11 +112,11 @@ test("answer-ready blocks expose stored values without changing calculations", (
   const opportunityHtml = renderOpportunityAnswerBlock(opportunity);
   const strategyHtml = renderStrategyAnswerBlock(strategy, strategy.latest_snapshot);
 
-  assert.match(home, /Answer-ready overview/);
-  assert.match(ranking, /Answer-ready comparison/);
+  assert.match(home, /Quick overview/);
+  assert.match(ranking, /Quick comparison/);
   assert.match(ranking, /Capital up to \$100/);
-  assert.match(opportunityHtml, /Answer-ready opportunity summary/);
-  assert.match(strategyHtml, /Answer-ready strategy summary/);
+  assert.match(opportunityHtml, /Quick opportunity summary/);
+  assert.match(strategyHtml, /Quick strategy summary/);
   assert.match(strategyHtml, /Estimated gross earnings\/day/);
   assert.match(strategyHtml, /Required time\/effort/);
   assert.match(strategyHtml, /Major assumptions/);
@@ -278,7 +279,7 @@ test("strategy detail renders capital, earnings, scores, classification, warning
   assert.match(html, /2 snapshots/);
   assert.match(html, /0.05862/);
   assert.match(html, /5.86%/);
-  assert.match(html, /Start/);
+  assert.match(html, /Open project/);
   assert.doesNotMatch(html, /5.862%/);
 });
 
@@ -334,7 +335,7 @@ test("error state distinguishes not found from API unavailable", () => {
 test("history no-history state is explicit", () => {
   const html = renderHistory(historyPayload([snapshotPayload()]));
 
-  assert.match(html, /Insufficient history/);
+  assert.match(html, /At least two stored snapshots are needed/);
   assert.doesNotMatch(html, /snapshots<\/span>/);
 });
 
@@ -381,9 +382,31 @@ test("long strategy names stay in card structure with CTA behavior", () => {
 
   assert.match(html, /ranking-card/);
   assert.match(html, /View strategy/);
-  assert.match(html, /Start/);
+  assert.match(html, /Open project/);
   assert.match(html, /\/go\/defi-kingdoms-play/);
   assert.doesNotMatch(html, /<table/);
+});
+
+
+test("legacy game detail CTA uses risk-aware wording without changing link behavior", () => {
+  const highRiskGame = gamePayload(strategyPayload());
+  const highRiskHtml = renderGameDetail(highRiskGame);
+
+  assert.match(highRiskHtml, /Open project/);
+  assert.match(highRiskHtml, /High-risk strategy\. Opening the project is not a recommendation; review the assumptions first\./);
+  assert.match(highRiskHtml, /href="\/go\/defi-kingdoms-play\?source_page=game_detail&amp;placement=primary_cta"/);
+  assert.match(highRiskHtml, /target="_blank"/);
+  assert.match(highRiskHtml, /rel="noopener noreferrer"/);
+  assert.match(highRiskHtml, /<a class="secondary-button" href="\/opportunities\/defi-kingdoms" data-link>Opportunity record<\/a>/);
+  assert.doesNotMatch(highRiskHtml, /<a class="secondary-button" href="\/opportunities\/defi-kingdoms"[^>]*target="_blank"/);
+
+  const normalSnapshot = snapshotPayload();
+  normalSnapshot.risk.score = 20;
+  normalSnapshot.risk.label = "LOW";
+  const normalHtml = renderGameDetail(gamePayload({ ...strategyPayload(), latest_snapshot: normalSnapshot }));
+
+  assert.match(normalHtml, />\s*Start\s*</);
+  assert.doesNotMatch(normalHtml, /High-risk strategy/);
 });
 
 test("public CTA never renders None and preserves /go route", () => {
@@ -649,6 +672,21 @@ function strategyPayload() {
     description: "cJEWEL max-lock strategy.",
     primary_destination: destinationPayload("defi-kingdoms-play"),
     latest_snapshot: snapshotPayload(),
+  };
+}
+
+function gamePayload(strategy = strategyPayload()) {
+  return {
+    game_id: "defi-kingdoms",
+    opportunity_id: "defi-kingdoms",
+    opportunity_type: "GAME",
+    name: "DeFi Kingdoms",
+    chains: ["dfk-chain"],
+    economy_types: ["locked-yield-reward"],
+    status: "active",
+    strategy_count: 1,
+    primary_destination: destinationPayload("defi-kingdoms-play"),
+    strategies: [strategy],
   };
 }
 
