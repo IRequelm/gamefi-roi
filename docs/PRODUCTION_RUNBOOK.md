@@ -29,7 +29,7 @@ Cost-minimized beta decision:
 - `render.yaml` uses a Free Web Service and Free Render Postgres.
 - The paid Render Cron Job is removed from the beta Blueprint because Render Cron Jobs have paid billing.
 - Scheduled recalculation moves to GitHub Actions for beta.
-- GitHub Actions runs the existing `python -m app.jobs.production_recalculation` command, so application-level PostgreSQL advisory locking, G8 snapshot idempotency, hard-stale checks, and per-strategy failure isolation remain unchanged.
+- GitHub Actions runs `python -m app.jobs.snapshot_refresh`, which applies the canonical refreshability policy before delegating eligible strategies to the existing recalculation pipeline. PostgreSQL advisory locking, G8 snapshot idempotency, hard-stale checks, and per-strategy failure isolation remain unchanged.
 
 Free-tier limitations:
 
@@ -199,7 +199,7 @@ PYTHONPATH=backend python -m app.jobs.snapshot_refresh --regenerate-distribution
 
 `--dry-run` classifies the currently registered production strategy tasks without provider or database calls. A normal run delegates to the existing production recalculation pipeline: source loader, freshness validation, adapter, generic ROI engine, append-only history persistence, scoring, and PostgreSQL idempotency/lock protection. It does not publish content or deploy the application.
 
-The optional `--regenerate-distribution` flag writes the file-based learning batch only after the recalculation returns zero failures. It reads the public read-only API after that successful run; it never converts stale or missing values into fresh values and never publishes drafts.
+The optional `--regenerate-distribution` flag writes the file-based learning batch only after the recalculation returns zero failures. It reads the public read-only API after that successful run; it never converts stale or missing values into fresh values and never publishes drafts. Numeric packs also resolve their strategy through the canonical refreshability registry: `PARTIAL_REFRESH_ONLY` and `NOT_REFRESHABLE` remain RED regardless of a recent calculation timestamp or refreshed market sub-input.
 
 At the freshness audit on 2026-08-31, the distribution candidates' latest snapshots were calculated around `15:16 UTC` and had five-minute source deadlines around `15:21 UTC`. They were stale because no later successful recalculation had replaced them, not because the documented thresholds were loosened or because persisted source-status counts were changed.
 
@@ -237,10 +237,10 @@ Refresh policy remains fail-closed:
 - re-saving old data is never treated as a refresh.
 - CONFIG/static observations retain the stable `catalog-expansion-batch1` evidence version and establishment timestamp; recalculation time cannot renew their source freshness.
 
-Shared recalculation command:
+Shared policy-aware scheduled refresh command:
 
 ```bash
-python -m app.jobs.production_recalculation
+python -m app.jobs.snapshot_refresh
 ```
 
 Beta cadence: every 30 minutes UTC through GitHub Actions schedule `*/30 * * * *`.

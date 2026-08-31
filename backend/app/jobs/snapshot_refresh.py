@@ -19,30 +19,7 @@ from app.jobs.production_recalculation import (
     run_recalculation_tasks,
 )
 from app.jobs.recalculation import StrategyCalculationTask
-
-AUTO_REFRESHABLE_ADAPTER_MODULES = frozenset(
-    {
-        "app.adapters.defi_kingdoms_jeweler",
-        "app.adapters.farmers_world",
-        "app.adapters.splinterlands",
-    }
-)
-
-PARTIAL_REFRESH_ONLY_STRATEGY_IDS = frozenset(
-    {
-        "geodnet-empty-hex-triple-band-base-station",
-        "weatherxm-d1-wifi-station",
-        "dimo-software-only-compatible-car",
-        "mysterium-b2b-existing-device",
-    }
-)
-NOT_REFRESHABLE_STRATEGY_IDS = frozenset({"storj-existing-hardware-storage-node"})
-
-
-class Refreshability(str, Enum):
-    AUTO_REFRESHABLE = "AUTO_REFRESHABLE"
-    PARTIAL_REFRESH_ONLY = "PARTIAL_REFRESH_ONLY"
-    NOT_REFRESHABLE = "NOT_REFRESHABLE"
+from app.strategies.refreshability import Refreshability, classify_refreshability
 
 
 @dataclass(frozen=True)
@@ -75,36 +52,15 @@ def build_refresh_plan(tasks: tuple[StrategyCalculationTask, ...]) -> tuple[Refr
     alone cannot prove that every required economic input has a live refresh path.
     """
 
-    def classification(task: StrategyCalculationTask) -> tuple[Refreshability, str]:
-        if task.strategy_id in NOT_REFRESHABLE_STRATEGY_IDS:
-            return (
-                Refreshability.NOT_REFRESHABLE,
-                "No approved live source loader exists for the required Storj economics; static CONFIG values are not refreshed.",
-            )
-        if task.strategy_id in PARTIAL_REFRESH_ONLY_STRATEGY_IDS:
-            return (
-                Refreshability.PARTIAL_REFRESH_ONLY,
-                "Only the reward-token market price refreshes live; required capital, reward, or operating economics remain CONFIG/static.",
-            )
-        if task.adapter.__class__.__module__ in AUTO_REFRESHABLE_ADAPTER_MODULES:
-            return (
-                Refreshability.AUTO_REFRESHABLE,
-                "Existing production loader obtains current provider observations, validates freshness, then runs the adapter and persists an append-only idempotent snapshot.",
-            )
-        return (
-            Refreshability.NOT_REFRESHABLE,
-            "No approved production refresh loader is registered for this strategy.",
-        )
-
     plan = []
     for task in tasks:
-        refreshability, reason = classification(task)
+        decision = classify_refreshability(task.strategy_id)
         plan.append(
             RefreshPlanEntry(
                 strategy_id=task.strategy_id,
                 strategy_version=task.strategy_version,
-                refreshability=refreshability,
-                reason=reason,
+                refreshability=decision.refreshability,
+                reason=decision.reason,
             )
         )
     return tuple(plan)

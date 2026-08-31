@@ -20,6 +20,7 @@ from app.distribution.content_pack import (
     derive_readiness,
     set_expected_source_hash,
 )
+from app.strategies.refreshability import classify_refreshability
 
 LEARNING_BATCH_ID = "distribution-learning-batch-001"
 LEARNING_BATCH_CREATED_AT = "2026-08-31T18:00:00Z"
@@ -490,6 +491,7 @@ def _strategy_pack(
             adapter_contract_version=snapshot["versions"]["adapter_contract_version"],
             model_version=snapshot["versions"]["model_version"],
             scoring_methodology_version=snapshot["versions"].get("scoring_methodology_version"),
+            refreshability=classify_refreshability(strategy["strategy_id"]).refreshability,
             official_source_refs=[SourceReference(**official_source)] if official_source else [],
         ),
         facts=ContentFactSet(

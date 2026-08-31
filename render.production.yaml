@@ -80,7 +80,7 @@ services:
     plan: starter
     region: ohio
     buildCommand: "python -m pip install --upgrade pip && python -m pip install -r requirements.txt"
-    startCommand: "python -m app.jobs.production_recalculation"
+    startCommand: "python -m app.jobs.snapshot_refresh"
     schedule: "*/30 * * * *"
     autoDeployTrigger: off
     envVars:
