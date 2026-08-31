@@ -203,7 +203,29 @@ The optional `--regenerate-distribution` flag writes the file-based learning bat
 
 At the freshness audit on 2026-08-31, the distribution candidates' latest snapshots were calculated around `15:16 UTC` and had five-minute source deadlines around `15:21 UTC`. They were stale because no later successful recalculation had replaced them, not because the documented thresholds were loosened or because persisted source-status counts were changed.
 
-Current distribution-relevant modeled strategies are auto-refreshable through the existing configured loaders when their provider credentials/configuration are available: DFK Jeweler, Farmers World, Splinterlands, GEODNET, WeatherXM, DIMO, Mysterium Network Node, and Storj Storage Node. The command records provider failures and skips no current registered strategy; future unsupported tasks must be explicitly classified as `MANUAL_SOURCE_REFRESH` or `NOT_REFRESHABLE` rather than assigned guessed values.
+Refreshability is explicit per strategy. The current registry has 10 `AUTO_REFRESHABLE` strategies: the three DFK Jeweler, three Farmers World, and four Splinterlands strategies. GEODNET, WeatherXM, DIMO, and Mysterium Network Node are `PARTIAL_REFRESH_ONLY`: market price can refresh, but required economic inputs remain CONFIG/static and are skipped for publication freshness. Storj Storage Node is `NOT_REFRESHABLE` because no approved live economic-source loader exists. The command records provider failures and never assigns guessed refreshability to unsupported tasks.
+
+The complete current matrix is:
+
+| Strategy | Refreshability | Live source/provider | Static/config dependency | Blocker |
+|---|---|---|---|---|
+| `dfk-crystalvale-jeweler-cjewel-max-lock` | `AUTO_REFRESHABLE` | DFK Chain RPC | verified strategy configuration | none when RPC credentials/config are available |
+| `dfk-crystalvale-jeweler-cjewel-100-max-lock` | `AUTO_REFRESHABLE` | DFK Chain RPC | verified strategy configuration | none when RPC credentials/config are available |
+| `dfk-crystalvale-jeweler-cjewel-5000-max-lock` | `AUTO_REFRESHABLE` | DFK Chain RPC | verified strategy configuration | none when RPC credentials/config are available |
+| `farmers-world-axe-wood-production` | `AUTO_REFRESHABLE` | Alcor, AtomicAssets, CoinGecko | verified production constants | none when provider configuration is available |
+| `farmers-world-axe-wood-production-3x` | `AUTO_REFRESHABLE` | Alcor, AtomicAssets, CoinGecko | verified production constants | none when provider configuration is available |
+| `farmers-world-axe-wood-production-10x` | `AUTO_REFRESHABLE` | Alcor, AtomicAssets, CoinGecko | verified production constants | none when provider configuration is available |
+| `splinterlands-modern-ranked-sps-ev` | `AUTO_REFRESHABLE` | Splinterlands API, CoinGecko | probability/performance configuration | none when provider configuration is available |
+| `splinterlands-modern-ranked-casual-sps-ev` | `AUTO_REFRESHABLE` | Splinterlands API, CoinGecko | probability/performance configuration | none when provider configuration is available |
+| `splinterlands-modern-ranked-active-sps-ev` | `AUTO_REFRESHABLE` | Splinterlands API, CoinGecko | probability/performance configuration | none when provider configuration is available |
+| `splinterlands-modern-ranked-grinder-sps-ev` | `AUTO_REFRESHABLE` | Splinterlands API, CoinGecko | probability/performance configuration | none when provider configuration is available |
+| `geodnet-empty-hex-triple-band-base-station` | `PARTIAL_REFRESH_ONLY` | CoinGecko GEOD price | hardware/reward/location economics | required economics remain CONFIG/static |
+| `weatherxm-d1-wifi-station` | `PARTIAL_REFRESH_ONLY` | CoinGecko WXM price | hardware/reward/location economics | required economics remain CONFIG/static |
+| `dimo-software-only-compatible-car` | `PARTIAL_REFRESH_ONLY` | CoinGecko DIMO price | reward denominator/subscription economics | required economics remain CONFIG/static |
+| `mysterium-b2b-existing-device` | `PARTIAL_REFRESH_ONLY` | CoinGecko MYST price | demand/cost economics | required economics remain CONFIG/static |
+| `storj-existing-hardware-storage-node` | `NOT_REFRESHABLE` | none approved | payout/utilization/power economics | no genuine live economic-source loader |
+
+The command summary exposes `auto_refreshed`, `partial_skipped`, `not_refreshable_skipped`, and `failed` counts; skipped categories never count as successful refreshes.
 
 Refresh policy remains fail-closed:
 
@@ -213,6 +235,7 @@ Refresh policy remains fail-closed:
 - historical snapshots are retained;
 - distribution numeric packs remain RED while their source snapshot is stale;
 - re-saving old data is never treated as a refresh.
+- CONFIG/static observations retain the stable `catalog-expansion-batch1` evidence version and establishment timestamp; recalculation time cannot renew their source freshness.
 
 Shared recalculation command:
 

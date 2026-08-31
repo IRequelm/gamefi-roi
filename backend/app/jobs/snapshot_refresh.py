@@ -29,10 +29,20 @@ AUTO_REFRESHABLE_ADAPTER_MODULES = frozenset(
     }
 )
 
+PARTIAL_REFRESH_ONLY_STRATEGY_IDS = frozenset(
+    {
+        "geodnet-empty-hex-triple-band-base-station",
+        "weatherxm-d1-wifi-station",
+        "dimo-software-only-compatible-car",
+        "mysterium-b2b-existing-device",
+    }
+)
+NOT_REFRESHABLE_STRATEGY_IDS = frozenset({"storj-existing-hardware-storage-node"})
+
 
 class Refreshability(str, Enum):
     AUTO_REFRESHABLE = "AUTO_REFRESHABLE"
-    MANUAL_SOURCE_REFRESH = "MANUAL_SOURCE_REFRESH"
+    PARTIAL_REFRESH_ONLY = "PARTIAL_REFRESH_ONLY"
     NOT_REFRESHABLE = "NOT_REFRESHABLE"
 
 
@@ -51,31 +61,54 @@ class RefreshCommandResult:
     refreshed_count: int
     skipped_count: int
     failed_count: int
+    auto_refreshed: int = 0
+    partial_skipped: int = 0
+    not_refreshable_skipped: int = 0
+    failed: int = 0
     snapshot_summary: ProductionRecalculationSummary | None = None
     distribution_regenerated: bool = False
 
 
 def build_refresh_plan(tasks: tuple[StrategyCalculationTask, ...]) -> tuple[RefreshPlanEntry, ...]:
-    """Classify current production tasks without calling providers."""
+    """Classify current production tasks without calling providers.
 
-    return tuple(
-        RefreshPlanEntry(
-            strategy_id=task.strategy_id,
-            strategy_version=task.strategy_version,
-            refreshability=(
-                Refreshability.AUTO_REFRESHABLE
-                if task.adapter.__class__.__module__ in AUTO_REFRESHABLE_ADAPTER_MODULES
-                else Refreshability.NOT_REFRESHABLE
-            ),
-            reason=(
-                "Existing production loader is configured for this strategy; it validates source observations "
-                "before adapter calculation and persists an append-only idempotent snapshot."
-                if task.adapter.__class__.__module__ in AUTO_REFRESHABLE_ADAPTER_MODULES
-                else "No approved production refresh loader is registered for this adapter."
-            ),
+    This is intentionally an explicit strategy registry. Adapter module identity
+    alone cannot prove that every required economic input has a live refresh path.
+    """
+
+    def classification(task: StrategyCalculationTask) -> tuple[Refreshability, str]:
+        if task.strategy_id in NOT_REFRESHABLE_STRATEGY_IDS:
+            return (
+                Refreshability.NOT_REFRESHABLE,
+                "No approved live source loader exists for the required Storj economics; static CONFIG values are not refreshed.",
+            )
+        if task.strategy_id in PARTIAL_REFRESH_ONLY_STRATEGY_IDS:
+            return (
+                Refreshability.PARTIAL_REFRESH_ONLY,
+                "Only the reward-token market price refreshes live; required capital, reward, or operating economics remain CONFIG/static.",
+            )
+        if task.adapter.__class__.__module__ in AUTO_REFRESHABLE_ADAPTER_MODULES:
+            return (
+                Refreshability.AUTO_REFRESHABLE,
+                "Existing production loader obtains current provider observations, validates freshness, then runs the adapter and persists an append-only idempotent snapshot.",
+            )
+        return (
+            Refreshability.NOT_REFRESHABLE,
+            "No approved production refresh loader is registered for this strategy.",
         )
-        for task in tasks
-    )
+
+    plan = []
+    for task in tasks:
+        refreshability, reason = classification(task)
+        plan.append(
+            RefreshPlanEntry(
+                strategy_id=task.strategy_id,
+                strategy_version=task.strategy_version,
+                refreshability=refreshability,
+                reason=reason,
+            )
+        )
+    return tuple(plan)
 
 
 def run_snapshot_refresh(
@@ -97,7 +130,9 @@ def run_snapshot_refresh(
         for task, entry in zip(tasks, plan, strict=True)
         if entry.refreshability == Refreshability.AUTO_REFRESHABLE
     )
-    skipped_count = len(tasks) - len(eligible_tasks)
+    partial_skipped = sum(entry.refreshability == Refreshability.PARTIAL_REFRESH_ONLY for entry in plan)
+    not_refreshable_skipped = sum(entry.refreshability == Refreshability.NOT_REFRESHABLE for entry in plan)
+    skipped_count = partial_skipped + not_refreshable_skipped
     if dry_run:
         return RefreshCommandResult(
             mode="dry-run",
@@ -105,6 +140,10 @@ def run_snapshot_refresh(
             refreshed_count=0,
             skipped_count=skipped_count,
             failed_count=0,
+            auto_refreshed=0,
+            partial_skipped=partial_skipped,
+            not_refreshable_skipped=not_refreshable_skipped,
+            failed=0,
         )
 
     engine = _database_engine(active_settings)
@@ -136,6 +175,10 @@ def run_snapshot_refresh(
         refreshed_count=len(summary.snapshot_ids),
         skipped_count=skipped_count,
         failed_count=len(summary.failure_ids),
+        auto_refreshed=len(summary.snapshot_ids),
+        partial_skipped=partial_skipped,
+        not_refreshable_skipped=not_refreshable_skipped,
+        failed=len(summary.failure_ids),
         snapshot_summary=summary,
         distribution_regenerated=distribution_regenerated,
     )

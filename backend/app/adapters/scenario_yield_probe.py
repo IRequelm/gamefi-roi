@@ -37,6 +37,8 @@ from app.strategies.scenario_yield import ScenarioSupportMetric, ScenarioYieldSt
 
 
 REWARD_TOKEN_PRICE_USD = "market.reward_token_price_usd"
+CONFIG_EVIDENCE_VERSION = "catalog-expansion-batch1"
+CONFIG_EVIDENCE_ESTABLISHED_AT = datetime(2026, 8, 28, tzinfo=UTC)
 
 
 def load_fixture_observations(
@@ -287,7 +289,7 @@ def _support_observation(
 ) -> Observation:
     source_type = SourceType(metric.source_type)
     return Observation(
-        observation_id=_observation_id(metric.source_provider, strategy.strategy_id, metric.key, active_time),
+        observation_id=_config_observation_id(metric.source_provider, strategy.strategy_id, metric.key, metric.value),
         entity_type="strategy",
         entity_id=strategy.strategy_id,
         metric=scenario_metric(strategy, f"source.{metric.key}"),
@@ -297,14 +299,16 @@ def _support_observation(
         source_provider=metric.source_provider,
         source_type=source_type,
         source_locator=metric.source_locator,
-        observed_at=active_time,
-        retrieved_at=active_time,
-        fresh_until=active_time + timedelta(days=365),
+        observed_at=CONFIG_EVIDENCE_ESTABLISHED_AT,
+        retrieved_at=CONFIG_EVIDENCE_ESTABLISHED_AT,
+        fresh_until=CONFIG_EVIDENCE_ESTABLISHED_AT + timedelta(days=365),
         status=ObservationStatus.FRESH,
         metadata={
             "classification": ValueClassification.CONFIG.value,
             "note": metric.note,
             "batch": "catalog-expansion-batch1",
+            "config_version": CONFIG_EVIDENCE_VERSION,
+            "config_established_at": CONFIG_EVIDENCE_ESTABLISHED_AT.isoformat(),
         },
     )
 
@@ -316,7 +320,7 @@ def _assumption_observation(
     active_time: datetime,
 ) -> Observation:
     return Observation(
-        observation_id=_observation_id("gamcryp-config", strategy.strategy_id, key, active_time),
+        observation_id=_config_observation_id("gamcryp-config", strategy.strategy_id, key, str(value)),
         entity_type="strategy",
         entity_id=strategy.strategy_id,
         metric=scenario_metric(strategy, f"assumption.{key}"),
@@ -326,14 +330,16 @@ def _assumption_observation(
         source_provider="gamcryp-config",
         source_type=SourceType.VERIFIED_CONFIG,
         source_locator="gamcryp_batch1_data_feasibility_handoff.json",
-        observed_at=active_time,
-        retrieved_at=active_time,
-        fresh_until=active_time + timedelta(days=365),
+        observed_at=CONFIG_EVIDENCE_ESTABLISHED_AT,
+        retrieved_at=CONFIG_EVIDENCE_ESTABLISHED_AT,
+        fresh_until=CONFIG_EVIDENCE_ESTABLISHED_AT + timedelta(days=365),
         status=ObservationStatus.FRESH,
         metadata={
             "classification": ValueClassification.CONFIG.value,
             "note": "Explicit scenario assumption retained for confidence scoring and reproducibility.",
             "batch": "catalog-expansion-batch1",
+            "config_version": CONFIG_EVIDENCE_VERSION,
+            "config_established_at": CONFIG_EVIDENCE_ESTABLISHED_AT.isoformat(),
         },
     )
 
@@ -348,6 +354,11 @@ def _assumption_unit(key: str) -> str:
     if key.endswith("_days"):
         return "day"
     return "count"
+
+
+def _config_observation_id(provider: str, strategy_id: str, key: str, value: str) -> str:
+    stable_key = f"{CONFIG_EVIDENCE_VERSION}|{provider}|{strategy_id}|{key}|{value}"
+    return str(uuid5(NAMESPACE_URL, stable_key))
 
 def _is_decimal_text(value: object) -> bool:
     try:
