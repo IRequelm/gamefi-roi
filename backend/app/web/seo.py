@@ -280,6 +280,7 @@ def opportunity_page(
           </div>
         </section>
         {_render_opportunity_answer_block(opportunity, strategy, snapshot)}
+        {_render_opportunity_human_summary(opportunity, strategy, snapshot)}
         <section class="section-panel">
           <div class="section-header"><h2>Executive Summary</h2></div>
           <div class="section-body metric-grid">
@@ -374,8 +375,10 @@ def strategy_page(
             <a class="secondary-button" href="/games/{escape(strategy.game_id)}">Game view</a>
             {_destination_button(strategy.primary_destination, cta_label_for_snapshot(snapshot, "Start"))}
           </div>
+          {_render_cta_risk_notice(snapshot)}
         </section>
         {_render_strategy_answer_block(strategy, snapshot)}
+        {_render_strategy_human_summary(strategy, snapshot)}
         {_render_snapshot_detail(snapshot) if snapshot is not None else _empty("No stored snapshot", "This strategy has not produced a valid stored calculation yet.")}
         {_render_history_context(history_items)}
         <section class="section-panel">
@@ -650,6 +653,71 @@ def _render_answer_block(title: str, summary: str, fields: list[tuple[str, str]]
     """
 
 
+def _render_human_summary(title: str, items: list[tuple[str, str]]) -> str:
+    rendered = "".join(
+        f'<article class="human-line"><span>{escape(label)}</span><p>{value}</p></article>'
+        for label, value in items
+    )
+    return f"""
+      <section class="section-panel human-summary">
+        <div class="section-header"><h2>{escape(title)}</h2></div>
+        <div class="section-body human-summary-grid">{rendered}</div>
+      </section>
+    """
+
+
+def _render_opportunity_human_summary(
+    opportunity: OpportunityDetail,
+    strategy: StrategySummary | None,
+    snapshot: StrategySnapshotPayload | None,
+) -> str:
+    access = human_list([*opportunity.platforms, *opportunity.chains], "Check the official project page for access requirements")
+    reward_types = human_list(opportunity.reward_asset_or_points_type, "Reward type not specified yet")
+    modeled = strategy is not None and snapshot is not None
+    unavailable = plain_unavailable_reason(opportunity)
+    items = [
+        ("What it is", escape(f"{opportunity.name} is tracked as {opportunity_type_label(opportunity.opportunity_type).lower()}.")),
+        ("How it may earn", escape(reward_types)),
+        ("What you need", escape(access)),
+        (
+            "Cost and return",
+            f"Modeled in {escape(strategy.name)}; open the strategy for current capital, costs, and ROI."
+            if modeled and strategy is not None
+            else escape(unavailable),
+        ),
+        (
+            "Cash-out",
+            "Realizable value is modeled inside the strategy snapshot where market data supports it."
+            if modeled
+            else escape(unavailable),
+        ),
+        (
+            "Main catch",
+            escape("Review risk, confidence, and freshness before acting." if opportunity.data_feasibility_status == "GO" else unavailable),
+        ),
+    ]
+    return _render_human_summary("Plain-language summary", items)
+
+
+def _render_strategy_human_summary(strategy: StrategySummary, snapshot: StrategySnapshotPayload | None) -> str:
+    if snapshot is None:
+        return ""
+    items = [
+        ("What it is", escape(f"{strategy.name} is a modeled strategy for {strategy.game_name}.")),
+        ("How it may earn", escape(f"{labelize(strategy.economy_type)} economics are converted into the generic ROI model.")),
+        ("What you need", f"Estimated starting capital is {format_money_html(snapshot.capital.total_capital)}."),
+        (
+            "Expected return",
+            f"{format_money_html(snapshot.earnings.net_earnings_day, per_day=True)} estimated net earnings and {format_ratio_html(snapshot.roi.roi_total_30d)} modeled 30-day ROI.",
+        ),
+        (
+            "Cash-out",
+            f"Recoverable value is {format_money_html(snapshot.capital.recoverable_capital)}; exit-adjusted P&amp;L is {format_money_html(snapshot.roi.exit_adjusted_pnl)}.",
+        ),
+        ("Main catch", escape(strategy_risk_summary(snapshot))),
+    ]
+    return _render_human_summary("Plain-language summary", items)
+
 def _filter_summary(filters: dict[str, object] | None) -> str:
     if not filters:
         return "No additional filters."
@@ -720,6 +788,7 @@ def _render_ranking_cards(items: list[RankingItem], *, heading: str) -> str:
                 {_badge(f"Risk {score_text(snapshot.risk)}", score_class(snapshot.risk, "risk"))}
                 {_badge(f"Updated {format_datetime(snapshot.calculated_at)}", "info")}
               </div>
+              {_render_cta_risk_notice(snapshot)}
               <div class="card-actions">
                 <a class="secondary-button" href="/strategies/{escape(strategy.strategy_id)}">View strategy</a>
                 {_destination_button(strategy.primary_destination, cta_label_for_snapshot(snapshot, "Start"))}
@@ -814,17 +883,32 @@ def _render_snapshot_detail(snapshot: StrategySnapshotPayload) -> str:
           {_metric("Risk explanation", escape(risk_reason))}
           {_metric("Confidence", score_text(snapshot.confidence))}
           {_metric("Confidence explanation", escape(confidence_reason))}
-        </div>
-      </section>
-      <section class="section-panel">
-        <div class="section-header"><h2>LIVE / CONFIG / DERIVED</h2></div>
-        <div class="section-body metric-grid">
-          {_metric("LIVE", escape(str(snapshot.classification_summary.counts.get("LIVE", 0))))}
-          {_metric("CONFIG", escape(str(snapshot.classification_summary.counts.get("CONFIG", 0))))}
-          {_metric("DERIVED", escape(str(snapshot.classification_summary.counts.get("DERIVED", 0))))}
           {_metric("Warnings", escape(warnings))}
         </div>
       </section>
+      <details class="advanced-panel snapshot-advanced">
+        <summary>Technical snapshot details</summary>
+        <div class="advanced-panel-body">
+          <section class="section-panel">
+            <div class="section-header"><h2>Versions</h2></div>
+            <div class="section-body metric-grid">
+              {_metric("Strategy ID", escape(snapshot.strategy_id))}
+              {_metric("Adapter contract", escape(snapshot.versions.adapter_contract_version))}
+              {_metric("ROI model", escape(snapshot.versions.model_version))}
+              {_metric("Scoring methodology", escape(snapshot.versions.scoring_methodology_version or "Unavailable"))}
+              {_metric("Last calculated", escape(format_datetime(snapshot.calculated_at)))}
+            </div>
+          </section>
+          <section class="section-panel">
+            <div class="section-header"><h2>LIVE / CONFIG / DERIVED</h2></div>
+            <div class="section-body metric-grid">
+              {_metric("LIVE", escape(str(snapshot.classification_summary.counts.get("LIVE", 0))))}
+              {_metric("CONFIG", escape(str(snapshot.classification_summary.counts.get("CONFIG", 0))))}
+              {_metric("DERIVED", escape(str(snapshot.classification_summary.counts.get("DERIVED", 0))))}
+            </div>
+          </section>
+        </div>
+      </details>
     """
 
 
@@ -850,7 +934,7 @@ def _render_unavailable_roi(opportunity: OpportunityDetail) -> str:
 
 def _render_sources(opportunity: OpportunityDetail) -> str:
     references = "".join(
-        f'<article class="contributor"><strong>{escape(source.label)}</strong><a href="{escape(source.url)}" rel="noopener noreferrer">{escape(source.url)}</a></article>'
+        f'<article class="contributor"><strong>{escape(source.label)}</strong><a href="{escape(source.url)}" target="_blank" rel="noopener noreferrer">{escape(source.url)}</a></article>'
         for source in opportunity.official_source_references
     )
     destinations = "".join(
@@ -895,6 +979,11 @@ def _destination_button(destination, label: str) -> str:
     relationship_html = f"<span>{escape(relationship)}</span>" if relationship else ""
     return f'<a class="button cta" href="{escape(destination.redirect_url)}" target="_blank" rel="noopener noreferrer"{analytics_attributes(destination)}>{escape(label)}{relationship_html}</a>'
 
+
+def _render_cta_risk_notice(snapshot) -> str:
+    if not is_elevated_risk(snapshot):
+        return ""
+    return '<p class="cta-risk-note">High-risk strategy. Opening the project is not a recommendation; review the assumptions first.</p>'
 
 def _summary(label: str, value: str) -> str:
     return f'<div class="summary-item"><span>{escape(label)}</span><strong>{value}</strong></div>'

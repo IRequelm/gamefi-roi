@@ -35,13 +35,38 @@ def test_strategy_page_contains_meaningful_server_rendered_content(monkeypatch, 
     assert "Risk and Confidence" in html
     assert 'data-ai-answer-block="true"' in html
     assert "Quick strategy summary" in html
+    assert "Plain-language summary" in html
+    assert "Expected return" in html
+    assert "High-risk strategy. Opening the project is not a recommendation; review the assumptions first." in html
+    assert "Technical snapshot details" in html
     assert "Estimated gross earnings/day" in html
     assert "Required time/effort" in html
     assert "Major assumptions" in html
     assert f'<link rel="canonical" href="http://localhost:8000/strategies/{DFK_CJEWEL_MAX_LOCK_V1.strategy_id}">' in html
-    assert '<a class="button cta" href="/go/defi-kingdoms-play"' in html
+    assert '<a class="button cta" href="/go/defi-kingdoms-play" target="_blank" rel="noopener noreferrer"' in html
+    assert ">Open project" in html
     assert 'data-analytics-link="outbound"' in html
     assert '"@type":"WebPage"' in html
+
+
+def test_server_rendered_external_links_open_new_tab_and_internal_links_stay_same_tab(monkeypatch, tmp_path) -> None:
+    client, _engine = _seeded_client(monkeypatch, tmp_path, "seo-link-behavior.db")
+
+    opportunity_html = client.get("/opportunities/grass").text
+    strategy_html = client.get(f"/strategies/{DFK_CJEWEL_MAX_LOCK_V1.strategy_id}").text
+    html = opportunity_html + strategy_html
+
+    external_anchors = re.findall(r'<a\b[^>]*href="https?://[^"]+"[^>]*>', html)
+    assert external_anchors
+    for anchor in external_anchors:
+        assert 'target="_blank"' in anchor
+        assert 'rel="noopener noreferrer"' in anchor
+
+    assert '<a href="https://www.grass.io/terms-and-conditions/" target="_blank" rel="noopener noreferrer">' in opportunity_html
+    assert '<a class="button cta" href="/go/defi-kingdoms-play" target="_blank" rel="noopener noreferrer"' in strategy_html
+    assert '<a class="secondary-button" href="/opportunities/defi-kingdoms">Parent opportunity</a>' in strategy_html
+    for anchor in re.findall(r'<a\b[^>]*href="/(?!go/)[^"]+"[^>]*>', html):
+        assert 'target="_blank"' not in anchor
 
 
 def test_unavailable_points_roi_is_crawlable_and_not_zero(monkeypatch, tmp_path) -> None:
