@@ -42,6 +42,10 @@ VALID_SOURCE_PATH_PREFIXES = (
     "source.",
     "strategy.",
 )
+PUBLIC_COPY_WRAPPER_LINE_RE = re.compile(
+    r"(?im)^\s*(?:\:\:\:|\:\:\:[A-Za-z][^\r\n]*|<\|(?:assistant|user|system|tool|endoftext)[^|]*\|>)\s*$"
+)
+PUBLIC_COPY_WRITING_RE = re.compile(r"(?i):::writing(?:\{|\b)")
 
 
 class ContentReadiness(str, Enum):
@@ -310,6 +314,13 @@ def validate_pack(pack: ContentPackLite) -> ContentPackValidation:
     if pack.source.strategy_id and not pack.source.snapshot_timestamp:
         errors.append("modeled strategy pack is missing snapshot_timestamp")
 
+    for field_name, text in public_editorial_text_fields(pack).items():
+        markers = public_copy_wrapper_markers(text)
+        if markers:
+            errors.append(
+                f"editorial {field_name} contains non-content wrapper marker(s): {', '.join(markers)}"
+            )
+
     unsupported_numeric_claims = tuple(unsupported_numeric_tokens(pack))
     if unsupported_numeric_claims:
         errors.append("editorial text contains unsupported numeric claim(s)")
@@ -370,6 +381,36 @@ def validate_pack(pack: ContentPackLite) -> ContentPackValidation:
         warnings=tuple(warnings),
         unsupported_numeric_claims=unsupported_numeric_claims,
     )
+
+
+def public_editorial_text_fields(pack: ContentPackLite) -> dict[str, str]:
+    """Return every editorial field that can reach a public distribution surface."""
+
+    fields = {
+        "hook": pack.editorial.hook,
+        "core_message": pack.editorial.core_message,
+        "x_post": pack.editorial.x_post,
+        "youtube_title": pack.editorial.youtube_title or "",
+        "youtube_short_script": pack.editorial.youtube_short_script or "",
+        "youtube_description": pack.editorial.youtube_description or "",
+        "thumbnail_text": pack.editorial.thumbnail_text or "",
+        "disclosure": pack.editorial.disclosure,
+    }
+    fields.update(
+        {f"visual_plan[{index}]": value for index, value in enumerate(pack.editorial.visual_plan)}
+    )
+    return fields
+
+
+def public_copy_wrapper_markers(text: str) -> tuple[str, ...]:
+    """Identify known assistant/tool wrappers without altering legitimate copy."""
+
+    markers: list[str] = []
+    if PUBLIC_COPY_WRITING_RE.search(text):
+        markers.append(":::writing")
+    if PUBLIC_COPY_WRAPPER_LINE_RE.search(text):
+        markers.append("wrapper directive line")
+    return tuple(markers)
 
 
 def resolve_claim_source_value(pack: ContentPackLite, source_path: str) -> str:

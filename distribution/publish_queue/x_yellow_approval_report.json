@@ -1,0 +1,137 @@
+{
+  "generated_at": "2026-08-31T18:00:00Z",
+  "items": [
+    {
+      "attribution_url": "https://gamcryp.com/strategies/dfk-crystalvale-jeweler-cjewel-5000-max-lock?utm_campaign=distribution-mvp&utm_content=x-dfk-lock-risk-20260831&utm_medium=social&utm_source=x",
+      "content_id": "x-dfk-lock-risk-20260831",
+      "exact_copy": "DeFi Kingdoms shows why confidence and risk are not the same.\n\nGamCryp models the 5000 JEWEL max-lock strategy at $40.64 capital, $0.0136/day net, and 1% 30D ROI.\n\nConfidence: HIGH. Risk: VERY HIGH because the lock and emergency-exit terms dominate the catch.\n\nhttps://gamcryp.com/strategies/dfk-crystalvale-jeweler-cjewel-5000-max-lock?utm_campaign=distribution-mvp&utm_content=x-dfk-lock-risk-20260831&utm_medium=social&utm_source=x",
+      "numeric_claims": [
+        {
+          "claim_id": "capital",
+          "display_value": "$40.64",
+          "source_path": "snapshot.capital.total_capital.amount",
+          "source_value": "40.64045550630489442100105938",
+          "text": "Modeled capital is $40.64."
+        },
+        {
+          "claim_id": "net_day",
+          "display_value": "$0.0136/day",
+          "source_path": "snapshot.earnings.net_earnings_day.amount",
+          "source_value": "0.01361299918132749601471545559",
+          "text": "Modeled net earnings are $0.0136/day."
+        },
+        {
+          "claim_id": "roi_30d",
+          "display_value": "1%",
+          "source_path": "snapshot.roi.roi_total_30d.value",
+          "source_value": "0.01004885330029009938953579240",
+          "text": "Modeled 30D ROI is 1%."
+        }
+      ],
+      "project": "DeFi Kingdoms",
+      "reason_yellow": "Risk is VERY HIGH; review the strategy assumptions before acting.",
+      "recommendation": "REJECT",
+      "review_blockers": [
+        "X weighted character count 284 exceeds 280",
+        "snapshot-backed numeric content is stale"
+      ],
+      "risk_caveat": "Risk is VERY HIGH; review the strategy assumptions before acting.",
+      "snapshot_timestamp": "2026-08-31T21:33:44.128693Z",
+      "weighted_character_count": 284
+    },
+    {
+      "attribution_url": "https://gamcryp.com/strategies/farmers-world-axe-wood-production?utm_campaign=distribution-mvp&utm_content=x-farmers-world-tiny-economics-20260831&utm_medium=social&utm_source=x",
+      "content_id": "x-farmers-world-tiny-economics-20260831",
+      "exact_copy": "Farmers World is a useful reminder: cheap entry is not the same as good economics.\n\nGamCryp's axe strategy shows capital $0.0019, net/day <$0.0001/day, and 30D ROI of -0.9%.\n\nThis is why GamCryp separates modeled return from risk, liquidity, and confidence.\n\nhttps://gamcryp.com/strategies/farmers-world-axe-wood-production?utm_campaign=distribution-mvp&utm_content=x-farmers-world-tiny-economics-20260831&utm_medium=social&utm_source=x",
+      "numeric_claims": [
+        {
+          "claim_id": "capital",
+          "display_value": "$0.0019",
+          "source_path": "snapshot.capital.total_capital.amount",
+          "source_value": "0.001888544556567210740",
+          "text": "Modeled capital is $0.0019."
+        },
+        {
+          "claim_id": "net_day",
+          "display_value": "<$0.0001/day",
+          "source_path": "snapshot.earnings.net_earnings_day.amount",
+          "source_value": "-5.659447631633797786076377440E-7",
+          "text": "Modeled net earnings are <$0.0001/day."
+        },
+        {
+          "claim_id": "roi_30d",
+          "display_value": "-0.9%",
+          "source_path": "snapshot.roi.roi_total_30d.value",
+          "source_value": "-0.008990173324670064333930792827",
+          "text": "Modeled 30D ROI is -0.9%."
+        }
+      ],
+      "project": "Farmers World",
+      "reason_yellow": "Risk is HIGH; review the strategy assumptions before acting.",
+      "recommendation": "REJECT",
+      "review_blockers": [
+        "X weighted character count 282 exceeds 280",
+        "snapshot-backed numeric content is stale"
+      ],
+      "risk_caveat": "Risk is HIGH; review the strategy assumptions before acting.",
+      "snapshot_timestamp": "2026-08-31T21:33:44.128693Z",
+      "weighted_character_count": 282
+    },
+    {
+      "attribution_url": "https://gamcryp.com/strategies/splinterlands-modern-ranked-sps-ev?utm_campaign=distribution-mvp&utm_content=x-splinterlands-expected-value-20260831&utm_medium=social&utm_source=x",
+      "content_id": "x-splinterlands-expected-value-20260831",
+      "exact_copy": "Splinterlands is modeled as expected value, not guaranteed income.\n\nGamCryp's Modern Ranked SPS strategy uses $10 capital, -$0.0004/day net, and -0.13% 30D ROI.\n\nThe catch: win rate and SPS per win are assumptions, so confidence stays LOW and uncertainty is explicit.\n\nhttps://gamcryp.com/strategies/splinterlands-modern-ranked-sps-ev?utm_campaign=distribution-mvp&utm_content=x-splinterlands-expected-value-20260831&utm_medium=social&utm_source=x",
+      "numeric_claims": [
+        {
+          "claim_id": "capital",
+          "display_value": "$10",
+          "source_path": "snapshot.capital.total_capital.amount",
+          "source_value": "10",
+          "text": "Modeled capital is $10."
+        },
+        {
+          "claim_id": "net_day",
+          "display_value": "-$0.0004/day",
+          "source_path": "snapshot.earnings.net_earnings_day.amount",
+          "source_value": "-0.0004409978394105555085000",
+          "text": "Modeled net earnings are -$0.0004/day."
+        },
+        {
+          "claim_id": "roi_30d",
+          "display_value": "-0.13%",
+          "source_path": "snapshot.roi.roi_total_30d.value",
+          "source_value": "-0.0013229935182316665255000",
+          "text": "Modeled 30D ROI is -0.13%."
+        }
+      ],
+      "project": "Splinterlands",
+      "reason_yellow": "Performance-dependent SPS rewards are modeled as expected value, not guaranteed earnings.",
+      "recommendation": "REJECT",
+      "review_blockers": [
+        "X weighted character count 292 exceeds 280",
+        "forbidden recommendation/promise wording: guaranteed",
+        "snapshot-backed numeric content is stale"
+      ],
+      "risk_caveat": "Performance-dependent SPS rewards are modeled as expected value, not guaranteed earnings.",
+      "snapshot_timestamp": "2026-08-31T21:33:44.128693Z",
+      "weighted_character_count": 292
+    },
+    {
+      "attribution_url": "https://gamcryp.com/opportunities/grass?utm_campaign=distribution-mvp&utm_content=x-grass-roi-unavailable-20260831&utm_medium=social&utm_source=x",
+      "content_id": "x-grass-roi-unavailable-20260831",
+      "exact_copy": "Grass is useful for GamCryp because the honest answer is: ROI unavailable.\n\nThe project has points-based rewards, but GamCryp does not convert points into financial ROI unless there is a reproducible exit route.\n\nThat is the point of the model: no fake zero, no made-up yield.\n\nhttps://gamcryp.com/opportunities/grass?utm_campaign=distribution-mvp&utm_content=x-grass-roi-unavailable-20260831&utm_medium=social&utm_source=x",
+      "numeric_claims": [],
+      "project": "Grass",
+      "reason_yellow": "Grass points are not modeled as financial ROI unless a lawful, reproducible value route exists.",
+      "recommendation": "EDIT",
+      "review_blockers": [
+        "X weighted character count 301 exceeds 280"
+      ],
+      "risk_caveat": "Grass points are not modeled as financial ROI unless a lawful, reproducible value route exists.",
+      "snapshot_timestamp": null,
+      "weighted_character_count": 301
+    }
+  ],
+  "report_version": "x-yellow-approval-report-v1",
+  "source_batch_id": "distribution-learning-batch-001"
+}

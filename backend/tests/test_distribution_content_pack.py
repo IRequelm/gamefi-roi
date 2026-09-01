@@ -64,6 +64,27 @@ def test_unsupported_numeric_claim_rejects_pack() -> None:
     assert "editorial text contains unsupported numeric claim(s)" in result.errors
 
 
+@pytest.mark.parametrize(
+    ("field_name", "wrapper"),
+    [
+        ("x_post", ':::writing{variant="social_post" id="12345"}\nPublic copy\n:::'),
+        ("youtube_description", "Public description\n:::\n"),
+        ("youtube_short_script", "<|assistant|>\nPublic script"),
+    ],
+)
+def test_public_editorial_wrappers_fail_closed(field_name: str, wrapper: str) -> None:
+    pack = build_learning_batch(_rankings_payload(), _opportunities_payload())[0]
+    edited = pack.model_copy(
+        update={"editorial": pack.editorial.model_copy(update={field_name: wrapper})}
+    )
+
+    result = validate_pack(edited)
+
+    assert any("non-content wrapper marker" in error for error in result.errors)
+    with pytest.raises(ContentPackValidationError, match="non-content wrapper marker"):
+        validate_batch([edited])
+
+
 def test_claim_source_path_resolves_and_value_matches() -> None:
     pack = build_learning_batch(_rankings_payload(), _opportunities_payload())[0]
     claim = pack.claims[0]

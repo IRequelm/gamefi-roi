@@ -26,6 +26,7 @@ dev = [
 
 [project.scripts]
 gamefi-doctor = "app.doctor.checks:main"
+x-publisher = "app.distribution.x_publishing_cli:main"
 
 [tool.setuptools]
 package-dir = {"" = "backend"}
