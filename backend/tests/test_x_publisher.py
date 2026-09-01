@@ -1,0 +1,434 @@
+from __future__ import annotations
+
+import json
+from datetime import UTC, datetime, timedelta
+from pathlib import Path
+from urllib.parse import urlsplit
+
+import httpx
+import pytest
+
+from app.distribution.content_pack import ContentReadiness
+from app.distribution.x_publisher import (
+    ApprovalRecord,
+    XAmbiguousApiError,
+    XApiClient,
+    XApiError,
+    XApprovalError,
+    XAuthError,
+    XConfigError,
+    XDuplicateError,
+    XOAuthManager,
+    XPublisherConfig,
+    XPublishingService,
+    XValidationError,
+    safe_error,
+)
+from app.distribution.x_queue import (
+    X_MAX_WEIGHTED_LENGTH,
+    build_x_publish_queue,
+    editorial_order_from_handoff,
+    load_content_pack_batch,
+    load_x_queue,
+    write_x_queue,
+    x_content_checksum,
+    x_weighted_character_count,
+)
+
+ROOT = Path(__file__).resolve().parents[2]
+SOURCE_BATCH = ROOT / "distribution/content_packs/learning_batch_001.json"
+SOURCE_HANDOFF = ROOT / "distribution/publish_queue/next_publish_queue.json"
+SOURCE_X_QUEUE = ROOT / "distribution/publish_queue/x_publish_queue.json"
+METHODOLOGY_ID = "x-gamcryp-methodology-not-recommendation-20260831"
+DFK_ID = "x-dfk-lock-risk-20260831"
+FARMERS_ID = "x-farmers-world-tiny-economics-20260831"
+GRASS_ID = "x-grass-roi-unavailable-20260831"
+SPLINTERLANDS_ID = "x-splinterlands-expected-value-20260831"
+DIMO_ID = "x-dimo-subscription-catch-20260831"
+SNAPSHOT_TIME = datetime(2026, 8, 31, 21, 33, 44, tzinfo=UTC)
+
+
+class FakeApiClient:
+    def __init__(self, *, post_id: str = "1900000000000000000", error: Exception | None = None) -> None:
+        self.post_id = post_id
+        self.error = error
+        self.calls: list[str] = []
+
+    def create_post(self, text: str) -> str:
+        self.calls.append(text)
+        if self.error:
+            raise self.error
+        return self.post_id
+
+
+def _config(tmp_path: Path) -> XPublisherConfig:
+    content_path = tmp_path / "learning_batch.json"
+    queue_path = tmp_path / "x_queue.json"
+    content_path.write_bytes(SOURCE_BATCH.read_bytes())
+    queue_path.write_bytes(SOURCE_X_QUEUE.read_bytes())
+    return XPublisherConfig(
+        content_pack_file=content_path,
+        queue_file=queue_path,
+        approval_file=tmp_path / "local/approvals.json",
+        publication_file=tmp_path / "local/publications.json",
+        token_file=tmp_path / "local/token.json",
+        oauth_pending_file=tmp_path / "local/oauth_pending.json",
+        publish_lock_file=tmp_path / "local/publish.lock",
+        client_id="test-client",
+    )
+
+
+def _service(
+    tmp_path: Path,
+    *,
+    now: datetime = SNAPSHOT_TIME + timedelta(minutes=5),
+    api: FakeApiClient | None = None,
+) -> tuple[XPublishingService, FakeApiClient]:
+    fake = api or FakeApiClient()
+    service = XPublishingService(_config(tmp_path), api_client=fake, now=lambda: now)  # type: ignore[arg-type]
+    return service, fake
+
+
+def _valid_dfk_copy(service: XPublishingService) -> str:
+    url = service.preview(DFK_ID).attribution_url
+    return (
+        "DeFi Kingdoms model: $40.64 capital, $0.0136/day net, 1% 30D ROI. "
+        "Confidence is HIGH; risk is VERY HIGH due to lock and exit terms. "
+        f"Analytical comparison, not a recommendation.\n\n{url}"
+    )
+
+
+def test_committed_x_queue_matches_canonical_content_inventory() -> None:
+    queue = load_x_queue(SOURCE_X_QUEUE)
+    _, packs = load_content_pack_batch(SOURCE_BATCH)
+
+    assert {item.content_id for item in queue.items} == {pack.content_id for pack in packs}
+    assert [item.content_id for item in queue.publishable] == [METHODOLOGY_ID]
+    assert {item.content_id for item in queue.awaiting_human_approval} == {
+        DFK_ID,
+        FARMERS_ID,
+        GRASS_ID,
+        SPLINTERLANDS_ID,
+    }
+    assert len(queue.blocked) == 5
+    assert all(item.status is ContentReadiness.RED for item in queue.blocked)
+
+
+def test_queue_generation_is_deterministic_and_red_never_enters_publishable(tmp_path: Path) -> None:
+    source_bytes = SOURCE_BATCH.read_bytes()
+    payload, packs = load_content_pack_batch(SOURCE_BATCH)
+    kwargs = {
+        "batch_payload": payload,
+        "packs": packs,
+        "source_batch_bytes": source_bytes,
+        "editorial_order": editorial_order_from_handoff(SOURCE_HANDOFF),
+    }
+    first = build_x_publish_queue(**kwargs)
+    second = build_x_publish_queue(**kwargs)
+    output = tmp_path / "queue.json"
+    write_x_queue(output, first)
+
+    assert first == second
+    assert load_x_queue(output) == first
+    assert not any(item.status is ContentReadiness.RED for item in first.publishable)
+
+
+def test_green_methodology_is_publishable_and_character_count_is_valid(tmp_path: Path) -> None:
+    service, _ = _service(tmp_path, now=datetime(2026, 9, 1, tzinfo=UTC))
+    preview = service.preview(METHODOLOGY_ID)
+
+    assert preview.readiness is ContentReadiness.GREEN
+    assert preview.approval_state == "not_required"
+    assert preview.would_publish is True
+    assert preview.weighted_character_count == 274
+    assert preview.weighted_character_count <= X_MAX_WEIGHTED_LENGTH
+    assert "not a recommendation" in preview.exact_final_copy
+
+
+def test_x_weighted_count_uses_23_char_urls_and_conservative_unicode() -> None:
+    assert x_weighted_character_count("a https://example.com/a/very/long/path") == 25
+    assert x_weighted_character_count("A") == 1
+    assert x_weighted_character_count("界") == 2
+
+
+def test_yellow_awaits_explicit_approval(tmp_path: Path) -> None:
+    service, _ = _service(tmp_path)
+    preview = service.preview(DFK_ID)
+
+    assert preview.readiness is ContentReadiness.YELLOW
+    assert preview.approval_state == "awaiting_human_approval"
+    assert preview.would_publish is False
+    assert any("explicit checksum-bound human approval" in blocker for blocker in preview.blockers)
+
+
+def test_yellow_cannot_publish_before_approval(tmp_path: Path) -> None:
+    service, api = _service(tmp_path)
+
+    with pytest.raises(XValidationError, match="explicit checksum-bound"):
+        service.publish(DFK_ID, dry_run=False, confirm_publish=True)
+    assert api.calls == []
+
+
+def test_yellow_can_publish_once_after_checksum_bound_approval(tmp_path: Path) -> None:
+    service, api = _service(tmp_path)
+    approved = service.approve(DFK_ID, edited_copy=_valid_dfk_copy(service))
+    result = service.publish(DFK_ID, dry_run=False, confirm_publish=True)
+
+    assert approved.state == "approved"
+    assert result.status == "published"
+    assert result.post_id == api.post_id
+    assert len(api.calls) == 1
+    records = service.publications.records(DFK_ID)
+    assert records[-1].status == "published"
+    assert records[-1].post_id == api.post_id
+
+
+def test_red_cannot_be_approved_or_published(tmp_path: Path) -> None:
+    service, api = _service(tmp_path)
+
+    with pytest.raises(XApprovalError, match="RED content"):
+        service.approve(DIMO_ID)
+    with pytest.raises(XValidationError, match="RED content"):
+        service.publish(DIMO_ID, dry_run=False, confirm_publish=True)
+    assert api.calls == []
+
+
+def test_all_committed_red_projects_are_hard_blocked(tmp_path: Path) -> None:
+    service, _ = _service(tmp_path)
+    queue = load_x_queue(service.config.queue_file)
+
+    assert len(queue.blocked) == 5
+    for item in queue.blocked:
+        preview = service.preview(item.content_id)
+        assert preview.would_publish is False
+        assert "RED content is permanently blocked from X publishing" in preview.blockers
+
+
+def test_approval_is_invalidated_when_source_content_checksum_changes(tmp_path: Path) -> None:
+    service, _ = _service(tmp_path)
+    record = service.approve(DFK_ID, edited_copy=_valid_dfk_copy(service))
+    queue_payload = json.loads(service.config.queue_file.read_text(encoding="utf-8"))
+    item = next(item for item in queue_payload["awaiting_human_approval"] if item["content_id"] == DFK_ID)
+    item["content_checksum"] = "a" * 64
+    service.config.queue_file.write_text(json.dumps(queue_payload), encoding="utf-8")
+
+    preview = service.preview(DFK_ID)
+    assert record.source_content_checksum != "a" * 64
+    assert preview.approval_state == "approval_invalidated_by_content_change"
+    assert preview.would_publish is False
+
+
+def test_tampered_approval_copy_checksum_is_rejected(tmp_path: Path) -> None:
+    service, _ = _service(tmp_path)
+    valid = service.approve(DFK_ID, edited_copy=_valid_dfk_copy(service))
+    tampered = valid.model_copy(update={"approved_copy": valid.approved_copy + " altered"})
+    payload = service.approvals.store.load()
+    payload["approvals"].append(tampered.model_dump(mode="json"))
+    service.approvals.store.save(payload)
+
+    preview = service.preview(DFK_ID)
+    assert preview.approval_state == "approval_record_checksum_mismatch"
+    assert preview.would_publish is False
+
+
+def test_revoke_removes_yellow_publishability(tmp_path: Path) -> None:
+    service, _ = _service(tmp_path)
+    service.approve(DFK_ID, edited_copy=_valid_dfk_copy(service))
+    assert service.preview(DFK_ID).would_publish is True
+
+    service.revoke(DFK_ID)
+    preview = service.preview(DFK_ID)
+    assert preview.approval_state == "awaiting_human_approval"
+    assert preview.would_publish is False
+
+
+def test_stale_snapshot_blocks_numeric_yellow_approval(tmp_path: Path) -> None:
+    service, _ = _service(tmp_path, now=SNAPSHOT_TIME + timedelta(hours=2))
+
+    with pytest.raises(XApprovalError, match="stale"):
+        service.approve(DFK_ID, edited_copy=_valid_dfk_copy(service))
+
+
+def test_unresolved_url_placeholder_blocks_approval(tmp_path: Path) -> None:
+    service, _ = _service(tmp_path)
+    copy = _valid_dfk_copy(service).replace(service.preview(DFK_ID).attribution_url, "{url}")
+
+    with pytest.raises(XApprovalError, match="placeholder"):
+        service.approve(DFK_ID, edited_copy=copy)
+
+
+def test_attribution_url_is_required_and_must_retain_expected_utm(tmp_path: Path) -> None:
+    service, _ = _service(tmp_path)
+    copy = _valid_dfk_copy(service).replace(service.preview(DFK_ID).attribution_url, "https://gamcryp.com")
+
+    with pytest.raises(XApprovalError, match="attribution URL"):
+        service.approve(DFK_ID, edited_copy=copy)
+
+
+def test_unsupported_numeric_claim_in_edited_copy_is_rejected(tmp_path: Path) -> None:
+    service, _ = _service(tmp_path)
+    copy = _valid_dfk_copy(service).replace("1% 30D ROI", "99% 30D ROI")
+
+    with pytest.raises(XApprovalError, match="unsupported numeric"):
+        service.approve(DFK_ID, edited_copy=copy)
+
+
+@pytest.mark.parametrize("promise", ["guaranteed", "risk-free", "no risk", "buy this", "easy profit"])
+def test_promise_or_recommendation_wording_is_rejected(tmp_path: Path, promise: str) -> None:
+    service, _ = _service(tmp_path)
+    copy = _valid_dfk_copy(service).replace("Analytical comparison", promise)
+
+    with pytest.raises(XApprovalError, match="forbidden recommendation/promise wording"):
+        service.approve(DFK_ID, edited_copy=copy)
+
+
+def test_same_content_and_checksum_duplicate_is_blocked(tmp_path: Path) -> None:
+    service, api = _service(tmp_path)
+    service.publish(METHODOLOGY_ID, dry_run=False, confirm_publish=True)
+
+    with pytest.raises(XValidationError, match="already published"):
+        service.publish(METHODOLOGY_ID, dry_run=False, confirm_publish=True)
+    assert len(api.calls) == 1
+
+
+def test_api_failure_does_not_mark_published(tmp_path: Path) -> None:
+    api = FakeApiClient(error=XApiError("status=401 access_token=secret-value"))
+    service, _ = _service(tmp_path, api=api)
+
+    with pytest.raises(XApiError):
+        service.publish(METHODOLOGY_ID, dry_run=False, confirm_publish=True)
+    record = service.publications.records(METHODOLOGY_ID)[-1]
+    assert record.status == "failed"
+    assert record.post_id is None
+    assert "secret-value" not in (record.safe_error or "")
+
+
+def test_ambiguous_api_failure_is_recorded_and_not_retried(tmp_path: Path) -> None:
+    api = FakeApiClient(error=XAmbiguousApiError("timeout after send"))
+    service, _ = _service(tmp_path, api=api)
+
+    with pytest.raises(XAmbiguousApiError):
+        service.publish(METHODOLOGY_ID, dry_run=False, confirm_publish=True)
+    assert service.publications.records(METHODOLOGY_ID)[-1].status == "ambiguous"
+    with pytest.raises(XValidationError, match="manual reconciliation"):
+        service.publish(METHODOLOGY_ID, dry_run=False, confirm_publish=True)
+    assert len(api.calls) == 1
+
+
+def test_dry_run_makes_zero_network_calls(tmp_path: Path) -> None:
+    service, api = _service(tmp_path)
+    preview = service.publish(METHODOLOGY_ID, dry_run=True)
+
+    assert preview.network_called is False
+    assert preview.would_publish is True
+    assert api.calls == []
+    assert service.publications.records(METHODOLOGY_ID) == ()
+
+
+def test_actual_publish_requires_explicit_confirmation(tmp_path: Path) -> None:
+    service, api = _service(tmp_path)
+
+    with pytest.raises(XValidationError, match="confirm-publish"):
+        service.publish(METHODOLOGY_ID, dry_run=False, confirm_publish=False)
+    assert api.calls == []
+
+
+def test_official_api_request_construction_and_success_response(tmp_path: Path) -> None:
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return httpx.Response(201, json={"data": {"id": "1999999999999999999"}})
+
+    config = _config(tmp_path)
+    oauth = XOAuthManager(config)
+    oauth.access_token = lambda: "private-token"  # type: ignore[method-assign]
+    client = XApiClient(oauth, client=httpx.Client(base_url="https://api.x.com", transport=httpx.MockTransport(handler)))
+
+    post_id = client.create_post("GamCryp test body")
+
+    assert post_id == "1999999999999999999"
+    assert requests[0].method == "POST"
+    assert requests[0].url.path == "/2/tweets"
+    assert json.loads(requests[0].content) == {"text": "GamCryp test body"}
+    assert requests[0].headers["authorization"] == "Bearer private-token"
+
+
+def test_official_api_5xx_is_ambiguous_and_error_redacts_secrets(tmp_path: Path) -> None:
+    config = _config(tmp_path)
+    oauth = XOAuthManager(config)
+    oauth.access_token = lambda: "private-token"  # type: ignore[method-assign]
+    client = XApiClient(
+        oauth,
+        client=httpx.Client(
+            base_url="https://api.x.com",
+            transport=httpx.MockTransport(lambda request: httpx.Response(503, json={"access_token": "secret"})),
+        ),
+    )
+
+    with pytest.raises(XAmbiguousApiError, match="reconcile"):
+        client.create_post("GamCryp test body")
+    assert "secret-value" not in safe_error("Bearer secret-value access_token=secret-value")
+
+
+def test_oauth_authorization_url_uses_pkce_and_required_scopes(tmp_path: Path) -> None:
+    config = _config(tmp_path)
+    oauth = XOAuthManager(config, now=lambda: datetime(2026, 9, 1, tzinfo=UTC))
+    url = oauth.authorization_url()
+    query = httpx.QueryParams(urlsplit(url).query)
+
+    assert url.startswith("https://x.com/i/oauth2/authorize?")
+    assert query["response_type"] == "code"
+    assert query["client_id"] == "test-client"
+    assert query["code_challenge_method"] == "S256"
+    assert set(query["scope"].split()) == {"tweet.read", "tweet.write", "users.read", "offline.access"}
+    assert config.oauth_pending_file.is_file()
+
+
+def test_oauth_callback_must_match_configured_redirect_uri(tmp_path: Path) -> None:
+    config = _config(tmp_path)
+    oauth = XOAuthManager(config, now=lambda: datetime(2026, 9, 1, tzinfo=UTC))
+    authorization_url = oauth.authorization_url()
+    state = httpx.QueryParams(urlsplit(authorization_url).query)["state"]
+
+    with pytest.raises(XAuthError, match="does not match"):
+        oauth.complete_authorization(f"https://attacker.example/callback?code=code&state={state}")
+
+
+def test_oauth_pending_state_expires(tmp_path: Path) -> None:
+    config = _config(tmp_path)
+    started_at = datetime(2026, 9, 1, tzinfo=UTC)
+    oauth = XOAuthManager(config, now=lambda: started_at)
+    authorization_url = oauth.authorization_url()
+    state = httpx.QueryParams(urlsplit(authorization_url).query)["state"]
+    oauth.now = lambda: started_at + timedelta(minutes=11)
+
+    with pytest.raises(XAuthError, match="expired"):
+        oauth.complete_authorization(f"{config.redirect_uri}?code=code&state={state}")
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("redirect_uri", "not-a-url", "absolute HTTP"),
+        ("timeout_seconds", 0, "greater than zero"),
+        ("max_snapshot_age_seconds", 0, "greater than zero"),
+    ],
+)
+def test_publisher_configuration_fails_closed(field: str, value: object, message: str) -> None:
+    with pytest.raises(XConfigError, match=message):
+        XPublisherConfig(**{field: value})
+
+
+def test_current_yellow_and_red_inventory_remains_fail_closed(tmp_path: Path) -> None:
+    service, _ = _service(tmp_path, now=datetime(2026, 9, 1, tzinfo=UTC))
+    queue = load_x_queue(service.config.queue_file)
+
+    assert {item.content_id for item in queue.awaiting_human_approval} == {
+        DFK_ID,
+        FARMERS_ID,
+        GRASS_ID,
+        SPLINTERLANDS_ID,
+    }
+    assert all(not service.preview(item.content_id).would_publish for item in queue.awaiting_human_approval)
+    assert all(not service.preview(item.content_id).would_publish for item in queue.blocked)
