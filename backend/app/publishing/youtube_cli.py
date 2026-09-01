@@ -8,11 +8,14 @@ from pathlib import Path
 from typing import Any
 
 from app.config.settings import get_settings
+from app.publishing.youtube_distribution import (
+    YouTubeDistributionConfig,
+    YouTubeDistributionPublisher,
+)
 from app.publishing.youtube import (
     YouTubePublisher,
     YouTubePublisherConfig,
     YouTubePublisherError,
-    load_manifest,
     redact_sensitive_text,
 )
 
@@ -23,12 +26,23 @@ def main(argv: list[str] | None = None) -> int:
 
     subcommands.add_parser("status", help="Check OAuth configuration and token state without mutating YouTube.")
     subcommands.add_parser("authorize", help="Run first-time Google OAuth and store a local refreshable token.")
+    subcommands.add_parser("queue", help="Show the current YouTube publication queue.")
+    subcommands.add_parser("rebuild-queue", help="Rebuild the YouTube queue from canonical Content Packs.")
 
-    dry_run = subcommands.add_parser("dry-run", help="Validate a publish manifest without mutating YouTube.")
-    dry_run.add_argument("--manifest", required=True, help="Path to a JSON publish manifest.")
+    preview = subcommands.add_parser("preview", help="Preview current package, asset, and approval gates.")
+    _add_package_asset_arguments(preview, require_video=False)
 
-    upload = subcommands.add_parser("upload", help="Upload a manifest video through the YouTube Data API.")
-    upload.add_argument("--manifest", required=True, help="Path to a JSON publish manifest.")
+    approve = subcommands.add_parser("approve", help="Approve an exact YELLOW package and creative checksum.")
+    _add_package_asset_arguments(approve, require_video=True)
+
+    revoke = subcommands.add_parser("revoke", help="Revoke a prior YELLOW creative approval.")
+    revoke.add_argument("content_id")
+
+    dry_run = subcommands.add_parser("dry-run", help="Validate a queued package without mutating YouTube.")
+    _add_package_asset_arguments(dry_run, require_video=True)
+
+    upload = subcommands.add_parser("upload", help="Upload an approved queued package through YouTube Data API.")
+    _add_package_asset_arguments(upload, require_video=True)
     upload.add_argument(
         "--confirm-publish",
         action="store_true",
@@ -58,19 +72,58 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         publisher = _publisher()
+        distribution = _distribution_publisher(publisher)
         if args.command == "status":
             _print_json(publisher.validate_auth_state().to_safe_dict())
             return 0
         if args.command == "authorize":
             _print_json(publisher.authorize_interactive().to_safe_dict())
             return 0
+        if args.command == "queue":
+            _print_json(distribution.queue_summary())
+            return 0
+        if args.command == "rebuild-queue":
+            _print_json(distribution.rebuild_queue().model_dump(mode="json"))
+            return 0
+        if args.command == "preview":
+            _print_json(
+                distribution.preview(
+                    args.content_id,
+                    video_path=Path(args.video) if args.video else None,
+                    thumbnail_path=Path(args.thumbnail) if args.thumbnail else None,
+                ).model_dump(mode="json")
+            )
+            return 0
+        if args.command == "approve":
+            _print_json(
+                distribution.approve(
+                    args.content_id,
+                    video_path=Path(args.video),
+                    thumbnail_path=Path(args.thumbnail) if args.thumbnail else None,
+                ).model_dump(mode="json")
+            )
+            return 0
+        if args.command == "revoke":
+            _print_json(distribution.revoke(args.content_id).model_dump(mode="json"))
+            return 0
         if args.command == "dry-run":
-            _print_json(publisher.dry_run_upload(load_manifest(Path(args.manifest))).to_safe_dict())
+            _print_json(
+                distribution.dry_run(
+                    args.content_id,
+                    video_path=Path(args.video),
+                    thumbnail_path=Path(args.thumbnail) if args.thumbnail else None,
+                ).to_safe_dict()
+            )
             return 0
         if args.command == "upload":
-            if not args.confirm_publish:
-                raise YouTubePublisherError("upload requires --confirm-publish after a successful dry-run")
-            _print_json(publisher.upload_video(load_manifest(Path(args.manifest))).to_safe_dict())
+            _print_json(
+                distribution.upload(
+                    args.content_id,
+                    video_path=Path(args.video),
+                    thumbnail_path=Path(args.thumbnail) if args.thumbnail else None,
+                    confirm_publish=bool(args.confirm_publish),
+                ).to_safe_dict()
+            )
             return 0
         if args.command == "thumbnail":
             _print_json(
@@ -110,6 +163,24 @@ def main(argv: list[str] | None = None) -> int:
 def _publisher() -> YouTubePublisher:
     settings = get_settings()
     return YouTubePublisher(config=YouTubePublisherConfig.from_settings(settings))
+
+
+def _distribution_publisher(publisher: YouTubePublisher) -> YouTubeDistributionPublisher:
+    settings = get_settings()
+    return YouTubeDistributionPublisher(
+        publisher,
+        config=YouTubeDistributionConfig(
+            content_pack_file=Path(settings.youtube_content_pack_file),
+            queue_file=Path(settings.youtube_queue_file),
+            approval_file=Path(settings.youtube_approval_file),
+        ),
+    )
+
+
+def _add_package_asset_arguments(parser: argparse.ArgumentParser, *, require_video: bool) -> None:
+    parser.add_argument("content_id")
+    parser.add_argument("--video", required=require_video, help="Rendered video file path.")
+    parser.add_argument("--thumbnail", help="Optional custom thumbnail file path.")
 
 
 def _parse_datetime(value: str) -> Any:

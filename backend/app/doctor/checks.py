@@ -37,6 +37,8 @@ REQUIRED_IMPORTS = (
     "app.observability.sentry",
     "app.publishing.youtube",
     "app.publishing.youtube_cli",
+    "app.publishing.youtube_distribution",
+    "app.distribution.youtube_queue",
     "app.storage.database",
     "app.storage.history",
     "app.storage.metadata",

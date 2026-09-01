@@ -46,6 +46,9 @@ class Settings(BaseSettings):
     youtube_oauth_client_secrets_file: str | None = None
     youtube_oauth_token_file: str | None = None
     youtube_publish_state_file: str = "data/local/youtube/publish_state.json"
+    youtube_approval_file: str = "data/local/youtube/approvals.json"
+    youtube_content_pack_file: str = "distribution/content_packs/learning_batch_001.json"
+    youtube_queue_file: str = "distribution/publish_queue/youtube_publish_queue.json"
     youtube_channel_handle: str = "@GamCryp"
     youtube_max_retries: int = Field(default=2, ge=0, le=5)
     public_x_url: str | None = "https://x.com/GamCryp"
@@ -191,12 +194,17 @@ class Settings(BaseSettings):
             raise ValueError("GAMEFI_POSTHOG_HOST must not include path, query, or fragment")
         return text
 
-    @field_validator("youtube_publish_state_file")
+    @field_validator(
+        "youtube_publish_state_file",
+        "youtube_approval_file",
+        "youtube_content_pack_file",
+        "youtube_queue_file",
+    )
     @classmethod
-    def validate_youtube_publish_state_file(cls, value: str) -> str:
+    def validate_youtube_file_setting(cls, value: str) -> str:
         text = value.strip()
         if not text:
-            raise ValueError("GAMEFI_YOUTUBE_PUBLISH_STATE_FILE is required")
+            raise ValueError("YouTube publisher file settings must not be blank")
         return text
 
     @field_validator("youtube_channel_handle")

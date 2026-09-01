@@ -9,6 +9,7 @@ import os
 import re
 import tempfile
 from collections.abc import Callable, Mapping, Sequence
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -204,7 +205,7 @@ class PublishRecord:
     content_id: str
     video_checksum_sha256: str
     manifest_hash: str
-    video_id: str
+    video_id: str | None
     status: str
     uploaded_at: str
 
@@ -289,7 +290,7 @@ class PublishStateStore:
                 content_id=str(raw["content_id"]),
                 video_checksum_sha256=str(raw["video_checksum_sha256"]),
                 manifest_hash=str(raw["manifest_hash"]),
-                video_id=str(raw["video_id"]),
+                video_id=str(raw["video_id"]) if raw.get("video_id") else None,
                 status=str(raw["status"]),
                 uploaded_at=str(raw["uploaded_at"]),
             )
@@ -319,6 +320,35 @@ class PublishStateStore:
             "video_checksum_sha256": record.video_checksum_sha256,
             "manifest_hash": record.manifest_hash,
             "video_id": record.video_id,
+            "status": record.status,
+            "uploaded_at": record.uploaded_at,
+        }
+        self._write_records(records)
+        return record
+
+    def record_attempt(
+        self,
+        *,
+        content_id: str,
+        video_checksum_sha256: str,
+        manifest_hash: str,
+        status: Literal["uploading", "ambiguous"],
+        now: datetime | None = None,
+    ) -> PublishRecord:
+        record = PublishRecord(
+            content_id=content_id,
+            video_checksum_sha256=video_checksum_sha256,
+            manifest_hash=manifest_hash,
+            video_id=None,
+            status=status,
+            uploaded_at=(now or datetime.now(UTC)).isoformat(),
+        )
+        records = self._read_records()
+        records[content_id] = {
+            "content_id": record.content_id,
+            "video_checksum_sha256": record.video_checksum_sha256,
+            "manifest_hash": record.manifest_hash,
+            "video_id": None,
             "status": record.status,
             "uploaded_at": record.uploaded_at,
         }
@@ -414,7 +444,6 @@ class YouTubePublisher:
         return self.validate_auth_state()
 
     def dry_run_upload(self, manifest: YouTubePublishManifest) -> YouTubeOperationResult:
-        self.config.require_oauth_config(require_token_path=False)
         validate_video_file(manifest.video_path)
         if manifest.thumbnail_path is not None:
             validate_thumbnail_file(manifest.thumbnail_path)
@@ -437,23 +466,40 @@ class YouTubePublisher:
         self.config.require_oauth_config(require_token_path=True)
         validate_video_file(manifest.video_path)
         checksum = sha256_file(manifest.video_path)
-        duplicate = self._duplicate_record(manifest, checksum)
-        if duplicate is not None:
-            logger.info("youtube_upload_skipped_duplicate", extra={"content_id": manifest.content_id, "video_id": duplicate.video_id})
-            return YouTubeOperationResult("upload_video", "skipped_duplicate", False, manifest.content_id, duplicate.video_id, "same content_id and video checksum were already uploaded")
-        body = self._video_body(manifest)
-        media_body = self.media_factory(str(manifest.video_path), mimetype="video/*", resumable=True)
-        request = self.service.videos().insert(part="snippet,status", body=body, media_body=media_body, notifySubscribers=False)
-        response = self._execute(request, operation="upload_video")
-        video_id = str(response.get("id", "")).strip() if isinstance(response, Mapping) else ""
-        if not video_id:
-            raise YouTubeApiError("YouTube upload response did not include a video id")
-        self.state_store.record_uploaded(
-            content_id=manifest.content_id,
-            video_checksum_sha256=checksum,
-            manifest_hash=manifest.manifest_hash(),
-            video_id=video_id,
-        )
+        with _exclusive_upload_lock(self.config.state_file.with_suffix(".lock")):
+            duplicate = self._duplicate_record(manifest, checksum)
+            if duplicate is not None:
+                logger.info("youtube_upload_skipped_duplicate", extra={"content_id": manifest.content_id, "video_id": duplicate.video_id})
+                return YouTubeOperationResult("upload_video", "skipped_duplicate", False, manifest.content_id, duplicate.video_id, "same content_id and video checksum were already uploaded")
+            manifest_hash = manifest.manifest_hash()
+            body = self._video_body(manifest)
+            media_body = self.media_factory(str(manifest.video_path), mimetype="video/*", resumable=True)
+            request = self.service.videos().insert(part="snippet,status", body=body, media_body=media_body, notifySubscribers=False)
+            self.state_store.record_attempt(
+                content_id=manifest.content_id,
+                video_checksum_sha256=checksum,
+                manifest_hash=manifest_hash,
+                status="uploading",
+            )
+            try:
+                response = self._execute(request, operation="upload_video")
+                video_id = str(response.get("id", "")).strip() if isinstance(response, Mapping) else ""
+                if not video_id:
+                    raise YouTubeApiError("YouTube upload response did not include a video id")
+            except YouTubeApiError:
+                self.state_store.record_attempt(
+                    content_id=manifest.content_id,
+                    video_checksum_sha256=checksum,
+                    manifest_hash=manifest_hash,
+                    status="ambiguous",
+                )
+                raise
+            self.state_store.record_uploaded(
+                content_id=manifest.content_id,
+                video_checksum_sha256=checksum,
+                manifest_hash=manifest_hash,
+                video_id=video_id,
+            )
         logger.info("youtube_upload_succeeded", extra={"content_id": manifest.content_id, "video_id": video_id})
         return YouTubeOperationResult("upload_video", "uploaded", True, manifest.content_id, video_id, "video uploaded through YouTube Data API", response)
 
@@ -559,6 +605,10 @@ class YouTubePublisher:
         record = self.state_store.find(manifest.content_id)
         if record is None:
             return None
+        if record.status in {"uploading", "ambiguous"}:
+            raise DuplicateUploadError(
+                "content_id has an unresolved upload attempt; reconcile the YouTube channel before retrying"
+            )
         if record.video_checksum_sha256 != checksum:
             raise DuplicateUploadError("content_id already exists with a different video checksum; choose a new content_id or review state")
         return record
@@ -780,3 +830,20 @@ def _chmod_private(path: Path) -> None:
         os.chmod(path, 0o600)
     except OSError:
         logger.debug("youtube_private_chmod_skipped", extra={"path_name": path.name})
+
+
+@contextmanager
+def _exclusive_upload_lock(path: Path):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        descriptor = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+    except FileExistsError as exc:
+        raise DuplicateUploadError("another YouTube upload operation is already in progress") from exc
+    try:
+        os.close(descriptor)
+        yield
+    finally:
+        try:
+            path.unlink()
+        except FileNotFoundError:
+            pass

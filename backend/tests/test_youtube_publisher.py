@@ -187,8 +187,9 @@ def test_missing_credentials_config_is_explicit(tmp_path) -> None:
     assert state.configured is False
     assert state.authorized is False
     assert "missing" in state.detail.lower()
-    with pytest.raises(YouTubeConfigError):
-        publisher.dry_run_upload(_manifest(tmp_path))
+    result = publisher.dry_run_upload(_manifest(tmp_path))
+    assert result.status == "ready"
+    assert result.would_mutate is False
 
 
 def test_manifest_rejects_invalid_video_and_thumbnail_paths(tmp_path) -> None:
@@ -322,6 +323,12 @@ def test_api_errors_are_structured_and_redacted(tmp_path) -> None:
     assert "ghi" not in message
     assert "secret-token" not in message
     assert "[redacted]" in message
+    stored = PublishStateStore(tmp_path / "state.json").find("gamcryp-test-short-001")
+    assert stored is not None
+    assert stored.status == "ambiguous"
+    with pytest.raises(DuplicateUploadError, match="unresolved upload attempt"):
+        publisher.upload_video(_manifest(tmp_path))
+    assert service.videos_resource.next_insert.called == 1
 
 
 def test_safe_log_redaction_and_response_sanitization() -> None:

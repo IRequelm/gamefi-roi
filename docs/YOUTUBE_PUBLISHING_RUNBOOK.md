@@ -1,160 +1,166 @@
 # GamCryp YouTube API Publishing Runbook
 
-Updated: 2026-08-30
-Status: infrastructure ready; no production videos published by this implementation
+Updated: 2026-09-01
+Status: queue and publisher ready for review; OAuth and live upload not performed
 
 ## Purpose
 
-GamCryp uses the official YouTube Data API v3 for operator-controlled uploads, metadata updates, thumbnail setting, and verification. Browser Studio upload remains a fallback only when the API path is unavailable or Google account policy blocks automation.
+GamCryp uses the official YouTube Data API v3 for operator-controlled video uploads, metadata, thumbnails, and verification. Publishing consumes validated Content Pack Lite data. It does not calculate financial values or alter ROI, ranking, risk, confidence, referrals, analytics, snapshots, or publication readiness.
 
-This runbook covers infrastructure only. It does not authorize creating a new channel, changing existing public videos, or publishing a new video without an explicit operator-approved manifest and command.
+No scheduler is active. Browser automation is not a publishing dependency.
 
 ## Architecture
 
-Code location:
+- `backend/app/distribution/youtube_queue.py`: deterministic queue generation from canonical Content Packs.
+- `backend/app/publishing/youtube_distribution.py`: GREEN/YELLOW/RED gates, exact creative approval, asset checksums, and queue-to-manifest conversion.
+- `backend/app/publishing/youtube.py`: OAuth, YouTube Data API transport, upload/thumbnail operations, and duplicate state.
+- `backend/app/publishing/youtube_cli.py`: operator-only CLI.
+- `distribution/publish_queue/youtube_publish_queue.json`: committed queue derived from the current accepted Content Pack artifact.
+- `data/local/youtube/`: ignored private OAuth, approval, and upload state.
 
-- `backend/app/publishing/youtube.py`: OAuth, manifest validation, duplicate protection, upload, thumbnail, metadata, status, verification, safe error redaction.
-- `backend/app/publishing/youtube_cli.py`: operator CLI entry point, `youtube-publisher`.
-- `data/local/youtube/`: recommended local secret/token/state directory. This path is ignored by Git.
+The operator path is:
 
-Official API surfaces used:
+```text
+canonical Content Pack
+-> YouTube queue
+-> readiness gate
+-> rendered asset checksum
+-> YELLOW approval when required
+-> dry-run
+-> explicit private upload
+```
 
-- OAuth 2.0 installed-app flow for user consent and refreshable credentials.
-- `videos.insert` for upload.
-- `videos.update` for metadata, privacy, and scheduled publish metadata.
-- `videos.list` for upload/processing/status verification.
-- `thumbnails.set` and thumbnail response data for custom thumbnails.
+Direct free-form manifests are not an operator CLI input. This prevents a manually authored manifest from bypassing current distribution readiness.
 
-The configured scope is `https://www.googleapis.com/auth/youtube.force-ssl`, the narrow single YouTube scope that supports the required upload, metadata, thumbnail, and status operations. Service accounts are not supported for YouTube channel uploads.
+## Current Official API Requirements
+
+The publisher uses YouTube Data API v3:
+
+- `videos.insert` for resumable upload: https://developers.google.com/youtube/v3/docs/videos/insert
+- `videos.update` for metadata: https://developers.google.com/youtube/v3/docs/videos/update
+- `videos.list` for verification.
+- `thumbnails.set` for custom thumbnails: https://developers.google.com/youtube/v3/docs/thumbnails/set
+
+OAuth uses Google's installed desktop application flow with a loopback callback. Service accounts cannot upload to a YouTube channel. The configured scope is:
+
+```text
+https://www.googleapis.com/auth/youtube.force-ssl
+```
+
+This scope is required because the retained publisher supports upload, thumbnail management, status reads, and metadata updates. The narrower `youtube.upload` scope supports upload and thumbnails but does not support the retained `videos.update` metadata capability.
+
+Google currently documents a separate Video Uploads quota bucket and a default allowance that may change. Check the Cloud Console quota page before live operation. API projects created after July 28, 2020 that have not completed Google's required audit may have uploads restricted to private visibility. GamCryp's queue-generated upload manifest is private by default.
 
 ## Environment Variables
 
-No secrets are committed. Configure paths and operator defaults through environment variables:
+```text
+GAMEFI_YOUTUBE_OAUTH_CLIENT_SECRETS_FILE=data/local/youtube/client_secret.json
+GAMEFI_YOUTUBE_OAUTH_TOKEN_FILE=data/local/youtube/token.json
+GAMEFI_YOUTUBE_PUBLISH_STATE_FILE=data/local/youtube/publish_state.json
+GAMEFI_YOUTUBE_APPROVAL_FILE=data/local/youtube/approvals.json
+GAMEFI_YOUTUBE_CONTENT_PACK_FILE=distribution/content_packs/learning_batch_001.json
+GAMEFI_YOUTUBE_QUEUE_FILE=distribution/publish_queue/youtube_publish_queue.json
+GAMEFI_YOUTUBE_CHANNEL_HANDLE=@GamCryp
+GAMEFI_YOUTUBE_MAX_RETRIES=2
+```
 
-- `GAMEFI_YOUTUBE_OAUTH_CLIENT_SECRETS_FILE=data/local/youtube/client_secret.json`
-- `GAMEFI_YOUTUBE_OAUTH_TOKEN_FILE=data/local/youtube/token.json`
-- `GAMEFI_YOUTUBE_PUBLISH_STATE_FILE=data/local/youtube/publish_state.json`
-- `GAMEFI_YOUTUBE_CHANNEL_HANDLE=@GamCryp`
-- `GAMEFI_YOUTUBE_MAX_RETRIES=2`
+Never paste or commit the OAuth client JSON, access token, refresh token, browser cookies, or authorization headers. Do not place secrets in Content Packs or queue files.
 
-The client secret JSON and token JSON must never be pasted into chat, committed to Git, printed in logs, or returned from API responses.
+## Queue Policy
+
+- `GREEN`: may proceed when its rendered video exists and all package/asset validation passes.
+- `YELLOW`: requires explicit human creative approval bound to the exact package checksum, video checksum, and optional thumbnail checksum.
+- `RED`: cannot be approved or uploaded.
+
+Changing the Content Pack, title, description, script, attribution URL, source snapshot, rendered video, or thumbnail invalidates a prior YELLOW approval. Referral availability does not influence readiness or approval.
+
+The queue records title, final description, script, attribution URL, snapshot/provenance references, refreshability, asset state, approval state, package checksum, and upload state. Actual rendered videos and thumbnails are not committed.
+
+## Queue And Preview
+
+Rebuild only from the canonical accepted Content Pack artifact:
+
+```powershell
+youtube-publisher rebuild-queue
+youtube-publisher queue
+youtube-publisher preview CONTENT_ID
+youtube-publisher preview CONTENT_ID --video C:\private\short.mp4 --thumbnail C:\private\thumb.png
+```
+
+Preview does not call YouTube.
+
+## Human Approval
+
+YELLOW approval requires the exact rendered asset:
+
+```powershell
+youtube-publisher approve CONTENT_ID --video C:\private\short.mp4 --thumbnail C:\private\thumb.png
+youtube-publisher revoke CONTENT_ID
+```
+
+RED approval fails. GREEN does not use a YELLOW approval record.
 
 ## One-Time Google Setup
 
-Human action required from Zafer:
+Human action required:
 
-1. Open Google Cloud Console using the Google account that owns or manages the existing GamCryp YouTube channel.
-2. Select or create the existing GamCryp Google Cloud project.
+1. Open Google Cloud Console with the account that owns or manages `@GamCryp`.
+2. Select or create the GamCryp Cloud project.
 3. Enable YouTube Data API v3.
-4. Configure the OAuth consent screen if Google requires it.
-5. Create an OAuth client ID for an installed desktop application or loopback local-server flow.
-6. Download the OAuth client JSON.
-7. Store it locally at `data/local/youtube/client_secret.json`, or set `GAMEFI_YOUTUBE_OAUTH_CLIENT_SECRETS_FILE` to the private path you choose.
-8. Do not paste the JSON into chat. Do not commit it.
+4. Configure the OAuth consent screen and required test/production users.
+5. Create an OAuth client ID for a Desktop application.
+6. Download the client JSON privately to `data/local/youtube/client_secret.json`, or configure another ignored private path.
+7. Do not paste the file into chat and do not commit it.
 
-## First-Time Authorization
-
-After the client secret file exists, run:
+Authorize only after the merged code and queue are approved:
 
 ```powershell
 youtube-publisher status
 youtube-publisher authorize
 ```
 
-The authorize command opens a local Google OAuth consent flow. Sign in as the existing GamCryp channel owner/manager account and approve the YouTube scope. A refreshable token is stored at `GAMEFI_YOUTUBE_OAUTH_TOKEN_FILE`.
+The local browser consent flow stores a refreshable token at the configured ignored token path.
 
-If authorization fails, do not fall back to password sharing or copied browser cookies. Fix the Google OAuth project, consent screen, account access, or channel permissions.
+## Dry-Run And Upload
 
-## Publish Manifest
-
-Uploads are driven by a JSON manifest. Example shape:
-
-```json
-{
-  "content_id": "gamcryp-example-2026-08-30",
-  "video_path": "C:/path/to/video.mp4",
-  "thumbnail_path": "C:/path/to/thumbnail.png",
-  "title": "GamCryp Example Video",
-  "description": "Operator-approved description.",
-  "privacy": "private",
-  "publish_at": "2026-09-01T16:00:00Z",
-  "category_id": "22",
-  "source_snapshot_id": "snapshot-id-if-applicable",
-  "source_snapshot_timestamp": "2026-08-30T12:00:00Z"
-}
-```
-
-Manifest rules:
-
-- `content_id`, `video_path`, `title`, `description`, and `privacy` are required.
-- `privacy` must be `private`, `unlisted`, or `public`.
-- Scheduled `publish_at` requires `privacy: private`.
-- Video files must be `.mp4`, `.mov`, `.m4v`, or `.webm`.
-- Thumbnail files must be `.jpg`, `.jpeg`, or `.png` and at most 2 MB.
-- Manifests must not contain credentials, refresh tokens, access tokens, API keys, cookies, or authorization headers.
-
-## Safe Operator Flow
-
-Always validate before mutating YouTube:
+Dry-run validates the queue, approval, exact assets, metadata, and duplicate state without making a YouTube API call:
 
 ```powershell
-youtube-publisher status
-youtube-publisher dry-run --manifest C:/path/to/manifest.json
-youtube-publisher upload --manifest C:/path/to/manifest.json --confirm-publish
+youtube-publisher dry-run CONTENT_ID --video C:\private\short.mp4 --thumbnail C:\private\thumb.png
+```
+
+An actual upload requires a second explicit flag and remains private:
+
+```powershell
+youtube-publisher upload CONTENT_ID --video C:\private\short.mp4 --thumbnail C:\private\thumb.png --confirm-publish
+```
+
+No upload should be attempted until OAuth is complete, the queue item is eligible, the final creative has been reviewed, and dry-run passes.
+
+## Thumbnail, Metadata, And Verification
+
+```powershell
+youtube-publisher thumbnail --video-id VIDEO_ID --image C:\private\thumb.png --dry-run
+youtube-publisher thumbnail --video-id VIDEO_ID --image C:\private\thumb.png
 youtube-publisher verify --video-id VIDEO_ID
-```
-
-Set or validate thumbnails separately:
-
-```powershell
-youtube-publisher thumbnail --video-id VIDEO_ID --image C:/path/to/thumbnail.png --dry-run
-youtube-publisher thumbnail --video-id VIDEO_ID --image C:/path/to/thumbnail.png
 youtube-publisher verify --video-id VIDEO_ID --thumbnail
+youtube-publisher metadata --video-id VIDEO_ID --title "Updated title" --confirm-update
 ```
 
-Metadata updates also require explicit confirmation:
+These commands operate only on an explicitly supplied video ID. They are not scheduled.
 
-```powershell
-youtube-publisher metadata --video-id VIDEO_ID --title "New title" --confirm-update
-```
+## Duplicate And Failure Safety
 
-## Duplicate Protection
+The local ignored publish state is keyed by `content_id` and video checksum:
 
-The publisher stores local publish records in `GAMEFI_YOUTUBE_PUBLISH_STATE_FILE` keyed by `content_id`.
+- same content ID and same successful video checksum: skip duplicate upload;
+- same content ID and changed video checksum: fail closed;
+- changed YELLOW package or asset: require new approval;
+- API error: do not record a successful upload;
+- missing or malformed queue, provenance, asset, or approval: fail closed.
 
-Behavior:
+If an upload outcome is uncertain, inspect the channel and local state before issuing another upload. Never blindly retry by changing `content_id`.
 
-- Reusing the same `content_id` with the same video checksum returns the existing uploaded video ID and does not upload again.
-- Reusing the same `content_id` with a different video checksum fails closed.
-- Re-running a command after an operator timeout is retry-safe when the same content ID and file are used.
+## Safe Disable
 
-The state file is not a secret, but it is local operational state and should not be committed.
-
-## Error Handling And Logging
-
-Operator-facing errors are structured and redacted. Secret-like keys, bearer tokens, OAuth tokens, client secrets, credentials, and API keys are scrubbed before display.
-
-Provider/API errors should be handled by fixing the manifest, OAuth state, channel permissions, quota/rate limits, or Google API availability. Do not weaken validation to make an upload pass.
-
-## Recovery
-
-If upload succeeds but a later thumbnail or metadata operation fails:
-
-1. Keep the returned YouTube video ID.
-2. Re-run `youtube-publisher verify --video-id VIDEO_ID`.
-3. Re-run only the failed operation.
-4. Do not create a second upload unless the operator deliberately uses a new `content_id` and manifest.
-
-If a mistaken video is uploaded, remove or correct it manually in YouTube Studio using the existing channel account. This runbook does not automate deletion of public videos.
-
-## Production Safety
-
-- Normal GamCryp API/web traffic must not upload to YouTube.
-- The publishing CLI is an operator action, not a public endpoint.
-- Tokens and client secrets live only in environment-managed private paths.
-- No live YouTube API calls are made in automated tests.
-- Browser Studio upload is fallback only after the API path is known to be blocked or unavailable.
-
-## Current Human Blocker
-
-The code is ready to run status and dry-run locally, but live upload readiness requires Zafer to complete Google Cloud OAuth setup and store the OAuth client JSON/token outside Git.
+Do not run `youtube-publisher authorize` or `youtube-publisher upload`. Removing the private token path or revoking the app in the Google Account also prevents authenticated publishing. No public application request and no active scheduler invoke this publisher.

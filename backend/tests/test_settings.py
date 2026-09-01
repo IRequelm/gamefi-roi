@@ -296,6 +296,9 @@ def test_youtube_publisher_config_is_optional_and_validated(monkeypatch) -> None
     assert settings.youtube_oauth_client_secrets_file is None
     assert settings.youtube_oauth_token_file is None
     assert settings.youtube_publish_state_file == "data/local/youtube/publish_state.json"
+    assert settings.youtube_approval_file == "data/local/youtube/approvals.json"
+    assert settings.youtube_content_pack_file == "distribution/content_packs/learning_batch_001.json"
+    assert settings.youtube_queue_file == "distribution/publish_queue/youtube_publish_queue.json"
     assert settings.youtube_channel_handle == "@GamCryp"
     assert settings.youtube_max_retries == 2
 
