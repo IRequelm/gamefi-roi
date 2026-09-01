@@ -282,3 +282,50 @@ def test_observability_config_is_optional_and_validated(monkeypatch) -> None:
     monkeypatch.setenv("GAMEFI_POSTHOG_PROJECT_API_KEY", "bad key")
     with pytest.raises(ValidationError):
         get_settings()
+
+
+def test_youtube_publisher_config_is_optional_and_validated(monkeypatch) -> None:
+    monkeypatch.setenv("GAMEFI_ENVIRONMENT", "test")
+    monkeypatch.setenv("GAMEFI_DATABASE_URL", "sqlite+pysqlite:///:memory:")
+    monkeypatch.setenv("GAMEFI_ALLOW_SQLITE_FOR_TESTS", "true")
+    monkeypatch.setenv("GAMEFI_YOUTUBE_OAUTH_CLIENT_SECRETS_FILE", "")
+    monkeypatch.setenv("GAMEFI_YOUTUBE_OAUTH_TOKEN_FILE", "")
+
+    settings = get_settings()
+
+    assert settings.youtube_oauth_client_secrets_file is None
+    assert settings.youtube_oauth_token_file is None
+    assert settings.youtube_publish_state_file == "data/local/youtube/publish_state.json"
+    assert settings.youtube_approval_file == "data/local/youtube/approvals.json"
+    assert settings.youtube_content_pack_file == "distribution/content_packs/learning_batch_001.json"
+    assert settings.youtube_queue_file == "distribution/publish_queue/youtube_publish_queue.json"
+    assert settings.youtube_channel_handle == "@GamCryp"
+    assert settings.youtube_max_retries == 2
+
+    from app.config.settings import clear_settings_cache
+
+    clear_settings_cache()
+    monkeypatch.setenv("GAMEFI_YOUTUBE_OAUTH_CLIENT_SECRETS_FILE", "data/local/youtube/client_secret.json")
+    monkeypatch.setenv("GAMEFI_YOUTUBE_OAUTH_TOKEN_FILE", "data/local/youtube/token.json")
+    monkeypatch.setenv("GAMEFI_YOUTUBE_PUBLISH_STATE_FILE", "data/local/youtube/state.json")
+    monkeypatch.setenv("GAMEFI_YOUTUBE_CHANNEL_HANDLE", "@GamCryp")
+    monkeypatch.setenv("GAMEFI_YOUTUBE_MAX_RETRIES", "3")
+
+    settings = get_settings()
+
+    assert settings.youtube_oauth_client_secrets_file == "data/local/youtube/client_secret.json"
+    assert settings.youtube_oauth_token_file == "data/local/youtube/token.json"
+    assert settings.youtube_publish_state_file == "data/local/youtube/state.json"
+    assert settings.youtube_channel_handle == "@GamCryp"
+    assert settings.youtube_max_retries == 3
+
+    clear_settings_cache()
+    monkeypatch.setenv("GAMEFI_YOUTUBE_CHANNEL_HANDLE", "GamCryp")
+    with pytest.raises(ValidationError):
+        get_settings()
+
+    clear_settings_cache()
+    monkeypatch.setenv("GAMEFI_YOUTUBE_CHANNEL_HANDLE", "@GamCryp")
+    monkeypatch.setenv("GAMEFI_YOUTUBE_MAX_RETRIES", "20")
+    with pytest.raises(ValidationError):
+        get_settings()

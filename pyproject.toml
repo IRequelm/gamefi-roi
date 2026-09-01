@@ -11,6 +11,8 @@ requires-python = ">=3.12,<3.13"
 dependencies = [
     "alembic==1.14.0",
     "fastapi==0.115.6",
+    "google-api-python-client==2.199.0",
+    "google-auth-oauthlib==1.4.1",
     "httpx==0.28.1",
     "psycopg[binary]==3.2.3",
     "pydantic-settings==2.7.0",
@@ -26,6 +28,7 @@ dev = [
 
 [project.scripts]
 gamefi-doctor = "app.doctor.checks:main"
+youtube-publisher = "app.publishing.youtube_cli:main"
 x-publisher = "app.distribution.x_publishing_cli:main"
 
 [tool.setuptools]

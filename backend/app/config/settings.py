@@ -43,6 +43,14 @@ class Settings(BaseSettings):
     posthog_project_api_key: str | None = None
     posthog_host: str = "https://us.i.posthog.com"
     posthog_timeout_seconds: float = Field(default=2.0, gt=0, le=10)
+    youtube_oauth_client_secrets_file: str | None = None
+    youtube_oauth_token_file: str | None = None
+    youtube_publish_state_file: str = "data/local/youtube/publish_state.json"
+    youtube_approval_file: str = "data/local/youtube/approvals.json"
+    youtube_content_pack_file: str = "distribution/content_packs/learning_batch_001.json"
+    youtube_queue_file: str = "distribution/publish_queue/youtube_publish_queue.json"
+    youtube_channel_handle: str = "@GamCryp"
+    youtube_max_retries: int = Field(default=2, ge=0, le=5)
     public_x_url: str | None = "https://x.com/GamCryp"
     public_youtube_url: str = "https://www.youtube.com/@GamCryp"
     public_contact_email: str = "info@gamcryp.com"
@@ -97,6 +105,8 @@ class Settings(BaseSettings):
         "sentry_environment",
         "sentry_release",
         "posthog_project_api_key",
+        "youtube_oauth_client_secrets_file",
+        "youtube_oauth_token_file",
         "public_x_url",
         "operator_username",
         "operator_password",
@@ -184,6 +194,26 @@ class Settings(BaseSettings):
             raise ValueError("GAMEFI_POSTHOG_HOST must not include path, query, or fragment")
         return text
 
+    @field_validator(
+        "youtube_publish_state_file",
+        "youtube_approval_file",
+        "youtube_content_pack_file",
+        "youtube_queue_file",
+    )
+    @classmethod
+    def validate_youtube_file_setting(cls, value: str) -> str:
+        text = value.strip()
+        if not text:
+            raise ValueError("YouTube publisher file settings must not be blank")
+        return text
+
+    @field_validator("youtube_channel_handle")
+    @classmethod
+    def validate_youtube_channel_handle(cls, value: str) -> str:
+        text = value.strip()
+        if not re.fullmatch(r"@[A-Za-z0-9._-]{3,64}", text):
+            raise ValueError("GAMEFI_YOUTUBE_CHANNEL_HANDLE must look like @GamCryp")
+        return text
     @field_validator("public_base_url")
     @classmethod
     def normalize_public_base_url(cls, value: str) -> str:
