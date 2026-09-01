@@ -12,6 +12,7 @@ from app.api.routes.health import router as health_router
 from app.api.v1.routes import router as api_v1_router
 from app.config.settings import get_settings
 from app.observability.sentry import initialize_sentry
+from app.operator.ai_routes import router as operator_ai_router
 from app.operator.routes import router as operator_router
 from app.web.routes import frontend_assets, router as web_router
 
@@ -33,6 +34,7 @@ def create_app() -> FastAPI:
     api.include_router(health_router)
     api.include_router(api_v1_router)
     api.include_router(operator_router)
+    api.include_router(operator_ai_router)
     api.mount("/assets", frontend_assets(), name="frontend-assets")
     api.include_router(web_router)
     return api
