@@ -283,8 +283,10 @@ class PublishStateStore:
     def find(self, content_id: str) -> PublishRecord | None:
         records = self._read_records()
         raw = records.get(content_id)
-        if not isinstance(raw, dict):
+        if raw is None:
             return None
+        if not isinstance(raw, dict):
+            raise YouTubeManifestError("YouTube publish state record is malformed")
         try:
             return PublishRecord(
                 content_id=str(raw["content_id"]),
@@ -294,8 +296,8 @@ class PublishStateStore:
                 status=str(raw["status"]),
                 uploaded_at=str(raw["uploaded_at"]),
             )
-        except KeyError:
-            return None
+        except KeyError as exc:
+            raise YouTubeManifestError("YouTube publish state record is incomplete") from exc
 
     def record_uploaded(
         self,

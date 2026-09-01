@@ -263,6 +263,20 @@ def test_duplicate_content_id_with_different_checksum_fails_closed(tmp_path) -> 
         publisher.upload_video(manifest)
 
 
+def test_corrupt_duplicate_state_fails_closed(tmp_path) -> None:
+    state = tmp_path / "state.json"
+    state.write_text('{"records":{"gamcryp-test-short-001":{"status":"uploaded"}}}', encoding="utf-8")
+    publisher = YouTubePublisher(
+        config=_config(tmp_path),
+        service=FakeYouTubeService(),
+        state_store=PublishStateStore(state),
+        media_factory=lambda path, **kwargs: {"path": path, **kwargs},
+    )
+
+    with pytest.raises(YouTubeManifestError, match="incomplete"):
+        publisher.upload_video(_manifest(tmp_path))
+
+
 def test_metadata_validation_and_update_preserves_existing_snippet_fields(tmp_path) -> None:
     service = FakeYouTubeService()
     publisher = _publisher(tmp_path, service=service)
