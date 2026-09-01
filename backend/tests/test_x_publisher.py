@@ -8,7 +8,7 @@ from urllib.parse import urlsplit
 import httpx
 import pytest
 
-from app.distribution.content_pack import ContentReadiness
+from app.distribution.content_pack import ContentPackValidationError, ContentReadiness
 from app.distribution.x_publisher import (
     ApprovalRecord,
     XAmbiguousApiError,
@@ -136,6 +136,8 @@ def test_queue_generation_is_deterministic_and_red_never_enters_publishable(tmp_
 def test_green_methodology_is_publishable_and_character_count_is_valid(tmp_path: Path) -> None:
     service, _ = _service(tmp_path, now=datetime(2026, 9, 1, tzinfo=UTC))
     preview = service.preview(METHODOLOGY_ID)
+    _, packs = load_content_pack_batch(service.config.content_pack_file)
+    methodology_pack = next(pack for pack in packs if pack.content_id == METHODOLOGY_ID)
 
     assert preview.readiness is ContentReadiness.GREEN
     assert preview.approval_state == "not_required"
@@ -143,6 +145,53 @@ def test_green_methodology_is_publishable_and_character_count_is_valid(tmp_path:
     assert preview.weighted_character_count == 274
     assert preview.weighted_character_count <= X_MAX_WEIGHTED_LENGTH
     assert "not a recommendation" in preview.exact_final_copy
+    assert ":::writing" not in preview.exact_final_copy
+    assert not any(line.strip() == ":::" for line in preview.exact_final_copy.splitlines())
+    assert preview.weighted_character_count == x_weighted_character_count(preview.exact_final_copy)
+    assert preview.content_checksum == x_content_checksum(methodology_pack, preview.exact_final_copy)
+
+
+def test_x_queue_serialization_contains_only_clean_public_copy() -> None:
+    queue_text = SOURCE_X_QUEUE.read_text(encoding="utf-8")
+    queue = load_x_queue(SOURCE_X_QUEUE)
+
+    assert ":::writing" not in queue_text
+    assert not any(line.strip() == ":::" for item in queue.items for line in item.final_copy.splitlines())
+
+
+def test_queue_generation_rejects_wrapper_contaminated_pack() -> None:
+    source_bytes = SOURCE_BATCH.read_bytes()
+    payload, packs = load_content_pack_batch(SOURCE_BATCH)
+    methodology = next(pack for pack in packs if pack.content_id == METHODOLOGY_ID)
+    contaminated = methodology.model_copy(
+        update={
+            "editorial": methodology.editorial.model_copy(
+                update={"x_post": f':::writing{{variant="social_post"}}\n{methodology.editorial.x_post}\n:::'}
+            )
+        }
+    )
+    replaced = tuple(contaminated if pack.content_id == METHODOLOGY_ID else pack for pack in packs)
+
+    with pytest.raises(ContentPackValidationError, match="non-content wrapper marker"):
+        build_x_publish_queue(
+            batch_payload=payload,
+            packs=replaced,
+            source_batch_bytes=source_bytes,
+            editorial_order=editorial_order_from_handoff(SOURCE_HANDOFF),
+        )
+
+
+def test_wrapper_contaminated_copy_cannot_be_approved_or_checksummed_as_publishable(tmp_path: Path) -> None:
+    service, _ = _service(tmp_path)
+    clean_copy = _valid_dfk_copy(service)
+    wrapped_copy = f':::writing{{variant="social_post" id="12345"}}\n{clean_copy}\n:::'
+
+    with pytest.raises(XApprovalError, match="non-content wrapper marker"):
+        service.approve(DFK_ID, edited_copy=wrapped_copy)
+
+    _, packs = load_content_pack_batch(service.config.content_pack_file)
+    dfk_pack = next(pack for pack in packs if pack.content_id == DFK_ID)
+    assert x_content_checksum(dfk_pack, clean_copy) != x_content_checksum(dfk_pack, wrapped_copy)
 
 
 def test_x_weighted_count_uses_23_char_urls_and_conservative_unicode() -> None:

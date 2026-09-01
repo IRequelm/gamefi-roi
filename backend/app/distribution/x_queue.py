@@ -99,6 +99,7 @@ def build_x_publish_queue(
     source_batch_bytes: bytes,
     editorial_order: dict[str, int] | None = None,
 ) -> XPublishQueue:
+    validate_batch(list(packs))
     order = dict(editorial_order or {})
     fallback_start = max(order.values(), default=0) + 1
     fallback_ids = sorted(pack.content_id for pack in packs if pack.content_id not in order)

@@ -109,6 +109,7 @@
       "recommendation": "REJECT",
       "review_blockers": [
         "X weighted character count 292 exceeds 280",
+        "forbidden recommendation/promise wording: guaranteed",
         "snapshot-backed numeric content is stale"
       ],
       "risk_caveat": "Performance-dependent SPS rewards are modeled as expected value, not guaranteed earnings.",
