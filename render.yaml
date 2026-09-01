@@ -50,6 +50,18 @@ services:
         sync: false
       - key: GAMEFI_BING_SITE_VERIFICATION
         sync: false
+      - key: NVIDIA_API_KEY
+        sync: false
+      - key: GAMEFI_NVIDIA_MODEL
+        value: openai/gpt-oss-120b
+      - key: GAMEFI_NVIDIA_BASE_URL
+        value: https://integrate.api.nvidia.com/v1
+      - key: GAMEFI_NVIDIA_TIMEOUT_SECONDS
+        value: "60"
+      - key: GAMEFI_NVIDIA_MAX_RETRIES
+        value: "2"
+      - key: GAMEFI_NVIDIA_MAX_TOKENS
+        value: "2048"
       - key: GAMEFI_SCHEDULER_CADENCE_MINUTES
         value: "30"
       - key: GAMEFI_PRODUCTION_HARD_STALE_SECONDS
