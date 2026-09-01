@@ -25,6 +25,8 @@ Verified against official X documentation on 2026-09-01:
 
 GamCryp does not purchase credits or authorize an account automatically.
 
+GamCryp's dependency-free local counter follows the documented weighting ranges, NFC normalization, common emoji grapheme handling, and 23-character transformed URL rule. It preserves balanced URL brackets and query/fragment punctuation while counting terminal punctuation separately. Ambiguous, malformed, or unsupported URL-like text is conservatively over-counted; X remains the final validity authority.
+
 ## Files and state
 
 Tracked, reviewable inputs:

@@ -3,11 +3,15 @@
 from __future__ import annotations
 
 import hashlib
+import ipaddress
 import json
+import re
+import string
 import unicodedata
 from enum import Enum
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -16,6 +20,18 @@ from app.distribution.content_pack import ContentPackLite, ContentReadiness, can
 X_QUEUE_VERSION = "x-publish-queue-v1"
 X_MAX_WEIGHTED_LENGTH = 280
 X_TRANSFORMED_URL_LENGTH = 23
+HTTP_URL_START_RE = re.compile(r"(?i)https?://")
+BARE_DOMAIN_RE = re.compile(
+    r"(?i)(?<![\w@])(?:www\.)?(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}"
+)
+ASCII_URL_CHARACTERS = frozenset(
+    string.ascii_letters + string.digits + "-._~:/?#[]@!$&'()*+,;=%"
+)
+TRAILING_URL_PUNCTUATION = frozenset(
+    ".,!?:;'\"\u2018\u2019\u201c\u201d\u00ab\u00bb\u2039\u203a"
+    "\u3002\uff0c\uff01\uff1f\uff1a\uff1b\u3001"
+)
+BRACKET_PAIRS = {')': '(', ']': '[', '}': '{'}
 
 
 class QueueApprovalState(str, Enum):
@@ -141,16 +157,18 @@ def editorial_order_from_handoff(path: Path) -> dict[str, int]:
 def x_weighted_character_count(text: str) -> int:
     """Conservatively implement X's 280-weight count and 23-character URL rule.
 
-    The official twitter-text implementation should remain the final platform
-    authority. This counter follows its documented Unicode ranges and safely
-    over-counts complex emoji sequences rather than allowing an oversized Post.
+    Valid HTTP(S) and bare-domain URLs use X's transformed length. Balanced URL
+    brackets and internal query/fragment punctuation are retained; terminal
+    punctuation is ordinary text. Common emoji grapheme sequences count as two.
+    Ambiguous or malformed URL-like text is deliberately over-counted so local
+    validation cannot admit an over-limit Post. X remains the final authority.
     """
 
     normalized = unicodedata.normalize("NFC", text)
     count = 0
     cursor = 0
-    for start, end in _url_spans(normalized):
-        count += _weighted_text(normalized[cursor:start]) + X_TRANSFORMED_URL_LENGTH
+    for start, end, url_weight in _url_spans(normalized):
+        count += _weighted_text(normalized[cursor:start]) + url_weight
         cursor = end
     return count + _weighted_text(normalized[cursor:])
 
@@ -185,24 +203,176 @@ def _order_key(item: XQueueItem) -> tuple[int, str]:
     return item.recommended_order, item.content_id
 
 
-def _url_spans(text: str) -> tuple[tuple[int, int], ...]:
-    spans: list[tuple[int, int]] = []
-    for scheme in ("https://", "http://"):
-        start = 0
-        while True:
-            index = text.find(scheme, start)
-            if index < 0:
-                break
-            end = index
-            while end < len(text) and not text[end].isspace():
-                end += 1
-            spans.append((index, end))
-            start = end
-    return tuple(sorted(spans))
+def _url_spans(text: str) -> tuple[tuple[int, int, int], ...]:
+    spans: list[tuple[int, int, int]] = []
+    cursor = 0
+    while match := HTTP_URL_START_RE.search(text, cursor):
+        start = match.start()
+        cursor = match.end()
+        if start > 0 and (text[start - 1].isalnum() or text[start - 1] in {"_", "@"}):
+            continue
+        candidate_end = cursor
+        while candidate_end < len(text) and text[candidate_end] in ASCII_URL_CHARACTERS:
+            candidate_end += 1
+        end = _valid_url_end(text, start, candidate_end, minimum_end=match.end())
+        if end > start:
+            spans.append((start, end, X_TRANSFORMED_URL_LENGTH))
+            cursor = end
+            continue
+        raw_end = match.end()
+        while raw_end < len(text) and not text[raw_end].isspace():
+            raw_end += 1
+        raw_weight = _weighted_text(text[start:raw_end])
+        spans.append((start, raw_end, max(X_TRANSFORMED_URL_LENGTH, raw_weight)))
+        cursor = raw_end
+
+    for match in BARE_DOMAIN_RE.finditer(text):
+        start = match.start()
+        if any(existing_start <= start < existing_end for existing_start, existing_end, _ in spans):
+            continue
+        candidate_end = match.end()
+        while candidate_end < len(text) and text[candidate_end] in ASCII_URL_CHARACTERS:
+            candidate_end += 1
+        end = _valid_bare_url_end(text, start, candidate_end, minimum_end=match.end())
+        if end <= start:
+            continue
+        literal_weight = _weighted_text(text[start:end])
+        spans.append((start, end, max(X_TRANSFORMED_URL_LENGTH, literal_weight)))
+    return tuple(sorted(spans, key=lambda item: item[0]))
+
+
+def _trim_url_end(text: str, start: int, end: int) -> int:
+    while end > start:
+        candidate = text[start:end]
+        trailing = candidate[-1]
+        if trailing in TRAILING_URL_PUNCTUATION:
+            end -= 1
+            continue
+        opener = BRACKET_PAIRS.get(trailing)
+        if opener and candidate.count(trailing) > candidate.count(opener):
+            end -= 1
+            continue
+        break
+    return end
+
+
+def _valid_url_end(text: str, start: int, end: int, *, minimum_end: int) -> int:
+    candidate_end = _trim_url_end(text, start, end)
+    while candidate_end >= minimum_end:
+        if _is_valid_http_url(text[start:candidate_end]):
+            return candidate_end
+        candidate_end = _trim_url_end(text, start, candidate_end - 1)
+    return start
+
+
+def _valid_bare_url_end(text: str, start: int, end: int, *, minimum_end: int) -> int:
+    candidate_end = _trim_url_end(text, start, end)
+    while candidate_end >= minimum_end:
+        if _is_valid_http_url(f"https://{text[start:candidate_end]}"):
+            return candidate_end
+        candidate_end = _trim_url_end(text, start, candidate_end - 1)
+    return start
+
+
+def _is_valid_http_url(value: str) -> bool:
+    try:
+        parsed = urlsplit(value)
+        host = parsed.hostname
+        _ = parsed.port
+    except ValueError:
+        return False
+    if parsed.scheme.lower() not in {"http", "https"} or not host:
+        return False
+    if host == "localhost":
+        return True
+    try:
+        ipaddress.ip_address(host)
+        return True
+    except ValueError:
+        pass
+    labels = host.rstrip(".").split(".")
+    top_level_domain = labels[-1]
+    return (
+        len(labels) >= 2
+        and (
+            (len(top_level_domain) >= 2 and top_level_domain.isalpha())
+            or (
+                top_level_domain.lower().startswith("xn--")
+                and len(top_level_domain) > 4
+                and top_level_domain[4:].isalnum()
+            )
+        )
+        and all(label and len(label) <= 63 for label in labels)
+        and all(
+            label[0].isalnum()
+            and label[-1].isalnum()
+            and all(character.isalnum() or character == "-" for character in label)
+            for label in labels
+        )
+    )
 
 
 def _weighted_text(text: str) -> int:
-    return sum(_character_weight(character) for character in text)
+    count = 0
+    cursor = 0
+    while cursor < len(text):
+        emoji_end = _emoji_sequence_end(text, cursor)
+        if emoji_end is not None:
+            count += 2
+            cursor = emoji_end
+            continue
+        count += _character_weight(text[cursor])
+        cursor += 1
+    return count
+
+
+def _emoji_sequence_end(text: str, start: int) -> int | None:
+    codepoint = ord(text[start])
+    if _is_regional_indicator(codepoint):
+        if start + 1 < len(text) and _is_regional_indicator(ord(text[start + 1])):
+            return start + 2
+        return start + 1
+    if text[start] in "#*0123456789":
+        cursor = start + 1
+        if cursor < len(text) and ord(text[cursor]) == 0xFE0F:
+            cursor += 1
+        return cursor + 1 if cursor < len(text) and ord(text[cursor]) == 0x20E3 else None
+    if not _is_emoji_base(codepoint):
+        return None
+    cursor = _consume_emoji_component(text, start)
+    while cursor < len(text) and ord(text[cursor]) == 0x200D:
+        next_start = cursor + 1
+        if next_start >= len(text) or not _is_emoji_base(ord(text[next_start])):
+            break
+        cursor = _consume_emoji_component(text, next_start)
+    if cursor < len(text) and 0xE0020 <= ord(text[cursor]) <= 0xE007E:
+        while cursor < len(text) and 0xE0020 <= ord(text[cursor]) <= 0xE007E:
+            cursor += 1
+        if cursor < len(text) and ord(text[cursor]) == 0xE007F:
+            cursor += 1
+    return cursor
+
+
+def _consume_emoji_component(text: str, start: int) -> int:
+    cursor = start + 1
+    if cursor < len(text) and ord(text[cursor]) in {0xFE0E, 0xFE0F}:
+        cursor += 1
+    if cursor < len(text) and 0x1F3FB <= ord(text[cursor]) <= 0x1F3FF:
+        cursor += 1
+    return cursor
+
+
+def _is_regional_indicator(codepoint: int) -> bool:
+    return 0x1F1E6 <= codepoint <= 0x1F1FF
+
+
+def _is_emoji_base(codepoint: int) -> bool:
+    return (
+        0x1F000 <= codepoint <= 0x1FAFF
+        or 0x2600 <= codepoint <= 0x27BF
+        or codepoint
+        in {0x00A9, 0x00AE, 0x203C, 0x2049, 0x2122, 0x2139, 0x3030, 0x303D, 0x3297, 0x3299}
+    )
 
 
 def _character_weight(character: str) -> int:

@@ -200,6 +200,75 @@ def test_x_weighted_count_uses_23_char_urls_and_conservative_unicode() -> None:
     assert x_weighted_character_count("界") == 2
 
 
+@pytest.mark.parametrize(
+    ("plain_text_length", "expected", "valid"),
+    [(255, 279, True), (256, 280, True), (257, 281, False)],
+)
+def test_x_weighted_count_exact_url_boundaries(
+    plain_text_length: int,
+    expected: int,
+    valid: bool,
+) -> None:
+    text = "a" * plain_text_length + " https://example.com/path"
+    weighted_count = x_weighted_character_count(text)
+
+    assert weighted_count == expected
+    assert (weighted_count <= X_MAX_WEIGHTED_LENGTH) is valid
+
+
+@pytest.mark.parametrize(
+    ("punctuation", "expected"),
+    [
+        (".", 24),
+        (",", 24),
+        ("!", 24),
+        ("?", 24),
+        (":", 24),
+        (";", 24),
+        (")", 24),
+        ("]", 24),
+        ("}", 24),
+        ("'", 24),
+        ('"', 24),
+        ("\u2019", 24),
+        ("\u201d", 24),
+        ("\u3002", 25),
+        ("\uff0c", 25),
+    ],
+)
+def test_x_weighted_count_counts_trailing_url_punctuation_as_text(
+    punctuation: str,
+    expected: int,
+) -> None:
+    assert x_weighted_character_count(f"https://example.com{punctuation}") == expected
+
+
+def test_x_weighted_count_handles_url_parentheses_without_stripping_valid_path_characters() -> None:
+    assert x_weighted_character_count("(https://example.com/path)") == 25
+    assert x_weighted_character_count("https://example.com/path_(valid)") == 23
+
+
+def test_x_weighted_count_handles_queries_fragments_and_multiple_urls() -> None:
+    assert x_weighted_character_count("https://example.com/path?q=a,b#section") == 23
+    assert x_weighted_character_count("https://example.com/a https://gamcryp.com/b") == 47
+    assert x_weighted_character_count("x.co") == 23
+    assert x_weighted_character_count("x.co.") == 24
+
+
+@pytest.mark.parametrize("emoji", ["👨‍🎤", "🙋🏽", "👨‍👩‍👧‍👦", "🇹🇷", "1️⃣"])
+def test_x_weighted_count_handles_complex_emoji_sequences(emoji: str) -> None:
+    assert x_weighted_character_count(emoji) == 2
+    assert x_weighted_character_count(f"https://example.com{emoji}") == 25
+
+
+def test_x_weighted_count_handles_unicode_malformed_and_empty_text() -> None:
+    assert x_weighted_character_count("界é") == 3
+    assert x_weighted_character_count("https://") == 23
+    assert x_weighted_character_count("https://例.中国") == 23
+    assert x_weighted_character_count("abchttps://example.com") >= len("abchttps://example.com")
+    assert x_weighted_character_count("") == 0
+
+
 def test_yellow_awaits_explicit_approval(tmp_path: Path) -> None:
     service, _ = _service(tmp_path)
     preview = service.preview(DFK_ID)
