@@ -19,6 +19,7 @@ from app.strategies.catalog import list_opportunities
 from app.strategies.defi_kingdoms import DFK_CJEWEL_MAX_LOCK_V1
 from app.strategies.farmers_world import FARMERS_WORLD_AXE_WOOD_V1
 from app.strategies.splinterlands import SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1
+from app.web.seo import format_datetime
 from test_api_v1 import NOW, _seed_snapshots_and_scores, _seeded_client
 
 
@@ -34,14 +35,45 @@ def test_strategy_page_contains_meaningful_server_rendered_content(monkeypatch, 
     assert "30-day ROI" in html
     assert "Risk and Confidence" in html
     assert 'data-ai-answer-block="true"' in html
-    assert "Answer-ready strategy summary" in html
+    assert "Quick strategy summary" in html
+    assert "Plain-language summary" in html
+    assert "Expected return" in html
+    assert "High-risk strategy. Opening the project is not a recommendation; review the assumptions first." in html
+    assert "Technical snapshot details" in html
+    assert "Aug 16, 2026 12:00 UTC" in html
     assert "Estimated gross earnings/day" in html
     assert "Required time/effort" in html
     assert "Major assumptions" in html
     assert f'<link rel="canonical" href="http://localhost:8000/strategies/{DFK_CJEWEL_MAX_LOCK_V1.strategy_id}">' in html
-    assert '<a class="button cta" href="/go/defi-kingdoms-play"' in html
+    assert '<a class="button cta" href="/go/defi-kingdoms-play" target="_blank" rel="noopener noreferrer"' in html
+    assert ">Open project" in html
     assert 'data-analytics-link="outbound"' in html
     assert '"@type":"WebPage"' in html
+
+
+def test_server_timestamp_formatter_uses_readable_utc_without_fractional_noise() -> None:
+    assert format_datetime("2026-08-16T12:00:00.000000+00:00") == "Aug 16, 2026 12:00 UTC"
+    assert format_datetime("2026-08-16T12:00:00Z") == "Aug 16, 2026 12:00 UTC"
+
+
+def test_server_rendered_external_links_open_new_tab_and_internal_links_stay_same_tab(monkeypatch, tmp_path) -> None:
+    client, _engine = _seeded_client(monkeypatch, tmp_path, "seo-link-behavior.db")
+
+    opportunity_html = client.get("/opportunities/grass").text
+    strategy_html = client.get(f"/strategies/{DFK_CJEWEL_MAX_LOCK_V1.strategy_id}").text
+    html = opportunity_html + strategy_html
+
+    external_anchors = re.findall(r'<a\b[^>]*href="https?://[^"]+"[^>]*>', html)
+    assert external_anchors
+    for anchor in external_anchors:
+        assert 'target="_blank"' in anchor
+        assert 'rel="noopener noreferrer"' in anchor
+
+    assert '<a href="https://www.grass.io/terms-and-conditions/" target="_blank" rel="noopener noreferrer">' in opportunity_html
+    assert '<a class="button cta" href="/go/defi-kingdoms-play" target="_blank" rel="noopener noreferrer"' in strategy_html
+    assert '<a class="secondary-button" href="/opportunities/defi-kingdoms">Parent opportunity</a>' in strategy_html
+    for anchor in re.findall(r'<a\b[^>]*href="/(?!go/)[^"]+"[^>]*>', html):
+        assert 'target="_blank"' not in anchor
 
 
 def test_unavailable_points_roi_is_crawlable_and_not_zero(monkeypatch, tmp_path) -> None:
@@ -54,7 +86,7 @@ def test_unavailable_points_roi_is_crawlable_and_not_zero(monkeypatch, tmp_path)
     assert "Grass" in html
     assert "ROI not measurable yet" in html
     assert "Points cannot currently be converted to cash reliably" in html
-    assert "Answer-ready opportunity summary" in html
+    assert "Quick opportunity summary" in html
     assert "Value route" in html
     assert "DePIN / Nodes" in html
     assert "DEPIN_NODE" not in html
@@ -93,8 +125,8 @@ def test_curated_landing_page_is_indexable(monkeypatch, tmp_path) -> None:
     assert response.status_code == 200
     assert '<meta name="robots" content="index,follow">' in response.text
     assert "Web3 strategies under $25 capital" in response.text
-    assert "Answer-ready comparison" in response.text
-    assert "Citation-ready" in response.text
+    assert "Quick comparison" in response.text
+    assert "Source-ready" in response.text
     assert SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1.name in response.text
 
 
@@ -108,7 +140,7 @@ def test_best_passive_gamefi_landing_page_is_publishable(monkeypatch, tmp_path) 
     html = response.text
     assert '<meta name="robots" content="index,follow">' in html
     assert "Best passive GameFi ROI strategies" in html
-    assert "Answer-ready comparison" in html
+    assert "Quick comparison" in html
     assert DFK_CJEWEL_MAX_LOCK_V1.name in html
     assert FARMERS_WORLD_AXE_WOOD_V1.name not in html
     assert "/rankings/best-passive-gamefi" in paths
@@ -177,7 +209,7 @@ def test_depin_curated_pages_publish_only_when_authoritative_data_qualifies(monk
         response = client.get(f"/rankings/{slug}")
         assert response.status_code == 200
         assert '<meta name="robots" content="index,follow">' in response.text
-        assert "Answer-ready comparison" in response.text
+        assert "Quick comparison" in response.text
         assert f"/rankings/{slug}" in inventory_paths
         assert f"/rankings/{slug}" in sitemap
 

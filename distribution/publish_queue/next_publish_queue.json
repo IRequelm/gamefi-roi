@@ -1,0 +1,129 @@
+{
+  "green": [
+    {
+      "approval_requirement": "FOUNDER_FINAL_REVIEW_BEFORE_EXTERNAL_PUBLISHING",
+      "attribution_url": "https://gamcryp.com/methodology?utm_campaign=distribution-mvp&utm_content=x-gamcryp-methodology-not-recommendation-20260831&utm_medium=social&utm_source=x",
+      "channel": "X",
+      "content_id": "x-gamcryp-methodology-not-recommendation-20260831",
+      "current_status": "GREEN",
+      "final_copy": "GamCryp ranks strategies, not hype.\n\nA high modeled ROI can still carry high risk. A low-cost opportunity can still have weak economics. And if rewards are not reproducible, ROI stays unavailable.\n\nThe goal is decision clarity, not a recommendation.\n\nhttps://gamcryp.com/methodology?utm_campaign=distribution-mvp&utm_content=x-gamcryp-methodology-not-recommendation-20260831&utm_medium=social&utm_source=x",
+      "project": "GamCryp",
+      "reason_for_inclusion": "Safest GREEN draft: non-numeric methodology content explains ranking without recommendation language.",
+      "recommended_order": 1,
+      "refreshability": null,
+      "risk_caveat": "Rank is a comparison signal, not a recommendation or guaranteed return.",
+      "snapshot_id": null,
+      "snapshot_timestamp": null,
+      "x_weighted_length": 274
+    }
+  ],
+  "queue_version": "publish-queue-v1",
+  "source_batch_hash": "34051cbed45a7e2b567d2d6b851267d6da900751c9b00ade093e41bb33e2a4af",
+  "source_batch_id": "distribution-learning-batch-001",
+  "source_refresh_timestamp": "2026-08-31T21:33:44.128693Z",
+  "yellow_requires_human_approval": [
+    {
+      "approval_notes": [
+        "Shorten to the X 280-character weighted limit before publishing."
+      ],
+      "approval_requirement": "EXPLICIT_HUMAN_APPROVAL_REQUIRED",
+      "attribution_url": "https://gamcryp.com/strategies/dfk-crystalvale-jeweler-cjewel-5000-max-lock?utm_campaign=distribution-mvp&utm_content=x-dfk-lock-risk-20260831&utm_medium=social&utm_source=x",
+      "channel": "X",
+      "content_id": "x-dfk-lock-risk-20260831",
+      "current_status": "YELLOW",
+      "final_copy": "DeFi Kingdoms shows why confidence and risk are not the same.\n\nGamCryp models the 5000 JEWEL max-lock strategy at $40.64 capital, $0.0136/day net, and 1% 30D ROI.\n\nConfidence: HIGH. Risk: VERY HIGH because the lock and emergency-exit terms dominate the catch.\n\nhttps://gamcryp.com/strategies/dfk-crystalvale-jeweler-cjewel-5000-max-lock?utm_campaign=distribution-mvp&utm_content=x-dfk-lock-risk-20260831&utm_medium=social&utm_source=x",
+      "project": "DeFi Kingdoms",
+      "reason_for_inclusion": "Current AUTO-refreshable snapshot is aligned; VERY HIGH lock and exit risk requires explicit human approval.",
+      "recommended_order": 2,
+      "refreshability": "AUTO_REFRESHABLE",
+      "risk_caveat": "Risk is VERY HIGH; review the strategy assumptions before acting.",
+      "snapshot_id": "3920a38d-3ca0-525d-b77e-1f47f4c59e38",
+      "snapshot_timestamp": "2026-08-31T21:33:44.128693Z",
+      "x_weighted_length": 284
+    },
+    {
+      "approval_notes": [
+        "Shorten to the X 280-character weighted limit before publishing."
+      ],
+      "approval_requirement": "EXPLICIT_HUMAN_APPROVAL_REQUIRED",
+      "attribution_url": "https://gamcryp.com/strategies/farmers-world-axe-wood-production?utm_campaign=distribution-mvp&utm_content=x-farmers-world-tiny-economics-20260831&utm_medium=social&utm_source=x",
+      "channel": "X",
+      "content_id": "x-farmers-world-tiny-economics-20260831",
+      "current_status": "YELLOW",
+      "final_copy": "Farmers World is a useful reminder: cheap entry is not the same as good economics.\n\nGamCryp's axe strategy shows capital $0.0019, net/day <$0.0001/day, and 30D ROI of -0.9%.\n\nThis is why GamCryp separates modeled return from risk, liquidity, and confidence.\n\nhttps://gamcryp.com/strategies/farmers-world-axe-wood-production?utm_campaign=distribution-mvp&utm_content=x-farmers-world-tiny-economics-20260831&utm_medium=social&utm_source=x",
+      "project": "Farmers World",
+      "reason_for_inclusion": "Current AUTO-refreshable snapshot is aligned; HIGH risk, MODERATE confidence, and tiny-value wording require human approval.",
+      "recommended_order": 3,
+      "refreshability": "AUTO_REFRESHABLE",
+      "risk_caveat": "Risk is HIGH; review the strategy assumptions before acting.",
+      "snapshot_id": "6abc7a05-f616-5215-ab2b-4e07e24291c2",
+      "snapshot_timestamp": "2026-08-31T21:33:44.128693Z",
+      "x_weighted_length": 282
+    },
+    {
+      "approval_notes": [
+        "Shorten to the X 280-character weighted limit before publishing."
+      ],
+      "approval_requirement": "EXPLICIT_HUMAN_APPROVAL_REQUIRED",
+      "attribution_url": "https://gamcryp.com/strategies/splinterlands-modern-ranked-sps-ev?utm_campaign=distribution-mvp&utm_content=x-splinterlands-expected-value-20260831&utm_medium=social&utm_source=x",
+      "channel": "X",
+      "content_id": "x-splinterlands-expected-value-20260831",
+      "current_status": "YELLOW",
+      "final_copy": "Splinterlands is modeled as expected value, not guaranteed income.\n\nGamCryp's Modern Ranked SPS strategy uses $10 capital, -$0.0004/day net, and -0.13% 30D ROI.\n\nThe catch: win rate and SPS per win are assumptions, so confidence stays LOW and uncertainty is explicit.\n\nhttps://gamcryp.com/strategies/splinterlands-modern-ranked-sps-ev?utm_campaign=distribution-mvp&utm_content=x-splinterlands-expected-value-20260831&utm_medium=social&utm_source=x",
+      "project": "Splinterlands",
+      "reason_for_inclusion": "Current AUTO-refreshable expected-value snapshot is aligned; VERY HIGH risk and LOW confidence require human approval.",
+      "recommended_order": 4,
+      "refreshability": "AUTO_REFRESHABLE",
+      "risk_caveat": "Performance-dependent SPS rewards are modeled as expected value, not guaranteed earnings.",
+      "snapshot_id": "b20ec6a4-78e2-54a0-83fb-741eeefe00e2",
+      "snapshot_timestamp": "2026-08-31T21:33:44.128693Z",
+      "x_weighted_length": 292
+    },
+    {
+      "approval_notes": [
+        "Shorten to the X 280-character weighted limit before publishing."
+      ],
+      "approval_requirement": "EXPLICIT_HUMAN_APPROVAL_REQUIRED",
+      "attribution_url": "https://gamcryp.com/opportunities/grass?utm_campaign=distribution-mvp&utm_content=x-grass-roi-unavailable-20260831&utm_medium=social&utm_source=x",
+      "channel": "X",
+      "content_id": "x-grass-roi-unavailable-20260831",
+      "current_status": "YELLOW",
+      "final_copy": "Grass is useful for GamCryp because the honest answer is: ROI unavailable.\n\nThe project has points-based rewards, but GamCryp does not convert points into financial ROI unless there is a reproducible exit route.\n\nThat is the point of the model: no fake zero, no made-up yield.\n\nhttps://gamcryp.com/opportunities/grass?utm_campaign=distribution-mvp&utm_content=x-grass-roi-unavailable-20260831&utm_medium=social&utm_source=x",
+      "project": "Grass",
+      "reason_for_inclusion": "Non-financial ROI-unavailable explanation is truthful; points-program wording requires human approval.",
+      "recommended_order": 5,
+      "refreshability": null,
+      "risk_caveat": "Grass points are not modeled as financial ROI unless a lawful, reproducible value route exists.",
+      "snapshot_id": null,
+      "snapshot_timestamp": null,
+      "x_weighted_length": 301
+    },
+    {
+      "approval_notes": [
+        "Human creative-quality and final edit approval required before video rendering or upload."
+      ],
+      "approval_requirement": "EXPLICIT_HUMAN_APPROVAL_REQUIRED",
+      "attribution_url": "https://gamcryp.com/opportunities/grass?utm_campaign=distribution-mvp&utm_content=x-grass-roi-unavailable-20260831&utm_medium=short&utm_source=youtube",
+      "channel": "YOUTUBE_SHORT",
+      "content_id": "x-grass-roi-unavailable-20260831",
+      "current_status": "YELLOW",
+      "description": "A GamCryp Short explaining why points-based opportunities like Grass may be useful to track while ROI remains unavailable.",
+      "project": "Grass",
+      "reason_for_inclusion": "Non-financial ROI-unavailable explanation is truthful; points-program wording requires human approval.",
+      "recommended_order": 6,
+      "refreshability": null,
+      "risk_caveat": "Grass points are not modeled as financial ROI unless a lawful, reproducible value route exists.",
+      "script": "Grass is a good example of a Web3 earning opportunity where GamCryp should not invent ROI. The user contributes bandwidth and may earn points. But points are not the same as a realizable market return. GamCryp marks ROI unavailable until a lawful, reproducible value route exists. That protects users from fake precision.",
+      "snapshot_id": null,
+      "snapshot_timestamp": null,
+      "thumbnail_text": "Grass ROI unavailable",
+      "title": "Grass: why GamCryp says ROI unavailable",
+      "visual_plan": [
+        "Open with Grass name and ROI unavailable.",
+        "Show points are not dollars.",
+        "Show GamCryp rule: no executable value route means no financial ROI.",
+        "End on the Grass opportunity page."
+      ]
+    }
+  ]
+}

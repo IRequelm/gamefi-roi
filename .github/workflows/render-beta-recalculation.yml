@@ -56,4 +56,4 @@ jobs:
           python -m pip install -r requirements.txt
 
       - name: Run scheduled recalculation
-        run: python -m app.jobs.production_recalculation
+        run: python -m app.jobs.snapshot_refresh

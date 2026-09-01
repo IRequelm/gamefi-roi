@@ -35,6 +35,7 @@ from app.strategies.catalog import CATALOG_REVIEWED_AT
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 FRONTEND_ASSETS = PROJECT_ROOT / "frontend" / "assets"
+MONTH_NAMES = ("", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
 
 
 @dataclass(frozen=True)
@@ -280,6 +281,7 @@ def opportunity_page(
           </div>
         </section>
         {_render_opportunity_answer_block(opportunity, strategy, snapshot)}
+        {_render_opportunity_human_summary(opportunity, strategy, snapshot)}
         <section class="section-panel">
           <div class="section-header"><h2>Executive Summary</h2></div>
           <div class="section-body metric-grid">
@@ -328,7 +330,7 @@ def game_page(game, *, settings: Settings, request: Request) -> SeoPage:
           <h1>{escape(game.name)} ROI strategies</h1>
           <p class="lede">{escape(description)}</p>
           <div class="button-row">
-            {_destination_button(game.primary_destination, "Start")}
+            {_destination_button(game.primary_destination, cta_label_for_snapshot(snapshot, "Start"))}
             <a class="secondary-button" href="/opportunities/{escape(game.opportunity_id)}">Canonical opportunity</a>
           </div>
         </section>
@@ -372,10 +374,12 @@ def strategy_page(
           <div class="button-row">
             <a class="secondary-button" href="/opportunities/{escape(strategy.opportunity_id)}">Parent opportunity</a>
             <a class="secondary-button" href="/games/{escape(strategy.game_id)}">Game view</a>
-            {_destination_button(strategy.primary_destination, "Start")}
+            {_destination_button(strategy.primary_destination, cta_label_for_snapshot(snapshot, "Start"))}
           </div>
+          {_render_cta_risk_notice(snapshot)}
         </section>
         {_render_strategy_answer_block(strategy, snapshot)}
+        {_render_strategy_human_summary(strategy, snapshot)}
         {_render_snapshot_detail(snapshot) if snapshot is not None else _empty("No stored snapshot", "This strategy has not produced a valid stored calculation yet.")}
         {_render_history_context(history_items)}
         <section class="section-panel">
@@ -528,7 +532,7 @@ def _render_home_answer_block(rankings: RankingsPage, opportunities: list[Opport
         ("Data source", "Stored snapshots served through /api/v1; page requests do not call live providers."),
     ]
     return _render_answer_block(
-        "Answer-ready overview",
+        "Quick overview",
         "GamCryp is a Web3 opportunity intelligence source for modeled ROI, risk, confidence, freshness, and explicit unavailable states.",
         fields,
     )
@@ -549,7 +553,7 @@ def _render_rankings_answer_block(
         ("Commercial policy", "Referral, affiliate, and sponsor metadata never changes organic ranking order or analytical scores."),
     ]
     return _render_answer_block(
-        "Answer-ready comparison",
+        "Quick comparison",
         _rankings_summary(rankings),
         fields,
     )
@@ -567,7 +571,7 @@ def _render_opportunity_index_answer_block(opportunities: list[OpportunitySummar
         ("Points rule", "Points and future claims are shown as unavailable unless a lawful realizable value route exists."),
     ]
     return _render_answer_block(
-        "Answer-ready catalog summary",
+        "Quick catalog summary",
         "GamCryp tracks Games, DePIN / Nodes, and Points programs in one opportunity catalog with modeled ROI only where the data supports it.",
         fields,
     )
@@ -582,7 +586,7 @@ def _render_opportunity_answer_block(
     if strategy is not None and snapshot is not None:
         fields = _strategy_answer_fields(strategy, snapshot)
         fields.insert(0, ("Opportunity page", escape(opportunity.name)))
-        return _render_answer_block("Answer-ready opportunity summary", _ranking_answer(snapshot, strategy), fields)
+        return _render_answer_block("Quick opportunity summary", _ranking_answer(snapshot, strategy), fields)
 
     fields = [
         ("Opportunity", escape(opportunity.name)),
@@ -595,7 +599,7 @@ def _render_opportunity_answer_block(
         ("Reviewed outbound link", escape(_destination_status_text(opportunity.primary_destination))),
         ("Last reviewed", escape(format_datetime(getattr(opportunity.primary_destination, "reviewed_at", None)))),
     ]
-    return _render_answer_block("Answer-ready opportunity summary", _opportunity_answer(opportunity, strategy, snapshot), fields)
+    return _render_answer_block("Quick opportunity summary", _opportunity_answer(opportunity, strategy, snapshot), fields)
 
 
 def _render_strategy_answer_block(strategy: StrategySummary, snapshot: StrategySnapshotPayload | None) -> str:
@@ -607,8 +611,8 @@ def _render_strategy_answer_block(strategy: StrategySummary, snapshot: StrategyS
             ("Opportunity type", escape(opportunity_type_label(strategy.opportunity_type))),
             ("ROI status", "No successful stored calculation yet."),
         ]
-        return _render_answer_block("Answer-ready strategy summary", f"{strategy.name} has no successful stored calculation yet.", fields)
-    return _render_answer_block("Answer-ready strategy summary", _ranking_answer(snapshot, strategy), _strategy_answer_fields(strategy, snapshot))
+        return _render_answer_block("Quick strategy summary", f"{strategy.name} has no successful stored calculation yet.", fields)
+    return _render_answer_block("Quick strategy summary", _ranking_answer(snapshot, strategy), _strategy_answer_fields(strategy, snapshot))
 
 
 def _strategy_answer_fields(strategy: StrategySummary, snapshot: StrategySnapshotPayload) -> list[tuple[str, str]]:
@@ -641,7 +645,7 @@ def _render_answer_block(title: str, summary: str, fields: list[tuple[str, str]]
     )
     return f"""
       <section class="answer-card" data-ai-answer-block="true">
-        <div class="section-header"><h2>{escape(title)}</h2><span class="badge info">Citation-ready</span></div>
+        <div class="section-header"><h2>{escape(title)}</h2><span class="badge info">Source-ready</span></div>
         <div class="section-body">
           <p class="answer-summary">{escape(summary)}</p>
           <dl class="answer-grid">{items}</dl>
@@ -649,6 +653,71 @@ def _render_answer_block(title: str, summary: str, fields: list[tuple[str, str]]
       </section>
     """
 
+
+def _render_human_summary(title: str, items: list[tuple[str, str]]) -> str:
+    rendered = "".join(
+        f'<article class="human-line"><span>{escape(label)}</span><p>{value}</p></article>'
+        for label, value in items
+    )
+    return f"""
+      <section class="section-panel human-summary">
+        <div class="section-header"><h2>{escape(title)}</h2></div>
+        <div class="section-body human-summary-grid">{rendered}</div>
+      </section>
+    """
+
+
+def _render_opportunity_human_summary(
+    opportunity: OpportunityDetail,
+    strategy: StrategySummary | None,
+    snapshot: StrategySnapshotPayload | None,
+) -> str:
+    access = human_list([*opportunity.platforms, *opportunity.chains], "Check the official project page for access requirements")
+    reward_types = human_list(opportunity.reward_asset_or_points_type, "Reward type not specified yet")
+    modeled = strategy is not None and snapshot is not None
+    unavailable = plain_unavailable_reason(opportunity)
+    items = [
+        ("What it is", escape(f"{opportunity.name} is tracked as {opportunity_type_label(opportunity.opportunity_type).lower()}.")),
+        ("How it may earn", escape(reward_types)),
+        ("What you need", escape(access)),
+        (
+            "Cost and return",
+            f"Modeled in {escape(strategy.name)}; open the strategy for current capital, costs, and ROI."
+            if modeled and strategy is not None
+            else escape(unavailable),
+        ),
+        (
+            "Cash-out",
+            "Realizable value is modeled inside the strategy snapshot where market data supports it."
+            if modeled
+            else escape(unavailable),
+        ),
+        (
+            "Main catch",
+            escape("Review risk, confidence, and freshness before acting." if opportunity.data_feasibility_status == "GO" else unavailable),
+        ),
+    ]
+    return _render_human_summary("Plain-language summary", items)
+
+
+def _render_strategy_human_summary(strategy: StrategySummary, snapshot: StrategySnapshotPayload | None) -> str:
+    if snapshot is None:
+        return ""
+    items = [
+        ("What it is", escape(f"{strategy.name} is a modeled strategy for {strategy.game_name}.")),
+        ("How it may earn", escape(f"{labelize(strategy.economy_type)} economics are converted into the generic ROI model.")),
+        ("What you need", f"Estimated starting capital is {format_money_html(snapshot.capital.total_capital)}."),
+        (
+            "Expected return",
+            f"{format_money_html(snapshot.earnings.net_earnings_day, per_day=True)} estimated net earnings and {format_ratio_html(snapshot.roi.roi_total_30d)} modeled 30-day ROI.",
+        ),
+        (
+            "Cash-out",
+            f"Recoverable value is {format_money_html(snapshot.capital.recoverable_capital)}; exit-adjusted P&amp;L is {format_money_html(snapshot.roi.exit_adjusted_pnl)}.",
+        ),
+        ("Main catch", escape(strategy_risk_summary(snapshot))),
+    ]
+    return _render_human_summary("Plain-language summary", items)
 
 def _filter_summary(filters: dict[str, object] | None) -> str:
     if not filters:
@@ -720,9 +789,10 @@ def _render_ranking_cards(items: list[RankingItem], *, heading: str) -> str:
                 {_badge(f"Risk {score_text(snapshot.risk)}", score_class(snapshot.risk, "risk"))}
                 {_badge(f"Updated {format_datetime(snapshot.calculated_at)}", "info")}
               </div>
+              {_render_cta_risk_notice(snapshot)}
               <div class="card-actions">
                 <a class="secondary-button" href="/strategies/{escape(strategy.strategy_id)}">View strategy</a>
-                {_destination_button(strategy.primary_destination, "Start")}
+                {_destination_button(strategy.primary_destination, cta_label_for_snapshot(snapshot, "Start"))}
               </div>
             </article>
             """
@@ -814,17 +884,32 @@ def _render_snapshot_detail(snapshot: StrategySnapshotPayload) -> str:
           {_metric("Risk explanation", escape(risk_reason))}
           {_metric("Confidence", score_text(snapshot.confidence))}
           {_metric("Confidence explanation", escape(confidence_reason))}
-        </div>
-      </section>
-      <section class="section-panel">
-        <div class="section-header"><h2>LIVE / CONFIG / DERIVED</h2></div>
-        <div class="section-body metric-grid">
-          {_metric("LIVE", escape(str(snapshot.classification_summary.counts.get("LIVE", 0))))}
-          {_metric("CONFIG", escape(str(snapshot.classification_summary.counts.get("CONFIG", 0))))}
-          {_metric("DERIVED", escape(str(snapshot.classification_summary.counts.get("DERIVED", 0))))}
           {_metric("Warnings", escape(warnings))}
         </div>
       </section>
+      <details class="advanced-panel snapshot-advanced">
+        <summary>Technical snapshot details</summary>
+        <div class="advanced-panel-body">
+          <section class="section-panel">
+            <div class="section-header"><h2>Versions</h2></div>
+            <div class="section-body metric-grid">
+              {_metric("Strategy ID", escape(snapshot.strategy_id))}
+              {_metric("Adapter contract", escape(snapshot.versions.adapter_contract_version))}
+              {_metric("ROI model", escape(snapshot.versions.model_version))}
+              {_metric("Scoring methodology", escape(snapshot.versions.scoring_methodology_version or "Unavailable"))}
+              {_metric("Last calculated", escape(format_datetime(snapshot.calculated_at)))}
+            </div>
+          </section>
+          <section class="section-panel">
+            <div class="section-header"><h2>LIVE / CONFIG / DERIVED</h2></div>
+            <div class="section-body metric-grid">
+              {_metric("LIVE", escape(str(snapshot.classification_summary.counts.get("LIVE", 0))))}
+              {_metric("CONFIG", escape(str(snapshot.classification_summary.counts.get("CONFIG", 0))))}
+              {_metric("DERIVED", escape(str(snapshot.classification_summary.counts.get("DERIVED", 0))))}
+            </div>
+          </section>
+        </div>
+      </details>
     """
 
 
@@ -850,7 +935,7 @@ def _render_unavailable_roi(opportunity: OpportunityDetail) -> str:
 
 def _render_sources(opportunity: OpportunityDetail) -> str:
     references = "".join(
-        f'<article class="contributor"><strong>{escape(source.label)}</strong><a href="{escape(source.url)}" rel="noopener noreferrer">{escape(source.url)}</a></article>'
+        f'<article class="contributor"><strong>{escape(source.label)}</strong><a href="{escape(source.url)}" target="_blank" rel="noopener noreferrer">{escape(source.url)}</a></article>'
         for source in opportunity.official_source_references
     )
     destinations = "".join(
@@ -893,8 +978,13 @@ def _destination_button(destination, label: str) -> str:
         return '<span class="badge">No reviewed link</span>'
     relationship = destination_relationship_label(destination)
     relationship_html = f"<span>{escape(relationship)}</span>" if relationship else ""
-    return f'<a class="button cta" href="{escape(destination.redirect_url)}"{analytics_attributes(destination)}>{escape(label)}{relationship_html}</a>'
+    return f'<a class="button cta" href="{escape(destination.redirect_url)}" target="_blank" rel="noopener noreferrer"{analytics_attributes(destination)}>{escape(label)}{relationship_html}</a>'
 
+
+def _render_cta_risk_notice(snapshot) -> str:
+    if not is_elevated_risk(snapshot):
+        return ""
+    return '<p class="cta-risk-note">High-risk strategy. Opening the project is not a recommendation; review the assumptions first.</p>'
 
 def _summary(label: str, value: str) -> str:
     return f'<div class="summary-item"><span>{escape(label)}</span><strong>{value}</strong></div>'
@@ -964,14 +1054,74 @@ def score_class(score, kind: str) -> str:
     return "good" if label == "low" else "medium" if label == "medium" else label
 
 
+def is_elevated_risk(snapshot) -> bool:
+    if not snapshot or not hasattr(snapshot, "risk") or not snapshot.risk.available:
+        return False
+    label = str(snapshot.risk.label or "").upper()
+    return label in ["HIGH", "VERY HIGH"]
+
+
+def cta_label_for_snapshot(snapshot, fallback: str = "Start") -> str:
+    return "Open project" if is_elevated_risk(snapshot) else fallback
+
+
+def strategy_risk_summary(snapshot) -> str:
+    if not snapshot:
+        return "No snapshot available for risk assessment."
+    if hasattr(snapshot, "freshness") and hasattr(snapshot.freshness, "overall_status"):
+        if snapshot.freshness.overall_status and snapshot.freshness.overall_status != "fresh":
+            return "The latest stored data is stale, so treat the result as outdated until a fresh snapshot appears."
+    if is_elevated_risk(snapshot):
+        return "Elevated risk: this CTA opens the project, not a recommendation to start."
+    if hasattr(snapshot, "confidence") and snapshot.confidence.available:
+        if snapshot.confidence.label == "LOW":
+            return "Low confidence means the calculation depends on weaker or incomplete evidence."
+    if hasattr(snapshot, "warnings") and snapshot.warnings:
+        return snapshot.warnings[0].message
+    return "No critical warning is attached, but ROI is still an estimate rather than a promise."
+
+
+def human_list(values: list[str] | None, fallback: str) -> str:
+    if not values:
+        return fallback
+    labels = [labelize(value) for value in values if value]
+    return ", ".join(labels) if labels else fallback
+
+
 def format_datetime(value: datetime | str | None) -> str:
     if value is None:
         return "Unavailable"
     if isinstance(value, str):
-        return value.replace("T", " ").replace("Z", " UTC").replace(":00 UTC", " UTC")
+        parsed = _parse_datetime(value)
+        if parsed is not None:
+            return _format_datetime_utc(parsed)
+        return _strip_timestamp_noise(value)
     if value.tzinfo is None or value.utcoffset() is None:
         value = value.replace(tzinfo=UTC)
-    return value.astimezone(UTC).strftime("%Y-%m-%d %H:%M UTC")
+    return _format_datetime_utc(value)
+
+
+def _parse_datetime(value: str) -> datetime | None:
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
+def _format_datetime_utc(value: datetime) -> str:
+    if value.tzinfo is None or value.utcoffset() is None:
+        value = value.replace(tzinfo=UTC)
+    utc_value = value.astimezone(UTC)
+    return f"{MONTH_NAMES[utc_value.month]} {utc_value.day}, {utc_value.year} {utc_value:%H:%M} UTC"
+
+
+def _strip_timestamp_noise(value: str) -> str:
+    text = str(value).replace("T", " ").replace("Z", " UTC")
+    suffix = " UTC" if "+00:00" in text or " UTC" in text else ""
+    text = text.replace("+00:00", "")
+    if "." in text:
+        text = text.split(".", 1)[0]
+    return f"{text}{suffix}".replace(":00 UTC", " UTC")
 
 
 def labelize(value: str) -> str:

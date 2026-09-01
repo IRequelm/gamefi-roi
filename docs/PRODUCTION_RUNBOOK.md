@@ -29,7 +29,7 @@ Cost-minimized beta decision:
 - `render.yaml` uses a Free Web Service and Free Render Postgres.
 - The paid Render Cron Job is removed from the beta Blueprint because Render Cron Jobs have paid billing.
 - Scheduled recalculation moves to GitHub Actions for beta.
-- GitHub Actions runs the existing `python -m app.jobs.production_recalculation` command, so application-level PostgreSQL advisory locking, G8 snapshot idempotency, hard-stale checks, and per-strategy failure isolation remain unchanged.
+- GitHub Actions runs `python -m app.jobs.snapshot_refresh`, which applies the canonical refreshability policy before delegating eligible strategies to the existing recalculation pipeline. PostgreSQL advisory locking, G8 snapshot idempotency, hard-stale checks, and per-strategy failure isolation remain unchanged.
 
 Free-tier limitations:
 
@@ -188,10 +188,59 @@ Before destructive schema changes in future gates:
 
 ## Scheduler
 
-Shared recalculation command:
+### Snapshot Freshness Refresh
+
+The canonical operator command remains:
 
 ```bash
-python -m app.jobs.production_recalculation
+PYTHONPATH=backend python -m app.jobs.snapshot_refresh --dry-run
+PYTHONPATH=backend python -m app.jobs.snapshot_refresh --regenerate-distribution
+```
+
+`--dry-run` classifies the currently registered production strategy tasks without provider or database calls. A normal run delegates to the existing production recalculation pipeline: source loader, freshness validation, adapter, generic ROI engine, append-only history persistence, scoring, and PostgreSQL idempotency/lock protection. It does not publish content or deploy the application.
+
+The optional `--regenerate-distribution` flag writes the file-based learning batch only after the recalculation returns zero failures. It reads the public read-only API after that successful run; it never converts stale or missing values into fresh values and never publishes drafts. Numeric packs also resolve their strategy through the canonical refreshability registry: `PARTIAL_REFRESH_ONLY` and `NOT_REFRESHABLE` remain RED regardless of a recent calculation timestamp or refreshed market sub-input.
+
+At the freshness audit on 2026-08-31, the distribution candidates' latest snapshots were calculated around `15:16 UTC` and had five-minute source deadlines around `15:21 UTC`. They were stale because no later successful recalculation had replaced them, not because the documented thresholds were loosened or because persisted source-status counts were changed.
+
+Refreshability is explicit per strategy. The current registry has 10 `AUTO_REFRESHABLE` strategies: the three DFK Jeweler, three Farmers World, and four Splinterlands strategies. GEODNET, WeatherXM, DIMO, and Mysterium Network Node are `PARTIAL_REFRESH_ONLY`: market price can refresh, but required economic inputs remain CONFIG/static and are skipped for publication freshness. Storj Storage Node is `NOT_REFRESHABLE` because no approved live economic-source loader exists. The command records provider failures and never assigns guessed refreshability to unsupported tasks.
+
+The complete current matrix is:
+
+| Strategy | Refreshability | Live source/provider | Static/config dependency | Blocker |
+|---|---|---|---|---|
+| `dfk-crystalvale-jeweler-cjewel-max-lock` | `AUTO_REFRESHABLE` | DFK Chain RPC | verified strategy configuration | none when RPC credentials/config are available |
+| `dfk-crystalvale-jeweler-cjewel-100-max-lock` | `AUTO_REFRESHABLE` | DFK Chain RPC | verified strategy configuration | none when RPC credentials/config are available |
+| `dfk-crystalvale-jeweler-cjewel-5000-max-lock` | `AUTO_REFRESHABLE` | DFK Chain RPC | verified strategy configuration | none when RPC credentials/config are available |
+| `farmers-world-axe-wood-production` | `AUTO_REFRESHABLE` | Alcor, AtomicAssets, CoinGecko | verified production constants | none when provider configuration is available |
+| `farmers-world-axe-wood-production-3x` | `AUTO_REFRESHABLE` | Alcor, AtomicAssets, CoinGecko | verified production constants | none when provider configuration is available |
+| `farmers-world-axe-wood-production-10x` | `AUTO_REFRESHABLE` | Alcor, AtomicAssets, CoinGecko | verified production constants | none when provider configuration is available |
+| `splinterlands-modern-ranked-sps-ev` | `AUTO_REFRESHABLE` | Splinterlands API, CoinGecko | probability/performance configuration | none when provider configuration is available |
+| `splinterlands-modern-ranked-casual-sps-ev` | `AUTO_REFRESHABLE` | Splinterlands API, CoinGecko | probability/performance configuration | none when provider configuration is available |
+| `splinterlands-modern-ranked-active-sps-ev` | `AUTO_REFRESHABLE` | Splinterlands API, CoinGecko | probability/performance configuration | none when provider configuration is available |
+| `splinterlands-modern-ranked-grinder-sps-ev` | `AUTO_REFRESHABLE` | Splinterlands API, CoinGecko | probability/performance configuration | none when provider configuration is available |
+| `geodnet-empty-hex-triple-band-base-station` | `PARTIAL_REFRESH_ONLY` | CoinGecko GEOD price | hardware/reward/location economics | required economics remain CONFIG/static |
+| `weatherxm-d1-wifi-station` | `PARTIAL_REFRESH_ONLY` | CoinGecko WXM price | hardware/reward/location economics | required economics remain CONFIG/static |
+| `dimo-software-only-compatible-car` | `PARTIAL_REFRESH_ONLY` | CoinGecko DIMO price | reward denominator/subscription economics | required economics remain CONFIG/static |
+| `mysterium-b2b-existing-device` | `PARTIAL_REFRESH_ONLY` | CoinGecko MYST price | demand/cost economics | required economics remain CONFIG/static |
+| `storj-existing-hardware-storage-node` | `NOT_REFRESHABLE` | none approved | payout/utilization/power economics | no genuine live economic-source loader |
+
+The command summary exposes `auto_refreshed`, `partial_skipped`, `not_refreshable_skipped`, and `failed` counts; skipped categories never count as successful refreshes.
+
+Refresh policy remains fail-closed:
+
+- fresh source observations can produce a new snapshot;
+- stale, missing, invalid, or provider-failed required inputs produce a failure, not a fresh snapshot;
+- identical source state and intended window remain idempotent;
+- historical snapshots are retained;
+- distribution numeric packs remain RED while their source snapshot is stale;
+- re-saving old data is never treated as a refresh.
+- CONFIG/static observations retain the stable `catalog-expansion-batch1` evidence version and establishment timestamp; recalculation time cannot renew their source freshness.
+
+Shared policy-aware scheduled refresh command:
+
+```bash
+python -m app.jobs.snapshot_refresh
 ```
 
 Beta cadence: every 30 minutes UTC through GitHub Actions schedule `*/30 * * * *`.

@@ -22,6 +22,7 @@ import {
   renderDestinationButton,
   renderError,
   renderFreshnessAlert,
+  renderGameDetail,
   renderHistory,
   renderHomeAnswerBlock,
   renderHomeShell,
@@ -111,11 +112,11 @@ test("answer-ready blocks expose stored values without changing calculations", (
   const opportunityHtml = renderOpportunityAnswerBlock(opportunity);
   const strategyHtml = renderStrategyAnswerBlock(strategy, strategy.latest_snapshot);
 
-  assert.match(home, /Answer-ready overview/);
-  assert.match(ranking, /Answer-ready comparison/);
+  assert.match(home, /Quick overview/);
+  assert.match(ranking, /Quick comparison/);
   assert.match(ranking, /Capital up to \$100/);
-  assert.match(opportunityHtml, /Answer-ready opportunity summary/);
-  assert.match(strategyHtml, /Answer-ready strategy summary/);
+  assert.match(opportunityHtml, /Quick opportunity summary/);
+  assert.match(strategyHtml, /Quick strategy summary/);
   assert.match(strategyHtml, /Estimated gross earnings\/day/);
   assert.match(strategyHtml, /Required time\/effort/);
   assert.match(strategyHtml, /Major assumptions/);
@@ -278,7 +279,7 @@ test("strategy detail renders capital, earnings, scores, classification, warning
   assert.match(html, /2 snapshots/);
   assert.match(html, /0.05862/);
   assert.match(html, /5.86%/);
-  assert.match(html, /Start/);
+  assert.match(html, /Open project/);
   assert.doesNotMatch(html, /5.862%/);
 });
 
@@ -334,7 +335,7 @@ test("error state distinguishes not found from API unavailable", () => {
 test("history no-history state is explicit", () => {
   const html = renderHistory(historyPayload([snapshotPayload()]));
 
-  assert.match(html, /Insufficient history/);
+  assert.match(html, /At least two stored snapshots are needed/);
   assert.doesNotMatch(html, /snapshots<\/span>/);
 });
 
@@ -356,6 +357,49 @@ test("financial formatting preserves exact API Decimal strings", () => {
   );
   assert.equal(formatUpdatedAge("2026-08-16T11:36:00Z", new Date("2026-08-16T12:00:00Z")), "Updated 24m ago");
   assert.equal(formatUpdatedAge("2026-08-16T10:00:00Z", new Date("2026-08-16T12:00:00Z")), "Updated 2h ago");
+  assert.equal(formatUpdatedAge("2026-07-01T12:00:00.000000+00:00", new Date("2026-08-16T12:00:00Z")), "Updated Jul 1, 2026 12:00 UTC");
+});
+
+test("strategy detail keeps visible precision readable while preserving exact values", () => {
+  const strategy = strategyPayload();
+  const snapshot = strategy.latest_snapshot;
+  snapshot.calculated_at = "2026-08-16T12:00:00.000000+00:00";
+  snapshot.earnings.net_earnings_day.amount = "0.488500000000000000";
+  snapshot.roi.break_even.days = "511.7707000000";
+  snapshot.roi.roi_total_30d.value = "0.0586200000000000";
+  snapshot.risk.contributions[0].evidence = {
+    observed_at: "2026-08-16T12:00:00.000000+00:00",
+    slippage_ratio: "12.384728391",
+    nested: { exact_input: "0.488500000000000000" },
+  };
+  snapshot.uncertainty_ranges = [
+    {
+      metric: "example.expected_reward_day",
+      values: {
+        low_metric: "0.488500000000000000",
+        base_metric: "12.384728391",
+        high_metric: "0.0000000351",
+      },
+      unit: "USD/day",
+    },
+  ];
+
+  const html = renderStrategyDetail(strategy, historyPayload([snapshot, secondSnapshot()]));
+  const visible = visibleText(html);
+
+  assert.match(visible, /Aug 16, 2026 12:00 UTC/);
+  assert.match(visible, /\$0\.49\/day/);
+  assert.match(visible, /5\.86%/);
+  assert.match(visible, /512 days/);
+  assert.match(visible, /12\.38/);
+  assert.match(visible, /< 0\.0001/);
+  assert.doesNotMatch(visible, /0\.488500000000000000/);
+  assert.doesNotMatch(visible, /0\.0586200000000000/);
+  assert.doesNotMatch(visible, /511\.7707000000/);
+  assert.doesNotMatch(visible, /2026-08-16T12:00:00\.000000\+00:00/);
+  assert.match(html, /title="Exact value: 0\.488500000000000000"/);
+  assert.match(html, /title="Exact ratio: 0\.0586200000000000"/);
+  assert.match(html, /title="Exact days: 511\.7707000000"/);
 });
 
 test("negative return and warning signals are explicit", () => {
@@ -381,9 +425,31 @@ test("long strategy names stay in card structure with CTA behavior", () => {
 
   assert.match(html, /ranking-card/);
   assert.match(html, /View strategy/);
-  assert.match(html, /Start/);
+  assert.match(html, /Open project/);
   assert.match(html, /\/go\/defi-kingdoms-play/);
   assert.doesNotMatch(html, /<table/);
+});
+
+
+test("legacy game detail CTA uses risk-aware wording without changing link behavior", () => {
+  const highRiskGame = gamePayload(strategyPayload());
+  const highRiskHtml = renderGameDetail(highRiskGame);
+
+  assert.match(highRiskHtml, /Open project/);
+  assert.match(highRiskHtml, /High-risk strategy\. Opening the project is not a recommendation; review the assumptions first\./);
+  assert.match(highRiskHtml, /href="\/go\/defi-kingdoms-play\?source_page=game_detail&amp;placement=primary_cta"/);
+  assert.match(highRiskHtml, /target="_blank"/);
+  assert.match(highRiskHtml, /rel="noopener noreferrer"/);
+  assert.match(highRiskHtml, /<a class="secondary-button" href="\/opportunities\/defi-kingdoms" data-link>Opportunity record<\/a>/);
+  assert.doesNotMatch(highRiskHtml, /<a class="secondary-button" href="\/opportunities\/defi-kingdoms"[^>]*target="_blank"/);
+
+  const normalSnapshot = snapshotPayload();
+  normalSnapshot.risk.score = 20;
+  normalSnapshot.risk.label = "LOW";
+  const normalHtml = renderGameDetail(gamePayload({ ...strategyPayload(), latest_snapshot: normalSnapshot }));
+
+  assert.match(normalHtml, />\s*Start\s*</);
+  assert.doesNotMatch(normalHtml, /High-risk strategy/);
 });
 
 test("public CTA never renders None and preserves /go route", () => {
@@ -649,6 +715,33 @@ function strategyPayload() {
     description: "cJEWEL max-lock strategy.",
     primary_destination: destinationPayload("defi-kingdoms-play"),
     latest_snapshot: snapshotPayload(),
+  };
+}
+
+function visibleText(html) {
+  return String(html)
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, "&")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function gamePayload(strategy = strategyPayload()) {
+  return {
+    game_id: "defi-kingdoms",
+    opportunity_id: "defi-kingdoms",
+    opportunity_type: "GAME",
+    name: "DeFi Kingdoms",
+    chains: ["dfk-chain"],
+    economy_types: ["locked-yield-reward"],
+    status: "active",
+    strategy_count: 1,
+    primary_destination: destinationPayload("defi-kingdoms-play"),
+    strategies: [strategy],
   };
 }
 
