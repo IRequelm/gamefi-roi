@@ -31,6 +31,7 @@ from app.distribution.x_queue import (
     X_MAX_WEIGHTED_LENGTH,
     XPublishQueue,
     XQueueItem,
+    contains_unsupported_idn_hostname,
     load_content_pack_batch,
     load_x_queue,
     x_content_checksum,
@@ -627,6 +628,8 @@ class XPublishingService:
             blockers.append("unresolved template placeholder remains")
         if "[object Object]" in final_copy:
             blockers.append("object serialization placeholder remains")
+        if contains_unsupported_idn_hostname(final_copy):
+            blockers.append("non-ASCII/IDN URL host syntax is unsupported")
         if item.attribution_url not in final_copy:
             blockers.append("exact attribution URL is missing from final copy")
         blockers.extend(_attribution_url_blockers(item))

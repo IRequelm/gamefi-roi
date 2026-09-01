@@ -21,9 +21,11 @@ X_QUEUE_VERSION = "x-publish-queue-v1"
 X_MAX_WEIGHTED_LENGTH = 280
 X_TRANSFORMED_URL_LENGTH = 23
 HTTP_URL_START_RE = re.compile(r"(?i)https?://")
+HTTP_HOST_RE = re.compile(r"(?i)(?<![\w@])https?://(?P<host>(?:[^\W_]|[.-])+)")
 BARE_DOMAIN_RE = re.compile(
     r"(?i)(?<![\w@])(?:www\.)?(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}"
 )
+UNICODE_DOMAIN_RE = re.compile(r"(?i)(?<![\w@])(?P<host>(?:[^\W_]|-)+(?:\.(?:[^\W_]|-)+)+)")
 ASCII_URL_CHARACTERS = frozenset(
     string.ascii_letters + string.digits + "-._~:/?#[]@!$&'()*+,;=%"
 )
@@ -171,6 +173,17 @@ def x_weighted_character_count(text: str) -> int:
         count += _weighted_text(normalized[cursor:start]) + url_weight
         cursor = end
     return count + _weighted_text(normalized[cursor:])
+
+
+def contains_unsupported_idn_hostname(text: str) -> bool:
+    """Return whether copy contains a URL/domain hostname outside ASCII."""
+
+    normalized = unicodedata.normalize("NFC", text)
+    for pattern in (HTTP_HOST_RE, UNICODE_DOMAIN_RE):
+        for match in pattern.finditer(normalized):
+            if not match.group("host").isascii():
+                return True
+    return False
 
 
 def _queue_item(pack: ContentPackLite, recommended_order: int, generated_at: str) -> XQueueItem:

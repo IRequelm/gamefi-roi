@@ -26,6 +26,7 @@ from app.distribution.x_publisher import (
 )
 from app.distribution.x_queue import (
     X_MAX_WEIGHTED_LENGTH,
+    contains_unsupported_idn_hostname,
     build_x_publish_queue,
     editorial_order_from_handoff,
     load_content_pack_batch,
@@ -264,9 +265,31 @@ def test_x_weighted_count_handles_complex_emoji_sequences(emoji: str) -> None:
 def test_x_weighted_count_handles_unicode_malformed_and_empty_text() -> None:
     assert x_weighted_character_count("界é") == 3
     assert x_weighted_character_count("https://") == 23
-    assert x_weighted_character_count("https://例.中国") == 23
     assert x_weighted_character_count("abchttps://example.com") >= len("abchttps://example.com")
     assert x_weighted_character_count("") == 0
+
+
+@pytest.mark.parametrize("idn_url", ["例.中国", "https://例.中国"])
+def test_non_ascii_idn_hosts_are_blocked(idn_url: str, tmp_path: Path) -> None:
+    service, _ = _service(tmp_path)
+    edited_copy = f"{_valid_dfk_copy(service)} {idn_url}"
+
+    assert contains_unsupported_idn_hostname(edited_copy) is True
+    with pytest.raises(XApprovalError, match="non-ASCII/IDN URL host syntax"):
+        service.approve(DFK_ID, edited_copy=edited_copy)
+
+
+@pytest.mark.parametrize("prose", ["GamCryp açıklaması güvenlidir.", "GamCryp analysis 🔍✨"])
+def test_unicode_and_emoji_prose_remain_supported(prose: str) -> None:
+    assert contains_unsupported_idn_hostname(prose) is False
+    assert x_weighted_character_count(prose) > 0
+
+
+def test_ascii_gamcryp_url_remains_supported() -> None:
+    url = "https://gamcryp.com/methodology?utm_source=x&utm_medium=social"
+
+    assert contains_unsupported_idn_hostname(url) is False
+    assert x_weighted_character_count(url) == 23
 
 
 def test_yellow_awaits_explicit_approval(tmp_path: Path) -> None:
