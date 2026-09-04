@@ -280,6 +280,36 @@ def test_operator_editor_updates_referral_and_shows_validation_errors(monkeypatc
     assert good.status_code == 303
 
 
+def test_operator_write_rejects_cross_origin_form_posts(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("GAMEFI_OPERATOR_USERNAME", "ops")
+    monkeypatch.setenv("GAMEFI_OPERATOR_PASSWORD", "secret")
+    clear_settings_cache()
+    client, _engine = _seeded_client(monkeypatch, tmp_path, "referral-csrf.db")
+    response = client.post(
+        "/operator/referrals/health",
+        auth=("ops", "secret"),
+        headers={"Origin": "https://untrusted.example"},
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 403
+
+
+def test_operator_editor_reports_invalid_dates_as_bad_request(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("GAMEFI_OPERATOR_USERNAME", "ops")
+    monkeypatch.setenv("GAMEFI_OPERATOR_PASSWORD", "secret")
+    clear_settings_cache()
+    client, _engine = _seeded_client(monkeypatch, tmp_path, "referral-invalid-date.db")
+    response = client.post(
+        "/operator/referrals/defi-kingdoms",
+        auth=("ops", "secret"),
+        data={"applied_at": "not-a-date"},
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 400
+
+
 def test_operator_urls_are_excluded_from_search_surfaces(monkeypatch, tmp_path) -> None:
     client, _engine = _seeded_client(monkeypatch, tmp_path, "referral-search.db")
 

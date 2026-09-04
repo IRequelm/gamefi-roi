@@ -6,7 +6,7 @@ import secrets
 from datetime import UTC, datetime
 from decimal import Decimal
 from html import escape
-from urllib.parse import parse_qs
+from urllib.parse import parse_qs, urlsplit
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
@@ -98,10 +98,12 @@ def referral_dashboard(
 
 @router.post("/referrals/health")
 def run_referral_health(
+    request: Request,
     _operator: str = Depends(require_operator),
     settings: Settings = Depends(get_settings),
     engine: Engine = Depends(get_database_engine),
 ) -> RedirectResponse:
+    _require_same_origin(request)
     _service(engine, settings).run_health_check()
     return RedirectResponse("/operator/referrals", status_code=303, headers=NOINDEX_HEADERS)
 
@@ -124,6 +126,7 @@ async def save_referral(
     settings: Settings = Depends(get_settings),
     engine: Engine = Depends(get_database_engine),
 ) -> Response:
+    _require_same_origin(request)
     form = await _form(request)
     destination = primary_destination_for_opportunity(opportunity_id)
     if destination is None:
@@ -149,7 +152,7 @@ async def save_referral(
             expires_at=_parse_dt(form.get("expires_at")),
             operator_notes=form.get("operator_notes"),
         )
-    except (ReferralValidationError, MonetizationPersistenceError) as exc:
+    except (ReferralValidationError, MonetizationPersistenceError, ValueError) as exc:
         return _render_editor(opportunity_id, settings=settings, engine=engine, error=str(exc), status_code=400)
     return RedirectResponse(f"/operator/referrals/{opportunity_id}", status_code=303, headers=NOINDEX_HEADERS)
 
@@ -171,6 +174,7 @@ async def save_revenue(
     settings: Settings = Depends(get_settings),
     engine: Engine = Depends(get_database_engine),
 ) -> Response:
+    _require_same_origin(request)
     form = await _form(request)
     try:
         _service(engine, settings).save_revenue_attribution(
@@ -196,6 +200,22 @@ def _service(engine: Engine, settings: Settings) -> ReferralOperationsService:
         reverify_days=settings.referral_reverify_days,
         pending_recheck_days=settings.referral_pending_recheck_days,
     )
+
+
+def _require_same_origin(request: Request) -> None:
+    """Reject browser form posts initiated by a different origin."""
+    origin = request.headers.get("origin") or request.headers.get("referer")
+    if not origin:
+        return
+    parsed = urlsplit(origin)
+    request_origin = f"{request.url.scheme}://{request.url.netloc}"
+    candidate_origin = f"{parsed.scheme}://{parsed.netloc}"
+    if parsed.scheme not in {"http", "https"} or candidate_origin != request_origin:
+        raise HTTPException(
+            status_code=403,
+            detail="Cross-origin operator form submission is not allowed.",
+            headers=NOINDEX_HEADERS,
+        )
 
 
 def _render_editor(
