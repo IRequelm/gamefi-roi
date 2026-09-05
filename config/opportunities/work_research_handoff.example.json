@@ -1,0 +1,35 @@
+{
+  "handoff_version": "work-research-handoff-v1",
+  "prepared_at": "2026-09-05T00:00:00Z",
+  "prepared_by": "researcher",
+  "opportunities": [
+    {
+      "opportunity_id": "example-opportunity",
+      "name": "Example Opportunity",
+      "opportunity_type": "DEPIN_NODE",
+      "admission_mode": "GUIDE_ONLY",
+      "reason_when_unavailable": "Reward value cannot yet be reproduced through an executable exit path.",
+      "source_references": [
+        {
+          "label": "Official docs",
+          "url": "https://example.com/docs",
+          "source_role": "OFFICIAL_PROJECT"
+        }
+      ],
+      "entry_requirements": "Existing PC",
+      "earning_mechanism": "Documented points activity",
+      "reward_asset": "Example points",
+      "claim_or_exit_mechanism": "Claim route is documented; monetary exit is not.",
+      "market_liquidity_evidence": "",
+      "fees_and_costs": "Unknown",
+      "modeling_evidence": {
+        "entry_cost": {"status": "SUPPORTED"},
+        "earning_rate": {"status": "PARTIAL"},
+        "realizable_reward_value": {"status": "MISSING"},
+        "executable_exit_path": {"status": "MISSING"},
+        "relevant_costs": {"status": "MISSING"},
+        "timing_or_claim_constraints": {"status": "PARTIAL"}
+      }
+    }
+  ]
+}

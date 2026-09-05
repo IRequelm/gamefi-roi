@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gamcryp.com/schemas/work-research-handoff-v1.json",
+  "title": "GamCryp Work Research Handoff",
+  "type": "object",
+  "required": ["handoff_version", "prepared_at", "opportunities"],
+  "properties": {
+    "handoff_version": {"const": "work-research-handoff-v1"},
+    "prepared_at": {"type": "string", "format": "date-time"},
+    "prepared_by": {"type": "string"},
+    "opportunities": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/opportunity"}
+    }
+  },
+  "$defs": {
+    "source": {
+      "type": "object",
+      "required": ["url", "source_role"],
+      "properties": {
+        "label": {"type": "string"},
+        "url": {"type": "string", "format": "uri", "pattern": "^https://"},
+        "source_role": {"enum": ["OFFICIAL_PROJECT", "OFFICIAL_CHAIN", "EXECUTABLE_MARKET", "AGGREGATOR", "OTHER_PUBLIC_EVIDENCE"]}
+      },
+      "additionalProperties": false
+    },
+    "evidence": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": {"enum": ["SUPPORTED", "PARTIAL", "MISSING", "NOT_APPLICABLE"]},
+        "machine_readable": {"type": "boolean"},
+        "collection_allowed": {"type": "boolean"},
+        "operator_notes": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "opportunity": {
+      "type": "object",
+      "required": ["opportunity_id", "name", "opportunity_type", "admission_mode", "source_references", "modeling_evidence"],
+      "properties": {
+        "opportunity_id": {"type": "string", "minLength": 1},
+        "name": {"type": "string", "minLength": 1},
+        "opportunity_type": {"enum": ["GAME", "DEPIN_NODE", "POINTS"]},
+        "admission_mode": {"enum": ["MODELED", "GUIDE_ONLY"]},
+        "reason_when_unavailable": {"type": "string"},
+        "source_references": {"type": "array", "items": {"$ref": "#/$defs/source"}},
+        "entry_requirements": {"type": "string"},
+        "earning_mechanism": {"type": "string"},
+        "reward_asset": {"type": "string"},
+        "claim_or_exit_mechanism": {"type": "string"},
+        "market_liquidity_evidence": {"type": "string"},
+        "fees_and_costs": {"type": "string"},
+        "modeling_evidence": {
+          "type": "object",
+          "properties": {
+            "entry_cost": {"$ref": "#/$defs/evidence"},
+            "earning_rate": {"$ref": "#/$defs/evidence"},
+            "realizable_reward_value": {"$ref": "#/$defs/evidence"},
+            "executable_exit_path": {"$ref": "#/$defs/evidence"},
+            "relevant_costs": {"$ref": "#/$defs/evidence"},
+            "timing_or_claim_constraints": {"$ref": "#/$defs/evidence"}
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

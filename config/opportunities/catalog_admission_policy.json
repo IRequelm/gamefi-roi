@@ -1,0 +1,23 @@
+{
+  "policy_version": "catalog-admission-v1",
+  "source_hierarchy": [
+    "OFFICIAL_PROJECT",
+    "OFFICIAL_CHAIN",
+    "EXECUTABLE_MARKET",
+    "AGGREGATOR",
+    "OTHER_PUBLIC_EVIDENCE"
+  ],
+  "admission_modes": {
+    "MODELED": "Sufficient reproducible evidence exists for financial ROI.",
+    "GUIDE_ONLY": "The opportunity is useful and evidenced, but one or more critical economic inputs are not reproducible."
+  },
+  "required_economic_inputs": [
+    "entry_cost",
+    "earning_rate",
+    "realizable_reward_value",
+    "executable_exit_path",
+    "relevant_costs",
+    "timing_or_claim_constraints"
+  ],
+  "commercial_independence": "Referral, affiliate, sponsorship, and other commercial relationships never determine admission mode, modeling priority, ROI, Risk, Confidence, or organic ranking."
+}

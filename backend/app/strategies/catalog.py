@@ -23,6 +23,7 @@ CATALOG_REVIEWED_AT = G18_REVIEWED_AT
 class SourceReference:
     label: str
     url: str
+    source_role: str = "OFFICIAL_PROJECT"
 
 
 @dataclass(frozen=True)
@@ -101,6 +102,10 @@ class OpportunityCatalogEntry:
     legacy_game_id: str | None = None
     guidance: OpportunityGuidance | None = None
     roi_unavailable: RoiUnavailableExplanation | None = None
+
+    @property
+    def admission_mode(self) -> str:
+        return "MODELED" if self.strategy_ids else "GUIDE_ONLY"
 
 
 @dataclass(frozen=True)

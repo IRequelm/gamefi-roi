@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -121,6 +121,7 @@ class ClassificationSummaryPayload(BaseModel):
 class SourceReferencePayload(BaseModel):
     label: str
     url: str
+    source_role: Literal["OFFICIAL_PROJECT", "OFFICIAL_CHAIN", "EXECUTABLE_MARKET", "AGGREGATOR", "OTHER_PUBLIC_EVIDENCE"] = "OFFICIAL_PROJECT"
 
 
 class OutboundDestinationPayload(BaseModel):
@@ -178,6 +179,7 @@ class OpportunitySummary(BaseModel):
     value_realization_status: str
     data_feasibility_status: str
     strategy_count: int
+    admission_mode: Literal["MODELED", "GUIDE_ONLY"]
     legacy_game_id: str | None = None
     primary_destination: OutboundDestinationPayload | None = None
     roi_unavailable: RoiUnavailablePayload | None = None

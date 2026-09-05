@@ -533,6 +533,7 @@ def _opportunity_summary(opportunity: OpportunityCatalogEntry) -> OpportunitySum
         value_realization_status=opportunity.value_realization_status,
         data_feasibility_status=opportunity.data_feasibility_status,
         strategy_count=len(opportunity.strategy_ids),
+        admission_mode=opportunity.admission_mode,
         legacy_game_id=opportunity.legacy_game_id,
         primary_destination=_maybe_outbound_destination(primary_destination_for_opportunity(opportunity.opportunity_id)),
         roi_unavailable=(
@@ -611,6 +612,7 @@ def _source_reference(reference: SourceReference) -> SourceReferencePayload:
     return SourceReferencePayload(
         label=reference.label,
         url=reference.url,
+        source_role=reference.source_role,
     )
 
 
