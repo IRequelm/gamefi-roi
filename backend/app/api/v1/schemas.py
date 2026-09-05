@@ -176,11 +176,19 @@ class OpportunitySummary(BaseModel):
     primary_destination: OutboundDestinationPayload | None = None
 
 
+class OpportunityGuidancePayload(BaseModel):
+    how_to_start: list[str] | None = None
+    what_you_need: list[str] | None = None
+    how_you_earn: list[str] | None = None
+    how_to_exit_or_claim: list[str] | None = None
+
+
 class OpportunityDetail(OpportunitySummary):
     feasibility_summary: str
     official_source_references: list[SourceReferencePayload]
     outbound_destinations: list[OutboundDestinationPayload]
     strategies: list["StrategySummary"]
+    guidance: OpportunityGuidancePayload | None = None
 
 
 class StrategySnapshotPayload(BaseModel):

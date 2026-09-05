@@ -26,6 +26,14 @@ class SourceReference:
 
 
 @dataclass(frozen=True)
+class OpportunityGuidance:
+    how_to_start: tuple[str, ...] | None = None
+    what_you_need: tuple[str, ...] | None = None
+    how_you_earn: tuple[str, ...] | None = None
+    how_to_exit_or_claim: tuple[str, ...] | None = None
+
+
+@dataclass(frozen=True)
 class OutboundDestination:
     destination_id: str
     destination_slug: str
@@ -84,6 +92,7 @@ class OpportunityCatalogEntry:
     strategy_ids: tuple[str, ...]
     outbound_destination_slugs: tuple[str, ...]
     legacy_game_id: str | None = None
+    guidance: OpportunityGuidance | None = None
 
 
 @dataclass(frozen=True)
@@ -186,6 +195,7 @@ def _opportunity(
     outbound_destination_slug: str,
     strategy_ids: tuple[str, ...] = (),
     legacy_game_id: str | None = None,
+    guidance: OpportunityGuidance | None = None,
 ) -> OpportunityCatalogEntry:
     return OpportunityCatalogEntry(
         opportunity_id=opportunity_id,
@@ -203,6 +213,7 @@ def _opportunity(
         strategy_ids=strategy_ids,
         outbound_destination_slugs=(outbound_destination_slug,),
         legacy_game_id=legacy_game_id,
+        guidance=guidance,
     )
 
 
@@ -307,6 +318,12 @@ OPPORTUNITIES = (
         strategy_ids=_strategy_ids(DFK_JEWELER_STRATEGIES),
         outbound_destination_slug="defi-kingdoms-play",
         legacy_game_id="defi-kingdoms",
+        guidance=OpportunityGuidance(
+            how_to_start=("Open DeFi Kingdoms on DFK Chain.",),
+            what_you_need=("The modeled Jeweler strategy uses a JEWEL/cJEWEL position.",),
+            how_you_earn=("Jeweler rewards are modeled from locked JEWEL/cJEWEL reward inputs.",),
+            how_to_exit_or_claim=("The modeled exit uses the DFK Chain route; emergency withdrawal has a documented 50% penalty.",),
+        ),
     ),
     _opportunity(
         opportunity_id="farmers-world",
@@ -361,6 +378,12 @@ OPPORTUNITIES = (
         feasibility_summary="Official payout rates, minimum node requirements, dashboard fields, and held-back schedule support an existing-hardware storage-node scenario with explicit utilization assumptions.",
         strategy_ids=("storj-existing-hardware-storage-node",),
         outbound_destination_slug="storj-storage-node-official",
+        guidance=OpportunityGuidance(
+            how_to_start=("Follow Storj's official node overview to set up a storage node.",),
+            what_you_need=("The reviewed scenario uses existing desktop or server hardware.",),
+            how_you_earn=("Storj publishes node payout rates and dashboard-based payout information.",),
+            how_to_exit_or_claim=("Review the official payouts guide and held-back amount schedule for payout timing.",),
+        ),
     ),
     _opportunity(
         opportunity_id="geodnet",

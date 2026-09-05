@@ -282,6 +282,7 @@ def opportunity_page(
         </section>
         {_render_opportunity_answer_block(opportunity, strategy, snapshot)}
         {_render_opportunity_human_summary(opportunity, strategy, snapshot)}
+        {_render_opportunity_guidance(opportunity)}
         <section class="section-panel">
           <div class="section-header"><h2>Executive Summary</h2></div>
           <div class="section-body metric-grid">
@@ -698,6 +699,32 @@ def _render_opportunity_human_summary(
         ),
     ]
     return _render_human_summary("Plain-language summary", items)
+
+
+def _render_opportunity_guidance(opportunity: OpportunityDetail) -> str:
+    guidance = opportunity.guidance
+    if guidance is None:
+        return ""
+    sections = []
+    for heading, items in (
+        ("How to start", guidance.how_to_start),
+        ("What you need", guidance.what_you_need),
+        ("How you earn", guidance.how_you_earn),
+        ("How to claim or exit", guidance.how_to_exit_or_claim),
+    ):
+        values = [str(item).strip() for item in (items or []) if str(item).strip()]
+        if values:
+            sections.append(
+                f'<article class="human-line"><h3>{escape(heading)}</h3><ul>{"".join(f"<li>{escape(item)}</li>" for item in values)}</ul></article>'
+            )
+    if not sections:
+        return ""
+    return (
+        '<section class="section-panel opportunity-guidance">'
+        '<div class="section-header"><h2>How it works</h2></div>'
+        f'<div class="section-body human-summary-grid">{"".join(sections)}</div>'
+        '</section>'
+    )
 
 
 def _render_strategy_human_summary(strategy: StrategySummary, snapshot: StrategySnapshotPayload | None) -> str:

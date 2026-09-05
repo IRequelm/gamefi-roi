@@ -631,6 +631,7 @@ export function renderOpportunityDetail(opportunity) {
       </section>
       ${renderOpportunityAnswerBlock(opportunity)}
       ${renderOpportunityHumanSummary(opportunity)}
+      ${renderOpportunityGuidance(opportunity.guidance)}
       <section class="game-grid">
         <div class="game-card">
           <h3>Opportunity type</h3>
@@ -664,6 +665,28 @@ export function renderOpportunityDetail(opportunity) {
       </section>
     </div>
   `;
+}
+
+export function renderOpportunityGuidance(guidance) {
+  if (!guidance) {
+    return "";
+  }
+  const sections = [
+    ["How to start", guidance.how_to_start],
+    ["What you need", guidance.what_you_need],
+    ["How you earn", guidance.how_you_earn],
+    ["How to claim or exit", guidance.how_to_exit_or_claim],
+  ].map(([heading, items]) => {
+    const values = (Array.isArray(items) ? items : []).map((item) => String(item || "").trim()).filter(Boolean);
+    if (!values.length) {
+      return "";
+    }
+    return `<article class="human-line"><h3>${escapeHtml(heading)}</h3><ul>${values.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></article>`;
+  }).join("");
+  if (!sections) {
+    return "";
+  }
+  return `<section class="section-panel opportunity-guidance"><div class="section-header"><h2>How it works</h2></div><div class="section-body human-summary-grid">${sections}</div></section>`;
 }
 
 export function renderOpportunityList(opportunities = [], options = {}) {

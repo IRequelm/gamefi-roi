@@ -28,6 +28,7 @@ import {
   renderHomeShell,
   renderOpportunityAnswerBlock,
   renderOpportunityDetail,
+  renderOpportunityGuidance,
   renderRankingsAnswerBlock,
   renderRankingsPage,
   renderRankingsTable,
@@ -296,6 +297,27 @@ test("opportunity detail shows unavailable ROI in public language without invent
   assert.match(html, /\/go\/grass-official/);
   assert.doesNotMatch(html, /DEPIN_NODE|PARTIAL|Financial ROI unavailable/);
   assert.doesNotMatch(html, /\$0(?:\.00)?|>0(?:\.00)?%/);
+});
+
+test("opportunity guidance renders complete, partial, and empty structures safely", () => {
+  const complete = renderOpportunityGuidance({
+    how_to_start: ["Start here"],
+    what_you_need: ["Required item"],
+    how_you_earn: ["Earn this"],
+    how_to_exit_or_claim: ["Claim here"],
+  });
+  assert.match(complete, /How it works/);
+  assert.match(complete, /How to start/);
+  assert.match(complete, /What you need/);
+  assert.match(complete, /How you earn/);
+  assert.match(complete, /How to claim or exit/);
+
+  const partial = renderOpportunityGuidance({ how_to_start: ["Start here"], what_you_need: [], how_you_earn: null });
+  assert.match(partial, /How to start/);
+  assert.doesNotMatch(partial, /What you need|How you earn|How to claim or exit/);
+  assert.equal(renderOpportunityGuidance(null), "");
+  assert.equal(renderOpportunityGuidance({ how_to_start: [null, ""], what_you_need: [] }), "");
+  assert.doesNotMatch(complete, /undefined|null/);
 });
 
 test("risk and confidence badges preserve unavailable scores", () => {

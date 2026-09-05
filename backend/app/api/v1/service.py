@@ -25,6 +25,7 @@ from app.api.v1.schemas import (
     OpsStatusPayload,
     OpportunitiesPage,
     OpportunityDetail,
+    OpportunityGuidancePayload,
     OpportunitySummary,
     OutboundDestinationPayload,
     PageMeta,
@@ -550,6 +551,16 @@ def _opportunity_detail(
             for destination in outbound_destinations_for_opportunity(opportunity.opportunity_id)
         ],
         strategies=strategies,
+        guidance=(
+            OpportunityGuidancePayload(
+                how_to_start=list(opportunity.guidance.how_to_start) if opportunity.guidance and opportunity.guidance.how_to_start else None,
+                what_you_need=list(opportunity.guidance.what_you_need) if opportunity.guidance and opportunity.guidance.what_you_need else None,
+                how_you_earn=list(opportunity.guidance.how_you_earn) if opportunity.guidance and opportunity.guidance.how_you_earn else None,
+                how_to_exit_or_claim=list(opportunity.guidance.how_to_exit_or_claim) if opportunity.guidance and opportunity.guidance.how_to_exit_or_claim else None,
+            )
+            if opportunity.guidance
+            else None
+        ),
     )
 
 
