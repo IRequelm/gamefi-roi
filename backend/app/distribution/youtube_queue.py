@@ -64,10 +64,11 @@ class YouTubePublishQueue(BaseModel):
     publishable: tuple[YouTubeQueueItem, ...]
     awaiting_human_approval: tuple[YouTubeQueueItem, ...]
     blocked: tuple[YouTubeQueueItem, ...]
+    pending_asset: tuple[YouTubeQueueItem, ...] = ()
 
     @property
     def items(self) -> tuple[YouTubeQueueItem, ...]:
-        return self.publishable + self.awaiting_human_approval + self.blocked
+        return self.publishable + self.awaiting_human_approval + self.blocked + self.pending_asset
 
     def find(self, content_id: str) -> YouTubeQueueItem:
         matches = [item for item in self.items if item.content_id == content_id]
@@ -98,17 +99,27 @@ def build_youtube_publish_queue(
     batch_payload: dict[str, Any],
     packs: tuple[ContentPackLite, ...],
     source_batch_bytes: bytes,
+    video_directory: Path | None = None,
 ) -> YouTubePublishQueue:
     validate_batch(list(packs))
     youtube_packs = tuple(pack for pack in packs if _has_youtube_package(pack))
     items = tuple(_queue_item(pack, index + 1, str(batch_payload["generated_at"])) for index, pack in enumerate(youtube_packs))
+    publishable = tuple(item for item in items if item.status is ContentReadiness.GREEN)
+    pending_asset = ()
+    if video_directory is not None:
+        pending_asset = tuple(
+            item for item in publishable
+            if not any((video_directory / f"{item.content_id}{extension}").is_file() for extension in (".mp4", ".mov", ".m4v", ".webm"))
+        )
+        publishable = tuple(item for item in publishable if item not in pending_asset)
     return YouTubePublishQueue(
         source_batch_id=str(batch_payload["batch_id"]),
         source_batch_hash=hashlib.sha256(source_batch_bytes).hexdigest(),
         generated_at=str(batch_payload["generated_at"]),
-        publishable=tuple(item for item in items if item.status is ContentReadiness.GREEN),
+        publishable=publishable,
         awaiting_human_approval=tuple(item for item in items if item.status is ContentReadiness.YELLOW),
         blocked=tuple(item for item in items if item.status is ContentReadiness.RED),
+        pending_asset=pending_asset,
     )
 
 

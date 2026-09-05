@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from app.distribution.x_publisher import XPublisherConfig, XPublishingService
+from app.distribution.refill import DistributionRefillConfig, DistributionRefiller
 from app.publishing.youtube import YouTubePublisher, YouTubePublisherConfig
 from app.publishing.youtube_distribution import YouTubeDistributionConfig, YouTubeDistributionPublisher
 
@@ -96,17 +97,26 @@ class DistributionWorker:
         config: DistributionWorkerConfig | None = None,
         x_service: XPublishingService | None = None,
         youtube_distribution: YouTubeDistributionPublisher | None = None,
+        refiller: DistributionRefiller | None = None,
         now: Callable[[], datetime] = lambda: datetime.now(UTC),
     ):
         self.config = config or DistributionWorkerConfig.from_environment()
         self.x_service = x_service or XPublishingService(XPublisherConfig.from_environment())
         self.youtube_distribution = youtube_distribution or _youtube_distribution_from_environment()
+        self.refiller = refiller or DistributionRefiller(DistributionRefillConfig.from_environment())
         self.now = now
         self.state = WorkerState(self.config.state_file)
 
     def run_once(self) -> list[dict[str, Any]]:
         now = self.now()
         results = []
+        try:
+            refill_result = self.refiller.run(now=now)
+            if refill_result.get("status") != "disabled":
+                results.append(refill_result)
+        except Exception as exc:
+            logger.error("distribution_refill_failed category=%s", type(exc).__name__)
+            results.append({"platform": "distribution", "status": "refill_failed", "error_category": type(exc).__name__})
         results.append(self._process_x(now))
         results.extend(self._process_youtube(now))
         return results

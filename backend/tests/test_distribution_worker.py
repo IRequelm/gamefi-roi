@@ -124,3 +124,17 @@ def test_youtube_queue_continues_after_one_item_failure(tmp_path):
     assert result[1]["status"] == "failed"
     assert result[2]["status"] == "dry_run"
     assert youtube.calls == ["dry:good-video"]
+
+
+def test_x_auth_failure_does_not_block_youtube_queue_processing(tmp_path):
+    video_dir = tmp_path / "videos"
+    video_dir.mkdir()
+    (video_dir / "good-video.mp4").write_bytes(b"video")
+    x = FakeX(publishable=["bad-x"], error=RuntimeError("auth unavailable"))
+    youtube = FakeYouTube(publishable=["good-video"])
+
+    result = worker(tmp_path, x=x, youtube=youtube).run_once()
+
+    assert result[0]["status"] == "failed"
+    assert result[1]["status"] == "dry_run"
+    assert youtube.calls == ["dry:good-video"]

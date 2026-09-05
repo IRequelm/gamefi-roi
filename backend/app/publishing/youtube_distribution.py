@@ -153,6 +153,7 @@ class YouTubeDistributionPublisher:
             "publishable": [item.content_id for item in queue.publishable],
             "awaiting_human_approval": [item.content_id for item in queue.awaiting_human_approval],
             "blocked": [item.content_id for item in queue.blocked],
+            "pending_asset": [item.content_id for item in queue.pending_asset],
         }
 
     def preview(

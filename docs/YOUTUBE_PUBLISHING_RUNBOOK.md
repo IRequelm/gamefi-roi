@@ -7,7 +7,15 @@ Status: queue and publisher ready for review; OAuth and live upload not performe
 
 GamCryp uses the official YouTube Data API v3 for operator-controlled video uploads, metadata, thumbnails, and verification. Publishing consumes validated Content Pack Lite data. It does not calculate financial values or alter ROI, ranking, risk, confidence, referrals, analytics, snapshots, or publication readiness.
 
-No scheduler is active. Browser automation is not a publishing dependency.
+The operator CLI remains available for review and one-off operations. Browser automation is not a publishing dependency.
+
+## Autonomous local distribution
+
+The Windows distribution worker may load the ignored local `.env` and run in live mode after validation. When enabled, it checks both publish queues before each worker cycle and refreshes the canonical learning batch only when either platform has fewer than `GAMEFI_DISTRIBUTION_BUFFER_SIZE` unpublished GREEN items. Refill is bounded by `GAMEFI_DISTRIBUTION_REFILL_COOLDOWN_HOURS` and persists its last source hash in `GAMEFI_DISTRIBUTION_REFILL_STATE_FILE`, so unchanged source facts do not regenerate content endlessly.
+
+Refill uses the existing snapshot/opportunity API facts and `build_learning_batch` policy. Stale, invalid, unsupported, or non-refreshable financial facts remain RED; points-only or high-risk content remains YELLOW under the existing rules. A GREEN YouTube package without a matching rendered asset is held in the queue's `pending_asset` collection and is not publishable. X queue generation may continue while X publication remains fail-closed when credentials are unavailable.
+
+The worker's append-only transcript is `data/local/distribution/worker.log`; cooldown and refill state are under `data/local/distribution/`. Set `GAMEFI_DISTRIBUTION_LIVE=false` and disable the scheduled task before stopping autonomous publishing.
 
 ## Architecture
 
