@@ -18,4 +18,4 @@ $trigger = New-ScheduledTaskTrigger -AtLogOn
 $settings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit (New-TimeSpan -Days 1) -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1)
 Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $trigger -Settings $settings -Description "Runs the fail-closed GamCryp distribution worker (interval ${IntervalMinutes}m)." -Force
 Write-Output "Registered $TaskName for $repo"
-Write-Output "The worker uses GAMEFI_DISTRIBUTION_LIVE=false by default; set it explicitly before enabling live publishing."
+Write-Output "The worker loads the ignored .env file at startup and runs every ${IntervalMinutes}m after logon."
