@@ -292,7 +292,7 @@ def opportunity_page(
             {_metric("Reward model", ", ".join(opportunity.reward_asset_or_points_type) or "Unspecified")}
           </div>
         </section>
-        {_render_strategy_cards(opportunity.strategies)}
+        {_render_strategy_cards(opportunity.strategies, heading="Strategies in this opportunity")}
         {_render_unavailable_roi(opportunity) if not opportunity.strategies else ""}
         {_render_sources(opportunity)}
         {_render_related_opportunities(opportunity)}
@@ -335,7 +335,7 @@ def game_page(game, *, settings: Settings, request: Request) -> SeoPage:
             <a class="secondary-button" href="/opportunities/{escape(game.opportunity_id)}">Canonical opportunity</a>
           </div>
         </section>
-        {_render_strategy_cards(game.strategies)}
+        {_render_strategy_cards(game.strategies, heading="Strategies in this game")}
       </div>
     """
     return _page(
@@ -799,7 +799,7 @@ def _render_ranking_cards(items: list[RankingItem], *, heading: str) -> str:
               <div class="ranking-card-head">
                 <span class="rank-chip">#{escape(str(item.rank))}</span>
                 <div>
-                  <a class="game-link" href="/games/{escape(strategy.game_id)}">{escape(snapshot.game_name)}</a>
+                  <p class="ranking-parent"><span>Opportunity</span> <a class="game-link" href="/opportunities/{escape(strategy.opportunity_id or strategy.game_id)}">{escape(snapshot.game_name)}</a></p>
                   <h3><a class="strategy-link" href="/strategies/{escape(strategy.strategy_id)}">{escape(strategy.name)}</a></h3>
                   <p class="muted">{escape(strategy.strategy_version)} | {escape(labelize(strategy.economy_type))}</p>
                 </div>
@@ -882,7 +882,7 @@ def _render_catalog_stats(rankings: RankingsPage, opportunities: list[Opportunit
     """
 
 
-def _render_strategy_cards(strategies: list[StrategySummary]) -> str:
+def _render_strategy_cards(strategies: list[StrategySummary], *, heading: str = "Ranked strategies") -> str:
     if not strategies:
         return _empty("ROI not measurable yet", "No modeled strategy is currently available for this opportunity.")
     items = [
@@ -890,7 +890,7 @@ def _render_strategy_cards(strategies: list[StrategySummary]) -> str:
         for index, strategy in enumerate(strategies)
         if strategy.latest_snapshot is not None
     ]
-    return _render_ranking_cards(items, heading="Modeled strategies")
+    return _render_ranking_cards(items, heading=heading)
 
 
 def _render_snapshot_detail(snapshot: StrategySnapshotPayload) -> str:

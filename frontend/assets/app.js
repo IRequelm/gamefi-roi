@@ -653,7 +653,7 @@ export function renderOpportunityDetail(opportunity) {
       </section>
       ${
         hasStrategies
-          ? renderStrategyList(opportunity.strategies, { clickEvent: "opportunity_to_strategy_click", rankingSlug: "opportunity_detail" })
+          ? renderStrategyList(opportunity.strategies, { clickEvent: "opportunity_to_strategy_click", rankingSlug: "opportunity_detail", heading: "Strategies in this opportunity" })
           : `<section class="empty-state"><h2>ROI not measurable yet</h2><p class="muted">${escapeHtml(unavailableRoiReason(opportunity))}</p></section>`
       }
       <section class="section-panel">
@@ -756,7 +756,7 @@ export function renderRankingsTable(rankings, options = {}) {
   return `
     <section class="section-panel ranking-section">
       <div class="section-header">
-        <h2>${options.compact ? "Current matches" : "Ranked strategies"}</h2>
+        <h2>${escapeHtml(options.heading || (options.compact ? "Current matches" : "Ranked strategies"))}</h2>
         <span class="badge info">${escapeHtml(String(rankings.page?.total ?? items.length))} stored</span>
       </div>
       <div class="ranking-card-grid">
@@ -785,7 +785,7 @@ export function renderRankingCard(item, options = {}) {
       <div class="ranking-card-head">
         <span class="rank-chip">#${escapeHtml(String(item.rank))}</span>
         <div>
-          <a class="game-link" href="/games/${encodeURIComponent(strategy.game_id)}" data-link>${escapeHtml(snapshot.game_name)}</a>
+          <p class="ranking-parent"><span>Opportunity</span> <a class="game-link" href="/opportunities/${encodeURIComponent(strategy.opportunity_id || strategy.game_id)}" data-link>${escapeHtml(snapshot.game_name)}</a></p>
           <h3><a class="strategy-link" href="/strategies/${encodeURIComponent(strategy.strategy_id)}" data-link${strategyClickAnalytics}>${escapeHtml(strategy.name)}</a></h3>
           <p class="muted">${escapeHtml(strategy.strategy_version)} | ${escapeHtml(labelize(strategy.economy_type))}</p>
         </div>
@@ -821,7 +821,7 @@ export function renderRankingRow(item) {
   return `
     <tr>
       <td class="metric">${escapeHtml(String(item.rank))}</td>
-      <td><a class="game-link" href="/games/${encodeURIComponent(strategy.game_id)}" data-link>${escapeHtml(snapshot.game_name)}</a></td>
+      <td><span class="ranking-parent-label">Opportunity</span> <a class="game-link" href="/opportunities/${encodeURIComponent(strategy.opportunity_id || strategy.game_id)}" data-link>${escapeHtml(snapshot.game_name)}</a></td>
       <td>
         <a class="strategy-link" href="/strategies/${encodeURIComponent(strategy.strategy_id)}" data-link>${escapeHtml(strategy.name)}</a>
         <div class="muted">${escapeHtml(strategy.strategy_version)} | ${escapeHtml(strategy.economy_type)}</div>
@@ -867,7 +867,7 @@ export function renderGameDetail(game) {
           <p>${escapeHtml(game.status)}</p>
         </div>
       </section>
-      ${renderStrategyList(strategies)}
+      ${renderStrategyList(strategies, { heading: "Strategies in this game" })}
     </div>
   `;
 }
@@ -894,6 +894,7 @@ export function renderStrategyList(strategies, options = {}) {
   return renderRankingsTable(rankings, {
     rankingSlug: options.rankingSlug || "strategy_list",
     clickEvent: options.clickEvent || "ranking_to_strategy_click",
+    heading: options.heading || "Strategies in this opportunity",
   });
 }
 

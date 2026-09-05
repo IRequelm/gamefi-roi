@@ -452,6 +452,31 @@ test("long strategy names stay in card structure with CTA behavior", () => {
   assert.doesNotMatch(html, /<table/);
 });
 
+test("ranking cards distinguish repeated opportunities from their child strategies", () => {
+  const payload = rankingPayload();
+  const second = structuredClone(payload.items[0]);
+  second.rank = 2;
+  second.strategy = { ...second.strategy, opportunity_id: "defi-kingdoms", strategy_id: "dfk-alt", name: "DFK Alternative Approach" };
+  payload.items.push(second);
+  payload.page.total = 2;
+
+  const html = renderRankingsTable(payload);
+
+  assert.equal((html.match(/class="ranking-parent"/g) || []).length, 2);
+  assert.match(html, /Opportunity/);
+  assert.match(html, /DFK Jeweler cJEWEL Max Lock/);
+  assert.match(html, /DFK Alternative Approach/);
+  assert.match(html, /href="\/opportunities\/defi-kingdoms"/);
+  assert.match(html, /Ranked strategies/);
+});
+
+test("opportunity strategy list uses an explicit child-strategy heading", () => {
+  const html = renderGameDetail(gamePayload(strategyPayload()));
+  assert.match(html, /Strategies in this game/);
+  assert.match(html, /Opportunity/);
+  assert.match(html, /href="\/opportunities\/defi-kingdoms"/);
+});
+
 
 test("legacy game detail CTA uses risk-aware wording without changing link behavior", () => {
   const highRiskGame = gamePayload(strategyPayload());

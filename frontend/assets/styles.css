@@ -729,6 +729,20 @@ tr:last-child td {
   word-break: normal;
 }
 
+.ranking-parent {
+  margin: 0 0 3px;
+  line-height: 1.2;
+}
+
+.ranking-parent span,
+.ranking-parent-label {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .rank-chip {
   display: inline-flex;
   align-items: center;
