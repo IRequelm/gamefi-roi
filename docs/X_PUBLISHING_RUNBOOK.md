@@ -63,6 +63,14 @@ GAMEFI_X_HTTP_TIMEOUT_SECONDS=20
 GAMEFI_X_MAX_SNAPSHOT_AGE_SECONDS=1800
 ```
 
+When X credentials or API access are unavailable, the autonomous distribution worker writes one current GREEN manual-ready item to `distribution/manual_outbox/x_manual_ready.json`. The record contains the exact validated post text, source URL, prepared timestamp, content checksum, and `published: false`; YELLOW and RED items are excluded. Repeated worker cycles retain the current pending record. After the operator publishes that exact text manually, confirm it explicitly with:
+
+```powershell
+distribution-worker x-manual-confirm CONTENT_ID
+```
+
+The confirmation records the checksum as manually published for duplicate protection and marks the outbox item published. It does not claim that the X API published the post and never infers publication without the command.
+
 `GAMEFI_X_CLIENT_SECRET` is optional for a public/native PKCE client and required only when the Developer Console configures the app as confidential. Do not create or use an app until the founder accepts X's current pay-per-use terms and sets an explicit spending limit.
 
 ## One-time human setup

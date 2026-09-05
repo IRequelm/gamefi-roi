@@ -5,6 +5,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from types import SimpleNamespace
 
+from app.distribution.x_publisher import XAuthError
 from app.publishing.distribution_worker import DistributionWorker, DistributionWorkerConfig
 
 
@@ -23,7 +24,12 @@ class FakeX:
         return {"publishable": self.publishable, "awaiting_human_approval": self.awaiting, "blocked": self.blocked}
 
     def preview(self, content_id):
-        return SimpleNamespace(content_checksum="checksum")
+        return SimpleNamespace(
+            content_checksum="checksum",
+            would_publish=True,
+            exact_final_copy=f"Post for {content_id}",
+            attribution_url=f"https://example.com/{content_id}",
+        )
 
     def publish(self, content_id, *, dry_run, confirm_publish):
         self.calls.append((content_id, dry_run, confirm_publish))
@@ -63,6 +69,7 @@ def worker(tmp_path: Path, *, live: bool = False, x=None, youtube=None) -> Distr
         video_directory=tmp_path / "videos",
         state_file=tmp_path / "worker.json",
         failure_cooldown_seconds=3600,
+        manual_outbox_file=tmp_path / "outbox.json",
     )
     return DistributionWorker(config=config, x_service=x or FakeX(), youtube_distribution=youtube or FakeYouTube(), now=lambda: NOW)
 
@@ -138,3 +145,18 @@ def test_x_auth_failure_does_not_block_youtube_queue_processing(tmp_path):
     assert result[0]["status"] == "failed"
     assert result[1]["status"] == "dry_run"
     assert youtube.calls == ["dry:good-video"]
+
+
+def test_x_auth_failure_exports_one_manual_ready_item_without_blocking_youtube(tmp_path):
+    x = FakeX(publishable=["bad-x"], error=XAuthError("credentials unavailable"))
+    youtube = FakeYouTube()
+    first = worker(tmp_path, x=x, youtube=youtube).run_once()
+    outbox = json.loads((tmp_path / "outbox.json").read_text(encoding="utf-8"))
+    second = worker(tmp_path, x=x, youtube=youtube).run_once()
+
+    assert first[0]["status"] == "manual_ready"
+    assert first[1]["status"] == "idle"
+    assert outbox["item"]["status"] == "MANUAL_READY"
+    assert outbox["item"]["published"] is False
+    assert second[0]["status"] == "cooldown"
+    assert json.loads((tmp_path / "outbox.json").read_text(encoding="utf-8")) == outbox

@@ -600,6 +600,27 @@ class XPublishingService:
                 return self.publish(item.content_id, dry_run=dry_run, confirm_publish=confirm_publish)
         raise XValidationError("No currently publishable X queue item exists")
 
+    def confirm_manual_publication(self, content_id: str, *, checksum: str) -> PublicationRecord:
+        preview = self.preview(content_id)
+        if preview.content_checksum != checksum:
+            raise XValidationError("manual outbox checksum does not match current X content")
+        if not preview.would_publish:
+            raise XValidationError("manual confirmation blocked: " + "; ".join(preview.blockers))
+        now = _iso(self.now())
+        record = PublicationRecord(
+            content_id=content_id,
+            content_checksum=checksum,
+            status="published",
+            attempted_at=now,
+            updated_at=now,
+            safe_error="confirmed manually outside the X API",
+        )
+        with _exclusive_publish_lock(self.config.publish_lock_file):
+            if self._publication_blockers_by_id(content_id, checksum):
+                raise XDuplicateError("same content_id and checksum was already published")
+            self.publications.append(record)
+        return record
+
     def _load_context(self) -> tuple[XPublishQueue, tuple[ContentPackLite, ...]]:
         queue = load_x_queue(self.config.queue_file)
         batch_bytes = self.config.content_pack_file.read_bytes()

@@ -22,6 +22,7 @@ from app.distribution.youtube_queue import (
     load_youtube_queue,
     write_youtube_queue,
     youtube_package_checksum,
+    narration_quality_blockers,
 )
 from app.publishing.youtube import (
     YouTubeManifestError,
@@ -352,6 +353,8 @@ class YouTubeDistributionPublisher:
             blockers.append("YouTube description is missing the exact attribution URL")
         if pack.editorial.readiness is not item.status:
             blockers.append("YouTube queue readiness does not match canonical content pack")
+        if item.status is ContentReadiness.GREEN:
+            blockers.extend(narration_quality_blockers(item))
         return tuple(blockers)
 
 

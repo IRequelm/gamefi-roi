@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -139,6 +139,10 @@ class EditorialContent(BaseModel):
     visual_plan: list[str] = Field(default_factory=list)
     thumbnail_text: str | None = None
     disclosure: str
+    narration_mode: Literal["neural_voice", "human", "music_only", "silent", "unknown"] = "unknown"
+    voice_provider: str | None = None
+    voice_model: str | None = None
+    narration_quality_status: Literal["approved", "not_ready", "unknown"] = "unknown"
 
 
 class DistributionLinks(BaseModel):

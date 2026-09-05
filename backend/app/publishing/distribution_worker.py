@@ -13,7 +13,8 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, Callable
 
-from app.distribution.x_publisher import XPublisherConfig, XPublishingService
+from app.distribution.manual_outbox import XManualOutbox, manual_ready_record
+from app.distribution.x_publisher import XApiError, XAuthError, XAmbiguousApiError, XPublisherConfig, XPublisherError, XPublishingService
 from app.distribution.refill import DistributionRefillConfig, DistributionRefiller
 from app.publishing.youtube import YouTubePublisher, YouTubePublisherConfig
 from app.publishing.youtube_distribution import YouTubeDistributionConfig, YouTubeDistributionPublisher
@@ -28,6 +29,7 @@ class DistributionWorkerConfig:
     thumbnail_directory: Path | None = None
     state_file: Path = Path("data/local/distribution/worker_state.json")
     failure_cooldown_seconds: int = 1800
+    manual_outbox_file: Path = Path("distribution/manual_outbox/x_manual_ready.json")
 
     @classmethod
     def from_environment(cls) -> "DistributionWorkerConfig":
@@ -38,6 +40,7 @@ class DistributionWorkerConfig:
             thumbnail_directory=Path(thumbnail) if thumbnail else None,
             state_file=Path(os.getenv("GAMEFI_DISTRIBUTION_WORKER_STATE_FILE", "data/local/distribution/worker_state.json")),
             failure_cooldown_seconds=int(os.getenv("GAMEFI_DISTRIBUTION_FAILURE_COOLDOWN_SECONDS", "1800")),
+            manual_outbox_file=Path(os.getenv("GAMEFI_MANUAL_X_OUTBOX_FILE", "distribution/manual_outbox/x_manual_ready.json")),
         )
 
 
@@ -106,6 +109,7 @@ class DistributionWorker:
         self.refiller = refiller or DistributionRefiller(DistributionRefillConfig.from_environment())
         self.now = now
         self.state = WorkerState(self.config.state_file)
+        self.manual_outbox = XManualOutbox(Path(os.getenv("GAMEFI_MANUAL_X_OUTBOX_FILE", str(self.config.manual_outbox_file))))
 
     def run_once(self) -> list[dict[str, Any]]:
         now = self.now()
@@ -133,23 +137,48 @@ class DistributionWorker:
         candidates = summary.get("publishable", [])
         if not candidates:
             return {"platform": "X", "status": "idle", "detail": "no GREEN queue item"}
-        content_id = str(candidates[0])
-        key = f"X:{content_id}"
-        try:
-            preview = self.x_service.preview(content_id)
-            key = f"X:{content_id}:{preview.content_checksum}"
-            if self.state.blocked(key, now=now) or self.state.blocked(f"X:{content_id}", now=now):
-                return {"platform": "X", "content_id": content_id, "status": "cooldown"}
-            result = self.x_service.publish(content_id, dry_run=not self.config.live, confirm_publish=self.config.live)
-            self.state.record_success(key)
-            return {"platform": "X", "content_id": content_id, "status": "published" if self.config.live else "dry_run", "result": result.model_dump(mode="json")}
-        except Exception as exc:  # Publisher classifies and persists the failure; worker must continue.
-            category = type(exc).__name__
-            self.state.record_failure(key, error_category=category, now=now, cooldown_seconds=self.config.failure_cooldown_seconds)
-            if key != f"X:{content_id}":
-                self.state.record_failure(f"X:{content_id}", error_category=category, now=now, cooldown_seconds=self.config.failure_cooldown_seconds)
-            logger.error("distribution_publish_failed platform=X content_id=%s category=%s", content_id, category)
-            return {"platform": "X", "content_id": content_id, "status": "failed", "error_category": category}
+        saw_cooldown = False
+        for raw_content_id in candidates:
+            content_id = str(raw_content_id)
+            key = f"X:{content_id}"
+            preview = None
+            try:
+                preview = self.x_service.preview(content_id)
+                key = f"X:{content_id}:{preview.content_checksum}"
+                if self.state.blocked(key, now=now) or self.state.blocked(f"X:{content_id}", now=now):
+                    saw_cooldown = True
+                    continue
+                result = self.x_service.publish(content_id, dry_run=not self.config.live, confirm_publish=self.config.live)
+                self.state.record_success(key)
+                return {"platform": "X", "content_id": content_id, "status": "published" if self.config.live else "dry_run", "result": result.model_dump(mode="json")}
+            except (XAuthError, XApiError) as exc:
+                if not isinstance(exc, XAmbiguousApiError) and preview is not None and preview.would_publish:
+                    outbox_status = self.manual_outbox.prepare(
+                        manual_ready_record(
+                            content_id=content_id,
+                            post_text=preview.exact_final_copy,
+                            source_url=preview.attribution_url,
+                            checksum=preview.content_checksum,
+                            now=now,
+                        )
+                    )
+                else:
+                    outbox_status = None
+                self._record_x_failure(key, content_id, type(exc).__name__, now)
+                logger.error("distribution_publish_failed platform=X content_id=%s category=%s", content_id, type(exc).__name__)
+                return {"platform": "X", "content_id": content_id, "status": "manual_ready" if outbox_status else "failed", "error_category": type(exc).__name__, "outbox": outbox_status}
+            except Exception as exc:  # Publisher classifies and persists the failure; worker must continue.
+                self._record_x_failure(key, content_id, type(exc).__name__, now)
+                logger.error("distribution_publish_failed platform=X content_id=%s category=%s", content_id, type(exc).__name__)
+                return {"platform": "X", "content_id": content_id, "status": "failed", "error_category": type(exc).__name__}
+        if saw_cooldown:
+            return {"platform": "X", "status": "cooldown"}
+        return {"platform": "X", "status": "idle", "detail": "no unblocked GREEN queue item"}
+
+    def _record_x_failure(self, key: str, content_id: str, category: str, now: datetime) -> None:
+        self.state.record_failure(key, error_category=category, now=now, cooldown_seconds=self.config.failure_cooldown_seconds)
+        if key != f"X:{content_id}":
+            self.state.record_failure(f"X:{content_id}", error_category=category, now=now, cooldown_seconds=self.config.failure_cooldown_seconds)
 
     def _process_youtube(self, now: datetime) -> list[dict[str, Any]]:
         summary = self.youtube_distribution.queue_summary()
@@ -219,8 +248,26 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Run the fail-closed GamCryp distribution worker.")
     parser.add_argument("--once", action="store_true", help="Process one interval and exit.")
     parser.add_argument("--interval-seconds", type=int, default=1800)
+    subcommands = parser.add_subparsers(dest="command")
+    confirm = subcommands.add_parser("x-manual-confirm", help="Confirm the current manually published X outbox item.")
+    confirm.add_argument("content_id")
     args = parser.parse_args(argv)
     logging.basicConfig(level=os.getenv("GAMEFI_DISTRIBUTION_LOG_LEVEL", "INFO"))
+    if args.command == "x-manual-confirm":
+        try:
+            config = DistributionWorkerConfig.from_environment()
+            service = XPublishingService(XPublisherConfig.from_environment())
+            outbox = XManualOutbox(Path(os.getenv("GAMEFI_MANUAL_X_OUTBOX_FILE", str(config.manual_outbox_file))))
+            record = outbox.current()
+            if record is None or record.published or record.content_id != args.content_id:
+                raise XPublisherError("current manual-ready outbox item does not match content_id")
+            service.confirm_manual_publication(args.content_id, checksum=record.checksum)
+            outbox.clear(content_id=record.content_id, checksum=record.checksum)
+            print(json.dumps({"content_id": record.content_id, "status": "manual_confirmed", "published": True}))
+            return 0
+        except (XPublisherError, OSError, ValueError, json.JSONDecodeError) as exc:
+            print(json.dumps({"status": "error", "error": str(exc)}))
+            return 1
     worker = DistributionWorker()
     if args.once:
         print(json.dumps(worker.run_once(), indent=2, sort_keys=True))

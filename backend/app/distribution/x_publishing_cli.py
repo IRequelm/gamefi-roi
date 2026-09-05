@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -13,6 +14,7 @@ from app.distribution.x_publisher import (
     XPublishingService,
     safe_error,
 )
+from app.distribution.manual_outbox import XManualOutbox
 from app.distribution.x_queue import (
     build_x_publish_queue,
     editorial_order_from_handoff,
@@ -54,6 +56,8 @@ def main(argv: list[str] | None = None) -> int:
     publish_next.add_argument("--confirm-publish", action="store_true")
 
     subcommands.add_parser("status", help="Show safe OAuth and local publisher state.")
+    manual_confirm = subcommands.add_parser("x-manual-confirm", help="Confirm one manually published X outbox item.")
+    manual_confirm.add_argument("content_id")
     subcommands.add_parser("authorize-url", help="Create the OAuth 2.0 PKCE authorization URL.")
     authorize = subcommands.add_parser("authorize", help="Exchange an approved OAuth callback URL for tokens.")
     authorize.add_argument("--callback-url", required=True)
@@ -68,6 +72,15 @@ def main(argv: list[str] | None = None) -> int:
             return 0
 
         service = XPublishingService(config)
+        if args.command == "x-manual-confirm":
+            outbox = XManualOutbox(Path(os.getenv("GAMEFI_MANUAL_X_OUTBOX_FILE", "distribution/manual_outbox/x_manual_ready.json")))
+            record = outbox.current()
+            if record is None or record.published or record.content_id != args.content_id:
+                raise XPublisherError("current manual-ready outbox item does not match content_id")
+            service.confirm_manual_publication(args.content_id, checksum=record.checksum)
+            outbox.clear(content_id=record.content_id, checksum=record.checksum)
+            _print_json({"content_id": record.content_id, "status": "manual_confirmed", "published": True})
+            return 0
         if args.command == "preview":
             _print_json(service.preview(args.content_id).model_dump(mode="json"))
             return 0

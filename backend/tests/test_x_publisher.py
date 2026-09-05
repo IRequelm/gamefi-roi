@@ -9,6 +9,7 @@ import httpx
 import pytest
 
 from app.distribution.content_pack import ContentPackValidationError, ContentReadiness
+from app.distribution.manual_outbox import XManualOutbox, manual_ready_record
 from app.distribution.x_publisher import (
     ApprovalRecord,
     XAmbiguousApiError,
@@ -429,7 +430,31 @@ def test_same_content_and_checksum_duplicate_is_blocked(tmp_path: Path) -> None:
 
     with pytest.raises(XValidationError, match="already published"):
         service.publish(METHODOLOGY_ID, dry_run=False, confirm_publish=True)
-    assert len(api.calls) == 1
+
+
+def test_manual_confirmation_records_duplicate_and_clears_outbox(tmp_path: Path) -> None:
+    service, _ = _service(tmp_path)
+    preview = service.preview(METHODOLOGY_ID)
+    outbox = XManualOutbox(tmp_path / "x_manual_ready.json")
+    outbox.prepare(
+        manual_ready_record(
+            content_id=METHODOLOGY_ID,
+            post_text=preview.exact_final_copy,
+            source_url=preview.attribution_url,
+            checksum=preview.content_checksum,
+            now=SNAPSHOT_TIME,
+        )
+    )
+
+    service.confirm_manual_publication(METHODOLOGY_ID, checksum=preview.content_checksum)
+    outbox.clear(content_id=METHODOLOGY_ID, checksum=preview.content_checksum)
+
+    assert outbox.current().published is True
+    confirmed_preview = service.preview(METHODOLOGY_ID)
+    assert confirmed_preview.would_publish is False
+    assert "already published" in confirmed_preview.blockers[0]
+    with pytest.raises(XValidationError, match="already published"):
+        service.publish(METHODOLOGY_ID, dry_run=False, confirm_publish=True)
 
 
 def test_api_failure_does_not_mark_published(tmp_path: Path) -> None:

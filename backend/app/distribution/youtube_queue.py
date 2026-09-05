@@ -19,6 +19,8 @@ from app.distribution.content_pack import (
 )
 
 YOUTUBE_QUEUE_VERSION = "youtube-publish-queue-v1"
+APPROVED_NEURAL_PROVIDERS = frozenset({"elevenlabs", "heygen"})
+FORBIDDEN_NARRATION_PROVIDERS = frozenset({"system", "windows", "pyttsx", "basic_tts", "generic_tts"})
 
 
 class YouTubeApprovalState(str, Enum):
@@ -52,6 +54,10 @@ class YouTubeQueueItem(BaseModel):
     recommended_order: int
     source_pack_version: str
     generated_at: str
+    narration_mode: str = "unknown"
+    voice_provider: str | None = None
+    voice_model: str | None = None
+    narration_quality_status: str = "unknown"
 
 
 class YouTubePublishQueue(BaseModel):
@@ -91,6 +97,22 @@ def youtube_package_checksum(pack: ContentPackLite) -> str:
         "source_snapshot_hash": pack.source.source_snapshot_hash,
         "title": pack.editorial.youtube_title,
     }
+    # Preserve the checksum of legacy packs that predate the narration policy;
+    # explicit quality metadata is included once a producer records it.
+    if (
+        pack.editorial.narration_mode != "unknown"
+        or pack.editorial.voice_provider
+        or pack.editorial.voice_model
+        or pack.editorial.narration_quality_status != "unknown"
+    ):
+        payload.update(
+            {
+                "narration_mode": pack.editorial.narration_mode,
+                "voice_provider": pack.editorial.voice_provider,
+                "voice_model": pack.editorial.voice_model,
+                "narration_quality_status": pack.editorial.narration_quality_status,
+            }
+        )
     return hashlib.sha256(canonical_json(payload).encode("utf-8")).hexdigest()
 
 
@@ -105,13 +127,15 @@ def build_youtube_publish_queue(
     youtube_packs = tuple(pack for pack in packs if _has_youtube_package(pack))
     items = tuple(_queue_item(pack, index + 1, str(batch_payload["generated_at"])) for index, pack in enumerate(youtube_packs))
     publishable = tuple(item for item in items if item.status is ContentReadiness.GREEN)
-    pending_asset = ()
+    pending_asset = tuple(item for item in publishable if narration_quality_blockers(item))
+    publishable = tuple(item for item in publishable if item not in pending_asset)
     if video_directory is not None:
-        pending_asset = tuple(
+        missing_assets = tuple(
             item for item in publishable
             if not any((video_directory / f"{item.content_id}{extension}").is_file() for extension in (".mp4", ".mov", ".m4v", ".webm"))
         )
-        publishable = tuple(item for item in publishable if item not in pending_asset)
+        pending_asset += missing_assets
+        publishable = tuple(item for item in publishable if item not in missing_assets)
     return YouTubePublishQueue(
         source_batch_id=str(batch_payload["batch_id"]),
         source_batch_hash=hashlib.sha256(source_batch_bytes).hexdigest(),
@@ -177,4 +201,27 @@ def _queue_item(pack: ContentPackLite, order: int, generated_at: str) -> YouTube
         recommended_order=order,
         source_pack_version=pack.content_pack_version,
         generated_at=generated_at,
+        narration_mode=pack.editorial.narration_mode,
+        voice_provider=pack.editorial.voice_provider,
+        voice_model=pack.editorial.voice_model,
+        narration_quality_status=pack.editorial.narration_quality_status,
     )
+
+
+def narration_quality_blockers(item: YouTubeQueueItem) -> tuple[str, ...]:
+    """Return publish blockers for narration provenance and quality."""
+
+    mode = item.narration_mode.strip().lower()
+    provider = (item.voice_provider or "").strip().lower()
+    status = item.narration_quality_status.strip().lower()
+    if mode in {"music_only", "silent"}:
+        return () if status == "approved" else ("intentional no-narration format is not approved",)
+    if mode == "human":
+        return () if status == "approved" else ("human narration quality is not approved",)
+    if mode == "neural_voice":
+        if provider in FORBIDDEN_NARRATION_PROVIDERS:
+            return ("forbidden basic/system TTS provider",)
+        if provider not in APPROVED_NEURAL_PROVIDERS:
+            return ("neural voice provider is not approved",)
+        return () if status == "approved" else ("neural narration quality is not approved",)
+    return ("narration mode is missing or unknown",)
