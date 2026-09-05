@@ -52,9 +52,9 @@ test("rankings rendering includes card metrics and stored API values", () => {
 
   assert.match(html, /DeFi Kingdoms/);
   assert.match(html, /DFK Jeweler/);
-  assert.match(html, /Estimated starting capital/);
-  assert.match(html, /Estimated net\/day/);
-  assert.match(html, /30-day modeled ROI/);
+  assert.match(html, /Starting capital/);
+  assert.match(html, /Net earning\/day/);
+  assert.match(html, /30-day ROI/);
   assert.match(html, /Current break-even/);
   assert.match(html, /82 High/);
   assert.match(html, /79 Very High/);
@@ -73,6 +73,7 @@ test("rankings rendering includes card metrics and stored API values", () => {
   assert.match(html, /ranking-card-grid/);
   assert.doesNotMatch(html, /<table/);
   assert.doesNotMatch(html, /<tr/);
+  assert.doesNotMatch(html, /<p class="muted">v1 \| locked-yield-reward<\/p>/);
 });
 
 test("rankings page exposes only published curated links", () => {
@@ -269,7 +270,7 @@ test("strategy detail renders capital, earnings, scores, classification, warning
 
   assert.match(html, /dfk-crystalvale-jeweler-cjewel-max-lock/);
   assert.match(html, /Capital Breakdown/);
-  assert.match(html, /Estimated starting capital/);
+  assert.match(html, /Starting capital/);
   assert.match(html, /Sunk cost is modeled as non-recoverable/);
   assert.match(html, /Earnings and Costs/);
   assert.match(html, /Return Metrics/);
@@ -330,6 +331,8 @@ test("structured unavailable ROI omits empty explanation sections and stays conc
   assert.match(detail, /Account eligibility is not reproducible/);
   assert.doesNotMatch(detail, /What is missing|What would make it modelable/);
   assert.match(card, /Account eligibility is not reproducible/);
+  assert.match(card, /ROI status/);
+  assert.doesNotMatch(card, /Opportunity type/);
   assert.ok(visibleText(card).length < 900);
 });
 

@@ -740,9 +740,8 @@ export function renderOpportunityCard(opportunity) {
       <p class="muted">${escapeHtml(opportunityIntro(opportunity))}</p>
       <p class="muted">${strategyText}</p>
       <div class="opportunity-facts">
-        ${metricItem("Opportunity type", escapeHtml(opportunityTypeLabel(opportunity.opportunity_type)))}
         ${metricItem("Reward type", escapeHtml(rewardTypes))}
-        ${metricItem("Can ROI be measured?", roiText)}
+        ${metricItem("ROI status", roiText)}
       </div>
       <p class="muted watchlist-note">${opportunity.strategy_count > 0 ? "Review the modeled strategy for assumptions and current freshness." : escapeHtml(conciseUnavailableRoiReason(opportunity))}</p>
       <div class="card-actions">
@@ -802,14 +801,13 @@ export function renderRankingCard(item, options = {}) {
         <div>
           <p class="ranking-parent"><span>Opportunity</span> <a class="game-link" href="/opportunities/${encodeURIComponent(strategy.opportunity_id || strategy.game_id)}" data-link>${escapeHtml(snapshot.game_name)}</a></p>
           <h3><a class="strategy-link" href="/strategies/${encodeURIComponent(strategy.strategy_id)}" data-link${strategyClickAnalytics}>${escapeHtml(strategy.name)}</a></h3>
-          <p class="muted">${escapeHtml(strategy.strategy_version)} | ${escapeHtml(labelize(strategy.economy_type))}</p>
         </div>
       </div>
       ${renderStrategySignals(snapshot)}
       <div class="card-metrics">
-        ${metricItem("Estimated starting capital", formatMoney(snapshot.capital.total_capital))}
-        ${metricItem("Estimated net/day", formatMoney(snapshot.earnings.net_earnings_day, { perDay: true }))}
-        ${metricItem("30-day modeled ROI", formatRatio(snapshot.roi.roi_total_30d))}
+        ${metricItem("Starting capital", formatMoney(snapshot.capital.total_capital))}
+        ${metricItem("Net earning/day", formatMoney(snapshot.earnings.net_earnings_day, { perDay: true }))}
+        ${metricItem("30-day ROI", formatRatio(snapshot.roi.roi_total_30d))}
         ${metricItem("Current break-even", formatBreakEven(snapshot.roi.break_even))}
       </div>
       ${renderNetEarningsInterpretation(snapshot)}

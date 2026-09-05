@@ -801,14 +801,13 @@ def _render_ranking_cards(items: list[RankingItem], *, heading: str) -> str:
                 <div>
                   <p class="ranking-parent"><span>Opportunity</span> <a class="game-link" href="/opportunities/{escape(strategy.opportunity_id or strategy.game_id)}">{escape(snapshot.game_name)}</a></p>
                   <h3><a class="strategy-link" href="/strategies/{escape(strategy.strategy_id)}">{escape(strategy.name)}</a></h3>
-                  <p class="muted">{escape(strategy.strategy_version)} | {escape(labelize(strategy.economy_type))}</p>
                 </div>
               </div>
               <p>{escape(_ranking_answer(snapshot, strategy))}</p>
               <div class="card-metrics">
-                {_metric("Estimated starting capital", format_money_html(snapshot.capital.total_capital))}
-                {_metric("Estimated net/day", format_money_html(snapshot.earnings.net_earnings_day, per_day=True))}
-                {_metric("30-day modeled ROI", format_ratio_html(snapshot.roi.roi_total_30d))}
+                {_metric("Starting capital", format_money_html(snapshot.capital.total_capital))}
+                {_metric("Net earning/day", format_money_html(snapshot.earnings.net_earnings_day, per_day=True))}
+                {_metric("30-day ROI", format_ratio_html(snapshot.roi.roi_total_30d))}
                 {_metric("Current break-even", format_break_even_html(snapshot.roi.break_even))}
               </div>
               <div class="card-badges">
@@ -836,6 +835,13 @@ def _render_opportunity_cards(opportunities: list[OpportunitySummary], *, headin
     cards = []
     for opportunity in opportunities:
         roi_text = "Review the modeled strategy for current assumptions." if opportunity.strategy_count else plain_unavailable_reason(opportunity)
+        strategy_text = (
+            f"{opportunity.strategy_count} modeled strategy"
+            if opportunity.strategy_count == 1
+            else f"{opportunity.strategy_count} modeled strategies"
+            if opportunity.strategy_count
+            else roi_text
+        )
         cards.append(
             f"""
             <article class="opportunity-card">
@@ -845,10 +851,10 @@ def _render_opportunity_cards(opportunities: list[OpportunitySummary], *, headin
               </div>
               <h3><a class="strategy-link" href="/opportunities/{escape(opportunity.opportunity_id)}">{escape(opportunity.name)}</a></h3>
               <p class="muted">{escape(opportunity_intro(opportunity))}</p>
-              <p class="muted">{escape(roi_text)}</p>
+              <p class="muted">{escape(strategy_text)}</p>
               <div class="opportunity-facts">
                 {_metric("Reward type", escape(", ".join(opportunity.reward_asset_or_points_type) or "Unspecified"))}
-                {_metric("Can ROI be measured?", value_status_label(opportunity.value_realization_status, opportunity.strategy_count))}
+                {_metric("ROI status", value_status_label(opportunity.value_realization_status, opportunity.strategy_count))}
               </div>
               <div class="card-actions">
                 <a class="secondary-button" href="/opportunities/{escape(opportunity.opportunity_id)}">Learn more</a>
