@@ -282,6 +282,7 @@ def opportunity_page(
         </section>
         {_render_opportunity_answer_block(opportunity, strategy, snapshot)}
         {_render_opportunity_human_summary(opportunity, strategy, snapshot)}
+        {_render_depin_setup_summary(opportunity)}
         {_render_opportunity_guidance(opportunity)}
         <section class="section-panel">
           <div class="section-header"><h2>Executive Summary</h2></div>
@@ -701,6 +702,45 @@ def _render_opportunity_human_summary(
     return _render_human_summary("Plain-language summary", items)
 
 
+def depin_setup_labels(opportunity_or_platforms) -> list[str]:
+    opportunity = None if isinstance(opportunity_or_platforms, (list, tuple)) else opportunity_or_platforms
+    if opportunity is not None and str(opportunity.opportunity_type or "").upper() != "DEPIN_NODE":
+        return []
+    platforms = opportunity_or_platforms if opportunity is None else (opportunity.platforms or [])
+    labels = []
+    mapping = {
+        "hardware-node": "Dedicated hardware",
+        "browser-extension": "Browser / extension",
+        "extension": "Browser / extension",
+        "desktop-node": "Node software",
+        "docker-node": "Node software",
+        "node": "Node software",
+        "cli": "Node software",
+        "desktop": "Existing PC",
+        "pc": "Existing PC",
+        "web": "Web-only",
+    }
+    for value in platforms:
+        label = mapping.get(str(value or "").lower())
+        if label and label not in labels:
+            labels.append(label)
+    return labels
+
+
+def _render_depin_setup_summary(opportunity: OpportunityDetail) -> str:
+    if opportunity.opportunity_type != "DEPIN_NODE":
+        return ""
+    labels = depin_setup_labels(opportunity)
+    if not labels:
+        return ""
+    return (
+        '<section class="section-panel depin-setup">'
+        '<div class="section-header"><h2>Setup at a glance</h2></div>'
+        f'<div class="section-body"><p>{escape("; ".join(labels))}</p></div>'
+        '</section>'
+    )
+
+
 def _render_opportunity_guidance(opportunity: OpportunityDetail) -> str:
     guidance = opportunity.guidance
     if guidance is None:
@@ -842,6 +882,8 @@ def _render_opportunity_cards(opportunities: list[OpportunitySummary], *, headin
             if opportunity.strategy_count
             else roi_text
         )
+        setup_labels = depin_setup_labels(opportunity)
+        setup_text = f"Setup: {'; '.join(setup_labels[:2])}" if setup_labels else ""
         cards.append(
             f"""
             <article class="opportunity-card">
@@ -852,6 +894,7 @@ def _render_opportunity_cards(opportunities: list[OpportunitySummary], *, headin
               <h3><a class="strategy-link" href="/opportunities/{escape(opportunity.opportunity_id)}">{escape(opportunity.name)}</a></h3>
               <p class="muted">{escape(opportunity_intro(opportunity))}</p>
               <p class="muted">{escape(strategy_text)}</p>
+              {f'<p class="muted">{escape(setup_text)}</p>' if setup_text else ''}
               <div class="opportunity-facts">
                 {_metric("Reward type", escape(", ".join(opportunity.reward_asset_or_points_type) or "Unspecified"))}
                 {_metric("ROI status", value_status_label(opportunity.value_realization_status, opportunity.strategy_count))}

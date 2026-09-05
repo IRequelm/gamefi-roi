@@ -8,6 +8,7 @@ import {
   applyCuratedRankingConstraints,
   buildRankingsPath,
   curatedRankingQuery,
+  depinSetupLabels,
   formatBreakEven,
   formatMoney,
   formatRatio,
@@ -20,6 +21,7 @@ import {
   renderAnalyticsConsentBanner,
   renderCatalogStats,
   renderDestinationButton,
+  renderDepinSetupSummary,
   renderError,
   renderFreshnessAlert,
   renderGameDetail,
@@ -300,6 +302,19 @@ test("opportunity detail shows unavailable ROI in public language without invent
   assert.match(html, /\/go\/grass-official/);
   assert.doesNotMatch(html, /DEPIN_NODE|PARTIAL|Financial ROI unavailable/);
   assert.doesNotMatch(html, /\$0(?:\.00)?|>0(?:\.00)?%/);
+});
+
+test("DePIN setup cues map platform evidence without leaking enums", () => {
+  const opportunity = { ...opportunityPayload(), platforms: ["browser-extension", "desktop", "hardware-node"] };
+  assert.deepEqual(depinSetupLabels(opportunity), ["Browser / extension", "Existing PC", "Dedicated hardware"]);
+  const detail = renderDepinSetupSummary(opportunity);
+  const card = renderOpportunityCard(opportunity);
+  assert.match(detail, /Setup at a glance/);
+  assert.match(detail, /Browser \/ extension; Existing PC; Dedicated hardware/);
+  assert.match(card, /Setup: Browser \/ extension; Existing PC/);
+  assert.doesNotMatch(detail + card, /browser-extension|hardware-node|desktop/);
+  assert.doesNotMatch(detail + card, /null|undefined|None/);
+  assert.equal(renderDepinSetupSummary({ ...opportunity, opportunity_type: "GAME" }), "");
 });
 
 test("structured unavailable ROI explains evidence gaps without leaking nulls", () => {

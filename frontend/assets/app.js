@@ -427,6 +427,36 @@ function humanList(values = [], fallback) {
   return labels.length ? labels.join(", ") : fallback;
 }
 
+export function depinSetupLabels(opportunityOrPlatforms) {
+  const opportunity = Array.isArray(opportunityOrPlatforms) ? null : opportunityOrPlatforms;
+  if (opportunity && String(opportunity.opportunity_type || "").toUpperCase() !== "DEPIN_NODE") {
+    return [];
+  }
+  const platforms = Array.isArray(opportunityOrPlatforms) ? opportunityOrPlatforms : (opportunity?.platforms || []);
+  const labels = [];
+  const add = (label) => { if (!labels.includes(label)) labels.push(label); };
+  for (const value of platforms) {
+    const normalized = String(value || "").toLowerCase();
+    if (normalized === "hardware-node") add("Dedicated hardware");
+    else if (["browser-extension", "extension"].includes(normalized)) add("Browser / extension");
+    else if (["desktop-node", "docker-node", "node", "cli"].includes(normalized)) add("Node software");
+    else if (["desktop", "pc"].includes(normalized)) add("Existing PC");
+    else if (normalized === "web") add("Web-only");
+  }
+  return labels;
+}
+
+export function renderDepinSetupSummary(opportunity) {
+  if (String(opportunity?.opportunity_type || "").toUpperCase() !== "DEPIN_NODE") {
+    return "";
+  }
+  const labels = depinSetupLabels(opportunity);
+  if (!labels.length) {
+    return "";
+  }
+  return `<section class="section-panel depin-setup"><div class="section-header"><h2>Setup at a glance</h2></div><div class="section-body"><p>${escapeHtml(labels.join("; "))}</p></div></section>`;
+}
+
 function strategyRiskSummary(snapshot) {
   if (snapshot.freshness?.overall_status && snapshot.freshness.overall_status !== "fresh") {
     return "The latest stored data is stale, so treat the result as outdated until a fresh snapshot appears.";
@@ -631,6 +661,7 @@ export function renderOpportunityDetail(opportunity) {
       </section>
       ${renderOpportunityAnswerBlock(opportunity)}
       ${renderOpportunityHumanSummary(opportunity)}
+      ${renderDepinSetupSummary(opportunity)}
       ${renderOpportunityGuidance(opportunity.guidance)}
       <section class="game-grid">
         <div class="game-card">
@@ -730,6 +761,7 @@ export function renderOpportunityCard(opportunity) {
   const roiText = opportunity.strategy_count > 0 && opportunity.value_realization_status === "realizable"
     ? '<span class="badge good">ROI modeled</span>'
     : `<span class="badge warning">${escapeHtml(opportunityCardState(opportunity))}</span>`;
+  const setupLabels = depinSetupLabels(opportunity);
   return `
     <article class="opportunity-card">
       <div class="identity-row">
@@ -739,6 +771,7 @@ export function renderOpportunityCard(opportunity) {
       <h3><a class="strategy-link" href="/opportunities/${encodeURIComponent(opportunity.opportunity_id)}" data-link>${escapeHtml(opportunity.name)}</a></h3>
       <p class="muted">${escapeHtml(opportunityIntro(opportunity))}</p>
       <p class="muted">${strategyText}</p>
+      ${setupLabels.length ? `<p class="muted">Setup: ${escapeHtml(setupLabels.slice(0, 2).join("; "))}</p>` : ""}
       <div class="opportunity-facts">
         ${metricItem("Reward type", escapeHtml(rewardTypes))}
         ${metricItem("ROI status", roiText)}
