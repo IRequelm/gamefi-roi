@@ -421,14 +421,17 @@ def methodology_page(*, settings: Settings, request: Request) -> SeoPage:
           <p class="lede">GamCryp publishes strategy-specific economics from stored snapshots, explicit assumptions, and source provenance. It does not imply guaranteed returns or investment advice.</p>
         </section>
         <section class="method-grid">
-          <article class="method-item"><h2>Strategy-specific ROI</h2><p class="muted">A game or opportunity does not have one universal ROI. Every result belongs to a named strategy version and model version.</p></article>
+          <article class="method-item"><h2>Modeled ROI</h2><p class="muted">ROI is calculated only when entry cost, reward rate, realizable reward value or exit path, and relevant costs can be reproduced from evidence.</p></article>
+          <article class="method-item"><h2>ROI unavailable</h2><p class="muted">When the economic path cannot be reproduced, GamCryp does not invent a financial ROI number.</p></article>
           <article class="method-item"><h2>Realizable earnings</h2><p class="muted">Rewards are valued through a modeled sell or realization route where one is lawful and reproducible.</p></article>
           <article class="method-item"><h2>Slippage</h2><p class="muted">Spot prices can overstate sellable value. Quotes or AMM simulations are preferred when available.</p></article>
           <article class="method-item"><h2>Total vs at-risk capital</h2><p class="muted">Total capital is the entry requirement. Capital at risk is the portion economically exposed after recoverable value is considered.</p></article>
-          <article class="method-item"><h2>Confidence vs risk</h2><p class="muted">Confidence measures trust in the calculation and data. Risk measures economic downside. They are independent.</p></article>
+          <article class="method-item"><h2>Risk</h2><p class="muted">Risk describes how exposed or fragile the opportunity or strategy is.</p></article>
+          <article class="method-item"><h2>Confidence</h2><p class="muted">Confidence describes how strong and reproducible the evidence behind the model is. It is separate from Risk.</p></article>
+          <article class="method-item"><h2>Freshness</h2><p class="muted">Freshness describes how recently the model and source inputs were updated or recalculated.</p></article>
           <article class="method-item"><h2>LIVE / CONFIG / DERIVED</h2><p class="muted">LIVE values are current observations, CONFIG values are assumptions, and DERIVED values are calculated from inputs.</p></article>
-          <article class="method-item"><h2>Unavailable ROI</h2><p class="muted">Points, badges, and future claims do not become zero-dollar ROI. They remain unavailable until value is lawful and reproducible.</p></article>
-          <article class="method-item"><h2>Commercial separation</h2><p class="muted">Referral, affiliate, sponsor, and traffic data never changes ROI, Risk, Confidence, or organic rankings.</p></article>
+          <article class="method-item"><h2>Commercial independence</h2><p class="muted">Referral, affiliate, sponsorship, or commercial relationships do not affect ROI, Risk, Confidence, or organic ranking.</p></article>
+          <article class="method-item"><h2>Decision support</h2><p class="muted">GamCryp provides decision-support analysis, not investment advice, guarantees, or automated execution instructions.</p></article>
         </section>
       </div>
     """

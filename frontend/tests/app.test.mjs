@@ -32,6 +32,7 @@ import {
   renderOpportunityCard,
   renderOpportunityDetail,
   renderOpportunityGuidance,
+  renderMethodologyPage,
   renderUnavailableRoiExplanation,
   renderRankingsAnswerBlock,
   renderRankingsPage,
@@ -106,6 +107,20 @@ test("home renders results as cards before filters without table ranking markup"
   assert.match(html, /finder-results/);
   assert.match(html, /filter-panel/);
   assert.doesNotMatch(html, /<table/);
+});
+
+test("methodology explains ROI availability and trust boundaries", () => {
+  const html = renderMethodologyPage();
+  assert.match(html, /Modeled ROI/);
+  assert.match(html, /ROI unavailable/);
+  assert.match(html, /does not invent a financial ROI number/);
+  assert.match(html, /Risk describes/);
+  assert.match(html, /Confidence describes/);
+  assert.match(html, /Freshness describes/);
+  assert.match(html, /Commercial independence/);
+  assert.match(html, /do not affect ROI, Risk, Confidence, or organic ranking/);
+  assert.match(html, /not investment advice/);
+  assert.doesNotMatch(html, /null|undefined|None/);
 });
 
 test("answer-ready blocks expose stored values without changing calculations", () => {

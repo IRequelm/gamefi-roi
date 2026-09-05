@@ -51,6 +51,26 @@ def test_strategy_page_contains_meaningful_server_rendered_content(monkeypatch, 
     assert '"@type":"WebPage"' in html
 
 
+def test_methodology_page_explains_modeling_and_trust_boundaries(monkeypatch, tmp_path) -> None:
+    client, _engine = _seeded_client(monkeypatch, tmp_path, "seo-methodology.db")
+
+    response = client.get("/methodology")
+
+    assert response.status_code == 200
+    html = response.text
+    assert "Modeled ROI" in html
+    assert "ROI unavailable" in html
+    assert "does not invent a financial ROI number" in html
+    assert "Risk describes" in html
+    assert "Confidence describes" in html
+    assert "Freshness describes" in html
+    assert "Commercial independence" in html
+    assert "do not affect ROI, Risk, Confidence, or organic ranking" in html
+    assert "not investment advice" in html
+    assert "None" not in html
+    assert "undefined" not in html
+
+
 def test_server_timestamp_formatter_uses_readable_utc_without_fractional_noise() -> None:
     assert format_datetime("2026-08-16T12:00:00.000000+00:00") == "Aug 16, 2026 12:00 UTC"
     assert format_datetime("2026-08-16T12:00:00Z") == "Aug 16, 2026 12:00 UTC"

@@ -1335,14 +1335,17 @@ export function renderHistory(historyPage = { items: [] }) {
 
 export function renderMethodologyPage() {
   const items = [
-    ["Strategy-specific ROI", "A game does not have one universal ROI. Each result belongs to a named strategy version and model version."],
+    ["Modeled ROI", "ROI is calculated only when entry cost, reward rate, realizable reward value or exit path, and relevant costs can be reproduced from evidence."],
+    ["ROI unavailable", "When the economic path cannot be reproduced, GamCryp does not invent a financial ROI number."],
     ["Realizable earnings", "Rewards are valued after the modeled route to sell or realize them, including route costs when available."],
     ["Slippage", "Displayed spot price can overstate sellable value. A quote or market simulation is preferred when the source supports it."],
     ["Total vs at-risk capital", "Total capital is the full entry requirement. Capital at risk is the portion economically exposed after recoverable value is considered."],
-    ["Confidence vs risk", "Confidence measures trust in the calculation and data. Risk measures economic downside. They are independent."],
+    ["Risk", "Risk describes how exposed or fragile the opportunity or strategy is."],
+    ["Confidence", "Confidence describes how strong and reproducible the evidence behind the model is. It is separate from Risk."],
+    ["Freshness", "Freshness describes how recently the model and source inputs were updated or recalculated."],
     ["LIVE / CONFIG / DERIVED", "LIVE means current observation, CONFIG means explicit assumption, and DERIVED means calculated from observed or configured inputs."],
-    ["Commercial separation", "Referral, affiliate, or sponsor relationships are disclosure metadata only. They do not change ROI, Risk, Confidence, or organic ranking order."],
-    ["No guaranteed returns", "Expected value and ROI are analytical estimates, not promises, investment advice, or automated execution instructions."],
+    ["Commercial independence", "Referral, affiliate, sponsorship, or commercial relationships do not affect ROI, Risk, Confidence, or organic ranking."],
+    ["Decision support", "GamCryp provides decision-support analysis, not investment advice, guarantees, or automated execution instructions."],
   ];
   return `
     <div class="page-shell">
