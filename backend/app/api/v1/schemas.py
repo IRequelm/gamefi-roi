@@ -160,6 +160,12 @@ class SponsoredPlacementPayload(BaseModel):
     sponsor_name: str | None = None
 
 
+class RoiUnavailablePayload(BaseModel):
+    reason: str
+    missing_evidence: list[str] | None = None
+    modeling_requirements: list[str] | None = None
+
+
 class OpportunitySummary(BaseModel):
     opportunity_id: str
     opportunity_type: str
@@ -174,6 +180,7 @@ class OpportunitySummary(BaseModel):
     strategy_count: int
     legacy_game_id: str | None = None
     primary_destination: OutboundDestinationPayload | None = None
+    roi_unavailable: RoiUnavailablePayload | None = None
 
 
 class OpportunityGuidancePayload(BaseModel):

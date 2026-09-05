@@ -27,8 +27,10 @@ import {
   renderHomeAnswerBlock,
   renderHomeShell,
   renderOpportunityAnswerBlock,
+  renderOpportunityCard,
   renderOpportunityDetail,
   renderOpportunityGuidance,
+  renderUnavailableRoiExplanation,
   renderRankingsAnswerBlock,
   renderRankingsPage,
   renderRankingsTable,
@@ -297,6 +299,38 @@ test("opportunity detail shows unavailable ROI in public language without invent
   assert.match(html, /\/go\/grass-official/);
   assert.doesNotMatch(html, /DEPIN_NODE|PARTIAL|Financial ROI unavailable/);
   assert.doesNotMatch(html, /\$0(?:\.00)?|>0(?:\.00)?%/);
+});
+
+test("structured unavailable ROI explains evidence gaps without leaking nulls", () => {
+  const opportunity = {
+    ...opportunityPayload(),
+    roi_unavailable: {
+      reason: "Rewards have no reproducible monetary route.",
+      missing_evidence: ["Transferable claim route", null],
+      modeling_requirements: ["Published settlement value"],
+    },
+  };
+  const html = renderOpportunityDetail(opportunity);
+  const explanation = renderUnavailableRoiExplanation(opportunity);
+
+  assert.match(html, /Why ROI is unavailable/);
+  assert.match(html, /Rewards have no reproducible monetary route/);
+  assert.match(html, /What is missing/);
+  assert.match(html, /What would make it modelable/);
+  assert.match(explanation, /Transferable claim route/);
+  assert.doesNotMatch(explanation, /null|undefined|None/);
+  assert.doesNotMatch(html, /\$0(?:\.00)?|>0(?:\.00)?%/);
+});
+
+test("structured unavailable ROI omits empty explanation sections and stays concise in cards", () => {
+  const opportunity = { ...opportunityPayload(), roi_unavailable: { reason: "Account eligibility is not reproducible." } };
+  const detail = renderUnavailableRoiExplanation(opportunity);
+  const card = renderOpportunityCard(opportunity);
+
+  assert.match(detail, /Account eligibility is not reproducible/);
+  assert.doesNotMatch(detail, /What is missing|What would make it modelable/);
+  assert.match(card, /Account eligibility is not reproducible/);
+  assert.ok(visibleText(card).length < 900);
 });
 
 test("opportunity guidance renders complete, partial, and empty structures safely", () => {

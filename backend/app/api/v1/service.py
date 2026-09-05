@@ -26,6 +26,7 @@ from app.api.v1.schemas import (
     OpportunitiesPage,
     OpportunityDetail,
     OpportunityGuidancePayload,
+    RoiUnavailablePayload,
     OpportunitySummary,
     OutboundDestinationPayload,
     PageMeta,
@@ -534,6 +535,15 @@ def _opportunity_summary(opportunity: OpportunityCatalogEntry) -> OpportunitySum
         strategy_count=len(opportunity.strategy_ids),
         legacy_game_id=opportunity.legacy_game_id,
         primary_destination=_maybe_outbound_destination(primary_destination_for_opportunity(opportunity.opportunity_id)),
+        roi_unavailable=(
+            RoiUnavailablePayload(
+                reason=opportunity.roi_unavailable.reason,
+                missing_evidence=list(opportunity.roi_unavailable.missing_evidence) if opportunity.roi_unavailable.missing_evidence else None,
+                modeling_requirements=list(opportunity.roi_unavailable.modeling_requirements) if opportunity.roi_unavailable.modeling_requirements else None,
+            )
+            if opportunity.roi_unavailable
+            else None
+        ),
     )
 
 

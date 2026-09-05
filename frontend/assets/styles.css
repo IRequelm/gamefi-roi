@@ -840,6 +840,29 @@ tr:last-child td {
   overflow-wrap: break-word;
 }
 
+.roi-unavailable-reason {
+  margin: 0;
+  color: var(--muted-strong);
+  line-height: 1.5;
+}
+
+.roi-unavailable-detail {
+  margin-top: 14px;
+}
+
+.roi-unavailable-detail h3 {
+  margin: 0 0 6px;
+  color: var(--ink);
+  font-size: 0.92rem;
+}
+
+.roi-unavailable-detail ul {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--muted-strong);
+  line-height: 1.5;
+}
+
 .history-summary {
   color: var(--muted-strong);
   font-weight: 750;

@@ -34,6 +34,13 @@ class OpportunityGuidance:
 
 
 @dataclass(frozen=True)
+class RoiUnavailableExplanation:
+    reason: str
+    missing_evidence: tuple[str, ...] | None = None
+    modeling_requirements: tuple[str, ...] | None = None
+
+
+@dataclass(frozen=True)
 class OutboundDestination:
     destination_id: str
     destination_slug: str
@@ -93,6 +100,7 @@ class OpportunityCatalogEntry:
     outbound_destination_slugs: tuple[str, ...]
     legacy_game_id: str | None = None
     guidance: OpportunityGuidance | None = None
+    roi_unavailable: RoiUnavailableExplanation | None = None
 
 
 @dataclass(frozen=True)
@@ -196,6 +204,7 @@ def _opportunity(
     strategy_ids: tuple[str, ...] = (),
     legacy_game_id: str | None = None,
     guidance: OpportunityGuidance | None = None,
+    roi_unavailable: RoiUnavailableExplanation | None = None,
 ) -> OpportunityCatalogEntry:
     return OpportunityCatalogEntry(
         opportunity_id=opportunity_id,
@@ -214,6 +223,7 @@ def _opportunity(
         outbound_destination_slugs=(outbound_destination_slug,),
         legacy_game_id=legacy_game_id,
         guidance=guidance,
+        roi_unavailable=roi_unavailable,
     )
 
 
@@ -563,6 +573,11 @@ OPPORTUNITIES = (
         data_feasibility_status="PARTIAL",
         feasibility_summary="Participation is documented, but reward formula and realizable value are insufficient.",
         outbound_destination_slug="bless-official",
+        roi_unavailable=RoiUnavailableExplanation(
+            reason="Financial ROI is unavailable because the reward formula and realizable value are insufficiently documented.",
+            missing_evidence=("A reproducible current reward-rate formula.", "A lawful, sourceable reward-to-cash route."),
+            modeling_requirements=("Published earning rules with current rates.", "A reproducible market or settlement value for rewards."),
+        ),
     ),
     _opportunity(
         opportunity_id="blockmesh",
@@ -611,6 +626,11 @@ OPPORTUNITIES = (
         data_feasibility_status="REJECTED",
         feasibility_summary="Official terms reject monetary value, transferability, or redemption for current rewards.",
         outbound_destination_slug="dawn-official",
+        roi_unavailable=RoiUnavailableExplanation(
+            reason="Financial ROI is unavailable because current rewards are not treated as monetary value and are not transferable or redeemable under the reviewed terms.",
+            missing_evidence=("A lawful transferable or redeemable reward route.", "A reproducible monetary value for current rewards."),
+            modeling_requirements=("Terms permitting monetary redemption or transfer.", "A sourceable claim route and settlement value."),
+        ),
     ),
     _opportunity(
         opportunity_id="galxe",
@@ -662,6 +682,11 @@ OPPORTUNITIES = (
         data_feasibility_status="PARTIAL",
         feasibility_summary="Points exist, but current monetary redemption and authorized account data are unavailable.",
         outbound_destination_slug="grass-official",
+        roi_unavailable=RoiUnavailableExplanation(
+            reason="Financial ROI is unavailable because points do not currently have a reproducible monetary redemption route.",
+            missing_evidence=("A lawful transferable reward or cash-conversion route.", "Authorized account-level earning and eligibility data."),
+            modeling_requirements=("A documented claim route with reproducible value.", "Sourceable earning and eligibility inputs."),
+        ),
     ),
     _opportunity(
         opportunity_id="illuvium",

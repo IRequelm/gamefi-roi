@@ -957,7 +957,18 @@ def _render_history_context(history_items: list[StrategySnapshotPayload]) -> str
 
 
 def _render_unavailable_roi(opportunity: OpportunityDetail) -> str:
-    return _empty("Why ROI is unavailable", _unavailable_reason(opportunity))
+    explanation = opportunity.roi_unavailable
+    if explanation is None:
+        return _empty("Why ROI is unavailable", _unavailable_reason(opportunity))
+    sections = [f'<p class="roi-unavailable-reason">{escape(explanation.reason)}</p>']
+    for heading, items in (
+        ("What is missing", explanation.missing_evidence),
+        ("What would make it modelable", explanation.modeling_requirements),
+    ):
+        values = [str(item).strip() for item in (items or []) if item is not None and str(item).strip()]
+        if values:
+            sections.append(f'<div class="roi-unavailable-detail"><h3>{escape(heading)}</h3><ul>{"".join(f"<li>{escape(item)}</li>" for item in values)}</ul></div>')
+    return f'<section class="section-panel roi-unavailable"><div class="section-header"><h2>Why ROI is unavailable</h2></div><div class="section-body">{"".join(sections)}</div></section>'
 
 
 def _render_sources(opportunity: OpportunityDetail) -> str:

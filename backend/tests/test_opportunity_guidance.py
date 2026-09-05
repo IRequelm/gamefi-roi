@@ -27,3 +27,18 @@ def test_server_opportunity_detail_renders_guidance_without_null_placeholders(mo
         assert "undefined" not in html
 
     assert "How it works" not in client.get("/opportunities/grass").text
+
+
+def test_unavailable_roi_explanation_is_structured_and_seeded_by_failure_mode(monkeypatch, tmp_path) -> None:
+    client, _engine = _seeded_client(monkeypatch, tmp_path, "roi-unavailable-api.db")
+
+    grass = client.get("/api/v1/opportunities/grass").json()["roi_unavailable"]
+    dawn = client.get("/api/v1/opportunities/dawn").json()["roi_unavailable"]
+    bless = client.get("/api/v1/opportunities/bless").json()["roi_unavailable"]
+    dfk = client.get("/api/v1/opportunities/defi-kingdoms").json()["roi_unavailable"]
+
+    assert grass["reason"] and grass["missing_evidence"] and grass["modeling_requirements"]
+    assert "monetary" in grass["reason"]
+    assert "transferable" in dawn["reason"]
+    assert "reward formula" in bless["reason"]
+    assert dfk is None

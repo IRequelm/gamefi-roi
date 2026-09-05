@@ -654,7 +654,7 @@ export function renderOpportunityDetail(opportunity) {
       ${
         hasStrategies
           ? renderStrategyList(opportunity.strategies, { clickEvent: "opportunity_to_strategy_click", rankingSlug: "opportunity_detail", heading: "Strategies in this opportunity" })
-          : `<section class="empty-state"><h2>ROI not measurable yet</h2><p class="muted">${escapeHtml(unavailableRoiReason(opportunity))}</p></section>`
+          : renderUnavailableRoiExplanation(opportunity)
       }
       <section class="section-panel">
         <div class="section-header"><h2>Sources and Outbound Links</h2></div>
@@ -665,6 +665,21 @@ export function renderOpportunityDetail(opportunity) {
       </section>
     </div>
   `;
+}
+
+export function renderUnavailableRoiExplanation(opportunity) {
+  const explanation = opportunity?.roi_unavailable;
+  if (!explanation) {
+    return `<section class="empty-state"><h2>ROI not measurable yet</h2><p class="muted">${escapeHtml(unavailableRoiReason(opportunity || {}))}</p></section>`;
+  }
+  const details = [
+    ["What is missing", explanation.missing_evidence],
+    ["What would make it modelable", explanation.modeling_requirements],
+  ].map(([heading, items]) => {
+    const values = (Array.isArray(items) ? items : []).map((item) => String(item || "").trim()).filter(Boolean);
+    return values.length ? `<div class="roi-unavailable-detail"><h3>${escapeHtml(heading)}</h3><ul>${values.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></div>` : "";
+  }).join("");
+  return `<section class="section-panel roi-unavailable"><div class="section-header"><h2>Why ROI is unavailable</h2></div><div class="section-body"><p class="roi-unavailable-reason">${escapeHtml(String(explanation.reason || "").trim())}</p>${details}</div></section>`;
 }
 
 export function renderOpportunityGuidance(guidance) {
@@ -1913,6 +1928,10 @@ function opportunityCardState(opportunity) {
 }
 
 function plainUnavailableReason(opportunity) {
+  const structuredReason = String(opportunity?.roi_unavailable?.reason || "").trim();
+  if (structuredReason) {
+    return structuredReason;
+  }
   const valueStatus = String(opportunity.value_realization_status || "").toLowerCase();
   const feasibility = String(opportunity.data_feasibility_status || "").toUpperCase();
   const summary = String(opportunity.feasibility_summary || "").toLowerCase();
