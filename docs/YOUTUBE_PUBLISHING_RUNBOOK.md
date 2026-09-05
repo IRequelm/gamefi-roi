@@ -72,6 +72,21 @@ GAMEFI_YOUTUBE_CHANNEL_HANDLE=@GamCryp
 GAMEFI_YOUTUBE_MAX_RETRIES=2
 ```
 
+## ElevenLabs narration
+
+Narration generation is a separate manual production step. Configure the local ignored `.env` with `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID`, `ELEVENLABS_MODEL_ID`, and optionally `ELEVENLABS_OUTPUT_DIRECTORY` (default `data/local/youtube/narration`). The model and voice must be selected explicitly; no paid account or plan is configured by the repository.
+
+Generate or validate one narration asset without publishing anything:
+
+```powershell
+video-narration generate CONTENT_ID --dry-run
+video-narration generate CONTENT_ID
+```
+
+Assets use `CONTENT_ID` plus a script fingerprint and are stored beside checksum-bound JSON metadata. Matching audio is reused. Changing the script, voice, or model produces a new asset. The metadata records `narration_mode=neural_voice`, `voice_provider=elevenlabs`, voice/model identifiers, the exact spoken text, timestamp, checksum, and quality status.
+
+GREEN video publication still requires the validated package, approved narration metadata, and a valid rendered video. A provider error leaves narration `NOT_READY`; it never falls back to Windows/system voices, pyttsx, generic TTS, another provider, or music-only mode. Music-only and silent formats remain valid only when explicitly approved in the content metadata.
+
 Never paste or commit the OAuth client JSON, access token, refresh token, browser cookies, or authorization headers. Do not place secrets in Content Packs or queue files.
 
 ## Queue Policy

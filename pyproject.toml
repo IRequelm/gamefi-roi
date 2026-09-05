@@ -29,6 +29,7 @@ dev = [
 [project.scripts]
 gamefi-doctor = "app.doctor.checks:main"
 youtube-publisher = "app.publishing.youtube_cli:main"
+video-narration = "app.publishing.elevenlabs_cli:main"
 x-publisher = "app.distribution.x_publishing_cli:main"
 distribution-worker = "app.publishing.distribution_worker:main"
 nvidia-ai = "app.ai.cli:main"

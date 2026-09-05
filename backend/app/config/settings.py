@@ -7,7 +7,7 @@ import re
 from typing import Literal
 from urllib.parse import urlsplit
 
-from pydantic import Field, field_validator, model_validator
+from pydantic import AliasChoices, Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 EnvironmentName = Literal["local", "test", "production"]
@@ -51,6 +51,10 @@ class Settings(BaseSettings):
     youtube_queue_file: str = "distribution/publish_queue/youtube_publish_queue.json"
     youtube_channel_handle: str = "@GamCryp"
     youtube_max_retries: int = Field(default=2, ge=0, le=5)
+    elevenlabs_api_key: SecretStr | None = Field(default=None, validation_alias=AliasChoices("ELEVENLABS_API_KEY", "GAMEFI_ELEVENLABS_API_KEY"))
+    elevenlabs_voice_id: str | None = Field(default=None, validation_alias=AliasChoices("ELEVENLABS_VOICE_ID", "GAMEFI_ELEVENLABS_VOICE_ID"))
+    elevenlabs_model_id: str | None = Field(default=None, validation_alias=AliasChoices("ELEVENLABS_MODEL_ID", "GAMEFI_ELEVENLABS_MODEL_ID"))
+    elevenlabs_output_directory: str = Field(default="data/local/youtube/narration", validation_alias=AliasChoices("ELEVENLABS_OUTPUT_DIRECTORY", "GAMEFI_ELEVENLABS_OUTPUT_DIRECTORY"))
     public_x_url: str | None = "https://x.com/GamCryp"
     public_youtube_url: str = "https://www.youtube.com/@GamCryp"
     public_contact_email: str = "info@gamcryp.com"
