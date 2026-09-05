@@ -279,19 +279,35 @@ class YouTubeDistributionPublisher:
         video_path: Path,
         thumbnail_path: Path | None = None,
         confirm_publish: bool = False,
+        privacy: str = "private",
+        category_id: str | None = None,
+        made_for_kids: bool = False,
     ) -> YouTubeOperationResult:
         if not confirm_publish:
             raise YouTubeDistributionError("Upload requires explicit --confirm-publish")
         preview = self.preview(content_id, video_path=video_path, thumbnail_path=thumbnail_path)
         if not preview.would_upload:
             raise YouTubeDistributionError("Upload blocked: " + "; ".join(preview.blockers))
-        return self.publisher.upload_video(self._manifest(preview, video_path, thumbnail_path))
+        return self.publisher.upload_video(
+            self._manifest(
+                preview,
+                video_path,
+                thumbnail_path,
+                privacy=privacy,
+                category_id=category_id,
+                made_for_kids=made_for_kids,
+            )
+        )
 
     def _manifest(
         self,
         preview: YouTubePackagePreview,
         video_path: Path,
         thumbnail_path: Path | None,
+        *,
+        privacy: str = "private",
+        category_id: str | None = None,
+        made_for_kids: bool = False,
     ) -> YouTubePublishManifest:
         timestamp = (
             datetime.fromisoformat(preview.source_snapshot_timestamp.replace("Z", "+00:00"))
@@ -305,7 +321,9 @@ class YouTubeDistributionPublisher:
             title=preview.title,
             description=preview.description,
             tags=("GamCryp", "Web3", preview.project),
-            privacy="private",
+            privacy=privacy,
+            category_id=category_id,
+            made_for_kids=made_for_kids,
             source_snapshot_id=preview.source_snapshot_id,
             source_snapshot_timestamp=timestamp,
             campaign_source="youtube",

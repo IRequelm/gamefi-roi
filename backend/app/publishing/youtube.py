@@ -77,6 +77,7 @@ class YouTubePublishManifest(BaseModel):
     privacy: PrivacyStatus = "private"
     publish_at: datetime | None = None
     category_id: str | None = Field(default=None, pattern=r"^[0-9]{1,4}$")
+    made_for_kids: bool = False
     source_snapshot_id: str | None = Field(default=None, max_length=120)
     source_snapshot_timestamp: datetime | None = None
     campaign_source: str | None = Field(default=None, max_length=80)
@@ -621,7 +622,10 @@ class YouTubePublisher:
             snippet["tags"] = list(manifest.tags)
         if manifest.category_id:
             snippet["categoryId"] = manifest.category_id
-        status: dict[str, Any] = {"privacyStatus": manifest.privacy}
+        status: dict[str, Any] = {
+            "privacyStatus": manifest.privacy,
+            "selfDeclaredMadeForKids": manifest.made_for_kids,
+        }
         if manifest.publish_at:
             status["publishAt"] = manifest.publish_at.isoformat().replace("+00:00", "Z")
         return {"snippet": snippet, "status": status}

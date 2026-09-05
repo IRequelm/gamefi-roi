@@ -48,6 +48,9 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Required for real upload operations. Use dry-run first.",
     )
+    upload.add_argument("--privacy", choices=("private", "unlisted", "public"), default="private")
+    upload.add_argument("--category-id", default=None)
+    upload.add_argument("--made-for-kids", choices=("true", "false"), default="false")
 
     thumbnail = subcommands.add_parser("thumbnail", help="Set a custom thumbnail on an existing YouTube video.")
     thumbnail.add_argument("--video-id", required=True)
@@ -122,6 +125,9 @@ def main(argv: list[str] | None = None) -> int:
                     video_path=Path(args.video),
                     thumbnail_path=Path(args.thumbnail) if args.thumbnail else None,
                     confirm_publish=bool(args.confirm_publish),
+                    privacy=args.privacy,
+                    category_id=args.category_id,
+                    made_for_kids=args.made_for_kids == "true",
                 ).to_safe_dict()
             )
             return 0
