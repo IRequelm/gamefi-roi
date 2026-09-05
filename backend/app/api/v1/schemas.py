@@ -167,6 +167,12 @@ class RoiUnavailablePayload(BaseModel):
     modeling_requirements: list[str] | None = None
 
 
+class OpportunityLogoPayload(BaseModel):
+    asset: str
+    alt: str
+    source_reference: SourceReferencePayload | None = None
+
+
 class OpportunitySummary(BaseModel):
     opportunity_id: str
     opportunity_type: str
@@ -183,6 +189,7 @@ class OpportunitySummary(BaseModel):
     legacy_game_id: str | None = None
     primary_destination: OutboundDestinationPayload | None = None
     roi_unavailable: RoiUnavailablePayload | None = None
+    logo: OpportunityLogoPayload | None = None
 
 
 class OpportunityGuidancePayload(BaseModel):
@@ -233,6 +240,7 @@ class GameSummary(BaseModel):
     status: str
     strategy_count: int
     primary_destination: OutboundDestinationPayload | None = None
+    logo: OpportunityLogoPayload | None = None
 
 
 class GameDetail(GameSummary):
@@ -254,6 +262,7 @@ class StrategySummary(BaseModel):
     outbound_destinations: list[OutboundDestinationPayload] = Field(default_factory=list)
     primary_destination: OutboundDestinationPayload | None = None
     latest_snapshot: StrategySnapshotPayload | None = None
+    logo: OpportunityLogoPayload | None = None
 
 
 class GamesPage(BaseModel):

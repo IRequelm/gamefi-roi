@@ -31,6 +31,7 @@ import {
   renderOpportunityAnswerBlock,
   renderOpportunityCard,
   renderOpportunityDetail,
+  renderOpportunityLogo,
   renderOpportunityGuidance,
   renderMethodologyPage,
   renderUnavailableRoiExplanation,
@@ -317,6 +318,26 @@ test("opportunity detail shows unavailable ROI in public language without invent
   assert.match(html, /\/go\/grass-official/);
   assert.doesNotMatch(html, /DEPIN_NODE|PARTIAL|Financial ROI unavailable/);
   assert.doesNotMatch(html, /\$0(?:\.00)?|>0(?:\.00)?%/);
+});
+
+test("opportunity logos render from optional API metadata and fall back cleanly", () => {
+  const logo = { asset: "/assets/logos/grass.png", alt: "Grass logo" };
+  const withLogo = renderOpportunityDetail({ ...opportunityPayload(), logo });
+  const withoutLogo = renderOpportunityCard(opportunityPayload());
+  assert.match(withLogo, /src="\/assets\/logos\/grass\.png"/);
+  assert.match(withLogo, /alt="Grass logo"/);
+  assert.doesNotMatch(withoutLogo, /<img/);
+  assert.doesNotMatch(withoutLogo, /null|undefined|None/);
+});
+
+test("strategy and ranking surfaces inherit the parent opportunity logo without changing ranking semantics", () => {
+  const logo = { asset: "/assets/logos/grass.png", alt: "Grass logo" };
+  const strategy = { ...strategyPayload(), logo };
+  const strategyHtml = renderStrategyDetail(strategy);
+  const rankingHtml = renderRankingsTable({ ...rankingPayload(), items: [{ ...rankingPayload().items[0], strategy: { ...rankingPayload().items[0].strategy, logo } }] });
+  assert.equal((strategyHtml.match(/src="\/assets\/logos\/grass\.png"/g) || []).length, 1);
+  assert.match(rankingHtml, /class="opportunity-logo opportunity-logo-compact"/);
+  assert.match(strategyHtml, /DFK Jeweler cJEWEL Max Lock/);
 });
 
 test("DePIN setup cues map platform evidence without leaking enums", () => {

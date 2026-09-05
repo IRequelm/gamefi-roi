@@ -195,6 +195,32 @@ select {
   padding: clamp(18px, 3vw, 28px);
 }
 
+.identity-heading,
+.card-identity {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.identity-heading h1,
+.card-identity h2,
+.card-identity h3 {
+  margin: 0;
+}
+
+.opportunity-logo {
+  display: block;
+  width: 3.25rem;
+  height: 3.25rem;
+  object-fit: contain;
+  flex: 0 0 auto;
+}
+
+.opportunity-logo-compact {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
 .page-head::after {
   content: "";
   position: absolute;
@@ -1259,6 +1285,15 @@ tr:last-child td {
   .page-head {
     gap: 7px;
     padding: 16px;
+  }
+
+  .identity-heading {
+    align-items: flex-start;
+  }
+
+  .identity-heading .opportunity-logo {
+    width: 2.75rem;
+    height: 2.75rem;
   }
 
   .hero-proof-points {

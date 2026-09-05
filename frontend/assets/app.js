@@ -308,7 +308,7 @@ export function renderTopRankingSummary(rankings = { items: [] }) {
     <section class="top-opportunity-card" aria-label="Top ranked organic strategy">
       <div class="top-opportunity-copy">
         <span class="eyebrow">Top modeled opportunity right now</span>
-        <h2>${escapeHtml(snapshot.game_name)}</h2>
+        <div class="card-identity">${renderOpportunityLogo(strategy.logo, snapshot.game_name, true)}<h2>${escapeHtml(snapshot.game_name)}</h2></div>
         <p><a class="strategy-link" href="/strategies/${encodeURIComponent(strategy.strategy_id)}" data-link>${escapeHtml(strategy.name)}</a></p>
         <p class="muted">Ranked by modeled 30D ROI, then confidence, risk, and recency according to the organic ranking methodology.</p>
         ${renderStrategySignals(snapshot)}
@@ -652,7 +652,7 @@ export function renderOpportunityDetail(opportunity) {
     <div class="page-shell">
       <section class="page-head">
         <p class="eyebrow">${escapeHtml(opportunityTypeLabel(opportunity.opportunity_type))}</p>
-        <h1>${escapeHtml(opportunity.name)}</h1>
+        <div class="identity-heading">${renderOpportunityLogo(opportunity.logo, opportunity.name)}<h1>${escapeHtml(opportunity.name)}</h1></div>
         <p class="lede">${escapeHtml(opportunityIntro(opportunity))}</p>
         <div class="button-row">
           ${renderDestinationButton(opportunity.primary_destination, opportunity.opportunity_type === "GAME" ? "Start" : "Open", { sourcePage: "opportunity_detail", placement: "primary_cta" })}
@@ -768,7 +768,7 @@ export function renderOpportunityCard(opportunity) {
         <span class="badge info">${escapeHtml(opportunityTypeLabel(opportunity.opportunity_type))}</span>
         ${renderFeasibilityStatus(opportunity.data_feasibility_status)}
       </div>
-      <h3><a class="strategy-link" href="/opportunities/${encodeURIComponent(opportunity.opportunity_id)}" data-link>${escapeHtml(opportunity.name)}</a></h3>
+      <div class="card-identity">${renderOpportunityLogo(opportunity.logo, opportunity.name, true)}<h3><a class="strategy-link" href="/opportunities/${encodeURIComponent(opportunity.opportunity_id)}" data-link>${escapeHtml(opportunity.name)}</a></h3></div>
       <p class="muted">${escapeHtml(opportunityIntro(opportunity))}</p>
       <p class="muted">${strategyText}</p>
       ${setupLabels.length ? `<p class="muted">Setup: ${escapeHtml(setupLabels.slice(0, 2).join("; "))}</p>` : ""}
@@ -832,7 +832,7 @@ export function renderRankingCard(item, options = {}) {
       <div class="ranking-card-head">
         <span class="rank-chip">#${escapeHtml(String(item.rank))}</span>
         <div>
-          <p class="ranking-parent"><span>Opportunity</span> <a class="game-link" href="/opportunities/${encodeURIComponent(strategy.opportunity_id || strategy.game_id)}" data-link>${escapeHtml(snapshot.game_name)}</a></p>
+          <p class="ranking-parent"><span>Opportunity</span> ${renderOpportunityLogo(strategy.logo, snapshot.game_name, true)} <a class="game-link" href="/opportunities/${encodeURIComponent(strategy.opportunity_id || strategy.game_id)}" data-link>${escapeHtml(snapshot.game_name)}</a></p>
           <h3><a class="strategy-link" href="/strategies/${encodeURIComponent(strategy.strategy_id)}" data-link${strategyClickAnalytics}>${escapeHtml(strategy.name)}</a></h3>
         </div>
       </div>
@@ -891,7 +891,7 @@ export function renderGameDetail(game) {
     <div class="page-shell">
       <section class="page-head">
         <p class="eyebrow">Game detail</p>
-        <h1>${escapeHtml(game.name)}</h1>
+        <div class="identity-heading">${renderOpportunityLogo(game.logo, game.name)}<h1>${escapeHtml(game.name)}</h1></div>
         <p class="lede">${escapeHtml(game.status)} game with ${escapeHtml(String(game.strategy_count))} modeled strategy.</p>
         <div class="button-row">
           ${renderDestinationButton(game.primary_destination, ctaLabelForSnapshot(snapshot, "Start"), { sourcePage: "game_detail", placement: "primary_cta" })}
@@ -951,7 +951,7 @@ export function renderStrategyDetail(strategy, historyPage = { items: [] }) {
       <div class="page-shell">
         <section class="page-head">
           <p class="eyebrow">Strategy detail</p>
-          <h1>${escapeHtml(strategy.name)}</h1>
+          <div class="identity-heading">${renderOpportunityLogo(strategy.logo, strategy.game_name)}<div><p class="eyebrow">${escapeHtml(strategy.game_name)}</p><h1>${escapeHtml(strategy.name)}</h1></div></div>
         </section>
         <section class="empty-state">
           <h2>No stored snapshot</h2>
@@ -964,7 +964,7 @@ export function renderStrategyDetail(strategy, historyPage = { items: [] }) {
     <div class="page-shell">
       <section class="page-head">
         <p class="eyebrow">Strategy detail</p>
-        <h1>${escapeHtml(strategy.name)}</h1>
+        <div class="identity-heading">${renderOpportunityLogo(strategy.logo, strategy.game_name)}<div><p class="eyebrow">${escapeHtml(strategy.game_name)}</p><h1>${escapeHtml(strategy.name)}</h1></div></div>
         <p class="lede">${escapeHtml(strategy.description)}</p>
         <div class="button-row">
           <span class="badge">Strategy version ${escapeHtml(strategy.strategy_version)}</span>
@@ -2585,6 +2585,14 @@ export function escapeHtml(value) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+}
+
+export function renderOpportunityLogo(logo, label, compact = false) {
+  if (!logo || !logo.asset || !logo.alt) {
+    return "";
+  }
+  const className = compact ? "opportunity-logo opportunity-logo-compact" : "opportunity-logo";
+  return `<img class="${className}" src="${escapeHtml(logo.asset)}" alt="${escapeHtml(logo.alt)}" loading="lazy" decoding="async">`;
 }
 
 async function renderCurrentRoute() {

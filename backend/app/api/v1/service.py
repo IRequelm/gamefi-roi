@@ -25,6 +25,7 @@ from app.api.v1.schemas import (
     OpsStatusPayload,
     OpportunitiesPage,
     OpportunityDetail,
+    OpportunityLogoPayload,
     OpportunityGuidancePayload,
     RoiUnavailablePayload,
     OpportunitySummary,
@@ -174,6 +175,7 @@ class ApiDataService:
             ],
             primary_destination=_maybe_outbound_destination(primary_destination_for_strategy(strategy.strategy_id)),
             latest_snapshot=latest,
+            logo=_logo_payload(get_opportunity(strategy.opportunity_id)),
         )
 
     def strategy_detail(self, strategy_id: str) -> StrategySummary | None:
@@ -517,6 +519,7 @@ def _game_summary(game: GameCatalogEntry) -> GameSummary:
         status=game.status,
         strategy_count=len(game.strategy_ids),
         primary_destination=_maybe_outbound_destination(primary_destination_for_opportunity(game.opportunity_id)),
+        logo=_logo_payload(get_opportunity(game.opportunity_id)),
     )
 
 
@@ -545,6 +548,7 @@ def _opportunity_summary(opportunity: OpportunityCatalogEntry) -> OpportunitySum
             if opportunity.roi_unavailable
             else None
         ),
+        logo=_logo_payload(opportunity),
     )
 
 
@@ -579,6 +583,20 @@ def _maybe_outbound_destination(destination: OutboundDestination | None) -> Outb
     if destination is None:
         return None
     return _outbound_destination(destination)
+
+
+def _logo_payload(opportunity: OpportunityCatalogEntry | None) -> OpportunityLogoPayload | None:
+    if opportunity is None or not opportunity.logo_asset or not opportunity.logo_alt:
+        return None
+    return OpportunityLogoPayload(
+        asset=opportunity.logo_asset,
+        alt=opportunity.logo_alt,
+        source_reference=(
+            _source_reference(opportunity.logo_source_reference)
+            if opportunity.logo_source_reference
+            else None
+        ),
+    )
 
 
 def _outbound_destination(destination: OutboundDestination) -> OutboundDestinationPayload:

@@ -274,7 +274,7 @@ def opportunity_page(
       <div class="page-shell">
         <section class="page-head">
           <p class="eyebrow">{escape(opportunity_type_label(opportunity.opportunity_type))}</p>
-          <h1>{escape(opportunity.name)} ROI status and evidence</h1>
+          <div class="identity-heading">{_render_logo(opportunity.logo)}<h1>{escape(opportunity.name)} ROI status and evidence</h1></div>
           <p class="lede">{escape(answer)}</p>
           <div class="button-row">
             {_destination_button(opportunity.primary_destination, "Open official link")}
@@ -329,7 +329,7 @@ def game_page(game, *, settings: Settings, request: Request) -> SeoPage:
       <div class="page-shell">
         <section class="page-head">
           <p class="eyebrow">Game compatibility page</p>
-          <h1>{escape(game.name)} ROI strategies</h1>
+          <div class="identity-heading">{_render_logo(game.logo)}<h1>{escape(game.name)} ROI strategies</h1></div>
           <p class="lede">{escape(description)}</p>
           <div class="button-row">
             {_destination_button(game.primary_destination, cta_label_for_snapshot(snapshot, "Start"))}
@@ -371,7 +371,7 @@ def strategy_page(
       <div class="page-shell">
         <section class="page-head">
           <p class="eyebrow">Strategy intelligence</p>
-          <h1>{escape(strategy.name)}</h1>
+          <div class="identity-heading">{_render_logo(strategy.logo)}<div><p class="eyebrow">{escape(strategy.game_name)}</p><h1>{escape(strategy.name)}</h1></div></div>
           <p class="lede">{escape(answer)}</p>
           <div class="button-row">
             <a class="secondary-button" href="/opportunities/{escape(strategy.opportunity_id)}">Parent opportunity</a>
@@ -495,6 +495,13 @@ def asset_url(path: str) -> str:
     except OSError:
         digest = "missing"
     return f"{clean}?v={digest}"
+
+
+def _render_logo(logo, *, compact: bool = False) -> str:
+    if logo is None or not logo.asset or not logo.alt:
+        return ""
+    class_name = "opportunity-logo opportunity-logo-compact" if compact else "opportunity-logo"
+    return f'<img class="{class_name}" src="{escape(asset_url(logo.asset))}" alt="{escape(logo.alt)}" loading="lazy" decoding="async">'
 
 
 def _ranking_answer(snapshot: StrategySnapshotPayload, strategy: StrategySummary) -> str:
@@ -842,7 +849,7 @@ def _render_ranking_cards(items: list[RankingItem], *, heading: str) -> str:
               <div class="ranking-card-head">
                 <span class="rank-chip">#{escape(str(item.rank))}</span>
                 <div>
-                  <p class="ranking-parent"><span>Opportunity</span> <a class="game-link" href="/opportunities/{escape(strategy.opportunity_id or strategy.game_id)}">{escape(snapshot.game_name)}</a></p>
+                  <p class="ranking-parent"><span>Opportunity</span> {_render_logo(strategy.logo, compact=True)} <a class="game-link" href="/opportunities/{escape(strategy.opportunity_id or strategy.game_id)}">{escape(snapshot.game_name)}</a></p>
                   <h3><a class="strategy-link" href="/strategies/{escape(strategy.strategy_id)}">{escape(strategy.name)}</a></h3>
                 </div>
               </div>
@@ -894,7 +901,7 @@ def _render_opportunity_cards(opportunities: list[OpportunitySummary], *, headin
                 {_badge(opportunity_type_label(opportunity.opportunity_type), "info")}
                 {_badge(feasibility_label(opportunity.data_feasibility_status), "good" if opportunity.data_feasibility_status == "GO" else "medium")}
               </div>
-              <h3><a class="strategy-link" href="/opportunities/{escape(opportunity.opportunity_id)}">{escape(opportunity.name)}</a></h3>
+              <div class="card-identity">{_render_logo(opportunity.logo, compact=True)}<h3><a class="strategy-link" href="/opportunities/{escape(opportunity.opportunity_id)}">{escape(opportunity.name)}</a></h3></div>
               <p class="muted">{escape(opportunity_intro(opportunity))}</p>
               <p class="muted">{escape(strategy_text)}</p>
               {f'<p class="muted">{escape(setup_text)}</p>' if setup_text else ''}

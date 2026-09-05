@@ -102,6 +102,9 @@ class OpportunityCatalogEntry:
     legacy_game_id: str | None = None
     guidance: OpportunityGuidance | None = None
     roi_unavailable: RoiUnavailableExplanation | None = None
+    logo_asset: str | None = None
+    logo_alt: str | None = None
+    logo_source_reference: SourceReference | None = None
 
     @property
     def admission_mode(self) -> str:
@@ -210,6 +213,9 @@ def _opportunity(
     legacy_game_id: str | None = None,
     guidance: OpportunityGuidance | None = None,
     roi_unavailable: RoiUnavailableExplanation | None = None,
+    logo_asset: str | None = None,
+    logo_alt: str | None = None,
+    logo_source_reference: tuple[str, str] | None = None,
 ) -> OpportunityCatalogEntry:
     return OpportunityCatalogEntry(
         opportunity_id=opportunity_id,
@@ -229,6 +235,9 @@ def _opportunity(
         legacy_game_id=legacy_game_id,
         guidance=guidance,
         roi_unavailable=roi_unavailable,
+        logo_asset=logo_asset,
+        logo_alt=logo_alt,
+        logo_source_reference=SourceReference(*logo_source_reference) if logo_source_reference else None,
     )
 
 
@@ -692,6 +701,9 @@ OPPORTUNITIES = (
             missing_evidence=("A lawful transferable reward or cash-conversion route.", "Authorized account-level earning and eligibility data."),
             modeling_requirements=("A documented claim route with reproducible value.", "Sourceable earning and eligibility inputs."),
         ),
+        logo_asset="/assets/logos/grass.png",
+        logo_alt="Grass logo",
+        logo_source_reference=("Grass official media kit", "https://www.grass.io/media-kit/"),
     ),
     _opportunity(
         opportunity_id="illuvium",

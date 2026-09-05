@@ -113,6 +113,24 @@ def test_strategy_detail_includes_latest_snapshot_risk_and_confidence(monkeypatc
     assert latest["classification_summary"]["counts"]["DERIVED"] >= 4
 
 
+def test_logo_metadata_is_optional_and_parent_scoped(monkeypatch, tmp_path) -> None:
+    client, _engine = _seeded_client(monkeypatch, tmp_path, "logo.db")
+
+    grass = client.get("/api/v1/opportunities/grass").json()
+    dfk = client.get("/api/v1/opportunities/defi-kingdoms").json()
+
+    assert grass["logo"] == {
+        "asset": "/assets/logos/grass.png",
+        "alt": "Grass logo",
+        "source_reference": {
+            "label": "Grass official media kit",
+            "url": "https://www.grass.io/media-kit/",
+            "source_role": "OFFICIAL_PROJECT",
+        },
+    }
+    assert dfk["logo"] is None
+
+
 def test_rankings_order_and_tie_breaking_policy(monkeypatch, tmp_path) -> None:
     client, _engine = _seeded_client(monkeypatch, tmp_path, "ranking.db")
 
