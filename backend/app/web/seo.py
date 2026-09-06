@@ -793,7 +793,7 @@ def _render_strategy_human_summary(strategy: StrategySummary, snapshot: Strategy
         ),
         (
             "Cash-out",
-            f"Recoverable value is {format_money_html(snapshot.capital.recoverable_capital)}; exit-adjusted P&amp;L is {format_money_html(snapshot.roi.exit_adjusted_pnl)}.",
+            f"Recoverable value: {format_money_html(snapshot.capital.recoverable_capital)}. Exit-adjusted P&amp;L: {format_money_html(snapshot.roi.exit_adjusted_pnl)}.",
         ),
         ("Main catch", escape(strategy_risk_summary(snapshot))),
     ]

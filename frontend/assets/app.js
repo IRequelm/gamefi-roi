@@ -434,7 +434,7 @@ export function renderStrategyHumanSummary(strategy, snapshot) {
     ["How it may earn", escapeHtml(`${labelize(strategy.economy_type)} economics are converted into the generic ROI model.`)],
     ["What you need", `Estimated starting capital is ${formatMoney(snapshot.capital.total_capital)}.`],
     ["Expected return", `${formatMoney(snapshot.earnings.net_earnings_day, { perDay: true })} estimated net earnings and ${formatRatio(snapshot.roi.roi_total_30d)} modeled 30-day ROI.`],
-    ["Cash-out", `Recoverable value is ${formatMoney(snapshot.capital.recoverable_capital)}; exit-adjusted P&L is ${formatMoney(snapshot.roi.exit_adjusted_pnl)}.`],
+    ["Cash-out", `Recoverable value: ${formatMoney(snapshot.capital.recoverable_capital)}. Exit-adjusted P&L: ${formatMoney(snapshot.roi.exit_adjusted_pnl)}.`],
     ["Main catch", escapeHtml(strategyRiskSummary(snapshot))],
   ];
   return renderHumanSummary("Plain-language summary", items);
