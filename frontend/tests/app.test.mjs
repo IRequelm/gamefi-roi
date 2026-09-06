@@ -22,6 +22,7 @@ import {
   renderCatalogStats,
   renderDestinationButton,
   renderDepinSetupSummary,
+  renderRouteDegradedNotice,
   renderError,
   renderFreshnessAlert,
   renderGameDetail,
@@ -440,6 +441,14 @@ test("stale freshness and low confidence produce a visible warning", () => {
 test("error state distinguishes not found from API unavailable", () => {
   assert.match(renderError(new ApiError(404, "Unknown strategy")), /Not found/);
   assert.match(renderError(new Error("Database unavailable")), /Data unavailable/);
+});
+
+test("degraded notice preserves truthful fallback behavior", () => {
+  const html = renderRouteDegradedNotice(new ApiError(503, "The data service is temporarily unavailable."));
+  assert.match(html, /Live data temporarily unavailable/);
+  assert.match(html, /Stored page content remains visible/);
+  assert.match(html, /data-retry-data/);
+  assert.doesNotMatch(html, /Loading strategy data/);
 });
 
 test("history no-history state is explicit", () => {
