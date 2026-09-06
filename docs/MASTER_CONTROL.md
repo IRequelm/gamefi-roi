@@ -53,7 +53,7 @@ Official destinations and reviewed outbound redirects remain allowlisted and sep
 
 - YouTube OAuth configuration and publisher code are present locally; no secret values are recorded here.
 - Existing Hivemapper proof renders passed the structural gate with six scenes, local official logo integration, and ElevenLabs narration.
-- A new GameFi proof attempt was correctly blocked when configured ElevenLabs credentials were rejected. No fallback TTS was used.
+- A new GameFi proof attempt was correctly blocked by the ElevenLabs account quota: the authenticated free-tier account reports 0 credits remaining for the requested narration. No fallback TTS was used. Sarah and Bella passed tiny compatibility requests; Laura was rejected after the quota was exhausted during the probe sequence. A real proof narration remains blocked until the quota resets or the operator supplies an authorized funded account.
 - No long-form video is rendered because the enrichment layer found zero truly eligible candidates.
 
 ## 8. X
@@ -83,12 +83,12 @@ X remains fail-closed while credentials/API access are unavailable. The manual-r
 
 1. Production public availability is constrained by the Free Render instance's cold-start behavior; the audit saw transient origin 503s before clean post-start 200s.
 2. Cloudflare Managed Challenge returns 429 to this controlled non-browser probe for the public host; Cloudflare configuration/verification remains an operator/infrastructure task.
-3. ElevenLabs credentials were rejected for the attempted third proof family; manual credential repair is required before new proof narration can be generated.
+3. ElevenLabs has authenticated credentials but 0 remaining credits on the configured free-tier account; the third non-DePIN proof cannot be generated until the quota resets or the operator changes the authorized account/plan. No fallback TTS is allowed.
 4. Live YouTube remains disabled until the operator reviews the proof renders and the public availability path is acceptable.
 
 ## 13. Exact next action
 
-Review the two local Hivemapper proof MP4s, repair/verify ElevenLabs credentials, render a third non-DePIN proof, then perform a controlled browser-origin route check. Only after all three proof families pass visual review may the operator set `GAMEFI_DISTRIBUTION_LIVE=true` locally.
+Review the two local Hivemapper proof MP4s, wait for or authorize sufficient ElevenLabs quota, render a third non-DePIN proof, then perform a controlled browser-origin route check. Only after all three proof families pass visual review and the intended commit is deployed may the operator set `GAMEFI_DISTRIBUTION_LIVE=true` locally.
 
 ## 14. Verification evidence
 
