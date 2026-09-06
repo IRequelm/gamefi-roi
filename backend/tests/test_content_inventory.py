@@ -24,7 +24,8 @@ def test_guide_only_opportunity_supports_how_to_content_but_not_financial_roi() 
 
     assert any(item.content_family == "HOW_TO_START" and item.evidence_status == READY for item in guide)
     assert any(item.content_family == "DEPIN_SETUP" for item in guide)
-    assert not any(item.content_family in {"ROI", "ROI_CLAIM", "FINANCIAL_ROI"} for item in grass)
+    assert not any(item.content_family in {"ROI", "ROI_CLAIM"} and item.evidence_status == READY for item in grass)
+    assert any(item.content_family == "FINANCIAL_ROI" and item.evidence_status == BLOCKED for item in grass)
     assert any(item.content_family == "WHY_ROI_UNAVAILABLE" for item in grass)
 
 
@@ -35,7 +36,7 @@ def test_modeled_strategy_comparison_and_missing_evidence_are_explicit() -> None
         item.opportunity_id == "defi-kingdoms" and item.content_family == "STRATEGY_COMPARISON" and item.evidence_status == READY
         for item in items
     )
-    assert any(item.source_type == "MODELED_STRATEGY" and item.evidence_status == PARTIAL for item in items)
+    assert any(item.content_family == "LOW_COST_RANKING" and item.evidence_status == PARTIAL for item in items)
 
 
 def test_inventory_paths_and_summary_are_valid() -> None:

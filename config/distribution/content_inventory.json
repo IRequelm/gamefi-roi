@@ -4,16 +4,19 @@
     {
       "content_family": "DEPIN_SETUP",
       "content_id": "inventory-depin_setup-acurast-compute-provider",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "acurast-compute-provider",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "DePIN platform, setup, and hardware or account requirements."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "53c14061ec376142f1e08ef651f3294bb7b0e5acba70b1faf18ca63096047c4e",
+      "source_reference_fingerprint": "69e3ef23585d308d52f35513841b2d7cf1567627bf52f901289e51b06e52e047",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/acurast-compute-provider",
       "strategy_id": null,
@@ -22,16 +25,19 @@
     {
       "content_family": "DEPIN_SETUP",
       "content_id": "inventory-depin_setup-aethir-checker-node",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "aethir-checker-node",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "DePIN platform, setup, and hardware or account requirements."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "55fa49bea7bec05ba05dea7d62b2efd266465ec0e6356906fc08c24ee1422b27",
+      "source_reference_fingerprint": "f5d449ae05c50c35780ed5e15fe66569846366e1a558163633ad4df3ac9c4394",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/aethir-checker-node",
       "strategy_id": null,
@@ -40,16 +46,19 @@
     {
       "content_family": "DEPIN_SETUP",
       "content_id": "inventory-depin_setup-akash-provider",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "akash-provider",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "DePIN platform, setup, and hardware or account requirements."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "0df22ad35a6aa5918146a1ff92b4a4d4fca20ab9c4b697f2555d4877e0d82b0d",
+      "source_reference_fingerprint": "724229b714c6b3c85d2f5dcbf12c7c0f8504f550f618be73b4eb8f84e0892d8a",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/akash-provider",
       "strategy_id": null,
@@ -58,16 +67,19 @@
     {
       "content_family": "DEPIN_SETUP",
       "content_id": "inventory-depin_setup-aleph-im-compute-resource-node",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "aleph-im-compute-resource-node",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "DePIN platform, setup, and hardware or account requirements."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "853639277ee5fe1849914a12c0b3d126ad440d75a391ee3c43efa056a142e264",
+      "source_reference_fingerprint": "4c0ce835e5877dd1bebb430549671fd5510e7af09c8642f0644e004805a28dd9",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/aleph-im-compute-resource-node",
       "strategy_id": null,
@@ -76,16 +88,19 @@
     {
       "content_family": "DEPIN_SETUP",
       "content_id": "inventory-depin_setup-bittensor-miner",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "bittensor-miner",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "DePIN platform, setup, and hardware or account requirements."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "8e23d62838bbdb99fe5365789450b8aa6b150f3441faaad6618a670cf30be6bc",
+      "source_reference_fingerprint": "b3b440fb98ec38107d78035efe8f8a33e2ea099d8f1728f9e42c9e7ccc14c56a",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/bittensor-miner",
       "strategy_id": null,
@@ -94,16 +109,19 @@
     {
       "content_family": "DEPIN_SETUP",
       "content_id": "inventory-depin_setup-earnapp",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "earnapp",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "DePIN platform, setup, and hardware or account requirements."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "63af0165479a2ec00106f19def492d0f8846ee73f85df8770dcbe1a65be50715",
+      "source_reference_fingerprint": "83079acc4a03b2c9738838df4fa5b64bf5c17795e48dbdc0a0c21cefe02e613e",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/earnapp",
       "strategy_id": null,
@@ -112,16 +130,19 @@
     {
       "content_family": "DEPIN_SETUP",
       "content_id": "inventory-depin_setup-filecoin-storage-provider",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "filecoin-storage-provider",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "DePIN platform, setup, and hardware or account requirements."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "7d25e3fb1b78df25f426218957d669900e2f8e483fa6ed90f8ddd2536f3bf655",
+      "source_reference_fingerprint": "770b8c44f5b06add9bb9cbc15dc8f415b6990b83fa00d31ecc423d2411cf9a20",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/filecoin-storage-provider",
       "strategy_id": null,
@@ -130,16 +151,19 @@
     {
       "content_family": "DEPIN_SETUP",
       "content_id": "inventory-depin_setup-fluxnode",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
       "missing_evidence": [],
       "opportunity_id": "fluxnode",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "DePIN platform, setup, and hardware or account requirements."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "33167f276a03796857fd090f7de5068492e6e8a8b2390237ffdb3005122020a1",
+      "source_reference_fingerprint": "5aede4510d1a3b08e1625a732e89327d5c52974051368aa47133e8fa59e6643e",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/fluxnode",
       "strategy_id": null,
@@ -148,16 +172,19 @@
     {
       "content_family": "DEPIN_SETUP",
       "content_id": "inventory-depin_setup-golem-provider",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "golem-provider",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "DePIN platform, setup, and hardware or account requirements."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "09e2513c6bd7ffa6ff80f9878221b1e9169c1688f8fb9f611e7ed8da460fb130",
+      "source_reference_fingerprint": "73026116d56fed4c8bda32e68dceb0bff3484843e2e49a5d4500f8e34b5d9894",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/golem-provider",
       "strategy_id": null,
@@ -166,16 +193,19 @@
     {
       "content_family": "DEPIN_SETUP",
       "content_id": "inventory-depin_setup-helium-iot-hotspot",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "helium-iot-hotspot",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "DePIN platform, setup, and hardware or account requirements."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "22bfa38b5b78007cf26353b063c1ac6cd3d61d8b24c9e90dd19ba98ac6bc5286",
+      "source_reference_fingerprint": "b92d3dd2ae0dc4c604ddc5dc4193fd1eb4cb4b90b3222a9a8db74f1679020588",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/helium-iot-hotspot",
       "strategy_id": null,
@@ -184,16 +214,19 @@
     {
       "content_family": "DEPIN_SETUP",
       "content_id": "inventory-depin_setup-hivemapper",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "hivemapper",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "DePIN platform, setup, and hardware or account requirements."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "20c09b7b0b220e192c27d15279f2b696a7bf4723ccf46624c3e3f6a996910a29",
+      "source_reference_fingerprint": "9574c3cae4c821bbd4ac3b06c146a90f5b4f4b7e3751416efb0253bd62c51882",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/hivemapper",
       "strategy_id": null,
@@ -202,16 +235,19 @@
     {
       "content_family": "DEPIN_SETUP",
       "content_id": "inventory-depin_setup-honeygain",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "honeygain",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "DePIN platform, setup, and hardware or account requirements."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "7bfca2b87e1800ff42fa461e10270cc62dc666c58500a7b0a3c347d3f0c6be12",
+      "source_reference_fingerprint": "ba5d4d444b8ff4c800278a135cc1f62fac2d29bca05ad6ff088615b04e62d018",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/honeygain",
       "strategy_id": null,
@@ -220,16 +256,19 @@
     {
       "content_family": "DEPIN_SETUP",
       "content_id": "inventory-depin_setup-io-net-worker",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "io-net-worker",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "DePIN platform, setup, and hardware or account requirements."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "a3c0fe5c95c6b3fa8885faf5b442cdfa27734da432c784bd21d91950b4cdbdc8",
+      "source_reference_fingerprint": "9892e6e0cea258465e88a9eee1d971272a986df204f85bf313a80618c7fa6cbc",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/io-net-worker",
       "strategy_id": null,
@@ -238,16 +277,19 @@
     {
       "content_family": "DEPIN_SETUP",
       "content_id": "inventory-depin_setup-livepeer-orchestrator",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "livepeer-orchestrator",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "DePIN platform, setup, and hardware or account requirements."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "130a32ca57a2a87b7cba055ba0e6e3bb336596769e542baef0baac105e144f74",
+      "source_reference_fingerprint": "3c522a0108620612dcb0c8369e21b50bd5205e3cdd1c6438c2db560c71ba0966",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/livepeer-orchestrator",
       "strategy_id": null,
@@ -256,16 +298,19 @@
     {
       "content_family": "DEPIN_SETUP",
       "content_id": "inventory-depin_setup-nosana-gpu-host",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "nosana-gpu-host",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "DePIN platform, setup, and hardware or account requirements."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "0c22b49bfade8d7f91394f5fa5648f70432ae5629cc2a3d2b0d81d3a0e8c0fbd",
+      "source_reference_fingerprint": "422163acee8a68a1432a8ca0e8f6296d72edd98eb584d0e69981565a2eb763b0",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/nosana-gpu-host",
       "strategy_id": null,
@@ -274,16 +319,19 @@
     {
       "content_family": "DEPIN_SETUP",
       "content_id": "inventory-depin_setup-nym-mixnode",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "nym-mixnode",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "DePIN platform, setup, and hardware or account requirements."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "3d6d67c5ae713b25170f437c2b0979e2782f5ee7667d955601df705ec36fb19a",
+      "source_reference_fingerprint": "4b3d2f99fd63b0de8ffd0a0aeb68938f0700e6180731d10efc4e1867c7e1904c",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/nym-mixnode",
       "strategy_id": null,
@@ -292,16 +340,19 @@
     {
       "content_family": "DEPIN_SETUP",
       "content_id": "inventory-depin_setup-render-node-operator",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "render-node-operator",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "DePIN platform, setup, and hardware or account requirements."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "5145771236f9d758a338e4ca3808b8fbad41febb2798cfa247c5efe6e9503b93",
+      "source_reference_fingerprint": "6f6158c7abc33905f5b0333185121d5171de4231f3c708c6e012e10edcacf037",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/render-node-operator",
       "strategy_id": null,
@@ -310,16 +361,19 @@
     {
       "content_family": "DEPIN_SETUP",
       "content_id": "inventory-depin_setup-storj-storage-node",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "storj-storage-node",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "DePIN platform, setup, and hardware or account requirements."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "08bbb3f06ce78a957cc7082653e1a78d8a5f899c4e54432d4d79688f031911a2",
+      "source_reference_fingerprint": "9a69970ac2cde96c7893c1e41c36309ac02ad71ed62f784b28396b1340f21833",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/storj-storage-node",
       "strategy_id": null,
@@ -328,16 +382,19 @@
     {
       "content_family": "DEPIN_SETUP",
       "content_id": "inventory-depin_setup-subspace-farmer",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "subspace-farmer",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "DePIN platform, setup, and hardware or account requirements."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "259305dc999ba5406cd8253b575582b1508b19b4b0d69c4534bbeeb9fae77f9d",
+      "source_reference_fingerprint": "4195c21f42123b1cf541f2ac5dfac706c11ff86c55832fda98a7ee0909eac182",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/subspace-farmer",
       "strategy_id": null,
@@ -346,16 +403,525 @@
     {
       "content_family": "DEPIN_SETUP",
       "content_id": "inventory-depin_setup-theta-edge-node",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "theta-edge-node",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "DePIN platform, setup, and hardware or account requirements."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "054dbcb0575a5f535b000ebcf9596ad7595f7ab33eb21ea1b294cbe6c5a8e5af",
+      "source_reference_fingerprint": "9d442a0425d9cd594358b1b6d30bff1f62f1e8e2ca85acccc73b7bfe815e5e7f",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/theta-edge-node",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "FINANCIAL_ROI",
+      "content_id": "inventory-financial_roi-acurast-compute-provider",
+      "destination_status": "NOT_APPLICABLE",
+      "evidence_status": "BLOCKED",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "missing_evidence": [
+        "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
+      ],
+      "opportunity_id": "acurast-compute-provider",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "A modeled opportunity with reproducible financial evidence."
+      ],
+      "short_form_eligible": false,
+      "source_reference_fingerprint": "5b5d70059c40031f446e5bd3347ff30a6d959c304d052f6a61fe5a79c666ea03",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/acurast-compute-provider",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "FINANCIAL_ROI",
+      "content_id": "inventory-financial_roi-aethir-checker-node",
+      "destination_status": "NOT_APPLICABLE",
+      "evidence_status": "BLOCKED",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "missing_evidence": [
+        "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
+      ],
+      "opportunity_id": "aethir-checker-node",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "A modeled opportunity with reproducible financial evidence."
+      ],
+      "short_form_eligible": false,
+      "source_reference_fingerprint": "8df868cb34374c9d9cebd2d9294152d829e367a9bee25674bebfdc4922d7ff25",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/aethir-checker-node",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "FINANCIAL_ROI",
+      "content_id": "inventory-financial_roi-akash-provider",
+      "destination_status": "NOT_APPLICABLE",
+      "evidence_status": "BLOCKED",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "missing_evidence": [
+        "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
+      ],
+      "opportunity_id": "akash-provider",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "A modeled opportunity with reproducible financial evidence."
+      ],
+      "short_form_eligible": false,
+      "source_reference_fingerprint": "6d5ee3b2d54b9254f02b4343107b137df8ca18a6ed3b6961d1a6b92ab232317d",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/akash-provider",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "FINANCIAL_ROI",
+      "content_id": "inventory-financial_roi-aleph-im-compute-resource-node",
+      "destination_status": "NOT_APPLICABLE",
+      "evidence_status": "BLOCKED",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "missing_evidence": [
+        "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
+      ],
+      "opportunity_id": "aleph-im-compute-resource-node",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "A modeled opportunity with reproducible financial evidence."
+      ],
+      "short_form_eligible": false,
+      "source_reference_fingerprint": "1b6508fcb75924447f515b4b48d9c3a3a754ae1ca6faa1bb0f17fd1b0c1cfbd1",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/aleph-im-compute-resource-node",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "FINANCIAL_ROI",
+      "content_id": "inventory-financial_roi-bittensor-miner",
+      "destination_status": "NOT_APPLICABLE",
+      "evidence_status": "BLOCKED",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "missing_evidence": [
+        "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
+      ],
+      "opportunity_id": "bittensor-miner",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "A modeled opportunity with reproducible financial evidence."
+      ],
+      "short_form_eligible": false,
+      "source_reference_fingerprint": "420bda8d1e1b18051f1cbe785be012631c96485c5fa698e13712f85df367b366",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/bittensor-miner",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "FINANCIAL_ROI",
+      "content_id": "inventory-financial_roi-bless",
+      "destination_status": "NOT_APPLICABLE",
+      "evidence_status": "BLOCKED",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "missing_evidence": [
+        "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
+      ],
+      "opportunity_id": "bless",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "A modeled opportunity with reproducible financial evidence."
+      ],
+      "short_form_eligible": false,
+      "source_reference_fingerprint": "0690b85f6e81196ce92b71709bf6b48bb843a8827ae51133c115e42285cc03a4",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/bless",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "FINANCIAL_ROI",
+      "content_id": "inventory-financial_roi-dawn",
+      "destination_status": "NOT_APPLICABLE",
+      "evidence_status": "BLOCKED",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "missing_evidence": [
+        "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
+      ],
+      "opportunity_id": "dawn",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "A modeled opportunity with reproducible financial evidence."
+      ],
+      "short_form_eligible": false,
+      "source_reference_fingerprint": "f89b18cad2aec5d4e4b85b82785490c0b98b2711934e67691a3a95cc5f7f4155",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/dawn",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "FINANCIAL_ROI",
+      "content_id": "inventory-financial_roi-earnapp",
+      "destination_status": "NOT_APPLICABLE",
+      "evidence_status": "BLOCKED",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "missing_evidence": [
+        "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
+      ],
+      "opportunity_id": "earnapp",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "A modeled opportunity with reproducible financial evidence."
+      ],
+      "short_form_eligible": false,
+      "source_reference_fingerprint": "3ab8586d9ab6982554f7e9252faa6a1754e43ef146d758430de32fd8c1679fc9",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/earnapp",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "FINANCIAL_ROI",
+      "content_id": "inventory-financial_roi-filecoin-storage-provider",
+      "destination_status": "NOT_APPLICABLE",
+      "evidence_status": "BLOCKED",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "missing_evidence": [
+        "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
+      ],
+      "opportunity_id": "filecoin-storage-provider",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "A modeled opportunity with reproducible financial evidence."
+      ],
+      "short_form_eligible": false,
+      "source_reference_fingerprint": "34f30da9367fd92cddbb08057f1325257835eb92ca2bd0a333d583f394e07bf3",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/filecoin-storage-provider",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "FINANCIAL_ROI",
+      "content_id": "inventory-financial_roi-fluxnode",
+      "destination_status": "NOT_APPLICABLE",
+      "evidence_status": "BLOCKED",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "missing_evidence": [
+        "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
+      ],
+      "opportunity_id": "fluxnode",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "A modeled opportunity with reproducible financial evidence."
+      ],
+      "short_form_eligible": false,
+      "source_reference_fingerprint": "5a8b7c8b19ba73545ec2caddc4a5da15c92b1aa9b5f708f0bd7220f61587d810",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/fluxnode",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "FINANCIAL_ROI",
+      "content_id": "inventory-financial_roi-golem-provider",
+      "destination_status": "NOT_APPLICABLE",
+      "evidence_status": "BLOCKED",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "missing_evidence": [
+        "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
+      ],
+      "opportunity_id": "golem-provider",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "A modeled opportunity with reproducible financial evidence."
+      ],
+      "short_form_eligible": false,
+      "source_reference_fingerprint": "6c3268302d1bc0ffaec57d9e8e392967c0dbe0073bd477df3c9a4a16c7336f4d",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/golem-provider",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "FINANCIAL_ROI",
+      "content_id": "inventory-financial_roi-grass",
+      "destination_status": "NOT_APPLICABLE",
+      "evidence_status": "BLOCKED",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "missing_evidence": [
+        "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
+      ],
+      "opportunity_id": "grass",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "A modeled opportunity with reproducible financial evidence."
+      ],
+      "short_form_eligible": false,
+      "source_reference_fingerprint": "e3b4886809aba3851245f144c5860a2798f24f9fc63f0cff3aa132b371fa7f0c",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/grass",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "FINANCIAL_ROI",
+      "content_id": "inventory-financial_roi-helium-iot-hotspot",
+      "destination_status": "NOT_APPLICABLE",
+      "evidence_status": "BLOCKED",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "missing_evidence": [
+        "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
+      ],
+      "opportunity_id": "helium-iot-hotspot",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "A modeled opportunity with reproducible financial evidence."
+      ],
+      "short_form_eligible": false,
+      "source_reference_fingerprint": "39a4d4e1c81f99c501f56a47c0b223246dbfbf736cb88c8462f37255a6163eee",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/helium-iot-hotspot",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "FINANCIAL_ROI",
+      "content_id": "inventory-financial_roi-hivemapper",
+      "destination_status": "NOT_APPLICABLE",
+      "evidence_status": "BLOCKED",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "missing_evidence": [
+        "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
+      ],
+      "opportunity_id": "hivemapper",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "A modeled opportunity with reproducible financial evidence."
+      ],
+      "short_form_eligible": false,
+      "source_reference_fingerprint": "68a145b9fcf680a12ae7fe3af1c2ee12c42e27d4990e4151d2d53d8979b2e0b5",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/hivemapper",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "FINANCIAL_ROI",
+      "content_id": "inventory-financial_roi-honeygain",
+      "destination_status": "NOT_APPLICABLE",
+      "evidence_status": "BLOCKED",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "missing_evidence": [
+        "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
+      ],
+      "opportunity_id": "honeygain",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "A modeled opportunity with reproducible financial evidence."
+      ],
+      "short_form_eligible": false,
+      "source_reference_fingerprint": "fb7bf5f395de97220ce45035ab4f1c93b81c814d3c6f3b3bf7116e252251cbd9",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/honeygain",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "FINANCIAL_ROI",
+      "content_id": "inventory-financial_roi-io-net-worker",
+      "destination_status": "NOT_APPLICABLE",
+      "evidence_status": "BLOCKED",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "missing_evidence": [
+        "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
+      ],
+      "opportunity_id": "io-net-worker",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "A modeled opportunity with reproducible financial evidence."
+      ],
+      "short_form_eligible": false,
+      "source_reference_fingerprint": "c29a45d6cafbe324969b8528445dc19a4abb3c5e42813462ae5474e46eabffbe",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/io-net-worker",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "FINANCIAL_ROI",
+      "content_id": "inventory-financial_roi-livepeer-orchestrator",
+      "destination_status": "NOT_APPLICABLE",
+      "evidence_status": "BLOCKED",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "missing_evidence": [
+        "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
+      ],
+      "opportunity_id": "livepeer-orchestrator",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "A modeled opportunity with reproducible financial evidence."
+      ],
+      "short_form_eligible": false,
+      "source_reference_fingerprint": "62239f62ef7d9ccb859a67fc621bc9aa51300073d72fb5b28d1e5fcd083605a5",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/livepeer-orchestrator",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "FINANCIAL_ROI",
+      "content_id": "inventory-financial_roi-nosana-gpu-host",
+      "destination_status": "NOT_APPLICABLE",
+      "evidence_status": "BLOCKED",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "missing_evidence": [
+        "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
+      ],
+      "opportunity_id": "nosana-gpu-host",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "A modeled opportunity with reproducible financial evidence."
+      ],
+      "short_form_eligible": false,
+      "source_reference_fingerprint": "165fcd440fcc250943c61677d7b54c35f05c04a5c3782b856280098ed67a699a",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/nosana-gpu-host",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "FINANCIAL_ROI",
+      "content_id": "inventory-financial_roi-nym-mixnode",
+      "destination_status": "NOT_APPLICABLE",
+      "evidence_status": "BLOCKED",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "missing_evidence": [
+        "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
+      ],
+      "opportunity_id": "nym-mixnode",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "A modeled opportunity with reproducible financial evidence."
+      ],
+      "short_form_eligible": false,
+      "source_reference_fingerprint": "212ab471b0cfbfc13a7add34fb3d3e51e739720896611768ae1e50d692679e12",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/nym-mixnode",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "FINANCIAL_ROI",
+      "content_id": "inventory-financial_roi-render-node-operator",
+      "destination_status": "NOT_APPLICABLE",
+      "evidence_status": "BLOCKED",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "missing_evidence": [
+        "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
+      ],
+      "opportunity_id": "render-node-operator",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "A modeled opportunity with reproducible financial evidence."
+      ],
+      "short_form_eligible": false,
+      "source_reference_fingerprint": "f589cf58430170e5aba9fa207400380b4d892dc7c50d4cea5ce45283d771b7e3",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/render-node-operator",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "FINANCIAL_ROI",
+      "content_id": "inventory-financial_roi-subspace-farmer",
+      "destination_status": "NOT_APPLICABLE",
+      "evidence_status": "BLOCKED",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "missing_evidence": [
+        "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
+      ],
+      "opportunity_id": "subspace-farmer",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "A modeled opportunity with reproducible financial evidence."
+      ],
+      "short_form_eligible": false,
+      "source_reference_fingerprint": "d2f31b3db686c301f7e6e75dc0f9995da5b56b2fcfc817f9b4cc78d697728c13",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/subspace-farmer",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "FINANCIAL_ROI",
+      "content_id": "inventory-financial_roi-theta-edge-node",
+      "destination_status": "NOT_APPLICABLE",
+      "evidence_status": "BLOCKED",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "missing_evidence": [
+        "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
+      ],
+      "opportunity_id": "theta-edge-node",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "A modeled opportunity with reproducible financial evidence."
+      ],
+      "short_form_eligible": false,
+      "source_reference_fingerprint": "c51caf562e8a29a4f6418dbff3d45eb061c1e8f2edd2657bb361c283a9b42dcc",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/theta-edge-node",
       "strategy_id": null,
@@ -364,17 +930,20 @@
     {
       "content_family": "HOW_TO_CLAIM_OR_EXIT",
       "content_id": "inventory-how_to_claim_or_exit-acurast-compute-provider",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "acurast-compute-provider",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Documented claim or exit path.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "8c0db54b32ba2520af75159587eb8ccea231f8dc827dde61cbdef5b71abe5a7f",
+      "source_reference_fingerprint": "b3804b5993fc20c3be03b985b817a754713a0e757921777caf0b20e063077254",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/acurast-compute-provider",
       "strategy_id": null,
@@ -383,17 +952,20 @@
     {
       "content_family": "HOW_TO_CLAIM_OR_EXIT",
       "content_id": "inventory-how_to_claim_or_exit-aethir-checker-node",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "aethir-checker-node",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Documented claim or exit path.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "df85847967e64354dd56c3165969c4535c6fcb0f5cd0060f0dcdc8a714241659",
+      "source_reference_fingerprint": "1fe3ee66eaf418b4bf68d903c9a89d1723a7835475535c9525373ebca414e767",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/aethir-checker-node",
       "strategy_id": null,
@@ -402,17 +974,20 @@
     {
       "content_family": "HOW_TO_CLAIM_OR_EXIT",
       "content_id": "inventory-how_to_claim_or_exit-akash-provider",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "akash-provider",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Documented claim or exit path.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "f4c2fe08371fd00d8c477adff3d41bcf3a55c345a128cccbf06ae2f8539c219d",
+      "source_reference_fingerprint": "8fce51cca6e9bd923a8f75fae68bafcb24b2571eecabf07950bc35ff31d8ff02",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/akash-provider",
       "strategy_id": null,
@@ -421,17 +996,20 @@
     {
       "content_family": "HOW_TO_CLAIM_OR_EXIT",
       "content_id": "inventory-how_to_claim_or_exit-aleph-im-compute-resource-node",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "aleph-im-compute-resource-node",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Documented claim or exit path.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "123c8d12a85e45a0e4a87d44128b40389fb1de21b53e04f4559a8612d7295f73",
+      "source_reference_fingerprint": "426ca3404d501ca7d9318a7de4b082e2664e1d7462bf39a113399ce41779df72",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/aleph-im-compute-resource-node",
       "strategy_id": null,
@@ -440,17 +1018,20 @@
     {
       "content_family": "HOW_TO_CLAIM_OR_EXIT",
       "content_id": "inventory-how_to_claim_or_exit-bittensor-miner",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "bittensor-miner",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Documented claim or exit path.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "9bdca5b7091e10cde6d5f1e831ca0ca44bc91780f68231c3391c9b0e32660125",
+      "source_reference_fingerprint": "2cdbd8647b6a06018ad5b43a23f9bb937146fbb877887508de1d0d999d0405ab",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/bittensor-miner",
       "strategy_id": null,
@@ -459,17 +1040,20 @@
     {
       "content_family": "HOW_TO_CLAIM_OR_EXIT",
       "content_id": "inventory-how_to_claim_or_exit-defi-kingdoms",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
       "missing_evidence": [],
       "opportunity_id": "defi-kingdoms",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Documented claim or exit path.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "2552e0688ac780b5bfc8470bac74d42ad47906a57f5cefc5c357271851d6ad43",
+      "source_reference_fingerprint": "b0ac2d8bb7068a1faabfdd6189278c49f258cb699aaa7f7cf0848bb58a58c261",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/defi-kingdoms",
       "strategy_id": null,
@@ -478,17 +1062,20 @@
     {
       "content_family": "HOW_TO_CLAIM_OR_EXIT",
       "content_id": "inventory-how_to_claim_or_exit-earnapp",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "earnapp",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Documented claim or exit path.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "f2aa111d08faafcc1689327a866e9de0a422fc7652cc348d1ae6037810a2b31f",
+      "source_reference_fingerprint": "e607bb4a685d5696fac7d477929759bb2f47798f8e05ce79eab83e95a4ce6c8e",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/earnapp",
       "strategy_id": null,
@@ -497,17 +1084,20 @@
     {
       "content_family": "HOW_TO_CLAIM_OR_EXIT",
       "content_id": "inventory-how_to_claim_or_exit-filecoin-storage-provider",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "filecoin-storage-provider",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Documented claim or exit path.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "40988bc9d6fb217199578db4e56f0a27460efbff716f5293f0e9282616c456d0",
+      "source_reference_fingerprint": "e2ad8e4ca72e42584eb2dc4a19a000b8730038f7b7da055fe5c5421a53d9930e",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/filecoin-storage-provider",
       "strategy_id": null,
@@ -516,17 +1106,20 @@
     {
       "content_family": "HOW_TO_CLAIM_OR_EXIT",
       "content_id": "inventory-how_to_claim_or_exit-fluxnode",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
       "missing_evidence": [],
       "opportunity_id": "fluxnode",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Documented claim or exit path.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "bd4de2436e9675215a3d2951a76a6768622df8db16562e9846dd83db82ef4aed",
+      "source_reference_fingerprint": "76325fa588ebe612d3ed0ee48faf879035e58752a34f43bc04c7a0870d3c7b3d",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/fluxnode",
       "strategy_id": null,
@@ -535,17 +1128,20 @@
     {
       "content_family": "HOW_TO_CLAIM_OR_EXIT",
       "content_id": "inventory-how_to_claim_or_exit-golem-provider",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "golem-provider",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Documented claim or exit path.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "ec6562d7acb5968836bd642bed2db6193482523161213bf294f8408f58450efc",
+      "source_reference_fingerprint": "65d50444a7696b8fb2218b555bb015d2ac7bc80d49313a987cfcea8f8658ceb4",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/golem-provider",
       "strategy_id": null,
@@ -554,17 +1150,20 @@
     {
       "content_family": "HOW_TO_CLAIM_OR_EXIT",
       "content_id": "inventory-how_to_claim_or_exit-helium-iot-hotspot",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "helium-iot-hotspot",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Documented claim or exit path.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "72a66edef3e0fe926944a0ecb6137c4bf97c15c4a9a4291a2740d421539b9b26",
+      "source_reference_fingerprint": "2d6a4f11732340715ace751e3d3a06019e9223829d37890841dab4fd73fdf311",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/helium-iot-hotspot",
       "strategy_id": null,
@@ -573,17 +1172,20 @@
     {
       "content_family": "HOW_TO_CLAIM_OR_EXIT",
       "content_id": "inventory-how_to_claim_or_exit-hivemapper",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "hivemapper",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Documented claim or exit path.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "b89cac49a7c372a9a2591a8b5e228f5a33ff229cc79273d0b0902acb58ef5051",
+      "source_reference_fingerprint": "6b16df324695098e81781cd35c64f7b7c8b49de7773eaa0a74b61bb13153006f",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/hivemapper",
       "strategy_id": null,
@@ -592,17 +1194,20 @@
     {
       "content_family": "HOW_TO_CLAIM_OR_EXIT",
       "content_id": "inventory-how_to_claim_or_exit-honeygain",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "honeygain",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Documented claim or exit path.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "566f1033d4b534d38d69f51103ddb96ba4f49239c1055581fb9e9f325b1161a3",
+      "source_reference_fingerprint": "fd4c701a4fd74f117fe045c4e515fd9d986e8cfdea243bfb39188c9b8d3cef41",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/honeygain",
       "strategy_id": null,
@@ -611,17 +1216,20 @@
     {
       "content_family": "HOW_TO_CLAIM_OR_EXIT",
       "content_id": "inventory-how_to_claim_or_exit-io-net-worker",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "io-net-worker",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Documented claim or exit path.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "454915ade26b6820ac4f860c763c84ab2f3431ce6eda0adca07c0525f6e190f9",
+      "source_reference_fingerprint": "d275d00a005bd11ba3e9d9ee772568fdc7e771f9168f6631fdcc714cac1629ee",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/io-net-worker",
       "strategy_id": null,
@@ -630,17 +1238,20 @@
     {
       "content_family": "HOW_TO_CLAIM_OR_EXIT",
       "content_id": "inventory-how_to_claim_or_exit-livepeer-orchestrator",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "livepeer-orchestrator",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Documented claim or exit path.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "5c19bb6d50d5c94218236d9d89c280cdfb27aaeafeb630c6c5288edae37d256c",
+      "source_reference_fingerprint": "e14ecec863a9e6ff13757d4e6795eb9e22a2a65702fd4c510f8af36b9a296ef1",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/livepeer-orchestrator",
       "strategy_id": null,
@@ -649,17 +1260,20 @@
     {
       "content_family": "HOW_TO_CLAIM_OR_EXIT",
       "content_id": "inventory-how_to_claim_or_exit-nosana-gpu-host",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "nosana-gpu-host",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Documented claim or exit path.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "9dabc2b4d9a155c4e37bcada41a76a900526800e0847977d23ae74dc433330b9",
+      "source_reference_fingerprint": "136deec9c838c29d7a502c2621a17d49322182ae8ab175ca5565c25159c08997",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/nosana-gpu-host",
       "strategy_id": null,
@@ -668,17 +1282,20 @@
     {
       "content_family": "HOW_TO_CLAIM_OR_EXIT",
       "content_id": "inventory-how_to_claim_or_exit-nym-mixnode",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "nym-mixnode",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Documented claim or exit path.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "687f9ab818409d34e4a10ac312e5f25bba5b8889891096157358a4c3937a647c",
+      "source_reference_fingerprint": "c80f887597b419009165f0e0cb10a4ad00d8bf168291c0382da68a6019c9610f",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/nym-mixnode",
       "strategy_id": null,
@@ -687,17 +1304,20 @@
     {
       "content_family": "HOW_TO_CLAIM_OR_EXIT",
       "content_id": "inventory-how_to_claim_or_exit-render-node-operator",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "render-node-operator",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Documented claim or exit path.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "26707e1445b96aabc5968611c58605e02fa85336d379269459efa10491cb60f4",
+      "source_reference_fingerprint": "3769bdd35c27b7359f4813c365634ec29d6b7b3bfe84313b682c8158e0426770",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/render-node-operator",
       "strategy_id": null,
@@ -706,17 +1326,20 @@
     {
       "content_family": "HOW_TO_CLAIM_OR_EXIT",
       "content_id": "inventory-how_to_claim_or_exit-storj-storage-node",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "storj-storage-node",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Documented claim or exit path.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "ad2db561dd49cce0b6085cebedcccbdbb71eea0dc84a7aab8aabe9a987b5d4e6",
+      "source_reference_fingerprint": "7dc8b5e3b101b9fd7e66f7345694543948e41eb23483e5f1338b266754a33cc5",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/storj-storage-node",
       "strategy_id": null,
@@ -725,17 +1348,20 @@
     {
       "content_family": "HOW_TO_CLAIM_OR_EXIT",
       "content_id": "inventory-how_to_claim_or_exit-subspace-farmer",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "subspace-farmer",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Documented claim or exit path.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "4fa4f52cdf55b0ed7e167e17c00f70e11d449918e42ea3a8f4cc2c88ba3cd9c6",
+      "source_reference_fingerprint": "633fc9dcec1dc618866c2ccd4786a5c16a92360ff10d3a2aca24373ede3aed2c",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/subspace-farmer",
       "strategy_id": null,
@@ -744,17 +1370,20 @@
     {
       "content_family": "HOW_TO_CLAIM_OR_EXIT",
       "content_id": "inventory-how_to_claim_or_exit-theta-edge-node",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "theta-edge-node",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Documented claim or exit path.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "d96db045c205645df8097f721daad844d779dd025047d9aa66d853a804435251",
+      "source_reference_fingerprint": "cc00ec4b0e9619eba97bdd43d9c5bda356bfe3619df89562c8ae9c7e14a564fa",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/theta-edge-node",
       "strategy_id": null,
@@ -763,17 +1392,20 @@
     {
       "content_family": "HOW_TO_START",
       "content_id": "inventory-how_to_start-acurast-compute-provider",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "acurast-compute-provider",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "How to start instructions.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "968dec9aafb318ca6db3215af9cdd708f4b7ee5bdf065937e69b2f7d9cddf45a",
+      "source_reference_fingerprint": "afc576368f8fdbba6b94276fda598e5226b5cd100ce76a8e40aeebce25c0fc1b",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/acurast-compute-provider",
       "strategy_id": null,
@@ -782,17 +1414,20 @@
     {
       "content_family": "HOW_TO_START",
       "content_id": "inventory-how_to_start-aethir-checker-node",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "aethir-checker-node",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "How to start instructions.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "5daeaa397945586772cb10d4be3160807a27c607ff43695e6397db9a4d34333a",
+      "source_reference_fingerprint": "695be15582c0d02d02180407344b50ae0ea71f3bf4f7dcfa0be91f968b3a5759",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/aethir-checker-node",
       "strategy_id": null,
@@ -801,17 +1436,20 @@
     {
       "content_family": "HOW_TO_START",
       "content_id": "inventory-how_to_start-akash-provider",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "akash-provider",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "How to start instructions.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "9afa1e55a95e83540b998c324e0fa786b72bb5fd82e11d2b4d3c367d834ed607",
+      "source_reference_fingerprint": "afa46ab3a28746d46f826042c84205c6f1e36f2928904c00c714312e24092270",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/akash-provider",
       "strategy_id": null,
@@ -820,17 +1458,20 @@
     {
       "content_family": "HOW_TO_START",
       "content_id": "inventory-how_to_start-aleph-im-compute-resource-node",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "aleph-im-compute-resource-node",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "How to start instructions.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "6f33fff72cd9ab3407746f6286cea66bf85a8352308caf8e791759a7b5ff38e9",
+      "source_reference_fingerprint": "ae5578ea0678015356d100c48e6aa8d1be14efad061420f936e486b2dff79ab8",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/aleph-im-compute-resource-node",
       "strategy_id": null,
@@ -839,17 +1480,20 @@
     {
       "content_family": "HOW_TO_START",
       "content_id": "inventory-how_to_start-bittensor-miner",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "bittensor-miner",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "How to start instructions.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "5b5142864d3d88dc126c9a8891c3ffb7049c2354223921aa1b9334046c5f544f",
+      "source_reference_fingerprint": "d2ead14e243b1e042eff764ed80180f2461066a89950a18b50a523aa9a2ea46c",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/bittensor-miner",
       "strategy_id": null,
@@ -858,17 +1502,20 @@
     {
       "content_family": "HOW_TO_START",
       "content_id": "inventory-how_to_start-defi-kingdoms",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
       "missing_evidence": [],
       "opportunity_id": "defi-kingdoms",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "How to start instructions.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "6da22f3c10441141a1365818123871b82843b1800e655d93386c7deba0ed8108",
+      "source_reference_fingerprint": "120d6050375624e36e249090fce3931fa1f994a8886511999f3c6e2d997ee23c",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/defi-kingdoms",
       "strategy_id": null,
@@ -877,17 +1524,20 @@
     {
       "content_family": "HOW_TO_START",
       "content_id": "inventory-how_to_start-earnapp",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "earnapp",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "How to start instructions.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "abceb1c89f72b94dc7c67d6a2cb587d5eb246cb921a463e4d43423d3b72d8c71",
+      "source_reference_fingerprint": "f4f2aaefd9bead73dd2691b5995d59b82e733fd600af13314d133951d3e42350",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/earnapp",
       "strategy_id": null,
@@ -896,17 +1546,20 @@
     {
       "content_family": "HOW_TO_START",
       "content_id": "inventory-how_to_start-filecoin-storage-provider",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "filecoin-storage-provider",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "How to start instructions.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "bc25bc485e94977543cdc4b184fb0583758c87767c815cf92cadb69b7a80737e",
+      "source_reference_fingerprint": "49907002d995cc4fad79e8400cd2a57df2dfafa42e55179490c166c08270b808",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/filecoin-storage-provider",
       "strategy_id": null,
@@ -915,17 +1568,20 @@
     {
       "content_family": "HOW_TO_START",
       "content_id": "inventory-how_to_start-fluxnode",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
       "missing_evidence": [],
       "opportunity_id": "fluxnode",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "How to start instructions.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "902ac1a8808a8cb7a2942b5a68ee55195d426b02f516a9db886a39bc0ef90905",
+      "source_reference_fingerprint": "78baae4c7f12030e755d61c3af29cd43fdf792f303254c5d2754945c42172918",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/fluxnode",
       "strategy_id": null,
@@ -934,17 +1590,20 @@
     {
       "content_family": "HOW_TO_START",
       "content_id": "inventory-how_to_start-golem-provider",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "golem-provider",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "How to start instructions.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "f89730d8e7813d70872e6c3c11683a02cf061af13ca0fd5f7b04a786022f9725",
+      "source_reference_fingerprint": "6417edb9682bfcd1952d7827655113b2e7552a5cb0447d051cf50aab697bedaf",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/golem-provider",
       "strategy_id": null,
@@ -953,17 +1612,20 @@
     {
       "content_family": "HOW_TO_START",
       "content_id": "inventory-how_to_start-helium-iot-hotspot",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "helium-iot-hotspot",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "How to start instructions.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "327752ab7d64d036b393c1805802542b8c0dd40d7aa18367356c4e6aa2fa59a4",
+      "source_reference_fingerprint": "1841ca0878c2469ef51f3da9324c54efd3c0cc723382e09ce8f19bb90688f384",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/helium-iot-hotspot",
       "strategy_id": null,
@@ -972,17 +1634,20 @@
     {
       "content_family": "HOW_TO_START",
       "content_id": "inventory-how_to_start-hivemapper",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "hivemapper",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "How to start instructions.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "d0291cc438fe25910221a1710d746e973185cbe976fc1c1b35e691ee66a0f477",
+      "source_reference_fingerprint": "dfe5d9f69d6fdad9885fd949440549c1b2375081af32757dc8b6464d2c175a7e",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/hivemapper",
       "strategy_id": null,
@@ -991,17 +1656,20 @@
     {
       "content_family": "HOW_TO_START",
       "content_id": "inventory-how_to_start-honeygain",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "honeygain",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "How to start instructions.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "e0db2e3afe99aa8d0d453ab88942c3b7965e72a43465203f1276a6162afa4c01",
+      "source_reference_fingerprint": "01aba36d186d0c0ccd5911e323f3b86f050a79fef83c4d7ebe91b9531f830578",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/honeygain",
       "strategy_id": null,
@@ -1010,17 +1678,20 @@
     {
       "content_family": "HOW_TO_START",
       "content_id": "inventory-how_to_start-io-net-worker",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "io-net-worker",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "How to start instructions.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "2d8a6ccc3bac932a263f7b9d031f9dd16ec21664ca53072ac2faef9901b0c1c8",
+      "source_reference_fingerprint": "50b565cc7223e4fc8133e0ad0122d20bb84ac37b5c242de29e42fb3cee0534a9",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/io-net-worker",
       "strategy_id": null,
@@ -1029,17 +1700,20 @@
     {
       "content_family": "HOW_TO_START",
       "content_id": "inventory-how_to_start-livepeer-orchestrator",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "livepeer-orchestrator",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "How to start instructions.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "11439194fde817c4b882290d00b1c56fc7bd55f499a7ceb442a91b1493f5808a",
+      "source_reference_fingerprint": "308c0bfc5b6926bfcc1308517d0c36fde296a9b581c3eac2a47c5a380a0b82f8",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/livepeer-orchestrator",
       "strategy_id": null,
@@ -1048,17 +1722,20 @@
     {
       "content_family": "HOW_TO_START",
       "content_id": "inventory-how_to_start-nosana-gpu-host",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "nosana-gpu-host",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "How to start instructions.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "fae52bb0c57e31eabc3b7ae666da70bafa20fb400e42548fce6f4cfedc147526",
+      "source_reference_fingerprint": "4e5d5d630c8f10af05776abd668617e59e63a35603d822dbed40a49a6d37ebfd",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/nosana-gpu-host",
       "strategy_id": null,
@@ -1067,17 +1744,20 @@
     {
       "content_family": "HOW_TO_START",
       "content_id": "inventory-how_to_start-nym-mixnode",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "nym-mixnode",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "How to start instructions.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "0dcfe9bd6931517a0405b51ec6844860cc171da1593b0b16a62a17a5e7cdd86f",
+      "source_reference_fingerprint": "0314c34a0f2bcf9ae058866a6124dd65379f2d4931fd1f2fb80da9d2a219bfbe",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/nym-mixnode",
       "strategy_id": null,
@@ -1086,17 +1766,20 @@
     {
       "content_family": "HOW_TO_START",
       "content_id": "inventory-how_to_start-render-node-operator",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "render-node-operator",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "How to start instructions.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "461e1ef3e30da2f0443121c2421887fe280fcc7aead544aaec2b907ede97a5ce",
+      "source_reference_fingerprint": "b351a208f9e3c67bbf1dc467f9e9a4a4cd624379ef909229bef020346995be6f",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/render-node-operator",
       "strategy_id": null,
@@ -1105,17 +1788,20 @@
     {
       "content_family": "HOW_TO_START",
       "content_id": "inventory-how_to_start-storj-storage-node",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "storj-storage-node",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "How to start instructions.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "a381764d9c2a9be6ec2d4cc92cd98de8af4f820c2afb23a5207b26dcddebae9e",
+      "source_reference_fingerprint": "d7420693d1d0916e7fd2da17412ae30cc2f56e4e064ec7c63c00d546e13ee530",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/storj-storage-node",
       "strategy_id": null,
@@ -1124,17 +1810,20 @@
     {
       "content_family": "HOW_TO_START",
       "content_id": "inventory-how_to_start-subspace-farmer",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "subspace-farmer",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "How to start instructions.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "e3f78be3211ece969f2edf88dca6214724a0f0c9611d14f9641c4ae1d8b3496c",
+      "source_reference_fingerprint": "5ff26ae62f3d841b70a75c268d5c361ff2cc2735439bc09a6bc054127ba36fce",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/subspace-farmer",
       "strategy_id": null,
@@ -1143,17 +1832,20 @@
     {
       "content_family": "HOW_TO_START",
       "content_id": "inventory-how_to_start-theta-edge-node",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "theta-edge-node",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "How to start instructions.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "0c185b24227b50ffd5fd7b44e1d262e44ddbec1f560a2e023916f94c7ddcd626",
+      "source_reference_fingerprint": "a478a13aad092e8c808a1f8d979b687bf065dba1a379fc91ebf2073a165c7a48",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/theta-edge-node",
       "strategy_id": null,
@@ -1162,16 +1854,19 @@
     {
       "content_family": "HOW_TO_USE_GAMCRYP",
       "content_id": "inventory-how_to_use_gamcryp-home",
+      "destination_status": "NOT_APPLICABLE",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": null,
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "The current public home and catalog navigation."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "97f9a8331521cf18e97937d9d8edc16fa4bd1050136c06121ac945ba1a178cc0",
+      "source_reference_fingerprint": "2ab0af269c5bac92d2764bafcf6e3be2511905c9aba515ae7e7ecb4fd5b70b68",
       "source_type": "SITE_PAGE",
       "source_url": "/",
       "strategy_id": null,
@@ -1180,17 +1875,20 @@
     {
       "content_family": "HOW_YOU_EARN",
       "content_id": "inventory-how_you_earn-acurast-compute-provider",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "acurast-compute-provider",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Documented earning mechanism.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "e18c9fc0c4fd353e457cdd5cdb497d68620681e1d640c6260bb67ba9306592f8",
+      "source_reference_fingerprint": "a42473c1c87e53de5e7b685cd0475d6c9ceb3671e74c2b2effeae9dc7980d6a1",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/acurast-compute-provider",
       "strategy_id": null,
@@ -1199,17 +1897,20 @@
     {
       "content_family": "HOW_YOU_EARN",
       "content_id": "inventory-how_you_earn-aethir-checker-node",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "aethir-checker-node",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Documented earning mechanism.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "ada814fb153ff33cec3b3d955d9cb2257b0129932d406c2c0d2d5e4d29a83e8c",
+      "source_reference_fingerprint": "5bdd302dc041526ef2c545bcead5e12d7a942f6c2f5ca110f6e57c7e69e26c30",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/aethir-checker-node",
       "strategy_id": null,
@@ -1218,17 +1919,20 @@
     {
       "content_family": "HOW_YOU_EARN",
       "content_id": "inventory-how_you_earn-akash-provider",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "akash-provider",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Documented earning mechanism.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "771971bb12e41ec47750453f589f48a4c2daaa67aed6f400ea6d2997905d9e78",
+      "source_reference_fingerprint": "c56640a3ebd3b5db2443d89208fc9dd77263f5c0326a1e5caae9462134e37137",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/akash-provider",
       "strategy_id": null,
@@ -1237,17 +1941,20 @@
     {
       "content_family": "HOW_YOU_EARN",
       "content_id": "inventory-how_you_earn-aleph-im-compute-resource-node",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "aleph-im-compute-resource-node",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Documented earning mechanism.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "f31e3ce9e07cca3a4d45a85671b9836e7a3ef84386da0e898547813e50abda0a",
+      "source_reference_fingerprint": "49b8cc831890b10b04d26d0c03f741aa2ab2da3aca40047538d45d9c30769514",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/aleph-im-compute-resource-node",
       "strategy_id": null,
@@ -1256,17 +1963,20 @@
     {
       "content_family": "HOW_YOU_EARN",
       "content_id": "inventory-how_you_earn-bittensor-miner",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "bittensor-miner",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Documented earning mechanism.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "1133a78ef157c9a168bf0fabe12e6049fb193f653752e5ba5673e187f47c1dd5",
+      "source_reference_fingerprint": "ea429c1aff40c2da1999608634bab3c67886de13984a7fa66330c565a8e3598a",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/bittensor-miner",
       "strategy_id": null,
@@ -1275,17 +1985,20 @@
     {
       "content_family": "HOW_YOU_EARN",
       "content_id": "inventory-how_you_earn-defi-kingdoms",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
       "missing_evidence": [],
       "opportunity_id": "defi-kingdoms",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Documented earning mechanism.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "e764c60b9eb8fce8b0eed6bc9b829648659eec56dbb0f22376a5d2b046f7e650",
+      "source_reference_fingerprint": "fb5f4d76b530453a1c3fa605b7a163183114284d992752444bd675deb996d4a2",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/defi-kingdoms",
       "strategy_id": null,
@@ -1294,17 +2007,20 @@
     {
       "content_family": "HOW_YOU_EARN",
       "content_id": "inventory-how_you_earn-earnapp",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "earnapp",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Documented earning mechanism.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "b5b1c68dabff4abffd082c57be9e0189a1210a75e754010bb113e64dc1b20041",
+      "source_reference_fingerprint": "62f8f84894c5d1a3d5f62f6dde5ef0ecfca10b22a25400cabe9e6387535b3ae0",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/earnapp",
       "strategy_id": null,
@@ -1313,17 +2029,20 @@
     {
       "content_family": "HOW_YOU_EARN",
       "content_id": "inventory-how_you_earn-filecoin-storage-provider",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "filecoin-storage-provider",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Documented earning mechanism.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "4b2c2aac0d87dddbdef85ba1eee48934d6dd34f543be6864529cff5ee0ec956d",
+      "source_reference_fingerprint": "69d70e0b4b06376c307e7c54de7a95615c6b73517124465e8468f687b1a26e69",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/filecoin-storage-provider",
       "strategy_id": null,
@@ -1332,17 +2051,20 @@
     {
       "content_family": "HOW_YOU_EARN",
       "content_id": "inventory-how_you_earn-fluxnode",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
       "missing_evidence": [],
       "opportunity_id": "fluxnode",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Documented earning mechanism.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "aeeca84da7171b569dc30034f55d0aad22a40c8960968f57ecb31ace8f6e1237",
+      "source_reference_fingerprint": "f1e1885998f1faeddae5d927d702a86eb68b43a5b8a12dbfa33b257f8767bc41",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/fluxnode",
       "strategy_id": null,
@@ -1351,17 +2073,20 @@
     {
       "content_family": "HOW_YOU_EARN",
       "content_id": "inventory-how_you_earn-golem-provider",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "golem-provider",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Documented earning mechanism.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "df7dbd637bfe00052087f092cd2fa6c7da42d98e43027d46140a8424883d8803",
+      "source_reference_fingerprint": "f19377ceffe2a30243c97d3c19c6256ea9096b89dbe32dbb3b933a23cd716efd",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/golem-provider",
       "strategy_id": null,
@@ -1370,17 +2095,20 @@
     {
       "content_family": "HOW_YOU_EARN",
       "content_id": "inventory-how_you_earn-helium-iot-hotspot",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "helium-iot-hotspot",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Documented earning mechanism.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "60f889cc5d90ab1e54d988aa40061035b5b64db52e6b0ecb8a7040f123dccc6f",
+      "source_reference_fingerprint": "a57e0ce2eb6d50c79a61d402aacb4a36ca862ceb4e7eb4ca86ea589e5b2823e4",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/helium-iot-hotspot",
       "strategy_id": null,
@@ -1389,17 +2117,20 @@
     {
       "content_family": "HOW_YOU_EARN",
       "content_id": "inventory-how_you_earn-hivemapper",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "hivemapper",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Documented earning mechanism.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "8da0a908c143f61bfe6c093167ec2af66a7aaf0ef1c9676ae12022bc446eb53c",
+      "source_reference_fingerprint": "7d9a5fc9ca7eae0b4210262995a61d3df0e4dcbaa15d4b560c805dcda715466d",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/hivemapper",
       "strategy_id": null,
@@ -1408,17 +2139,20 @@
     {
       "content_family": "HOW_YOU_EARN",
       "content_id": "inventory-how_you_earn-honeygain",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "honeygain",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Documented earning mechanism.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "8ecb008b9da831c0c712209d1e0e412b10705d211b828749fd18f576bb8b2a22",
+      "source_reference_fingerprint": "2c2d5faa9de8ca80a93c46f498475ae102b337bafe2c3940aea61c7c0fa80d47",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/honeygain",
       "strategy_id": null,
@@ -1427,17 +2161,20 @@
     {
       "content_family": "HOW_YOU_EARN",
       "content_id": "inventory-how_you_earn-io-net-worker",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "io-net-worker",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Documented earning mechanism.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "057aee1462ffd204a47f2d5289c715b2f2da93e631c10f3ad0e326f78316ad00",
+      "source_reference_fingerprint": "00e6941dd53ea88748fc662a1c1f0f6e4f2f1cd4626d49d858ca65539a5f8f13",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/io-net-worker",
       "strategy_id": null,
@@ -1446,17 +2183,20 @@
     {
       "content_family": "HOW_YOU_EARN",
       "content_id": "inventory-how_you_earn-livepeer-orchestrator",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "livepeer-orchestrator",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Documented earning mechanism.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "d10e2b4751b613cbb446ea92ca9013d7b28b12893f71cc37c23ac8e3b7563d51",
+      "source_reference_fingerprint": "5c1b45656fdfc7c69e6a7d36e91b0434bdf27f858ac2d75145abe254bbcc8d60",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/livepeer-orchestrator",
       "strategy_id": null,
@@ -1465,17 +2205,20 @@
     {
       "content_family": "HOW_YOU_EARN",
       "content_id": "inventory-how_you_earn-nosana-gpu-host",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "nosana-gpu-host",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Documented earning mechanism.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "ca413715e59e60e9bafcdee67f7fd056e80aa78ce34be785a67ef713088f1e3e",
+      "source_reference_fingerprint": "90a108afcfc01ad7cb2e1023d0b30dcad7aa4d1ed887d7d1ad9a1ac7f1cd0882",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/nosana-gpu-host",
       "strategy_id": null,
@@ -1484,17 +2227,20 @@
     {
       "content_family": "HOW_YOU_EARN",
       "content_id": "inventory-how_you_earn-nym-mixnode",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "nym-mixnode",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Documented earning mechanism.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "1357772acac2974c1209e72de75e9b3eb2ae18bd1ac380708c69354dd17d7b44",
+      "source_reference_fingerprint": "dceea00255287dae4560e99b04a082293969ae896b9d7d431de0386ec516018b",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/nym-mixnode",
       "strategy_id": null,
@@ -1503,17 +2249,20 @@
     {
       "content_family": "HOW_YOU_EARN",
       "content_id": "inventory-how_you_earn-render-node-operator",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "render-node-operator",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Documented earning mechanism.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "aa916371746ddd5851733381c308acb0977551412e4771788b53e7ffe7bbbe8f",
+      "source_reference_fingerprint": "b5c1502ee89a337c26bd165fee6d92ef6d2f2a6f9d5738f8288a896b9aeb653d",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/render-node-operator",
       "strategy_id": null,
@@ -1522,17 +2271,20 @@
     {
       "content_family": "HOW_YOU_EARN",
       "content_id": "inventory-how_you_earn-storj-storage-node",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "storj-storage-node",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Documented earning mechanism.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "84f360b4107b05d84c4c61a87af83621c3aa74cbd1faa162a03a807e62f2c30f",
+      "source_reference_fingerprint": "62e2861736c932e8f65dd1230e64f9da2a7aa1d87cf77daff4834335e7f60dd4",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/storj-storage-node",
       "strategy_id": null,
@@ -1541,17 +2293,20 @@
     {
       "content_family": "HOW_YOU_EARN",
       "content_id": "inventory-how_you_earn-subspace-farmer",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "subspace-farmer",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Documented earning mechanism.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "6c4039b3bb4f88f05ab315a3151563dbf5db4aec566ca5c8245be87c15e6658d",
+      "source_reference_fingerprint": "088d2e34e705c9f0a9cf3e854cb2ab07c5c88431984ebfe3806d5ddc5d8a716a",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/subspace-farmer",
       "strategy_id": null,
@@ -1560,17 +2315,20 @@
     {
       "content_family": "HOW_YOU_EARN",
       "content_id": "inventory-how_you_earn-theta-edge-node",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "theta-edge-node",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Documented earning mechanism.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "49bcd2618caba3ad9cf7c0e1571eadc0e0caadeff66bb34150751bf6254631ae",
+      "source_reference_fingerprint": "cadb4d18dabc130b311a85e2f6e0a2e8cd6e12ae288ba711cba3e12aa3b1d73c",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/theta-edge-node",
       "strategy_id": null,
@@ -1579,18 +2337,21 @@
     {
       "content_family": "LOW_COST_RANKING",
       "content_id": "inventory-low_cost_ranking-rankings-best-depin-under-100",
+      "destination_status": "NOT_APPLICABLE",
       "evidence_status": "PARTIAL",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
       "missing_evidence": [
         "Current ranking snapshot eligibility is evaluated at sitemap publication time."
       ],
       "opportunity_id": null,
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "A published ranking page with current successful modeled snapshots."
       ],
       "short_form_eligible": false,
-      "source_reference_fingerprint": "77419c577e6bc2e8203a19380e4d29c7c957656736eef11d8d94c20a10b160e5",
+      "source_reference_fingerprint": "a40626afe9b72da9fc98df008effe37781a0996deff1ca554fa5c8629ce3f239",
       "source_type": "RANKING_PAGE",
       "source_url": "/rankings/best-depin-under-100",
       "strategy_id": null,
@@ -1599,18 +2360,21 @@
     {
       "content_family": "LOW_COST_RANKING",
       "content_id": "inventory-low_cost_ranking-rankings-gamefi-under-10",
+      "destination_status": "NOT_APPLICABLE",
       "evidence_status": "PARTIAL",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
       "missing_evidence": [
         "Current ranking snapshot eligibility is evaluated at sitemap publication time."
       ],
       "opportunity_id": null,
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "A published ranking page with current successful modeled snapshots."
       ],
       "short_form_eligible": false,
-      "source_reference_fingerprint": "8526156a6eb5c6809aea81c7bc860da4b4ab4f2df45b564866f08b13f8239074",
+      "source_reference_fingerprint": "32d8d47c614682cba03fae6c85352d1e323191ea1c146105a7b943b791671bf2",
       "source_type": "RANKING_PAGE",
       "source_url": "/rankings/gamefi-under-10",
       "strategy_id": null,
@@ -1619,18 +2383,21 @@
     {
       "content_family": "LOW_COST_RANKING",
       "content_id": "inventory-low_cost_ranking-rankings-gamefi-under-100",
+      "destination_status": "NOT_APPLICABLE",
       "evidence_status": "PARTIAL",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
       "missing_evidence": [
         "Current ranking snapshot eligibility is evaluated at sitemap publication time."
       ],
       "opportunity_id": null,
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "A published ranking page with current successful modeled snapshots."
       ],
       "short_form_eligible": false,
-      "source_reference_fingerprint": "ff84af784637b63093f208325336fa4d8455e13e210bc61508a7e217228e5ff7",
+      "source_reference_fingerprint": "90e6cd519dd596432a9d4165ebec2ac85a6ff724c980f77be6a98f01c1a5130d",
       "source_type": "RANKING_PAGE",
       "source_url": "/rankings/gamefi-under-100",
       "strategy_id": null,
@@ -1639,18 +2406,21 @@
     {
       "content_family": "LOW_COST_RANKING",
       "content_id": "inventory-low_cost_ranking-rankings-gamefi-under-50",
+      "destination_status": "NOT_APPLICABLE",
       "evidence_status": "PARTIAL",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
       "missing_evidence": [
         "Current ranking snapshot eligibility is evaluated at sitemap publication time."
       ],
       "opportunity_id": null,
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "A published ranking page with current successful modeled snapshots."
       ],
       "short_form_eligible": false,
-      "source_reference_fingerprint": "55964d0633e71f02cf42c22ce4b87aba778b1644ea1a6ca5411b8b4b43fa6e61",
+      "source_reference_fingerprint": "99807cc58c36c2084f14f95cfd87e9da341d2a58e172ad7b17329a6fa0478a2a",
       "source_type": "RANKING_PAGE",
       "source_url": "/rankings/gamefi-under-50",
       "strategy_id": null,
@@ -1659,18 +2429,21 @@
     {
       "content_family": "LOW_COST_RANKING",
       "content_id": "inventory-low_cost_ranking-rankings-lowest-capital-gamefi",
+      "destination_status": "NOT_APPLICABLE",
       "evidence_status": "PARTIAL",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
       "missing_evidence": [
         "Current ranking snapshot eligibility is evaluated at sitemap publication time."
       ],
       "opportunity_id": null,
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "A published ranking page with current successful modeled snapshots."
       ],
       "short_form_eligible": false,
-      "source_reference_fingerprint": "4083c03652d56548b6939e8e1391b9082ebacbaf42fc74eef87411a0206508e3",
+      "source_reference_fingerprint": "bb4c1007974c24c81ee3ce926d034ffafaa18dc372d06765306a29615dca603a",
       "source_type": "RANKING_PAGE",
       "source_url": "/rankings/lowest-capital-gamefi",
       "strategy_id": null,
@@ -1679,18 +2452,21 @@
     {
       "content_family": "LOW_COST_RANKING",
       "content_id": "inventory-low_cost_ranking-rankings-under-25",
+      "destination_status": "NOT_APPLICABLE",
       "evidence_status": "PARTIAL",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
       "missing_evidence": [
         "Current ranking snapshot eligibility is evaluated at sitemap publication time."
       ],
       "opportunity_id": null,
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "A published ranking page with current successful modeled snapshots."
       ],
       "short_form_eligible": false,
-      "source_reference_fingerprint": "c0851401e73e91039aab74ccf20de303ef958b3a03ba765cc8bf79ae92217c4a",
+      "source_reference_fingerprint": "f8fadf4412260cd0257405722d56200f2a5815b26e7e5da433fc8221fac4d3e2",
       "source_type": "RANKING_PAGE",
       "source_url": "/rankings/under-25",
       "strategy_id": null,
@@ -1699,16 +2475,19 @@
     {
       "content_family": "METHODOLOGY_EXPLAINER",
       "content_id": "inventory-methodology_explainer-methodology",
+      "destination_status": "NOT_APPLICABLE",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": null,
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Published methodology and trust-boundary content."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "732b902d961e1030dc8867b8135b7ac2826f33260d0f27ff15ac26b76b6ced52",
+      "source_reference_fingerprint": "288c041541a0a9fe919e70eadecc30acf6c8271b6d13afaeb18d73667595c946",
       "source_type": "SITE_PAGE",
       "source_url": "/methodology",
       "strategy_id": null,
@@ -1717,16 +2496,19 @@
     {
       "content_family": "RISK_VS_CONFIDENCE",
       "content_id": "inventory-risk_vs_confidence-methodology",
+      "destination_status": "NOT_APPLICABLE",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": null,
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Published risk, confidence, and methodology explanations."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "3c795ef88a309073b9c790fd99de8db592922ff7475d65eb32909c9dd8356e74",
+      "source_reference_fingerprint": "179cdddbbb3cf4c3d2c9b9d8fa32cdbb946495305336f63694613eaa17f0f748",
       "source_type": "SITE_PAGE",
       "source_url": "/methodology",
       "strategy_id": null,
@@ -1735,16 +2517,19 @@
     {
       "content_family": "STRATEGY_COMPARISON",
       "content_id": "inventory-strategy_comparison-defi-kingdoms",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
       "missing_evidence": [],
       "opportunity_id": "defi-kingdoms",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "At least two distinct modeled strategies under one opportunity."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "54cae6dafe03ded7084e392f81febf6cc6ba713347b59c6501320804a200719f",
+      "source_reference_fingerprint": "5735f232b7843b2336d42081b40f9e924440b5b3d57e4341e741655922c2982e",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/defi-kingdoms",
       "strategy_id": null,
@@ -1756,105 +2541,20 @@
     },
     {
       "content_family": "STRATEGY_COMPARISON",
-      "content_id": "inventory-strategy_comparison-dfk-crystalvale-jeweler-cjewel-100-max-lock",
-      "evidence_status": "PARTIAL",
-      "generation_status": "NOT_STARTED",
-      "long_form_eligible": false,
-      "missing_evidence": [
-        "A current successful snapshot is required before making financial claims."
-      ],
-      "opportunity_id": "defi-kingdoms",
-      "required_evidence": [
-        "A modeled strategy definition and its current snapshot evidence."
-      ],
-      "short_form_eligible": false,
-      "source_reference_fingerprint": "60a6144d08787681e6bcd80f2d12df09b58b1737cfde00f60ca715372bd057c1",
-      "source_type": "MODELED_STRATEGY",
-      "source_url": "/strategies/dfk-crystalvale-jeweler-cjewel-100-max-lock",
-      "strategy_id": "dfk-crystalvale-jeweler-cjewel-100-max-lock",
-      "strategy_ids": [
-        "dfk-crystalvale-jeweler-cjewel-100-max-lock"
-      ]
-    },
-    {
-      "content_family": "STRATEGY_COMPARISON",
-      "content_id": "inventory-strategy_comparison-dfk-crystalvale-jeweler-cjewel-5000-max-lock",
-      "evidence_status": "PARTIAL",
-      "generation_status": "NOT_STARTED",
-      "long_form_eligible": false,
-      "missing_evidence": [
-        "A current successful snapshot is required before making financial claims."
-      ],
-      "opportunity_id": "defi-kingdoms",
-      "required_evidence": [
-        "A modeled strategy definition and its current snapshot evidence."
-      ],
-      "short_form_eligible": false,
-      "source_reference_fingerprint": "34dd53825ab27190f917e579e6c8b82900d8d86b0c58c33a0df0fba129aadb0c",
-      "source_type": "MODELED_STRATEGY",
-      "source_url": "/strategies/dfk-crystalvale-jeweler-cjewel-5000-max-lock",
-      "strategy_id": "dfk-crystalvale-jeweler-cjewel-5000-max-lock",
-      "strategy_ids": [
-        "dfk-crystalvale-jeweler-cjewel-5000-max-lock"
-      ]
-    },
-    {
-      "content_family": "STRATEGY_COMPARISON",
-      "content_id": "inventory-strategy_comparison-dfk-crystalvale-jeweler-cjewel-max-lock",
-      "evidence_status": "PARTIAL",
-      "generation_status": "NOT_STARTED",
-      "long_form_eligible": false,
-      "missing_evidence": [
-        "A current successful snapshot is required before making financial claims."
-      ],
-      "opportunity_id": "defi-kingdoms",
-      "required_evidence": [
-        "A modeled strategy definition and its current snapshot evidence."
-      ],
-      "short_form_eligible": false,
-      "source_reference_fingerprint": "65c591b0d35f63769e6fcd31d6bf659775719925bf2bd290c01cb07aa03b65b1",
-      "source_type": "MODELED_STRATEGY",
-      "source_url": "/strategies/dfk-crystalvale-jeweler-cjewel-max-lock",
-      "strategy_id": "dfk-crystalvale-jeweler-cjewel-max-lock",
-      "strategy_ids": [
-        "dfk-crystalvale-jeweler-cjewel-max-lock"
-      ]
-    },
-    {
-      "content_family": "STRATEGY_COMPARISON",
-      "content_id": "inventory-strategy_comparison-dimo-software-only-compatible-car",
-      "evidence_status": "PARTIAL",
-      "generation_status": "NOT_STARTED",
-      "long_form_eligible": false,
-      "missing_evidence": [
-        "A current successful snapshot is required before making financial claims."
-      ],
-      "opportunity_id": "dimo",
-      "required_evidence": [
-        "A modeled strategy definition and its current snapshot evidence."
-      ],
-      "short_form_eligible": false,
-      "source_reference_fingerprint": "81cf25909eca6ff1bc6c1b35c1333348c764edf46e7cb166037c78cdbe7a97cc",
-      "source_type": "MODELED_STRATEGY",
-      "source_url": "/strategies/dimo-software-only-compatible-car",
-      "strategy_id": "dimo-software-only-compatible-car",
-      "strategy_ids": [
-        "dimo-software-only-compatible-car"
-      ]
-    },
-    {
-      "content_family": "STRATEGY_COMPARISON",
       "content_id": "inventory-strategy_comparison-farmers-world",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
       "missing_evidence": [],
       "opportunity_id": "farmers-world",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "At least two distinct modeled strategies under one opportunity."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "709be40dd711aa3dc5d0c8c7558406081e026b088533717c2cb3762c0ef830e8",
+      "source_reference_fingerprint": "c15342456ce374bc294c0abfbbd70612764ebb7963dfabd62706d84dd4f2c254",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/farmers-world",
       "strategy_id": null,
@@ -1866,127 +2566,20 @@
     },
     {
       "content_family": "STRATEGY_COMPARISON",
-      "content_id": "inventory-strategy_comparison-farmers-world-axe-wood-production",
-      "evidence_status": "PARTIAL",
-      "generation_status": "NOT_STARTED",
-      "long_form_eligible": false,
-      "missing_evidence": [
-        "A current successful snapshot is required before making financial claims."
-      ],
-      "opportunity_id": "farmers-world",
-      "required_evidence": [
-        "A modeled strategy definition and its current snapshot evidence."
-      ],
-      "short_form_eligible": false,
-      "source_reference_fingerprint": "6f2138cb1130aae922e71649990f6b807e2476d51d4321aaeb9f1c3367e4e3cb",
-      "source_type": "MODELED_STRATEGY",
-      "source_url": "/strategies/farmers-world-axe-wood-production",
-      "strategy_id": "farmers-world-axe-wood-production",
-      "strategy_ids": [
-        "farmers-world-axe-wood-production"
-      ]
-    },
-    {
-      "content_family": "STRATEGY_COMPARISON",
-      "content_id": "inventory-strategy_comparison-farmers-world-axe-wood-production-10x",
-      "evidence_status": "PARTIAL",
-      "generation_status": "NOT_STARTED",
-      "long_form_eligible": false,
-      "missing_evidence": [
-        "A current successful snapshot is required before making financial claims."
-      ],
-      "opportunity_id": "farmers-world",
-      "required_evidence": [
-        "A modeled strategy definition and its current snapshot evidence."
-      ],
-      "short_form_eligible": false,
-      "source_reference_fingerprint": "5f60dc9652b7380dfbb68fb34e24b74902239f3695b7e5426d10d3cf8585df26",
-      "source_type": "MODELED_STRATEGY",
-      "source_url": "/strategies/farmers-world-axe-wood-production-10x",
-      "strategy_id": "farmers-world-axe-wood-production-10x",
-      "strategy_ids": [
-        "farmers-world-axe-wood-production-10x"
-      ]
-    },
-    {
-      "content_family": "STRATEGY_COMPARISON",
-      "content_id": "inventory-strategy_comparison-farmers-world-axe-wood-production-3x",
-      "evidence_status": "PARTIAL",
-      "generation_status": "NOT_STARTED",
-      "long_form_eligible": false,
-      "missing_evidence": [
-        "A current successful snapshot is required before making financial claims."
-      ],
-      "opportunity_id": "farmers-world",
-      "required_evidence": [
-        "A modeled strategy definition and its current snapshot evidence."
-      ],
-      "short_form_eligible": false,
-      "source_reference_fingerprint": "167b32ae126baacfdb8dd356c2994cd06a634c4cdc12171484344c2264a21b27",
-      "source_type": "MODELED_STRATEGY",
-      "source_url": "/strategies/farmers-world-axe-wood-production-3x",
-      "strategy_id": "farmers-world-axe-wood-production-3x",
-      "strategy_ids": [
-        "farmers-world-axe-wood-production-3x"
-      ]
-    },
-    {
-      "content_family": "STRATEGY_COMPARISON",
-      "content_id": "inventory-strategy_comparison-geodnet-empty-hex-triple-band-base-station",
-      "evidence_status": "PARTIAL",
-      "generation_status": "NOT_STARTED",
-      "long_form_eligible": false,
-      "missing_evidence": [
-        "A current successful snapshot is required before making financial claims."
-      ],
-      "opportunity_id": "geodnet",
-      "required_evidence": [
-        "A modeled strategy definition and its current snapshot evidence."
-      ],
-      "short_form_eligible": false,
-      "source_reference_fingerprint": "22431050074b7296728ad3ab71cda30f323406d82bef37f24dbf0eae4448b85f",
-      "source_type": "MODELED_STRATEGY",
-      "source_url": "/strategies/geodnet-empty-hex-triple-band-base-station",
-      "strategy_id": "geodnet-empty-hex-triple-band-base-station",
-      "strategy_ids": [
-        "geodnet-empty-hex-triple-band-base-station"
-      ]
-    },
-    {
-      "content_family": "STRATEGY_COMPARISON",
-      "content_id": "inventory-strategy_comparison-mysterium-b2b-existing-device",
-      "evidence_status": "PARTIAL",
-      "generation_status": "NOT_STARTED",
-      "long_form_eligible": false,
-      "missing_evidence": [
-        "A current successful snapshot is required before making financial claims."
-      ],
-      "opportunity_id": "mysterium-network-node",
-      "required_evidence": [
-        "A modeled strategy definition and its current snapshot evidence."
-      ],
-      "short_form_eligible": false,
-      "source_reference_fingerprint": "0cbc7aab3e58ebe71db23001539bec2940581260b1f20d0b92cac4b321028180",
-      "source_type": "MODELED_STRATEGY",
-      "source_url": "/strategies/mysterium-b2b-existing-device",
-      "strategy_id": "mysterium-b2b-existing-device",
-      "strategy_ids": [
-        "mysterium-b2b-existing-device"
-      ]
-    },
-    {
-      "content_family": "STRATEGY_COMPARISON",
       "content_id": "inventory-strategy_comparison-splinterlands",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
       "missing_evidence": [],
       "opportunity_id": "splinterlands",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "At least two distinct modeled strategies under one opportunity."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "16d4bd4f668c56b47132903e584141bbf46c7bedf186505407bd09e51a5e75cb",
+      "source_reference_fingerprint": "0214ad25a68d020343872fd6dae1381f3ace2f4ba1de42d1856d902913a7f16d",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/splinterlands",
       "strategy_id": null,
@@ -1998,151 +2591,22 @@
       ]
     },
     {
-      "content_family": "STRATEGY_COMPARISON",
-      "content_id": "inventory-strategy_comparison-splinterlands-modern-ranked-active-sps-ev",
-      "evidence_status": "PARTIAL",
-      "generation_status": "NOT_STARTED",
-      "long_form_eligible": false,
-      "missing_evidence": [
-        "A current successful snapshot is required before making financial claims."
-      ],
-      "opportunity_id": "splinterlands",
-      "required_evidence": [
-        "A modeled strategy definition and its current snapshot evidence."
-      ],
-      "short_form_eligible": false,
-      "source_reference_fingerprint": "35c7272dde7a5131908a2ade80ec34e9b24bcc125996fa39214991cc0349f317",
-      "source_type": "MODELED_STRATEGY",
-      "source_url": "/strategies/splinterlands-modern-ranked-active-sps-ev",
-      "strategy_id": "splinterlands-modern-ranked-active-sps-ev",
-      "strategy_ids": [
-        "splinterlands-modern-ranked-active-sps-ev"
-      ]
-    },
-    {
-      "content_family": "STRATEGY_COMPARISON",
-      "content_id": "inventory-strategy_comparison-splinterlands-modern-ranked-casual-sps-ev",
-      "evidence_status": "PARTIAL",
-      "generation_status": "NOT_STARTED",
-      "long_form_eligible": false,
-      "missing_evidence": [
-        "A current successful snapshot is required before making financial claims."
-      ],
-      "opportunity_id": "splinterlands",
-      "required_evidence": [
-        "A modeled strategy definition and its current snapshot evidence."
-      ],
-      "short_form_eligible": false,
-      "source_reference_fingerprint": "d958c97c0b5dc41362a18c9ba88724a80672ff10c1e4a72c4fc29b05be6d31f2",
-      "source_type": "MODELED_STRATEGY",
-      "source_url": "/strategies/splinterlands-modern-ranked-casual-sps-ev",
-      "strategy_id": "splinterlands-modern-ranked-casual-sps-ev",
-      "strategy_ids": [
-        "splinterlands-modern-ranked-casual-sps-ev"
-      ]
-    },
-    {
-      "content_family": "STRATEGY_COMPARISON",
-      "content_id": "inventory-strategy_comparison-splinterlands-modern-ranked-grinder-sps-ev",
-      "evidence_status": "PARTIAL",
-      "generation_status": "NOT_STARTED",
-      "long_form_eligible": false,
-      "missing_evidence": [
-        "A current successful snapshot is required before making financial claims."
-      ],
-      "opportunity_id": "splinterlands",
-      "required_evidence": [
-        "A modeled strategy definition and its current snapshot evidence."
-      ],
-      "short_form_eligible": false,
-      "source_reference_fingerprint": "2ebb3103093fb4be5504809dd37af465f88cd42cb45daa48b12517ebc45db4ff",
-      "source_type": "MODELED_STRATEGY",
-      "source_url": "/strategies/splinterlands-modern-ranked-grinder-sps-ev",
-      "strategy_id": "splinterlands-modern-ranked-grinder-sps-ev",
-      "strategy_ids": [
-        "splinterlands-modern-ranked-grinder-sps-ev"
-      ]
-    },
-    {
-      "content_family": "STRATEGY_COMPARISON",
-      "content_id": "inventory-strategy_comparison-splinterlands-modern-ranked-sps-ev",
-      "evidence_status": "PARTIAL",
-      "generation_status": "NOT_STARTED",
-      "long_form_eligible": false,
-      "missing_evidence": [
-        "A current successful snapshot is required before making financial claims."
-      ],
-      "opportunity_id": "splinterlands",
-      "required_evidence": [
-        "A modeled strategy definition and its current snapshot evidence."
-      ],
-      "short_form_eligible": false,
-      "source_reference_fingerprint": "2113573c8a002d75631de09a1e49e4e8c757e84d925b3e8948377a186cfa85bd",
-      "source_type": "MODELED_STRATEGY",
-      "source_url": "/strategies/splinterlands-modern-ranked-sps-ev",
-      "strategy_id": "splinterlands-modern-ranked-sps-ev",
-      "strategy_ids": [
-        "splinterlands-modern-ranked-sps-ev"
-      ]
-    },
-    {
-      "content_family": "STRATEGY_COMPARISON",
-      "content_id": "inventory-strategy_comparison-storj-existing-hardware-storage-node",
-      "evidence_status": "PARTIAL",
-      "generation_status": "NOT_STARTED",
-      "long_form_eligible": false,
-      "missing_evidence": [
-        "A current successful snapshot is required before making financial claims."
-      ],
-      "opportunity_id": "storj-storage-node",
-      "required_evidence": [
-        "A modeled strategy definition and its current snapshot evidence."
-      ],
-      "short_form_eligible": false,
-      "source_reference_fingerprint": "b164dbd64394c9301e22fa0027a0b0e7e18ef4136669308042307a16cb2b98d0",
-      "source_type": "MODELED_STRATEGY",
-      "source_url": "/strategies/storj-existing-hardware-storage-node",
-      "strategy_id": "storj-existing-hardware-storage-node",
-      "strategy_ids": [
-        "storj-existing-hardware-storage-node"
-      ]
-    },
-    {
-      "content_family": "STRATEGY_COMPARISON",
-      "content_id": "inventory-strategy_comparison-weatherxm-d1-wifi-station",
-      "evidence_status": "PARTIAL",
-      "generation_status": "NOT_STARTED",
-      "long_form_eligible": false,
-      "missing_evidence": [
-        "A current successful snapshot is required before making financial claims."
-      ],
-      "opportunity_id": "weatherxm",
-      "required_evidence": [
-        "A modeled strategy definition and its current snapshot evidence."
-      ],
-      "short_form_eligible": false,
-      "source_reference_fingerprint": "e2842075ba877303f36bb7e22ab2c2fa873ff2ce6c912aa9472a8d69959e9e71",
-      "source_type": "MODELED_STRATEGY",
-      "source_url": "/strategies/weatherxm-d1-wifi-station",
-      "strategy_id": "weatherxm-d1-wifi-station",
-      "strategy_ids": [
-        "weatherxm-d1-wifi-station"
-      ]
-    },
-    {
       "content_family": "WHAT_YOU_NEED",
       "content_id": "inventory-what_you_need-acurast-compute-provider",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "acurast-compute-provider",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Setup or purchase requirements.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "ae57099ff7ee4931522a34b198fc925b4630707dfdba22cd82b857e60897dd72",
+      "source_reference_fingerprint": "2440aad87f1480b02d62f8ae7090640bd719db71918c0d8bd9e662d53603a4a9",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/acurast-compute-provider",
       "strategy_id": null,
@@ -2151,17 +2615,20 @@
     {
       "content_family": "WHAT_YOU_NEED",
       "content_id": "inventory-what_you_need-aethir-checker-node",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "aethir-checker-node",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Setup or purchase requirements.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "b3ed4467c845f99925e835300276220c868366d1b440fe8a22fdf0beb2408a60",
+      "source_reference_fingerprint": "7883824a410a54d4cf61c097e456b049867c8f51fec841441681b24af4ac34cb",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/aethir-checker-node",
       "strategy_id": null,
@@ -2170,17 +2637,20 @@
     {
       "content_family": "WHAT_YOU_NEED",
       "content_id": "inventory-what_you_need-akash-provider",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "akash-provider",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Setup or purchase requirements.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "9a652bedf3c47e94533f0e0a1537dbd2759775b61c6595fad55a37f521271761",
+      "source_reference_fingerprint": "db1d02ee66ae68e896cd873b736248fc0b048f72f27244c6f15dd9b153489b9d",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/akash-provider",
       "strategy_id": null,
@@ -2189,17 +2659,20 @@
     {
       "content_family": "WHAT_YOU_NEED",
       "content_id": "inventory-what_you_need-aleph-im-compute-resource-node",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "aleph-im-compute-resource-node",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Setup or purchase requirements.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "1f982f03c8a29d67d85d4ecc97c437358426d0cad6565583a001164326d54fb5",
+      "source_reference_fingerprint": "9dbd7320872dd255035bd10e99a5af264a7f088c0a43f50ca6de9adfc6b84d99",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/aleph-im-compute-resource-node",
       "strategy_id": null,
@@ -2208,17 +2681,20 @@
     {
       "content_family": "WHAT_YOU_NEED",
       "content_id": "inventory-what_you_need-bittensor-miner",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "bittensor-miner",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Setup or purchase requirements.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "eb6faf5d1f99b9fdd1ebb396fb252150155a16ebee9550544034504e15e78701",
+      "source_reference_fingerprint": "9fca4df0f947b12981101dcbcc228dee52285dc855ae35076d475658981d341c",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/bittensor-miner",
       "strategy_id": null,
@@ -2227,17 +2703,20 @@
     {
       "content_family": "WHAT_YOU_NEED",
       "content_id": "inventory-what_you_need-defi-kingdoms",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
       "missing_evidence": [],
       "opportunity_id": "defi-kingdoms",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Setup or purchase requirements.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "3c56fbae75fcff7a559f6fd5fef81246f028867770d1571c6100ecee8ffdcbcf",
+      "source_reference_fingerprint": "9c89fd87cc524312fa8d3ea80fca8f261f16e5034387206f63c60e4793c5f6ea",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/defi-kingdoms",
       "strategy_id": null,
@@ -2246,17 +2725,20 @@
     {
       "content_family": "WHAT_YOU_NEED",
       "content_id": "inventory-what_you_need-earnapp",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "earnapp",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Setup or purchase requirements.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "a2c974d6763885423247f876efcaef28a40322c191f0babd5ece0934700958a0",
+      "source_reference_fingerprint": "2506136f8964ef49b1e9102a8eb72b1db6eddbeca56322b2b284d3d315de2348",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/earnapp",
       "strategy_id": null,
@@ -2265,17 +2747,20 @@
     {
       "content_family": "WHAT_YOU_NEED",
       "content_id": "inventory-what_you_need-filecoin-storage-provider",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "filecoin-storage-provider",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Setup or purchase requirements.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "3364598b6d6c64344946c37afdbbe36b8878e4a31cfb240be1bcac41d02f01d4",
+      "source_reference_fingerprint": "1468edd4fd6b71451ac63da52a2d5fe8e4b91d0c0033322ca49d743d0d838a46",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/filecoin-storage-provider",
       "strategy_id": null,
@@ -2284,17 +2769,20 @@
     {
       "content_family": "WHAT_YOU_NEED",
       "content_id": "inventory-what_you_need-fluxnode",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
       "missing_evidence": [],
       "opportunity_id": "fluxnode",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Setup or purchase requirements.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "9ba442854b9c855f958b98c7115f0e3b0c1a945b826c332f3bd3c6e600d0fef6",
+      "source_reference_fingerprint": "240e937f98e6a87f1f80603de25b81c4fb313828be41307c569be7033048fe65",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/fluxnode",
       "strategy_id": null,
@@ -2303,17 +2791,20 @@
     {
       "content_family": "WHAT_YOU_NEED",
       "content_id": "inventory-what_you_need-golem-provider",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "golem-provider",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Setup or purchase requirements.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "c88c3a9ad1c77a94fb07ce250235f09a37e5cae8fe0e856181d1c0baeb843377",
+      "source_reference_fingerprint": "0ca0245112fd864d0f1c24e862438b92479732b0daf633f20d966825dee31173",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/golem-provider",
       "strategy_id": null,
@@ -2322,17 +2813,20 @@
     {
       "content_family": "WHAT_YOU_NEED",
       "content_id": "inventory-what_you_need-helium-iot-hotspot",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "helium-iot-hotspot",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Setup or purchase requirements.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "ab2bc468dce1749ad10561affdc4288f586b8c40b053e4b6b9b8952c2f3b0f44",
+      "source_reference_fingerprint": "d1378f90b8f38faa3c7ec08ad08a4ec0c11240f2d43c4cd17d8cfcfa7e456b58",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/helium-iot-hotspot",
       "strategy_id": null,
@@ -2341,17 +2835,20 @@
     {
       "content_family": "WHAT_YOU_NEED",
       "content_id": "inventory-what_you_need-hivemapper",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "hivemapper",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Setup or purchase requirements.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "6d3a3ade87db9db64a4239c8723141d66e2f7e357e2978a8e95af3a73abd8fea",
+      "source_reference_fingerprint": "d8381955aad91229b5133af19c5919c0102d7cbfefdb97f8b0ff9fe4cce45ed0",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/hivemapper",
       "strategy_id": null,
@@ -2360,17 +2857,20 @@
     {
       "content_family": "WHAT_YOU_NEED",
       "content_id": "inventory-what_you_need-honeygain",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "honeygain",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Setup or purchase requirements.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "647eeab6ef05d9e33a268e9493d81f2959c7a6b483e7b02b76f6fac0f94b2e10",
+      "source_reference_fingerprint": "7309d7e34b7fdd92798ecbb8223bab6cc95e883eff9755dd8a42f598c6c55e7d",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/honeygain",
       "strategy_id": null,
@@ -2379,17 +2879,20 @@
     {
       "content_family": "WHAT_YOU_NEED",
       "content_id": "inventory-what_you_need-io-net-worker",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "io-net-worker",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Setup or purchase requirements.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "ddc18e81e4cb56eb0a0002e521130ee768459b53b7b81711157a386feb87bee1",
+      "source_reference_fingerprint": "f4a6b65f8eaa528ed08d4a42434f891917674726fdd376116a7cb3a6db786e74",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/io-net-worker",
       "strategy_id": null,
@@ -2398,17 +2901,20 @@
     {
       "content_family": "WHAT_YOU_NEED",
       "content_id": "inventory-what_you_need-livepeer-orchestrator",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "livepeer-orchestrator",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Setup or purchase requirements.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "9ae0d5307448faad4f65a77f229523e8eb3d608d2224245fc673f6ade17db5ca",
+      "source_reference_fingerprint": "321f5491c97724f3508910d5f2d0c754c8d152eb01c4a42a45461b8fc75f616f",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/livepeer-orchestrator",
       "strategy_id": null,
@@ -2417,17 +2923,20 @@
     {
       "content_family": "WHAT_YOU_NEED",
       "content_id": "inventory-what_you_need-nosana-gpu-host",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "nosana-gpu-host",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Setup or purchase requirements.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "57627e40a6c4cb285a41ee5eecbe62863e32fc5c84efd83ff1df46f5cdc0d3c9",
+      "source_reference_fingerprint": "570ac20779719d7b21addfaba65b1a470faad0d4c2a9349ac12912c34041ce5a",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/nosana-gpu-host",
       "strategy_id": null,
@@ -2436,17 +2945,20 @@
     {
       "content_family": "WHAT_YOU_NEED",
       "content_id": "inventory-what_you_need-nym-mixnode",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "nym-mixnode",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Setup or purchase requirements.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "7a6f264bc7a6349dc0fd74e1f5b45958bf77cc6c839375cfa3fc8355121f1936",
+      "source_reference_fingerprint": "56720ede33c3674eed3ba75eb71cd92afe7e5ed4c39da6c58f4bc7f050958cb2",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/nym-mixnode",
       "strategy_id": null,
@@ -2455,17 +2967,20 @@
     {
       "content_family": "WHAT_YOU_NEED",
       "content_id": "inventory-what_you_need-render-node-operator",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "render-node-operator",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Setup or purchase requirements.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "0412bd42126c34cea34c096ca5e87dc2e959036a28ab96574e37ab26cbc297cc",
+      "source_reference_fingerprint": "a6b02fbf46fa6be76ae8e6e229f83cfbb1612612831380dcc6d4b80274561bb6",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/render-node-operator",
       "strategy_id": null,
@@ -2474,17 +2989,20 @@
     {
       "content_family": "WHAT_YOU_NEED",
       "content_id": "inventory-what_you_need-storj-storage-node",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "storj-storage-node",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Setup or purchase requirements.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "f5a7f001e54de18fc7265250d94187b20c7f56717c1c45cdf7c36d44c8356387",
+      "source_reference_fingerprint": "3a1919235e14a8455a585778503e2fbbd114ec380bd0c357a4104cad12883605",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/storj-storage-node",
       "strategy_id": null,
@@ -2493,17 +3011,20 @@
     {
       "content_family": "WHAT_YOU_NEED",
       "content_id": "inventory-what_you_need-subspace-farmer",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "subspace-farmer",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Setup or purchase requirements.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "e655295cc8443037638091e461521f65a6e7adf0ec9c2a0b745dc2a130f9ca19",
+      "source_reference_fingerprint": "88cdcc4a0d0ae7cffc280edd60d74854b4d3cb5ffb513b4653a0c6f2ca3f1a20",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/subspace-farmer",
       "strategy_id": null,
@@ -2512,17 +3033,20 @@
     {
       "content_family": "WHAT_YOU_NEED",
       "content_id": "inventory-what_you_need-theta-edge-node",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "theta-edge-node",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Setup or purchase requirements.",
         "At least one official source reference."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "0e9146ca5c62e298255e5f860e79db245ffc8c52ab697246c1d2c1f9d175ac82",
+      "source_reference_fingerprint": "b275c0de458ea501bddb756548fe546bf90ce0393d8c8374526efeae53377b0c",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/theta-edge-node",
       "strategy_id": null,
@@ -2531,16 +3055,19 @@
     {
       "content_family": "WHY_ROI_UNAVAILABLE",
       "content_id": "inventory-why_roi_unavailable-acurast-compute-provider",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "acurast-compute-provider",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Structured ROI-unavailable reason and missing evidence."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "79316f0465d95e41d870774633d798c9dcc32c0d2af3ade917550bb9d48876ab",
+      "source_reference_fingerprint": "ca92e2cdfec536c784d53334ddac3ae09aad3ad95a150033b254af4d227c52fd",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/acurast-compute-provider",
       "strategy_id": null,
@@ -2549,16 +3076,19 @@
     {
       "content_family": "WHY_ROI_UNAVAILABLE",
       "content_id": "inventory-why_roi_unavailable-aethir-checker-node",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "aethir-checker-node",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Structured ROI-unavailable reason and missing evidence."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "9db799069980a98c383372f730406161a40044df2ba12fe760fcc363ac150609",
+      "source_reference_fingerprint": "2640b0fb5fdaad99a249e40c01cddfc1d97bd52719c19a1175ff10a36ecf7810",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/aethir-checker-node",
       "strategy_id": null,
@@ -2567,16 +3097,19 @@
     {
       "content_family": "WHY_ROI_UNAVAILABLE",
       "content_id": "inventory-why_roi_unavailable-akash-provider",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "akash-provider",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Structured ROI-unavailable reason and missing evidence."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "fc5d022771604db5c76a8a32a7ce95f48ae953d710db249ca46e8a9f947961ba",
+      "source_reference_fingerprint": "833cc07ba3d468b6dc9f665c3573622141362bf1bd633c5052d4442f1e600da3",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/akash-provider",
       "strategy_id": null,
@@ -2585,16 +3118,19 @@
     {
       "content_family": "WHY_ROI_UNAVAILABLE",
       "content_id": "inventory-why_roi_unavailable-aleph-im-compute-resource-node",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "aleph-im-compute-resource-node",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Structured ROI-unavailable reason and missing evidence."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "db1c52fb17448a7a2fa130633a98b54b4c0460c7b8dca5d729b602cf256f8aa7",
+      "source_reference_fingerprint": "8e24ba168d99069b3354f41d200f6b8df7cf7735c0eb7dc09bc0f50cb23f6df2",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/aleph-im-compute-resource-node",
       "strategy_id": null,
@@ -2603,16 +3139,19 @@
     {
       "content_family": "WHY_ROI_UNAVAILABLE",
       "content_id": "inventory-why_roi_unavailable-bittensor-miner",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "bittensor-miner",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Structured ROI-unavailable reason and missing evidence."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "ccf95978f1b0a116ecd432331bab1cb875648a04665bbc6764866c0966b00b77",
+      "source_reference_fingerprint": "12040575700a20a3b5239fafcd759a6c225a75648eaa74606a811e9c7525a9b6",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/bittensor-miner",
       "strategy_id": null,
@@ -2621,16 +3160,19 @@
     {
       "content_family": "WHY_ROI_UNAVAILABLE",
       "content_id": "inventory-why_roi_unavailable-bless",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
       "missing_evidence": [],
       "opportunity_id": "bless",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Structured ROI-unavailable reason and missing evidence."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "5a89beee9c538a38577cc066eb3cb653b61e8c029bc56a3377429dea85c71953",
+      "source_reference_fingerprint": "33bae4d1739694d6e2afc2cc1b5cce8382a85565da3753603060ed5e608cbf32",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/bless",
       "strategy_id": null,
@@ -2639,16 +3181,19 @@
     {
       "content_family": "WHY_ROI_UNAVAILABLE",
       "content_id": "inventory-why_roi_unavailable-dawn",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
       "missing_evidence": [],
       "opportunity_id": "dawn",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Structured ROI-unavailable reason and missing evidence."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "876b0b6480d9cad25c8cbef742dd10eb153c60c9f85da70c237b462a8e64c505",
+      "source_reference_fingerprint": "6036a4b6f4fbd9e2d05c4a75ca3f7256012904100a037c4169c432ac59d95388",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/dawn",
       "strategy_id": null,
@@ -2657,16 +3202,19 @@
     {
       "content_family": "WHY_ROI_UNAVAILABLE",
       "content_id": "inventory-why_roi_unavailable-earnapp",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "earnapp",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Structured ROI-unavailable reason and missing evidence."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "08537e454b59e6456b0ad3dd4ee5866dfbd2cec642837a7873623e6d727df9a8",
+      "source_reference_fingerprint": "928f8e5a8f31e260c7d4f3051cb05516eddb630fd1ce2887becf0b2a3658a9ee",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/earnapp",
       "strategy_id": null,
@@ -2675,16 +3223,19 @@
     {
       "content_family": "WHY_ROI_UNAVAILABLE",
       "content_id": "inventory-why_roi_unavailable-filecoin-storage-provider",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "filecoin-storage-provider",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Structured ROI-unavailable reason and missing evidence."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "4c26542386d56c56672d7ca46fc3b0a2aba18881391907b7445b83e890e882ed",
+      "source_reference_fingerprint": "4aa4ce4e2b641f94dcb8d71bb3f5c5cde82ee63a93b372690039b7084a5f8cbc",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/filecoin-storage-provider",
       "strategy_id": null,
@@ -2693,16 +3244,19 @@
     {
       "content_family": "WHY_ROI_UNAVAILABLE",
       "content_id": "inventory-why_roi_unavailable-fluxnode",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
       "missing_evidence": [],
       "opportunity_id": "fluxnode",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Structured ROI-unavailable reason and missing evidence."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "fd8336bdc45c1285af46d5e20a834434588be599acd33116173a306d1ef89e57",
+      "source_reference_fingerprint": "d42b7ce4a0f84eddc31fcbe4a50dc2c14c4aaff71158ec67a155ed342abb5db3",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/fluxnode",
       "strategy_id": null,
@@ -2711,16 +3265,19 @@
     {
       "content_family": "WHY_ROI_UNAVAILABLE",
       "content_id": "inventory-why_roi_unavailable-golem-provider",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "golem-provider",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Structured ROI-unavailable reason and missing evidence."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "ab130448bddc7a4e33082748cc3127917691abdf2b415daad4146d8c1f0f9ad1",
+      "source_reference_fingerprint": "462ac10b2632b0bb6c16a78ee0b682201037c347894c6cc4aebfd3e73b5e5099",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/golem-provider",
       "strategy_id": null,
@@ -2729,16 +3286,19 @@
     {
       "content_family": "WHY_ROI_UNAVAILABLE",
       "content_id": "inventory-why_roi_unavailable-grass",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
       "missing_evidence": [],
       "opportunity_id": "grass",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Structured ROI-unavailable reason and missing evidence."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "6e2efe756cbc931159ca1eea8f8c77fc89d82b5968e244f4e81887486efc7bc6",
+      "source_reference_fingerprint": "ef2d8f7823509e9c50480a3fc1a752dcb96a42cc50dee16b1eef91aee6c5d6a4",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/grass",
       "strategy_id": null,
@@ -2747,16 +3307,19 @@
     {
       "content_family": "WHY_ROI_UNAVAILABLE",
       "content_id": "inventory-why_roi_unavailable-helium-iot-hotspot",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "helium-iot-hotspot",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Structured ROI-unavailable reason and missing evidence."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "6774918947498ab0fabe9baf206f897bd40dbc48ae4ae4b1f669b56a7b9fd4eb",
+      "source_reference_fingerprint": "5b1413d7ca6048f8b5f0bb21e7bce104425ffa02f14d2c830a557b296782bb5a",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/helium-iot-hotspot",
       "strategy_id": null,
@@ -2765,16 +3328,19 @@
     {
       "content_family": "WHY_ROI_UNAVAILABLE",
       "content_id": "inventory-why_roi_unavailable-hivemapper",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "hivemapper",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Structured ROI-unavailable reason and missing evidence."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "7887a396bd3224359058cb83f6ec4341a8ebac8949320125cbe463ed4a61e592",
+      "source_reference_fingerprint": "b5fb68c35952b557710d666f77cdce90a0db909a5356ac11f62d7adf0cda4f3a",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/hivemapper",
       "strategy_id": null,
@@ -2783,16 +3349,19 @@
     {
       "content_family": "WHY_ROI_UNAVAILABLE",
       "content_id": "inventory-why_roi_unavailable-honeygain",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "honeygain",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Structured ROI-unavailable reason and missing evidence."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "1eb16f06f3125b87d6fd66973d08acce9d356f604fa8cab53cea512100cc6e6a",
+      "source_reference_fingerprint": "aded1d9249d68aed4863f7fe163910a49ae56f74e8333f2b60a8305eca99317f",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/honeygain",
       "strategy_id": null,
@@ -2801,16 +3370,19 @@
     {
       "content_family": "WHY_ROI_UNAVAILABLE",
       "content_id": "inventory-why_roi_unavailable-io-net-worker",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "io-net-worker",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Structured ROI-unavailable reason and missing evidence."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "2d8e0d4a418d40062eab14bb85ce06330a2f52c3df81e1bf1e479e3354f34594",
+      "source_reference_fingerprint": "a61f465d9da994f61ae47a6a18c88d7203923185d4df40fa8868bedac52c7ab0",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/io-net-worker",
       "strategy_id": null,
@@ -2819,16 +3391,19 @@
     {
       "content_family": "WHY_ROI_UNAVAILABLE",
       "content_id": "inventory-why_roi_unavailable-livepeer-orchestrator",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "livepeer-orchestrator",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Structured ROI-unavailable reason and missing evidence."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "0d917fc07ce937b46a94c7eaeea977d7a95e85cd2a19bbd045e62382789e3d3e",
+      "source_reference_fingerprint": "45ea9b398e492525abb248c7cc04fff0e84ff746f65ae7361e645b7e8d4394e1",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/livepeer-orchestrator",
       "strategy_id": null,
@@ -2837,16 +3412,19 @@
     {
       "content_family": "WHY_ROI_UNAVAILABLE",
       "content_id": "inventory-why_roi_unavailable-nosana-gpu-host",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "nosana-gpu-host",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Structured ROI-unavailable reason and missing evidence."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "c9b840efd838e04a7e3fbd2d876d32ba26d50ae397f0b3619aaaa271f7af7949",
+      "source_reference_fingerprint": "2e4b55f114c34f3bb195a7904f03713060dcfab0e4c8e9611e49020e56ac3456",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/nosana-gpu-host",
       "strategy_id": null,
@@ -2855,16 +3433,19 @@
     {
       "content_family": "WHY_ROI_UNAVAILABLE",
       "content_id": "inventory-why_roi_unavailable-nym-mixnode",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "nym-mixnode",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Structured ROI-unavailable reason and missing evidence."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "51f3f0f6f6dbb99b063a64e21ba953705a7232b16ab002d7e78df3d3109338b7",
+      "source_reference_fingerprint": "772179af5b5841109e5513ea99ec9fcabf638d8a6880fc12cfd0492c1a2c5a74",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/nym-mixnode",
       "strategy_id": null,
@@ -2873,16 +3454,19 @@
     {
       "content_family": "WHY_ROI_UNAVAILABLE",
       "content_id": "inventory-why_roi_unavailable-render-node-operator",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "render-node-operator",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Structured ROI-unavailable reason and missing evidence."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "ead1602f920d2dc54aac6525355799ff70520b6573cd3eb2fb3fb8d0b500ef2f",
+      "source_reference_fingerprint": "2d3e694b539cd2047c2b63b75e8845e12ed5325a7910a6c67b2e8d8b0463698c",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/render-node-operator",
       "strategy_id": null,
@@ -2891,16 +3475,19 @@
     {
       "content_family": "WHY_ROI_UNAVAILABLE",
       "content_id": "inventory-why_roi_unavailable-subspace-farmer",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "subspace-farmer",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Structured ROI-unavailable reason and missing evidence."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "a1330a3fe6bfc301a4bb3e1ecd0a40ec18ed09575b7bdb2c234e79c790559387",
+      "source_reference_fingerprint": "2eb3e709ea74724360ee7c6db8674de4ff97000fe416a1e3be72e6f9a47eec3c",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/subspace-farmer",
       "strategy_id": null,
@@ -2909,16 +3496,19 @@
     {
       "content_family": "WHY_ROI_UNAVAILABLE",
       "content_id": "inventory-why_roi_unavailable-theta-edge-node",
+      "destination_status": "VALIDATED",
       "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": true,
       "missing_evidence": [],
       "opportunity_id": "theta-edge-node",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
       "required_evidence": [
         "Structured ROI-unavailable reason and missing evidence."
       ],
       "short_form_eligible": true,
-      "source_reference_fingerprint": "834d279a4faafbab9ac51a32ec0fea47a9e345930dee375bf8df230537395d41",
+      "source_reference_fingerprint": "0a1d86ab6ae3346626f8554ce2d8290aa038c91aa439035f78b1654533f254d0",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/theta-edge-node",
       "strategy_id": null,
@@ -2927,9 +3517,10 @@
   ],
   "schema_version": "content-inventory-v1",
   "summary": {
-    "blocked_count": 0,
+    "blocked_count": 22,
     "by_content_family": {
       "DEPIN_SETUP": 20,
+      "FINANCIAL_ROI": 22,
       "HOW_TO_CLAIM_OR_EXIT": 21,
       "HOW_TO_START": 21,
       "HOW_TO_USE_GAMCRYP": 1,
@@ -2937,13 +3528,13 @@
       "LOW_COST_RANKING": 6,
       "METHODOLOGY_EXPLAINER": 1,
       "RISK_VS_CONFIDENCE": 1,
-      "STRATEGY_COMPARISON": 18,
+      "STRATEGY_COMPARISON": 3,
       "WHAT_YOU_NEED": 21,
       "WHY_ROI_UNAVAILABLE": 22
     },
-    "partial_count": 21,
-    "ready_long_form_count": 132,
+    "partial_count": 6,
+    "ready_long_form_count": 116,
     "ready_short_form_count": 132,
-    "total_topic_candidates": 153
+    "total_topic_candidates": 160
   }
 }

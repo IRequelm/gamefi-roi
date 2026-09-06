@@ -20,7 +20,7 @@
         "content_id", "source_url", "source_type", "opportunity_id", "strategy_id",
         "content_family", "evidence_status", "short_form_eligible", "long_form_eligible",
         "required_evidence", "missing_evidence", "generation_status", "source_reference_fingerprint",
-        "strategy_ids"
+        "strategy_ids", "freshness_status", "destination_status", "publication_status"
       ],
       "properties": {
         "content_id": {"type": "string"},
@@ -36,7 +36,10 @@
         "missing_evidence": {"type": "array", "items": {"type": "string"}},
         "generation_status": {"const": "NOT_STARTED"},
         "source_reference_fingerprint": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
-        "strategy_ids": {"type": "array", "items": {"type": "string"}}
+        "strategy_ids": {"type": "array", "items": {"type": "string"}},
+        "freshness_status": {"type": "string"},
+        "destination_status": {"type": "string"},
+        "publication_status": {"type": "string"}
       }
     }
   }

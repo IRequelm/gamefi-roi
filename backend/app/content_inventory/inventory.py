@@ -9,7 +9,14 @@ from pathlib import Path
 from typing import Any
 
 from app.search.canonical import CURATED_RANKING_PAGES, canonical_path
-from app.strategies.catalog import OpportunityCatalogEntry, StrategyCatalogEntry, list_opportunities, list_strategies
+from app.strategies.catalog import (
+    CATALOG_REVIEWED_AT,
+    OpportunityCatalogEntry,
+    StrategyCatalogEntry,
+    get_outbound_destination,
+    list_opportunities,
+    list_strategies,
+)
 
 SCHEMA_VERSION = "content-inventory-v1"
 INVENTORY_VERSION = "catalog-derived-v1"
@@ -34,6 +41,9 @@ class ContentInventoryItem:
     generation_status: str
     source_reference_fingerprint: str
     strategy_ids: tuple[str, ...] = ()
+    freshness_status: str = "CATALOG_REVIEWED"
+    destination_status: str = "NOT_APPLICABLE"
+    publication_status: str = "CANONICAL_CATALOG_ROUTE"
 
 
 def build_content_inventory() -> list[ContentInventoryItem]:
@@ -96,6 +106,9 @@ def _site_items() -> list[ContentInventoryItem]:
 def _opportunity_items(opportunity: OpportunityCatalogEntry) -> list[ContentInventoryItem]:
     guidance = opportunity.guidance
     items: list[ContentInventoryItem] = []
+    freshness_status, destination_status, publication_status = _opportunity_context(opportunity)
+    context_ready = all(status in {"CATALOG_REVIEWED", "VALIDATED", "CANONICAL_CATALOG_ROUTE"} for status in (freshness_status, destination_status, publication_status))
+    rich_long_form = _rich_long_form_evidence(opportunity, guidance) and context_ready
     fields = (
         ("HOW_TO_START", "how_to_start", "How to start instructions."),
         ("WHAT_YOU_NEED", "what_you_need", "Setup or purchase requirements."),
@@ -106,14 +119,19 @@ def _opportunity_items(opportunity: OpportunityCatalogEntry) -> list[ContentInve
         if guidance is None or not getattr(guidance, attribute):
             continue
         complete = all(getattr(guidance, field) for _, field, _ in fields)
+        missing = []
+        if not complete or not opportunity.official_source_references:
+            missing.append("One or more structured guidance sections are incomplete.")
+        if not context_ready:
+            missing.extend(_context_missing(freshness_status, destination_status, publication_status))
         items.append(
             _item(
                 f"/opportunities/{opportunity.opportunity_id}", "OPPORTUNITY_CATALOG", family,
                 (required_text, "At least one official source reference."),
-                () if complete and opportunity.official_source_references else ("One or more structured guidance sections are incomplete.",),
-                READY if complete and opportunity.official_source_references else PARTIAL,
-                True, complete and bool(opportunity.official_source_references),
+                tuple(missing), READY if complete and opportunity.official_source_references and context_ready else PARTIAL,
+                True, rich_long_form,
                 opportunity_id=opportunity.opportunity_id,
+                freshness_status=freshness_status, destination_status=destination_status, publication_status=publication_status,
             )
         )
     if opportunity.roi_unavailable is not None:
@@ -123,54 +141,89 @@ def _opportunity_items(opportunity: OpportunityCatalogEntry) -> list[ContentInve
                 f"/opportunities/{opportunity.opportunity_id}", "OPPORTUNITY_CATALOG", "WHY_ROI_UNAVAILABLE",
                 ("Structured ROI-unavailable reason and missing evidence.",),
                 () if explanation.missing_evidence else ("Missing-evidence list.",),
-                READY if explanation.missing_evidence else BLOCKED,
-                True, bool(explanation.missing_evidence and explanation.modeling_requirements),
+                READY if explanation.missing_evidence and context_ready else (PARTIAL if explanation.missing_evidence else BLOCKED),
+                True, bool(explanation.missing_evidence and explanation.modeling_requirements and rich_long_form),
                 opportunity_id=opportunity.opportunity_id,
+                freshness_status=freshness_status, destination_status=destination_status, publication_status=publication_status,
+            )
+        )
+        items.append(
+            _item(
+                f"/opportunities/{opportunity.opportunity_id}", "OPPORTUNITY_CATALOG", "FINANCIAL_ROI",
+                ("A modeled opportunity with reproducible financial evidence.",),
+                ("GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model.",),
+                BLOCKED, False, False, opportunity_id=opportunity.opportunity_id,
             )
         )
     if guidance is not None and opportunity.opportunity_type == "DEPIN_NODE" and guidance.how_to_start and guidance.what_you_need:
         items.append(
             _item(
                 f"/opportunities/{opportunity.opportunity_id}", "OPPORTUNITY_CATALOG", "DEPIN_SETUP",
-                ("DePIN platform, setup, and hardware or account requirements.",), (), READY, True,
-                bool(guidance.how_you_earn and guidance.how_to_exit_or_claim), opportunity_id=opportunity.opportunity_id,
+                ("DePIN platform, setup, and hardware or account requirements.",),
+                tuple(_context_missing(freshness_status, destination_status, publication_status)) if not context_ready else (),
+                READY if context_ready else PARTIAL, True, rich_long_form, opportunity_id=opportunity.opportunity_id,
+                freshness_status=freshness_status, destination_status=destination_status, publication_status=publication_status,
             )
         )
     if len(opportunity.strategy_ids) >= 2:
         items.append(
             _item(
                 f"/opportunities/{opportunity.opportunity_id}", "OPPORTUNITY_CATALOG", "STRATEGY_COMPARISON",
-                ("At least two distinct modeled strategies under one opportunity.",), (), READY, True, True,
+                ("At least two distinct modeled strategies under one opportunity.",),
+                tuple(_context_missing(freshness_status, destination_status, publication_status)) if not context_ready else (),
+                READY if context_ready else PARTIAL, True, rich_long_form,
                 opportunity_id=opportunity.opportunity_id, strategy_ids=opportunity.strategy_ids,
+                freshness_status=freshness_status, destination_status=destination_status, publication_status=publication_status,
             )
         )
     return items
 
 
 def _strategy_items(strategy: StrategyCatalogEntry, opportunities: tuple[OpportunityCatalogEntry, ...]) -> list[ContentInventoryItem]:
-    opportunity = next((item for item in opportunities if item.opportunity_id == strategy.opportunity_id), None)
-    if opportunity is None or not opportunity.strategy_ids:
-        return []
-    return [
-        _item(
-            f"/strategies/{strategy.strategy_id}", "MODELED_STRATEGY", "STRATEGY_COMPARISON",
-            ("A modeled strategy definition and its current snapshot evidence.",),
-            ("A current successful snapshot is required before making financial claims.",),
-            PARTIAL, False, False, opportunity_id=strategy.opportunity_id, strategy_id=strategy.strategy_id,
-            strategy_ids=(strategy.strategy_id,),
-        )
-    ]
+    # Strategy IDs remain supporting references on the single parent comparison item.
+    return []
+
+
+def _opportunity_context(opportunity: OpportunityCatalogEntry) -> tuple[str, str, str]:
+    freshness_status = "CATALOG_REVIEWED" if CATALOG_REVIEWED_AT is not None else "MISSING"
+    destination = get_outbound_destination(opportunity.outbound_destination_slugs[0]) if opportunity.outbound_destination_slugs else None
+    destination_status = "VALIDATED" if destination is not None and CATALOG_REVIEWED_AT is not None and destination.is_active(now=CATALOG_REVIEWED_AT) else "MISSING"
+    publication_status = "CANONICAL_CATALOG_ROUTE"
+    return freshness_status, destination_status, publication_status
+
+
+def _context_missing(freshness_status: str, destination_status: str, publication_status: str) -> list[str]:
+    missing = []
+    if freshness_status != "CATALOG_REVIEWED":
+        missing.append("Catalog/source freshness evidence.")
+    if destination_status != "VALIDATED":
+        missing.append("Validated official destination liveness.")
+    if publication_status != "CANONICAL_CATALOG_ROUTE":
+        missing.append("Canonical/public sitemap publication evidence.")
+    return missing
+
+
+def _rich_long_form_evidence(opportunity: OpportunityCatalogEntry, guidance: Any) -> bool:
+    if guidance is None or not all(getattr(guidance, field) for field in ("how_to_start", "what_you_need", "how_you_earn", "how_to_exit_or_claim")):
+        return False
+    if len(opportunity.official_source_references) < 2 or not opportunity.feasibility_summary:
+        return False
+    return bool(opportunity.roi_unavailable or opportunity.strategy_ids or opportunity.data_feasibility_status)
 
 
 def _item(
     source_url: str, source_type: str, family: str, required: tuple[str, ...], missing: tuple[str, ...],
     status: str, short: bool, long: bool, *, opportunity_id: str | None = None,
     strategy_id: str | None = None, strategy_ids: tuple[str, ...] = (),
+    freshness_status: str = "CATALOG_REVIEWED", destination_status: str = "NOT_APPLICABLE",
+    publication_status: str = "CANONICAL_CATALOG_ROUTE",
 ) -> ContentInventoryItem:
     source_fingerprint = hashlib.sha256(json.dumps({
         "source_url": canonical_path(source_url), "source_type": source_type,
         "opportunity_id": opportunity_id, "strategy_id": strategy_id, "strategy_ids": strategy_ids,
         "content_family": family, "required": required, "missing": missing,
+        "freshness_status": freshness_status, "destination_status": destination_status,
+        "publication_status": publication_status,
     }, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
     scope = strategy_id or opportunity_id or source_url.strip("/").replace("/", "-") or "home"
     return ContentInventoryItem(
@@ -178,4 +231,6 @@ def _item(
         opportunity_id=opportunity_id, strategy_id=strategy_id, content_family=family, evidence_status=status,
         short_form_eligible=short, long_form_eligible=long, required_evidence=required, missing_evidence=missing,
         generation_status="NOT_STARTED", source_reference_fingerprint=source_fingerprint, strategy_ids=strategy_ids,
+        freshness_status=freshness_status, destination_status=destination_status,
+        publication_status=publication_status,
     )

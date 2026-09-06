@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gamcryp.com/schemas/content-packages-v1.json",
+  "title": "GamCryp Content Packages",
+  "type": "object",
+  "required": ["schema_version", "packages", "summary"],
+  "properties": {
+    "schema_version": {"const": "content-package-v1"},
+    "packages": {"type": "array", "items": {"$ref": "#/$defs/package"}},
+    "summary": {"type": "object"}
+  },
+  "$defs": {
+    "package": {
+      "type": "object",
+      "required": [
+        "package_id", "source_inventory_item_id", "format", "content_family", "canonical_source_url",
+        "title_candidates", "hook", "factual_talking_points", "required_source_references",
+        "prohibited_claims", "cta", "narration_script_outline", "visual_asset_requirements",
+        "thumbnail_brief", "generation_status", "evidence_fingerprint"
+      ],
+      "properties": {
+        "package_id": {"type": "string"},
+        "source_inventory_item_id": {"type": "string"},
+        "format": {"enum": ["SHORT_FORM", "LONG_FORM"]},
+        "content_family": {"type": "string"},
+        "canonical_source_url": {"type": "string", "pattern": "^/"},
+        "title_candidates": {"type": "array", "items": {"type": "string"}},
+        "hook": {"type": "string"},
+        "factual_talking_points": {"type": "array", "items": {"type": "object"}},
+        "required_source_references": {"type": "array", "items": {"type": "object"}},
+        "prohibited_claims": {"type": "array", "items": {"type": "string"}},
+        "cta": {"type": "string"},
+        "narration_script_outline": {"type": "array", "items": {"type": "string"}},
+        "visual_asset_requirements": {"type": "array", "items": {"type": "string"}},
+        "thumbnail_brief": {"type": "string"},
+        "generation_status": {"enum": ["READY_FOR_REVIEW", "NOT_READY"]},
+        "evidence_fingerprint": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      }
+    }
+  }
+}
