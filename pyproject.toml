@@ -32,6 +32,7 @@ youtube-publisher = "app.publishing.youtube_cli:main"
 video-narration = "app.publishing.elevenlabs_cli:main"
 x-publisher = "app.distribution.x_publishing_cli:main"
 distribution-worker = "app.publishing.distribution_worker:main"
+content-inventory = "app.content_inventory.cli:main"
 nvidia-ai = "app.ai.cli:main"
 
 [tool.setuptools]

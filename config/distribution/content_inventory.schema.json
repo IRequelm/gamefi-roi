@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gamcryp.com/schemas/content-inventory-v1.json",
+  "title": "GamCryp Content Inventory",
+  "type": "object",
+  "required": ["schema_version", "inventory_version", "items", "summary"],
+  "properties": {
+    "schema_version": {"const": "content-inventory-v1"},
+    "inventory_version": {"const": "catalog-derived-v1"},
+    "items": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/item"}
+    },
+    "summary": {"type": "object"}
+  },
+  "$defs": {
+    "item": {
+      "type": "object",
+      "required": [
+        "content_id", "source_url", "source_type", "opportunity_id", "strategy_id",
+        "content_family", "evidence_status", "short_form_eligible", "long_form_eligible",
+        "required_evidence", "missing_evidence", "generation_status", "source_reference_fingerprint",
+        "strategy_ids"
+      ],
+      "properties": {
+        "content_id": {"type": "string"},
+        "source_url": {"type": "string", "pattern": "^/"},
+        "source_type": {"type": "string"},
+        "opportunity_id": {"type": ["string", "null"]},
+        "strategy_id": {"type": ["string", "null"]},
+        "content_family": {"type": "string"},
+        "evidence_status": {"enum": ["READY", "PARTIAL", "BLOCKED"]},
+        "short_form_eligible": {"type": "boolean"},
+        "long_form_eligible": {"type": "boolean"},
+        "required_evidence": {"type": "array", "items": {"type": "string"}},
+        "missing_evidence": {"type": "array", "items": {"type": "string"}},
+        "generation_status": {"const": "NOT_STARTED"},
+        "source_reference_fingerprint": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "strategy_ids": {"type": "array", "items": {"type": "string"}}
+      }
+    }
+  }
+}
