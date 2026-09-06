@@ -34,6 +34,6 @@ def test_batch_three_is_source_backed_guide_only() -> None:
 def test_batch_three_increases_guide_only_catalog_without_changing_strategy_count() -> None:
     opportunities = list_opportunities()
     assert all(get_opportunity(opportunity_id) is not None for opportunity_id in BATCH_THREE)
-    assert len(opportunities) == 43
+    assert len(opportunities) == 51
     assert len([item for item in opportunities if item.admission_mode == "MODELED"]) == 8
-    assert len([item for item in opportunities if item.admission_mode == "GUIDE_ONLY"]) == 35
+    assert len([item for item in opportunities if item.admission_mode == "GUIDE_ONLY"]) == 43
