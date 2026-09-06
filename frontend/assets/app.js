@@ -235,7 +235,7 @@ export function renderHomeShell(games = [], rankings = { items: [], page: { tota
       ${renderCatalogStats(rankings, opportunities)}
       <section class="finder-grid" aria-label="ROI finder">
         <div id="finder-results">
-          ${renderRankingsTable(rankings, { compact: true })}
+          ${renderRankingsTable(rankings, { compact: true, groupByOpportunity: true })}
         </div>
         <form class="tool-panel filter-panel" id="finder-form">
           <div class="filter-panel-head">
@@ -829,16 +829,67 @@ export function renderRankingsTable(rankings, options = {}) {
       </section>
     `;
   }
+  const groups = options.groupByOpportunity ? groupRankingItemsByOpportunity(items) : null;
+  const cardMarkup = groups
+    ? groups.map((group) => renderOpportunityRankingGroup(group)).join("")
+    : items.map((item) => renderRankingCard(item, options)).join("");
+  const countLabel = groups
+    ? `${groups.length} opportunities · ${items.length} strategies`
+    : `${rankings.page?.total ?? items.length} stored`;
   return `
     <section class="section-panel ranking-section">
       <div class="section-header">
         <h2>${escapeHtml(options.heading || (options.compact ? "Current matches" : "Ranked strategies"))}</h2>
-        <span class="badge info">${escapeHtml(String(rankings.page?.total ?? items.length))} stored</span>
+        <span class="badge info">${escapeHtml(countLabel)}</span>
       </div>
       <div class="ranking-card-grid">
-        ${items.map((item) => renderRankingCard(item, options)).join("")}
+        ${cardMarkup}
       </div>
     </section>
+  `;
+}
+
+function groupRankingItemsByOpportunity(items) {
+  const groups = new Map();
+  for (const item of items) {
+    const key = item.strategy?.opportunity_id || item.strategy?.game_id || item.latest_snapshot?.game_name || item.strategy?.strategy_id;
+    if (!groups.has(key)) {
+      groups.set(key, { items: [] });
+    }
+    groups.get(key).items.push(item);
+  }
+  return Array.from(groups.values());
+}
+
+function renderOpportunityRankingGroup(group) {
+  const primary = group.items[0];
+  const snapshot = primary.latest_snapshot;
+  const strategy = primary.strategy;
+  const opportunityId = strategy.opportunity_id || strategy.game_id;
+  return `
+    <article class="ranking-card opportunity-group-card">
+      <div class="ranking-card-head">
+        <span class="rank-chip">#${escapeHtml(String(primary.rank))}</span>
+        <div>
+          <p class="ranking-parent"><span>Opportunity</span> ${renderOpportunityLogo(strategy.logo, snapshot.game_name, true)}</p>
+          <h3><a class="game-link" href="/opportunities/${encodeURIComponent(opportunityId)}" data-link>${escapeHtml(snapshot.game_name)}</a></h3>
+          <p class="muted">${group.items.length} modeled strateg${group.items.length === 1 ? "y" : "ies"}; choose an assumption set below.</p>
+        </div>
+      </div>
+      ${renderStrategySignals(snapshot)}
+      <div class="card-metrics">
+        ${metricItem("Top strategy capital", formatMoney(snapshot.capital.total_capital))}
+        ${metricItem("Top strategy net/day", formatMoney(snapshot.earnings.net_earnings_day, { perDay: true }))}
+        ${metricItem("Top strategy ROI", formatRatio(snapshot.roi.roi_total_30d))}
+      </div>
+      <div class="group-strategy-list" aria-label="Strategies for ${escapeHtml(snapshot.game_name)}">
+        ${group.items.map((item) => `<a class="strategy-link group-strategy-link" href="/strategies/${encodeURIComponent(item.strategy.strategy_id)}" data-link>${escapeHtml(item.strategy.name)} <span class="muted">#${escapeHtml(String(item.rank))}</span></a>`).join("")}
+      </div>
+      <p class="muted ranking-context">Organic comparison, not a recommendation.</p>
+      <div class="card-actions">
+        <a class="secondary-button" href="/opportunities/${encodeURIComponent(opportunityId)}" data-link>View opportunity and strategies</a>
+      </div>
+    </article>
   `;
 }
 
