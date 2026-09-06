@@ -111,6 +111,29 @@ test("home renders results as cards before filters without table ranking markup"
   assert.doesNotMatch(html, /<table/);
 });
 
+test("homepage groups multiple strategies under one opportunity", () => {
+  const payload = rankingPayload();
+  const second = {
+    ...payload.items[0],
+    rank: 2,
+    strategy: {
+      ...payload.items[0].strategy,
+      strategy_id: "dfk-crystalvale-jeweler-cjewel-100-max-lock",
+      name: "DFK Jeweler 100 JEWEL Max Lock",
+    },
+  };
+  const html = renderRankingsTable(
+    { ...payload, items: [payload.items[0], second], page: { ...payload.page, total: 2 } },
+    { groupByOpportunity: true },
+  );
+
+  assert.equal((html.match(/opportunity-group-card/g) || []).length, 1);
+  assert.match(html, /1 opportunities · 2 strategies/);
+  assert.match(html, /DFK Jeweler cJEWEL Max Lock/);
+  assert.match(html, /DFK Jeweler 100 JEWEL Max Lock/);
+  assert.match(html, /View opportunity and strategies/);
+});
+
 test("methodology explains ROI availability and trust boundaries", () => {
   const html = renderMethodologyPage();
   assert.match(html, /Modeled ROI/);
