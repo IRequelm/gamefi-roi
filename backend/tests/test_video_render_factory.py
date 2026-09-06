@@ -13,11 +13,16 @@ from app.video_render.factory import (
     render_package,
     validate_render,
 )
+from app.video_render.factory import _script_for
 from app.content_package.generator import build_content_packages
 
 
 def _package(fmt: str = "SHORT_FORM"):
-    return next(package for package in build_content_packages() if package.format == fmt and package.content_family != "FINANCIAL_ROI")
+    package = next(package for package in build_content_packages() if package.format == "SHORT_FORM" and package.content_family != "FINANCIAL_ROI")
+    if fmt == "SHORT_FORM":
+        return package
+    sections = tuple({"title": f"Section {index}", "text": (f"Evidence-backed detail {index} " * 220).strip(), "evidence_paths": ["opportunity.guidance.how_to_start"]} for index in range(6))
+    return replace(package, package_id=package.package_id.replace("short_form", "long_form"), format="LONG_FORM", narration_sections=sections, narration_script_outline=tuple(section["title"] for section in sections), estimated_narration_words=1320, estimated_duration_seconds=528)
 
 
 def _settings(tmp_path: Path):
@@ -58,7 +63,7 @@ def _runner(command, **kwargs):
     from subprocess import CompletedProcess
 
     if command[0] == "ffprobe":
-        return CompletedProcess(command, 0, stdout="4.25\n", stderr="")
+        return CompletedProcess(command, 0, stdout=("600\n" if "package-long_form" in str(command) else "4.25\n"), stderr="")
     Path(command[-1]).write_bytes(b"video")
     return CompletedProcess(command, 0, stdout="", stderr="")
 
@@ -67,7 +72,7 @@ def test_ready_short_renders_with_captions_and_evidence(tmp_path: Path) -> None:
     calls: list[str] = []
     result = render_package(_package(), settings=_settings(tmp_path), root=tmp_path / "render", narration_provider_factory=_provider_factory(tmp_path, calls), command_runner=_runner)
 
-    assert result.status == RENDER_READY
+    assert result.status == RENDER_READY, result.reason
     assert result.width == 1080 and result.height == 1920
     assert Path(result.video_path).is_file()
     assert Path(result.caption_path).is_file()
@@ -81,8 +86,16 @@ def test_ready_long_uses_landscape_dimensions(tmp_path: Path) -> None:
     package = _package("LONG_FORM")
     result = render_package(package, settings=_settings(tmp_path), root=tmp_path / "render", narration_provider_factory=_provider_factory(tmp_path, []), command_runner=_runner)
 
-    assert result.status == RENDER_READY
+    assert result.status == RENDER_READY, result.reason
     assert (result.width, result.height) == (1920, 1080)
+
+
+def test_long_script_uses_distinct_bound_evidence_sections_without_filler() -> None:
+    package = _package("LONG_FORM")
+    script = _script_for(package)
+
+    assert all(f"Evidence-backed detail {index}" in script for index in range(6))
+    assert "Opportunity or method context" not in script
 
 
 def test_all_approved_voice_failures_are_not_ready_without_fallback(tmp_path: Path) -> None:

@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from app.content_inventory.inventory import ContentInventoryItem, READY, build_content_inventory
+from app.content_inventory.inventory import LONG_FORM_MIN_SECTIONS, LONG_FORM_MIN_SECONDS, LONG_FORM_MIN_WORDS, LONG_FORM_WORDS_PER_MINUTE
 from app.strategies.catalog import OpportunityCatalogEntry, StrategyCatalogEntry, get_opportunity, get_strategy
 
 PACKAGE_SCHEMA_VERSION = "content-package-v1"
@@ -30,6 +31,9 @@ class ContentPackage:
     prohibited_claims: tuple[str, ...]
     cta: str
     narration_script_outline: tuple[str, ...]
+    narration_sections: tuple[dict[str, Any], ...]
+    estimated_narration_words: int
+    estimated_duration_seconds: int
     visual_asset_requirements: tuple[str, ...]
     thumbnail_brief: str
     generation_status: str
@@ -73,7 +77,11 @@ def summarize_content_packages(packages: list[ContentPackage]) -> dict[str, Any]
 def validate_package(package: ContentPackage) -> bool:
     if package.format not in {"SHORT_FORM", "LONG_FORM"} or not package.factual_talking_points:
         return False
-    if package.format == "LONG_FORM" and len(package.narration_script_outline) < 5:
+    if package.format == "LONG_FORM" and (
+        len(package.narration_sections) < LONG_FORM_MIN_SECTIONS
+        or package.estimated_narration_words < LONG_FORM_MIN_WORDS
+        or package.estimated_duration_seconds < LONG_FORM_MIN_SECONDS
+    ):
         return False
     if package.content_family == "FINANCIAL_ROI":
         return False
@@ -85,6 +93,11 @@ def validate_package(package: ContentPackage) -> bool:
             return False
         text = str(point["text"]).lower()
         if any(term in text for term in ("guarantee", "risk-free", "you will earn", "buy this", "i recommend", "guaranteed return")):
+            return False
+    if package.format == "LONG_FORM":
+        if len({section.get("text") for section in package.narration_sections}) != len(package.narration_sections):
+            return False
+        if any(not section.get("text") or not section.get("evidence_paths") for section in package.narration_sections):
             return False
     return bool(package.required_source_references and package.evidence_fingerprint)
 
@@ -103,7 +116,10 @@ def _build_package(item: ContentInventoryItem, output_format: str) -> ContentPac
     strategies = tuple(get_strategy(strategy_id) for strategy_id in item.strategy_ids if get_strategy(strategy_id) is not None)
     references = _references(opportunity, item)
     points = _talking_points(item, opportunity, strategies)
-    sections = _outline(item, output_format, points)
+    narration_sections = _narration_sections(item, points)
+    sections = _outline(item, output_format, narration_sections)
+    script_text = " ".join([_hook(item, opportunity), *(str(section["text"]) for section in narration_sections), f"Review the evidence on {item.source_url}."])
+    estimated_words = len(script_text.split())
     canonical = item.source_url
     evidence = hashlib.sha256(json.dumps({
         "inventory": item.content_id,
@@ -127,6 +143,9 @@ def _build_package(item: ContentInventoryItem, output_format: str) -> ContentPac
         prohibited_claims=("guaranteed returns", "investment advice", "risk-free earnings", "unsupported token prices", "invented hardware requirements"),
         cta=f"Review the evidence on {canonical}.",
         narration_script_outline=tuple(sections),
+        narration_sections=tuple(narration_sections),
+        estimated_narration_words=estimated_words,
+        estimated_duration_seconds=(estimated_words * 60) // LONG_FORM_WORDS_PER_MINUTE,
         visual_asset_requirements=_visuals(item),
         thumbnail_brief=f"Clean GamCryp title card focused on {item.content_family.replace('_', ' ').lower()} with no financial promise.",
         generation_status="READY_FOR_REVIEW",
@@ -175,10 +194,18 @@ def _talking_points(item: ContentInventoryItem, opportunity: OpportunityCatalogE
     return points
 
 
-def _outline(item: ContentInventoryItem, output_format: str, points: list[dict[str, Any]]) -> list[str]:
+def _outline(item: ContentInventoryItem, output_format: str, sections: list[dict[str, Any]]) -> list[str]:
     if output_format == "SHORT_FORM":
-        return ["Hook", *[str(point["text"]) for point in points[:4]], "Evidence-aware CTA"]
-    return ["Hook", "Opportunity or method context", "How to start and what you need", "How the mechanism works", "Claim, exit, or limitation", "Risk, confidence, and evidence boundary", "Practical summary", "Evidence-aware CTA"]
+        return ["Hook", *[str(section["text"]) for section in sections[:4]], "Evidence-aware CTA"]
+    return ["Hook", *[str(section["title"]) for section in sections], "Evidence-aware CTA"]
+
+
+def _narration_sections(item: ContentInventoryItem, points: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    if item.content_family == "STRATEGY_COMPARISON":
+        titles = ["Strategy comparison"] * len(points)
+    else:
+        titles = ["Evidence-backed detail"] * len(points)
+    return [{"title": title, "text": str(point["text"]), "evidence_paths": tuple(point["evidence_paths"])} for title, point in zip(titles, points)]
 
 
 def _titles(item: ContentInventoryItem, opportunity: OpportunityCatalogEntry | None) -> tuple[str, ...]:

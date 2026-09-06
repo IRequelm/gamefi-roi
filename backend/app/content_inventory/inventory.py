@@ -23,6 +23,10 @@ INVENTORY_VERSION = "catalog-derived-v1"
 READY = "READY"
 PARTIAL = "PARTIAL"
 BLOCKED = "BLOCKED"
+LONG_FORM_MIN_WORDS = 1200
+LONG_FORM_WORDS_PER_MINUTE = 150
+LONG_FORM_MIN_SECONDS = 8 * 60
+LONG_FORM_MIN_SECTIONS = 6
 
 
 @dataclass(frozen=True)
@@ -44,6 +48,9 @@ class ContentInventoryItem:
     freshness_status: str = "CATALOG_REVIEWED"
     destination_status: str = "NOT_APPLICABLE"
     publication_status: str = "CANONICAL_CATALOG_ROUTE"
+    long_form_word_count: int = 0
+    long_form_estimated_seconds: int = 0
+    long_form_missing_evidence: tuple[str, ...] = ()
 
 
 def build_content_inventory() -> list[ContentInventoryItem]:
@@ -80,15 +87,16 @@ def summarize_content_inventory(items: list[ContentInventoryItem]) -> dict[str, 
         "ready_long_form_count": sum(item.evidence_status == READY and item.long_form_eligible for item in items),
         "partial_count": sum(item.evidence_status == PARTIAL for item in items),
         "blocked_count": sum(item.evidence_status == BLOCKED for item in items),
+        "ready_short_only_count": sum(item.evidence_status == READY and item.short_form_eligible and not item.long_form_eligible for item in items),
         "by_content_family": dict(sorted(families.items())),
     }
 
 
 def _site_items() -> list[ContentInventoryItem]:
     items = [
-        _item("/", "SITE_PAGE", "HOW_TO_USE_GAMCRYP", ("The current public home and catalog navigation.",), (), READY, True, True),
-        _item("/methodology", "SITE_PAGE", "METHODOLOGY_EXPLAINER", ("Published methodology and trust-boundary content.",), (), READY, True, True),
-        _item("/methodology", "SITE_PAGE", "RISK_VS_CONFIDENCE", ("Published risk, confidence, and methodology explanations.",), (), READY, True, True),
+        _item("/", "SITE_PAGE", "HOW_TO_USE_GAMCRYP", ("The current public home and catalog navigation.",), (), READY, True, False),
+        _item("/methodology", "SITE_PAGE", "METHODOLOGY_EXPLAINER", ("Published methodology and trust-boundary content.",), (), READY, True, False),
+        _item("/methodology", "SITE_PAGE", "RISK_VS_CONFIDENCE", ("Published risk, confidence, and methodology explanations.",), (), READY, True, False),
     ]
     for page in CURATED_RANKING_PAGES:
         if "capital_max" in page.filters:
@@ -108,7 +116,9 @@ def _opportunity_items(opportunity: OpportunityCatalogEntry) -> list[ContentInve
     items: list[ContentInventoryItem] = []
     freshness_status, destination_status, publication_status = _opportunity_context(opportunity)
     context_ready = all(status in {"CATALOG_REVIEWED", "VALIDATED", "CANONICAL_CATALOG_ROUTE"} for status in (freshness_status, destination_status, publication_status))
-    rich_long_form = _rich_long_form_evidence(opportunity, guidance) and context_ready
+    long_words, long_sections = _long_form_material(opportunity, guidance)
+    long_missing = _long_form_missing(long_words, long_sections, context_ready, freshness_status, destination_status, publication_status)
+    rich_long_form = not long_missing
     fields = (
         ("HOW_TO_START", "how_to_start", "How to start instructions."),
         ("WHAT_YOU_NEED", "what_you_need", "Setup or purchase requirements."),
@@ -132,6 +142,8 @@ def _opportunity_items(opportunity: OpportunityCatalogEntry) -> list[ContentInve
                 True, rich_long_form,
                 opportunity_id=opportunity.opportunity_id,
                 freshness_status=freshness_status, destination_status=destination_status, publication_status=publication_status,
+                long_form_word_count=long_words, long_form_estimated_seconds=(long_words * 60) // LONG_FORM_WORDS_PER_MINUTE,
+                long_form_missing_evidence=long_missing,
             )
         )
     if opportunity.roi_unavailable is not None:
@@ -145,6 +157,8 @@ def _opportunity_items(opportunity: OpportunityCatalogEntry) -> list[ContentInve
                 True, bool(explanation.missing_evidence and explanation.modeling_requirements and rich_long_form),
                 opportunity_id=opportunity.opportunity_id,
                 freshness_status=freshness_status, destination_status=destination_status, publication_status=publication_status,
+                long_form_word_count=long_words, long_form_estimated_seconds=(long_words * 60) // LONG_FORM_WORDS_PER_MINUTE,
+                long_form_missing_evidence=long_missing,
             )
         )
         items.append(
@@ -163,6 +177,8 @@ def _opportunity_items(opportunity: OpportunityCatalogEntry) -> list[ContentInve
                 tuple(_context_missing(freshness_status, destination_status, publication_status)) if not context_ready else (),
                 READY if context_ready else PARTIAL, True, rich_long_form, opportunity_id=opportunity.opportunity_id,
                 freshness_status=freshness_status, destination_status=destination_status, publication_status=publication_status,
+                long_form_word_count=long_words, long_form_estimated_seconds=(long_words * 60) // LONG_FORM_WORDS_PER_MINUTE,
+                long_form_missing_evidence=long_missing,
             )
         )
     if len(opportunity.strategy_ids) >= 2:
@@ -174,6 +190,8 @@ def _opportunity_items(opportunity: OpportunityCatalogEntry) -> list[ContentInve
                 READY if context_ready else PARTIAL, True, rich_long_form,
                 opportunity_id=opportunity.opportunity_id, strategy_ids=opportunity.strategy_ids,
                 freshness_status=freshness_status, destination_status=destination_status, publication_status=publication_status,
+                long_form_word_count=long_words, long_form_estimated_seconds=(long_words * 60) // LONG_FORM_WORDS_PER_MINUTE,
+                long_form_missing_evidence=long_missing,
             )
         )
     return items
@@ -203,12 +221,31 @@ def _context_missing(freshness_status: str, destination_status: str, publication
     return missing
 
 
-def _rich_long_form_evidence(opportunity: OpportunityCatalogEntry, guidance: Any) -> bool:
-    if guidance is None or not all(getattr(guidance, field) for field in ("how_to_start", "what_you_need", "how_you_earn", "how_to_exit_or_claim")):
-        return False
-    if len(opportunity.official_source_references) < 2 or not opportunity.feasibility_summary:
-        return False
-    return bool(opportunity.roi_unavailable or opportunity.strategy_ids or opportunity.data_feasibility_status)
+def _long_form_material(opportunity: OpportunityCatalogEntry, guidance: Any) -> tuple[int, int]:
+    sections = [
+        ("context", (opportunity.name, opportunity.feasibility_summary)),
+        ("start", getattr(guidance, "how_to_start", ()) if guidance else ()),
+        ("requirements", getattr(guidance, "what_you_need", ()) if guidance else ()),
+        ("earning", getattr(guidance, "how_you_earn", ()) if guidance else ()),
+        ("claim_exit", getattr(guidance, "how_to_exit_or_claim", ()) if guidance else ()),
+    ]
+    if opportunity.strategy_ids:
+        sections.append(("strategies", tuple(strategy_id for strategy_id in opportunity.strategy_ids)))
+    if opportunity.roi_unavailable:
+        sections.append(("roi_status", (opportunity.roi_unavailable.reason, *(opportunity.roi_unavailable.missing_evidence or ()))) )
+    words = sum(len(str(value).split()) for _, values in sections for value in values if value)
+    return words, sum(bool(tuple(value for value in values if value)) for _, values in sections)
+
+
+def _long_form_missing(words: int, sections: int, context_ready: bool, freshness_status: str, destination_status: str, publication_status: str) -> tuple[str, ...]:
+    missing: list[str] = []
+    if words < LONG_FORM_MIN_WORDS:
+        missing.append(f"At least {LONG_FORM_MIN_WORDS} evidence-backed narration words; available {words}.")
+    if sections < LONG_FORM_MIN_SECTIONS:
+        missing.append(f"At least {LONG_FORM_MIN_SECTIONS} substantive supported sections; available {sections}.")
+    if not context_ready:
+        missing.extend(_context_missing(freshness_status, destination_status, publication_status))
+    return tuple(missing)
 
 
 def _item(
@@ -217,6 +254,8 @@ def _item(
     strategy_id: str | None = None, strategy_ids: tuple[str, ...] = (),
     freshness_status: str = "CATALOG_REVIEWED", destination_status: str = "NOT_APPLICABLE",
     publication_status: str = "CANONICAL_CATALOG_ROUTE",
+    long_form_word_count: int = 0, long_form_estimated_seconds: int = 0,
+    long_form_missing_evidence: tuple[str, ...] = (),
 ) -> ContentInventoryItem:
     source_fingerprint = hashlib.sha256(json.dumps({
         "source_url": canonical_path(source_url), "source_type": source_type,
@@ -233,4 +272,6 @@ def _item(
         generation_status="NOT_STARTED", source_reference_fingerprint=source_fingerprint, strategy_ids=strategy_ids,
         freshness_status=freshness_status, destination_status=destination_status,
         publication_status=publication_status,
+        long_form_word_count=long_form_word_count, long_form_estimated_seconds=long_form_estimated_seconds,
+        long_form_missing_evidence=long_form_missing_evidence,
     )

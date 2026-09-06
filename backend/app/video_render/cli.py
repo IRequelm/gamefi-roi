@@ -66,18 +66,29 @@ def _report(packages) -> dict[str, int]:
             continue
     reason_counts: dict[str, int] = {}
     for result in results:
-        if result.get("status") != "RENDER_READY":
+        blockers = _metadata_blockers(result)
+        if blockers:
             reason = str(result.get("reason") or "unknown")
+            if reason == "unknown":
+                reason = blockers[0]
             reason_counts[reason] = reason_counts.get(reason, 0) + 1
     return {
         "renderable_packages": len(packages),
         "short_eligible": sum(package.format == SHORT_FORM for package in packages),
         "long_eligible": sum(package.format == LONG_FORM for package in packages),
         "rendered": len(results),
-        "render_ready": sum(result.get("status") == "RENDER_READY" for result in results),
-        "not_ready": sum(result.get("status") != "RENDER_READY" for result in results),
+        "render_ready": sum(not _metadata_blockers(result) for result in results),
+        "not_ready": sum(bool(_metadata_blockers(result)) for result in results),
         "reason_counts": reason_counts,
     }
+
+
+def _metadata_blockers(result: dict) -> tuple[str, ...]:
+    try:
+        parsed = RenderResult(**{key: value for key, value in result.items() if key != "asset_checksums"})
+        return validate_render(parsed)
+    except (TypeError, ValueError):
+        return ("render metadata is invalid",)
 
 
 if __name__ == "__main__":

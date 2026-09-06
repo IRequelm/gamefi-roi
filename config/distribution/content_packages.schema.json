@@ -15,7 +15,8 @@
       "required": [
         "package_id", "source_inventory_item_id", "format", "content_family", "canonical_source_url",
         "title_candidates", "hook", "factual_talking_points", "required_source_references",
-        "prohibited_claims", "cta", "narration_script_outline", "visual_asset_requirements",
+        "prohibited_claims", "cta", "narration_script_outline", "narration_sections",
+        "estimated_narration_words", "estimated_duration_seconds", "visual_asset_requirements",
         "thumbnail_brief", "generation_status", "evidence_fingerprint"
       ],
       "properties": {
@@ -31,6 +32,9 @@
         "prohibited_claims": {"type": "array", "items": {"type": "string"}},
         "cta": {"type": "string"},
         "narration_script_outline": {"type": "array", "items": {"type": "string"}},
+        "narration_sections": {"type": "array", "items": {"type": "object"}},
+        "estimated_narration_words": {"type": "integer", "minimum": 0},
+        "estimated_duration_seconds": {"type": "integer", "minimum": 0},
         "visual_asset_requirements": {"type": "array", "items": {"type": "string"}},
         "thumbnail_brief": {"type": "string"},
         "generation_status": {"enum": ["READY_FOR_REVIEW", "NOT_READY"]},

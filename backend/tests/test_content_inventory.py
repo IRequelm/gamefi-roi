@@ -39,6 +39,14 @@ def test_modeled_strategy_comparison_and_missing_evidence_are_explicit() -> None
     assert any(item.content_family == "LOW_COST_RANKING" and item.evidence_status == PARTIAL for item in items)
 
 
+def test_long_form_requires_a_real_evidence_backed_budget() -> None:
+    items = build_content_inventory()
+
+    assert summarize_content_inventory(items)["ready_long_form_count"] == 0
+    assert summarize_content_inventory(items)["ready_short_only_count"] == 132
+    assert all(item.long_form_word_count < 1200 for item in items if item.opportunity_id)
+
+
 def test_inventory_paths_and_summary_are_valid() -> None:
     items = build_content_inventory()
     summary = summarize_content_inventory(items)

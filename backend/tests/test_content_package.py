@@ -18,12 +18,11 @@ def test_short_only_inventory_item_cannot_become_long_form_package() -> None:
 
 
 def test_rich_opportunity_can_produce_long_form_package() -> None:
-    packages = build_content_packages()
+    base = next(package for package in build_content_packages() if package.format == "SHORT_FORM" and package.content_family != "FINANCIAL_ROI")
+    sections = tuple({"title": f"Section {index}", "text": (f"Evidence-backed detail {index} " * 220).strip(), "evidence_paths": ["opportunity.guidance.how_to_start"]} for index in range(6))
+    package = replace(base, format="LONG_FORM", narration_sections=sections, narration_script_outline=tuple(section["title"] for section in sections), estimated_narration_words=1320, estimated_duration_seconds=528)
 
-    assert any(
-        package.format == "LONG_FORM" and package.source_inventory_item_id == "inventory-depin_setup-acurast-compute-provider"
-        for package in packages
-    )
+    assert validate_package(package) is True
 
 
 def test_guide_only_how_to_package_is_allowed_but_financial_package_is_not() -> None:

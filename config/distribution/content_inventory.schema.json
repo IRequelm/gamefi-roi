@@ -20,7 +20,8 @@
         "content_id", "source_url", "source_type", "opportunity_id", "strategy_id",
         "content_family", "evidence_status", "short_form_eligible", "long_form_eligible",
         "required_evidence", "missing_evidence", "generation_status", "source_reference_fingerprint",
-        "strategy_ids", "freshness_status", "destination_status", "publication_status"
+        "strategy_ids", "freshness_status", "destination_status", "publication_status",
+        "long_form_word_count", "long_form_estimated_seconds", "long_form_missing_evidence"
       ],
       "properties": {
         "content_id": {"type": "string"},
@@ -40,6 +41,9 @@
         "freshness_status": {"type": "string"},
         "destination_status": {"type": "string"},
         "publication_status": {"type": "string"}
+        ,"long_form_word_count": {"type": "integer", "minimum": 0}
+        ,"long_form_estimated_seconds": {"type": "integer", "minimum": 0}
+        ,"long_form_missing_evidence": {"type": "array", "items": {"type": "string"}}
       }
     }
   }

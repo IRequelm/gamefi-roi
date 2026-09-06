@@ -8,7 +8,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 46,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 117."
+      ],
+      "long_form_word_count": 117,
       "missing_evidence": [],
       "opportunity_id": "acurast-compute-provider",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -29,7 +34,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 48,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 122."
+      ],
+      "long_form_word_count": 122,
       "missing_evidence": [],
       "opportunity_id": "aethir-checker-node",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -50,7 +60,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 51,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 128."
+      ],
+      "long_form_word_count": 128,
       "missing_evidence": [],
       "opportunity_id": "akash-provider",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -71,7 +86,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 45,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 114."
+      ],
+      "long_form_word_count": 114,
       "missing_evidence": [],
       "opportunity_id": "aleph-im-compute-resource-node",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -92,7 +112,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 50,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 125."
+      ],
+      "long_form_word_count": 125,
       "missing_evidence": [],
       "opportunity_id": "bittensor-miner",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -113,7 +138,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 41,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 104."
+      ],
+      "long_form_word_count": 104,
       "missing_evidence": [],
       "opportunity_id": "earnapp",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -134,7 +164,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 51,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 129."
+      ],
+      "long_form_word_count": 129,
       "missing_evidence": [],
       "opportunity_id": "filecoin-storage-provider",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -156,6 +191,11 @@
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
+      "long_form_estimated_seconds": 47,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 119."
+      ],
+      "long_form_word_count": 119,
       "missing_evidence": [],
       "opportunity_id": "fluxnode",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -176,7 +216,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 53,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 134."
+      ],
+      "long_form_word_count": 134,
       "missing_evidence": [],
       "opportunity_id": "golem-provider",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -197,7 +242,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 48,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 120."
+      ],
+      "long_form_word_count": 120,
       "missing_evidence": [],
       "opportunity_id": "helium-iot-hotspot",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -218,7 +268,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 40,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 101."
+      ],
+      "long_form_word_count": 101,
       "missing_evidence": [],
       "opportunity_id": "hivemapper",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -239,7 +294,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 43,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 108."
+      ],
+      "long_form_word_count": 108,
       "missing_evidence": [],
       "opportunity_id": "honeygain",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -260,7 +320,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 47,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 119."
+      ],
+      "long_form_word_count": 119,
       "missing_evidence": [],
       "opportunity_id": "io-net-worker",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -281,7 +346,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 50,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 126."
+      ],
+      "long_form_word_count": 126,
       "missing_evidence": [],
       "opportunity_id": "livepeer-orchestrator",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -302,7 +372,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 53,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 133."
+      ],
+      "long_form_word_count": 133,
       "missing_evidence": [],
       "opportunity_id": "nosana-gpu-host",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -323,7 +398,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 48,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 120."
+      ],
+      "long_form_word_count": 120,
       "missing_evidence": [],
       "opportunity_id": "nym-mixnode",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -344,7 +424,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 50,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 125."
+      ],
+      "long_form_word_count": 125,
       "missing_evidence": [],
       "opportunity_id": "render-node-operator",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -365,7 +450,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 26,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 65."
+      ],
+      "long_form_word_count": 65,
       "missing_evidence": [],
       "opportunity_id": "storj-storage-node",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -386,7 +476,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 46,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 116."
+      ],
+      "long_form_word_count": 116,
       "missing_evidence": [],
       "opportunity_id": "subspace-farmer",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -407,7 +502,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 52,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 131."
+      ],
+      "long_form_word_count": 131,
       "missing_evidence": [],
       "opportunity_id": "theta-edge-node",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -429,6 +529,9 @@
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
+      "long_form_estimated_seconds": 0,
+      "long_form_missing_evidence": [],
+      "long_form_word_count": 0,
       "missing_evidence": [
         "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
       ],
@@ -452,6 +555,9 @@
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
+      "long_form_estimated_seconds": 0,
+      "long_form_missing_evidence": [],
+      "long_form_word_count": 0,
       "missing_evidence": [
         "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
       ],
@@ -475,6 +581,9 @@
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
+      "long_form_estimated_seconds": 0,
+      "long_form_missing_evidence": [],
+      "long_form_word_count": 0,
       "missing_evidence": [
         "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
       ],
@@ -498,6 +607,9 @@
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
+      "long_form_estimated_seconds": 0,
+      "long_form_missing_evidence": [],
+      "long_form_word_count": 0,
       "missing_evidence": [
         "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
       ],
@@ -521,6 +633,9 @@
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
+      "long_form_estimated_seconds": 0,
+      "long_form_missing_evidence": [],
+      "long_form_word_count": 0,
       "missing_evidence": [
         "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
       ],
@@ -544,6 +659,9 @@
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
+      "long_form_estimated_seconds": 0,
+      "long_form_missing_evidence": [],
+      "long_form_word_count": 0,
       "missing_evidence": [
         "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
       ],
@@ -567,6 +685,9 @@
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
+      "long_form_estimated_seconds": 0,
+      "long_form_missing_evidence": [],
+      "long_form_word_count": 0,
       "missing_evidence": [
         "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
       ],
@@ -590,6 +711,9 @@
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
+      "long_form_estimated_seconds": 0,
+      "long_form_missing_evidence": [],
+      "long_form_word_count": 0,
       "missing_evidence": [
         "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
       ],
@@ -613,6 +737,9 @@
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
+      "long_form_estimated_seconds": 0,
+      "long_form_missing_evidence": [],
+      "long_form_word_count": 0,
       "missing_evidence": [
         "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
       ],
@@ -636,6 +763,9 @@
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
+      "long_form_estimated_seconds": 0,
+      "long_form_missing_evidence": [],
+      "long_form_word_count": 0,
       "missing_evidence": [
         "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
       ],
@@ -659,6 +789,9 @@
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
+      "long_form_estimated_seconds": 0,
+      "long_form_missing_evidence": [],
+      "long_form_word_count": 0,
       "missing_evidence": [
         "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
       ],
@@ -682,6 +815,9 @@
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
+      "long_form_estimated_seconds": 0,
+      "long_form_missing_evidence": [],
+      "long_form_word_count": 0,
       "missing_evidence": [
         "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
       ],
@@ -705,6 +841,9 @@
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
+      "long_form_estimated_seconds": 0,
+      "long_form_missing_evidence": [],
+      "long_form_word_count": 0,
       "missing_evidence": [
         "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
       ],
@@ -728,6 +867,9 @@
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
+      "long_form_estimated_seconds": 0,
+      "long_form_missing_evidence": [],
+      "long_form_word_count": 0,
       "missing_evidence": [
         "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
       ],
@@ -751,6 +893,9 @@
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
+      "long_form_estimated_seconds": 0,
+      "long_form_missing_evidence": [],
+      "long_form_word_count": 0,
       "missing_evidence": [
         "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
       ],
@@ -774,6 +919,9 @@
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
+      "long_form_estimated_seconds": 0,
+      "long_form_missing_evidence": [],
+      "long_form_word_count": 0,
       "missing_evidence": [
         "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
       ],
@@ -797,6 +945,9 @@
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
+      "long_form_estimated_seconds": 0,
+      "long_form_missing_evidence": [],
+      "long_form_word_count": 0,
       "missing_evidence": [
         "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
       ],
@@ -820,6 +971,9 @@
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
+      "long_form_estimated_seconds": 0,
+      "long_form_missing_evidence": [],
+      "long_form_word_count": 0,
       "missing_evidence": [
         "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
       ],
@@ -843,6 +997,9 @@
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
+      "long_form_estimated_seconds": 0,
+      "long_form_missing_evidence": [],
+      "long_form_word_count": 0,
       "missing_evidence": [
         "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
       ],
@@ -866,6 +1023,9 @@
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
+      "long_form_estimated_seconds": 0,
+      "long_form_missing_evidence": [],
+      "long_form_word_count": 0,
       "missing_evidence": [
         "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
       ],
@@ -889,6 +1049,9 @@
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
+      "long_form_estimated_seconds": 0,
+      "long_form_missing_evidence": [],
+      "long_form_word_count": 0,
       "missing_evidence": [
         "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
       ],
@@ -912,6 +1075,9 @@
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
+      "long_form_estimated_seconds": 0,
+      "long_form_missing_evidence": [],
+      "long_form_word_count": 0,
       "missing_evidence": [
         "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
       ],
@@ -934,7 +1100,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 46,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 117."
+      ],
+      "long_form_word_count": 117,
       "missing_evidence": [],
       "opportunity_id": "acurast-compute-provider",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -956,7 +1127,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 48,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 122."
+      ],
+      "long_form_word_count": 122,
       "missing_evidence": [],
       "opportunity_id": "aethir-checker-node",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -978,7 +1154,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 51,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 128."
+      ],
+      "long_form_word_count": 128,
       "missing_evidence": [],
       "opportunity_id": "akash-provider",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1000,7 +1181,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 45,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 114."
+      ],
+      "long_form_word_count": 114,
       "missing_evidence": [],
       "opportunity_id": "aleph-im-compute-resource-node",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1022,7 +1208,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 50,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 125."
+      ],
+      "long_form_word_count": 125,
       "missing_evidence": [],
       "opportunity_id": "bittensor-miner",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1045,6 +1236,11 @@
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
+      "long_form_estimated_seconds": 21,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 53."
+      ],
+      "long_form_word_count": 53,
       "missing_evidence": [],
       "opportunity_id": "defi-kingdoms",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1066,7 +1262,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 41,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 104."
+      ],
+      "long_form_word_count": 104,
       "missing_evidence": [],
       "opportunity_id": "earnapp",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1088,7 +1289,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 51,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 129."
+      ],
+      "long_form_word_count": 129,
       "missing_evidence": [],
       "opportunity_id": "filecoin-storage-provider",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1111,6 +1317,11 @@
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
+      "long_form_estimated_seconds": 47,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 119."
+      ],
+      "long_form_word_count": 119,
       "missing_evidence": [],
       "opportunity_id": "fluxnode",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1132,7 +1343,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 53,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 134."
+      ],
+      "long_form_word_count": 134,
       "missing_evidence": [],
       "opportunity_id": "golem-provider",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1154,7 +1370,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 48,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 120."
+      ],
+      "long_form_word_count": 120,
       "missing_evidence": [],
       "opportunity_id": "helium-iot-hotspot",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1176,7 +1397,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 40,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 101."
+      ],
+      "long_form_word_count": 101,
       "missing_evidence": [],
       "opportunity_id": "hivemapper",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1198,7 +1424,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 43,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 108."
+      ],
+      "long_form_word_count": 108,
       "missing_evidence": [],
       "opportunity_id": "honeygain",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1220,7 +1451,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 47,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 119."
+      ],
+      "long_form_word_count": 119,
       "missing_evidence": [],
       "opportunity_id": "io-net-worker",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1242,7 +1478,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 50,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 126."
+      ],
+      "long_form_word_count": 126,
       "missing_evidence": [],
       "opportunity_id": "livepeer-orchestrator",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1264,7 +1505,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 53,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 133."
+      ],
+      "long_form_word_count": 133,
       "missing_evidence": [],
       "opportunity_id": "nosana-gpu-host",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1286,7 +1532,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 48,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 120."
+      ],
+      "long_form_word_count": 120,
       "missing_evidence": [],
       "opportunity_id": "nym-mixnode",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1308,7 +1559,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 50,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 125."
+      ],
+      "long_form_word_count": 125,
       "missing_evidence": [],
       "opportunity_id": "render-node-operator",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1330,7 +1586,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 26,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 65."
+      ],
+      "long_form_word_count": 65,
       "missing_evidence": [],
       "opportunity_id": "storj-storage-node",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1352,7 +1613,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 46,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 116."
+      ],
+      "long_form_word_count": 116,
       "missing_evidence": [],
       "opportunity_id": "subspace-farmer",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1374,7 +1640,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 52,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 131."
+      ],
+      "long_form_word_count": 131,
       "missing_evidence": [],
       "opportunity_id": "theta-edge-node",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1396,7 +1667,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 46,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 117."
+      ],
+      "long_form_word_count": 117,
       "missing_evidence": [],
       "opportunity_id": "acurast-compute-provider",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1418,7 +1694,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 48,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 122."
+      ],
+      "long_form_word_count": 122,
       "missing_evidence": [],
       "opportunity_id": "aethir-checker-node",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1440,7 +1721,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 51,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 128."
+      ],
+      "long_form_word_count": 128,
       "missing_evidence": [],
       "opportunity_id": "akash-provider",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1462,7 +1748,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 45,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 114."
+      ],
+      "long_form_word_count": 114,
       "missing_evidence": [],
       "opportunity_id": "aleph-im-compute-resource-node",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1484,7 +1775,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 50,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 125."
+      ],
+      "long_form_word_count": 125,
       "missing_evidence": [],
       "opportunity_id": "bittensor-miner",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1507,6 +1803,11 @@
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
+      "long_form_estimated_seconds": 21,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 53."
+      ],
+      "long_form_word_count": 53,
       "missing_evidence": [],
       "opportunity_id": "defi-kingdoms",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1528,7 +1829,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 41,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 104."
+      ],
+      "long_form_word_count": 104,
       "missing_evidence": [],
       "opportunity_id": "earnapp",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1550,7 +1856,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 51,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 129."
+      ],
+      "long_form_word_count": 129,
       "missing_evidence": [],
       "opportunity_id": "filecoin-storage-provider",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1573,6 +1884,11 @@
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
+      "long_form_estimated_seconds": 47,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 119."
+      ],
+      "long_form_word_count": 119,
       "missing_evidence": [],
       "opportunity_id": "fluxnode",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1594,7 +1910,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 53,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 134."
+      ],
+      "long_form_word_count": 134,
       "missing_evidence": [],
       "opportunity_id": "golem-provider",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1616,7 +1937,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 48,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 120."
+      ],
+      "long_form_word_count": 120,
       "missing_evidence": [],
       "opportunity_id": "helium-iot-hotspot",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1638,7 +1964,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 40,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 101."
+      ],
+      "long_form_word_count": 101,
       "missing_evidence": [],
       "opportunity_id": "hivemapper",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1660,7 +1991,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 43,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 108."
+      ],
+      "long_form_word_count": 108,
       "missing_evidence": [],
       "opportunity_id": "honeygain",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1682,7 +2018,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 47,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 119."
+      ],
+      "long_form_word_count": 119,
       "missing_evidence": [],
       "opportunity_id": "io-net-worker",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1704,7 +2045,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 50,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 126."
+      ],
+      "long_form_word_count": 126,
       "missing_evidence": [],
       "opportunity_id": "livepeer-orchestrator",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1726,7 +2072,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 53,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 133."
+      ],
+      "long_form_word_count": 133,
       "missing_evidence": [],
       "opportunity_id": "nosana-gpu-host",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1748,7 +2099,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 48,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 120."
+      ],
+      "long_form_word_count": 120,
       "missing_evidence": [],
       "opportunity_id": "nym-mixnode",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1770,7 +2126,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 50,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 125."
+      ],
+      "long_form_word_count": 125,
       "missing_evidence": [],
       "opportunity_id": "render-node-operator",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1792,7 +2153,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 26,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 65."
+      ],
+      "long_form_word_count": 65,
       "missing_evidence": [],
       "opportunity_id": "storj-storage-node",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1814,7 +2180,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 46,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 116."
+      ],
+      "long_form_word_count": 116,
       "missing_evidence": [],
       "opportunity_id": "subspace-farmer",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1836,7 +2207,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 52,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 131."
+      ],
+      "long_form_word_count": 131,
       "missing_evidence": [],
       "opportunity_id": "theta-edge-node",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1858,7 +2234,10 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 0,
+      "long_form_missing_evidence": [],
+      "long_form_word_count": 0,
       "missing_evidence": [],
       "opportunity_id": null,
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1879,7 +2258,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 46,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 117."
+      ],
+      "long_form_word_count": 117,
       "missing_evidence": [],
       "opportunity_id": "acurast-compute-provider",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1901,7 +2285,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 48,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 122."
+      ],
+      "long_form_word_count": 122,
       "missing_evidence": [],
       "opportunity_id": "aethir-checker-node",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1923,7 +2312,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 51,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 128."
+      ],
+      "long_form_word_count": 128,
       "missing_evidence": [],
       "opportunity_id": "akash-provider",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1945,7 +2339,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 45,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 114."
+      ],
+      "long_form_word_count": 114,
       "missing_evidence": [],
       "opportunity_id": "aleph-im-compute-resource-node",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1967,7 +2366,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 50,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 125."
+      ],
+      "long_form_word_count": 125,
       "missing_evidence": [],
       "opportunity_id": "bittensor-miner",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -1990,6 +2394,11 @@
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
+      "long_form_estimated_seconds": 21,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 53."
+      ],
+      "long_form_word_count": 53,
       "missing_evidence": [],
       "opportunity_id": "defi-kingdoms",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -2011,7 +2420,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 41,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 104."
+      ],
+      "long_form_word_count": 104,
       "missing_evidence": [],
       "opportunity_id": "earnapp",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -2033,7 +2447,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 51,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 129."
+      ],
+      "long_form_word_count": 129,
       "missing_evidence": [],
       "opportunity_id": "filecoin-storage-provider",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -2056,6 +2475,11 @@
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
+      "long_form_estimated_seconds": 47,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 119."
+      ],
+      "long_form_word_count": 119,
       "missing_evidence": [],
       "opportunity_id": "fluxnode",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -2077,7 +2501,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 53,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 134."
+      ],
+      "long_form_word_count": 134,
       "missing_evidence": [],
       "opportunity_id": "golem-provider",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -2099,7 +2528,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 48,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 120."
+      ],
+      "long_form_word_count": 120,
       "missing_evidence": [],
       "opportunity_id": "helium-iot-hotspot",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -2121,7 +2555,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 40,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 101."
+      ],
+      "long_form_word_count": 101,
       "missing_evidence": [],
       "opportunity_id": "hivemapper",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -2143,7 +2582,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 43,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 108."
+      ],
+      "long_form_word_count": 108,
       "missing_evidence": [],
       "opportunity_id": "honeygain",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -2165,7 +2609,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 47,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 119."
+      ],
+      "long_form_word_count": 119,
       "missing_evidence": [],
       "opportunity_id": "io-net-worker",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -2187,7 +2636,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 50,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 126."
+      ],
+      "long_form_word_count": 126,
       "missing_evidence": [],
       "opportunity_id": "livepeer-orchestrator",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -2209,7 +2663,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 53,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 133."
+      ],
+      "long_form_word_count": 133,
       "missing_evidence": [],
       "opportunity_id": "nosana-gpu-host",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -2231,7 +2690,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 48,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 120."
+      ],
+      "long_form_word_count": 120,
       "missing_evidence": [],
       "opportunity_id": "nym-mixnode",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -2253,7 +2717,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 50,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 125."
+      ],
+      "long_form_word_count": 125,
       "missing_evidence": [],
       "opportunity_id": "render-node-operator",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -2275,7 +2744,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 26,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 65."
+      ],
+      "long_form_word_count": 65,
       "missing_evidence": [],
       "opportunity_id": "storj-storage-node",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -2297,7 +2771,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 46,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 116."
+      ],
+      "long_form_word_count": 116,
       "missing_evidence": [],
       "opportunity_id": "subspace-farmer",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -2319,7 +2798,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 52,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 131."
+      ],
+      "long_form_word_count": 131,
       "missing_evidence": [],
       "opportunity_id": "theta-edge-node",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -2342,6 +2826,9 @@
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
+      "long_form_estimated_seconds": 0,
+      "long_form_missing_evidence": [],
+      "long_form_word_count": 0,
       "missing_evidence": [
         "Current ranking snapshot eligibility is evaluated at sitemap publication time."
       ],
@@ -2365,6 +2852,9 @@
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
+      "long_form_estimated_seconds": 0,
+      "long_form_missing_evidence": [],
+      "long_form_word_count": 0,
       "missing_evidence": [
         "Current ranking snapshot eligibility is evaluated at sitemap publication time."
       ],
@@ -2388,6 +2878,9 @@
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
+      "long_form_estimated_seconds": 0,
+      "long_form_missing_evidence": [],
+      "long_form_word_count": 0,
       "missing_evidence": [
         "Current ranking snapshot eligibility is evaluated at sitemap publication time."
       ],
@@ -2411,6 +2904,9 @@
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
+      "long_form_estimated_seconds": 0,
+      "long_form_missing_evidence": [],
+      "long_form_word_count": 0,
       "missing_evidence": [
         "Current ranking snapshot eligibility is evaluated at sitemap publication time."
       ],
@@ -2434,6 +2930,9 @@
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
+      "long_form_estimated_seconds": 0,
+      "long_form_missing_evidence": [],
+      "long_form_word_count": 0,
       "missing_evidence": [
         "Current ranking snapshot eligibility is evaluated at sitemap publication time."
       ],
@@ -2457,6 +2956,9 @@
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
+      "long_form_estimated_seconds": 0,
+      "long_form_missing_evidence": [],
+      "long_form_word_count": 0,
       "missing_evidence": [
         "Current ranking snapshot eligibility is evaluated at sitemap publication time."
       ],
@@ -2479,7 +2981,10 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 0,
+      "long_form_missing_evidence": [],
+      "long_form_word_count": 0,
       "missing_evidence": [],
       "opportunity_id": null,
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -2500,7 +3005,10 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 0,
+      "long_form_missing_evidence": [],
+      "long_form_word_count": 0,
       "missing_evidence": [],
       "opportunity_id": null,
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -2522,6 +3030,11 @@
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
+      "long_form_estimated_seconds": 21,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 53."
+      ],
+      "long_form_word_count": 53,
       "missing_evidence": [],
       "opportunity_id": "defi-kingdoms",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -2547,6 +3060,12 @@
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
+      "long_form_estimated_seconds": 6,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 15.",
+        "At least 6 substantive supported sections; available 2."
+      ],
+      "long_form_word_count": 15,
       "missing_evidence": [],
       "opportunity_id": "farmers-world",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -2572,6 +3091,12 @@
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
+      "long_form_estimated_seconds": 6,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 15.",
+        "At least 6 substantive supported sections; available 2."
+      ],
+      "long_form_word_count": 15,
       "missing_evidence": [],
       "opportunity_id": "splinterlands",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -2597,7 +3122,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 46,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 117."
+      ],
+      "long_form_word_count": 117,
       "missing_evidence": [],
       "opportunity_id": "acurast-compute-provider",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -2619,7 +3149,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 48,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 122."
+      ],
+      "long_form_word_count": 122,
       "missing_evidence": [],
       "opportunity_id": "aethir-checker-node",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -2641,7 +3176,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 51,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 128."
+      ],
+      "long_form_word_count": 128,
       "missing_evidence": [],
       "opportunity_id": "akash-provider",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -2663,7 +3203,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 45,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 114."
+      ],
+      "long_form_word_count": 114,
       "missing_evidence": [],
       "opportunity_id": "aleph-im-compute-resource-node",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -2685,7 +3230,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 50,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 125."
+      ],
+      "long_form_word_count": 125,
       "missing_evidence": [],
       "opportunity_id": "bittensor-miner",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -2708,6 +3258,11 @@
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
+      "long_form_estimated_seconds": 21,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 53."
+      ],
+      "long_form_word_count": 53,
       "missing_evidence": [],
       "opportunity_id": "defi-kingdoms",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -2729,7 +3284,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 41,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 104."
+      ],
+      "long_form_word_count": 104,
       "missing_evidence": [],
       "opportunity_id": "earnapp",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -2751,7 +3311,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 51,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 129."
+      ],
+      "long_form_word_count": 129,
       "missing_evidence": [],
       "opportunity_id": "filecoin-storage-provider",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -2774,6 +3339,11 @@
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
+      "long_form_estimated_seconds": 47,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 119."
+      ],
+      "long_form_word_count": 119,
       "missing_evidence": [],
       "opportunity_id": "fluxnode",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -2795,7 +3365,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 53,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 134."
+      ],
+      "long_form_word_count": 134,
       "missing_evidence": [],
       "opportunity_id": "golem-provider",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -2817,7 +3392,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 48,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 120."
+      ],
+      "long_form_word_count": 120,
       "missing_evidence": [],
       "opportunity_id": "helium-iot-hotspot",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -2839,7 +3419,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 40,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 101."
+      ],
+      "long_form_word_count": 101,
       "missing_evidence": [],
       "opportunity_id": "hivemapper",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -2861,7 +3446,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 43,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 108."
+      ],
+      "long_form_word_count": 108,
       "missing_evidence": [],
       "opportunity_id": "honeygain",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -2883,7 +3473,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 47,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 119."
+      ],
+      "long_form_word_count": 119,
       "missing_evidence": [],
       "opportunity_id": "io-net-worker",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -2905,7 +3500,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 50,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 126."
+      ],
+      "long_form_word_count": 126,
       "missing_evidence": [],
       "opportunity_id": "livepeer-orchestrator",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -2927,7 +3527,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 53,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 133."
+      ],
+      "long_form_word_count": 133,
       "missing_evidence": [],
       "opportunity_id": "nosana-gpu-host",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -2949,7 +3554,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 48,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 120."
+      ],
+      "long_form_word_count": 120,
       "missing_evidence": [],
       "opportunity_id": "nym-mixnode",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -2971,7 +3581,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 50,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 125."
+      ],
+      "long_form_word_count": 125,
       "missing_evidence": [],
       "opportunity_id": "render-node-operator",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -2993,7 +3608,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 26,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 65."
+      ],
+      "long_form_word_count": 65,
       "missing_evidence": [],
       "opportunity_id": "storj-storage-node",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -3015,7 +3635,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 46,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 116."
+      ],
+      "long_form_word_count": 116,
       "missing_evidence": [],
       "opportunity_id": "subspace-farmer",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -3037,7 +3662,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 52,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 131."
+      ],
+      "long_form_word_count": 131,
       "missing_evidence": [],
       "opportunity_id": "theta-edge-node",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -3059,7 +3689,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 46,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 117."
+      ],
+      "long_form_word_count": 117,
       "missing_evidence": [],
       "opportunity_id": "acurast-compute-provider",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -3080,7 +3715,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 48,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 122."
+      ],
+      "long_form_word_count": 122,
       "missing_evidence": [],
       "opportunity_id": "aethir-checker-node",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -3101,7 +3741,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 51,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 128."
+      ],
+      "long_form_word_count": 128,
       "missing_evidence": [],
       "opportunity_id": "akash-provider",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -3122,7 +3767,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 45,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 114."
+      ],
+      "long_form_word_count": 114,
       "missing_evidence": [],
       "opportunity_id": "aleph-im-compute-resource-node",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -3143,7 +3793,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 50,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 125."
+      ],
+      "long_form_word_count": 125,
       "missing_evidence": [],
       "opportunity_id": "bittensor-miner",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -3165,6 +3820,12 @@
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
+      "long_form_estimated_seconds": 14,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 37.",
+        "At least 6 substantive supported sections; available 2."
+      ],
+      "long_form_word_count": 37,
       "missing_evidence": [],
       "opportunity_id": "bless",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -3186,6 +3847,12 @@
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
+      "long_form_estimated_seconds": 19,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 49.",
+        "At least 6 substantive supported sections; available 2."
+      ],
+      "long_form_word_count": 49,
       "missing_evidence": [],
       "opportunity_id": "dawn",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -3206,7 +3873,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 41,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 104."
+      ],
+      "long_form_word_count": 104,
       "missing_evidence": [],
       "opportunity_id": "earnapp",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -3227,7 +3899,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 51,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 129."
+      ],
+      "long_form_word_count": 129,
       "missing_evidence": [],
       "opportunity_id": "filecoin-storage-provider",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -3249,6 +3926,11 @@
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
+      "long_form_estimated_seconds": 47,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 119."
+      ],
+      "long_form_word_count": 119,
       "missing_evidence": [],
       "opportunity_id": "fluxnode",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -3269,7 +3951,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 53,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 134."
+      ],
+      "long_form_word_count": 134,
       "missing_evidence": [],
       "opportunity_id": "golem-provider",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -3291,6 +3978,12 @@
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
+      "long_form_estimated_seconds": 16,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 41.",
+        "At least 6 substantive supported sections; available 2."
+      ],
+      "long_form_word_count": 41,
       "missing_evidence": [],
       "opportunity_id": "grass",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -3311,7 +4004,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 48,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 120."
+      ],
+      "long_form_word_count": 120,
       "missing_evidence": [],
       "opportunity_id": "helium-iot-hotspot",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -3332,7 +4030,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 40,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 101."
+      ],
+      "long_form_word_count": 101,
       "missing_evidence": [],
       "opportunity_id": "hivemapper",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -3353,7 +4056,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 43,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 108."
+      ],
+      "long_form_word_count": 108,
       "missing_evidence": [],
       "opportunity_id": "honeygain",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -3374,7 +4082,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 47,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 119."
+      ],
+      "long_form_word_count": 119,
       "missing_evidence": [],
       "opportunity_id": "io-net-worker",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -3395,7 +4108,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 50,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 126."
+      ],
+      "long_form_word_count": 126,
       "missing_evidence": [],
       "opportunity_id": "livepeer-orchestrator",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -3416,7 +4134,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 53,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 133."
+      ],
+      "long_form_word_count": 133,
       "missing_evidence": [],
       "opportunity_id": "nosana-gpu-host",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -3437,7 +4160,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 48,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 120."
+      ],
+      "long_form_word_count": 120,
       "missing_evidence": [],
       "opportunity_id": "nym-mixnode",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -3458,7 +4186,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 50,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 125."
+      ],
+      "long_form_word_count": 125,
       "missing_evidence": [],
       "opportunity_id": "render-node-operator",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -3479,7 +4212,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 46,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 116."
+      ],
+      "long_form_word_count": 116,
       "missing_evidence": [],
       "opportunity_id": "subspace-farmer",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -3500,7 +4238,12 @@
       "evidence_status": "READY",
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
-      "long_form_eligible": true,
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 52,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 131."
+      ],
+      "long_form_word_count": 131,
       "missing_evidence": [],
       "opportunity_id": "theta-edge-node",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -3533,8 +4276,9 @@
       "WHY_ROI_UNAVAILABLE": 22
     },
     "partial_count": 6,
-    "ready_long_form_count": 116,
+    "ready_long_form_count": 0,
     "ready_short_form_count": 132,
+    "ready_short_only_count": 132,
     "total_topic_candidates": 160
   }
 }

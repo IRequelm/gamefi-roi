@@ -18,6 +18,7 @@ from typing import Any, Callable
 
 from app.config.settings import Settings
 from app.content_package.generator import ContentPackage, build_content_packages, validate_package
+from app.content_inventory.inventory import LONG_FORM_MIN_SECONDS, LONG_FORM_MIN_WORDS
 from app.publishing.elevenlabs import ElevenLabsConfig, ElevenLabsNarrationProvider, ElevenLabsGenerationResult
 
 SHORT_FORM = "SHORT_FORM"
@@ -76,6 +77,8 @@ def build_render_job(package: ContentPackage) -> RenderJob:
         raise RenderError("content package evidence validation failed")
     if package.format not in {SHORT_FORM, LONG_FORM}:
         raise RenderError("unsupported render format")
+    if package.format == LONG_FORM and (package.estimated_narration_words < LONG_FORM_MIN_WORDS or package.estimated_duration_seconds < LONG_FORM_MIN_SECONDS):
+        raise RenderError("long-form evidence-backed narration budget is insufficient")
     script = _script_for(package)
     if not script:
         raise RenderError("content package has no supported narration text")
@@ -170,6 +173,8 @@ def render_package(
     duration = _probe_video(video_path, run)
     if duration is None:
         return _failed(package, "rendered video is not decodable", evidence=job.evidence_fingerprint, width=job.width, height=job.height)
+    if job.format == LONG_FORM and duration < LONG_FORM_MIN_SECONDS:
+        return _failed(package, "rendered long-form video is shorter than the evidence-backed minimum", evidence=job.evidence_fingerprint, width=job.width, height=job.height)
     result = RenderResult(package.source_inventory_item_id, package.package_id, job.format, RENDER_READY, None, str(video_path), str(caption_path), str(audio), duration, job.width, job.height, voice_name, voice_id, narration.metadata.model_id, job.evidence_fingerprint, str(metadata_dir / f"{package.package_id}.json"), (now or datetime.now(UTC)).isoformat())
     Path(result.metadata_path).write_text(json.dumps({**asdict(result), "asset_checksums": {"video": _sha256(video_path), "audio": _sha256(audio), "captions": _sha256(caption_path)}}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return result
@@ -189,12 +194,17 @@ def validate_render(result: RenderResult) -> tuple[str, ...]:
         blockers.append("short-form aspect ratio is invalid")
     if result.format == LONG_FORM and (result.width, result.height) != (1920, 1080):
         blockers.append("long-form aspect ratio is invalid")
+    if result.format == LONG_FORM and (result.duration_seconds is None or result.duration_seconds < LONG_FORM_MIN_SECONDS):
+        blockers.append("long-form duration is below the evidence-backed minimum")
     return tuple(blockers)
 
 
 def _script_for(package: ContentPackage) -> str:
     parts = [package.hook]
-    parts.extend(str(point["text"]) for point in package.factual_talking_points if point.get("text"))
+    if package.format == LONG_FORM and package.narration_sections:
+        parts.extend(str(section["text"]) for section in package.narration_sections if section.get("text"))
+    else:
+        parts.extend(str(point["text"]) for point in package.factual_talking_points if point.get("text"))
     parts.append(package.cta)
     return " ".join(part.strip() for part in parts if part.strip())
 
