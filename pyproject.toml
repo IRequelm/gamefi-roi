@@ -35,6 +35,7 @@ distribution-worker = "app.publishing.distribution_worker:main"
 content-inventory = "app.content_inventory.cli:main"
 content-package = "app.content_package.cli:main"
 video-render = "app.video_render.cli:main"
+short-youtube-handoff = "app.publishing.short_youtube_handoff_cli:main"
 nvidia-ai = "app.ai.cli:main"
 
 [tool.setuptools]

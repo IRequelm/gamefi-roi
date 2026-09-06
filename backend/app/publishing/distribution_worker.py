@@ -18,6 +18,13 @@ from app.distribution.x_publisher import XApiError, XAuthError, XAmbiguousApiErr
 from app.distribution.refill import DistributionRefillConfig, DistributionRefiller
 from app.publishing.youtube import YouTubePublisher, YouTubePublisherConfig
 from app.publishing.youtube_distribution import YouTubeDistributionConfig, YouTubeDistributionPublisher
+from app.publishing.short_youtube_handoff import (
+    DEFAULT_CAP_STATE,
+    DEFAULT_QUEUE,
+    autonomous_youtube_cap_available,
+    publish_next as publish_next_short_handoff,
+    record_autonomous_youtube_success,
+)
 
 logger = logging.getLogger("gamcryp.distribution_worker")
 
@@ -30,6 +37,8 @@ class DistributionWorkerConfig:
     state_file: Path = Path("data/local/distribution/worker_state.json")
     failure_cooldown_seconds: int = 1800
     manual_outbox_file: Path = Path("distribution/manual_outbox/x_manual_ready.json")
+    short_handoff_file: Path = DEFAULT_QUEUE
+    autonomous_cap_file: Path = DEFAULT_CAP_STATE
 
     @classmethod
     def from_environment(cls) -> "DistributionWorkerConfig":
@@ -41,6 +50,8 @@ class DistributionWorkerConfig:
             state_file=Path(os.getenv("GAMEFI_DISTRIBUTION_WORKER_STATE_FILE", "data/local/distribution/worker_state.json")),
             failure_cooldown_seconds=int(os.getenv("GAMEFI_DISTRIBUTION_FAILURE_COOLDOWN_SECONDS", "1800")),
             manual_outbox_file=Path(os.getenv("GAMEFI_MANUAL_X_OUTBOX_FILE", "distribution/manual_outbox/x_manual_ready.json")),
+            short_handoff_file=Path(os.getenv("GAMEFI_SHORT_YOUTUBE_HANDOFF_FILE", str(DEFAULT_QUEUE))),
+            autonomous_cap_file=Path(os.getenv("GAMEFI_YOUTUBE_AUTONOMOUS_CAP_FILE", str(DEFAULT_CAP_STATE))),
         )
 
 
@@ -123,6 +134,7 @@ class DistributionWorker:
             results.append({"platform": "distribution", "status": "refill_failed", "error_category": type(exc).__name__})
         results.append(self._process_x(now))
         results.extend(self._process_youtube(now))
+        results.append(self._process_short_handoff(now))
         return results
 
     def run_forever(self, *, interval_seconds: int = 1800) -> None:
@@ -183,7 +195,11 @@ class DistributionWorker:
     def _process_youtube(self, now: datetime) -> list[dict[str, Any]]:
         summary = self.youtube_distribution.queue_summary()
         results = []
+        cap_available = autonomous_youtube_cap_available(self.config.autonomous_cap_file, now=now)
         for content_id in summary.get("publishable", []):
+            if self.config.live and not cap_available:
+                results.append({"platform": "YouTube", "content_id": content_id, "status": "daily_cap"})
+                continue
             key = f"YouTube:{content_id}"
             video_path = _find_asset(self.config.video_directory, content_id, (".mp4", ".mov", ".m4v", ".webm"))
             thumbnail_path = _find_asset(self.config.thumbnail_directory, content_id, (".jpg", ".jpeg", ".png")) if self.config.thumbnail_directory else None
@@ -198,6 +214,9 @@ class DistributionWorker:
                     continue
                 operation = self.youtube_distribution.upload(content_id, video_path=video_path, thumbnail_path=thumbnail_path, confirm_publish=self.config.live) if self.config.live else self.youtube_distribution.dry_run(content_id, video_path=video_path, thumbnail_path=thumbnail_path)
                 self.state.record_success(key)
+                if self.config.live and getattr(operation, "status", None) == "uploaded":
+                    record_autonomous_youtube_success(self.config.autonomous_cap_file, now=now)
+                    cap_available = False
                 results.append({"platform": "YouTube", "content_id": content_id, "status": "published" if self.config.live else "dry_run", "result": operation.to_safe_dict()})
             except Exception as exc:
                 category = type(exc).__name__
@@ -207,6 +226,22 @@ class DistributionWorker:
         if not results:
             results.append({"platform": "YouTube", "status": "idle", "detail": "no GREEN queue item"})
         return results
+
+    def _process_short_handoff(self, now: datetime) -> dict[str, Any]:
+        if not self.config.short_handoff_file.is_file():
+            return {"platform": "YouTubeShortHandoff", "status": "idle", "detail": "handoff queue is empty"}
+        try:
+            result = publish_next_short_handoff(
+                publisher=self.youtube_distribution.publisher,
+                queue_path=self.config.short_handoff_file,
+                cap_path=self.config.autonomous_cap_file,
+                now=now,
+                live=self.config.live,
+            )
+            return {"platform": "YouTubeShortHandoff", **result}
+        except Exception as exc:
+            logger.error("short_youtube_handoff_failed category=%s", type(exc).__name__)
+            return {"platform": "YouTubeShortHandoff", "status": "failed", "error_category": type(exc).__name__}
 
 
 def _find_asset(directory: Path | None, content_id: str, extensions: tuple[str, ...]) -> Path | None:
