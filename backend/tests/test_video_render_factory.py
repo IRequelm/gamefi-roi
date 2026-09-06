@@ -9,6 +9,7 @@ from app.video_render.factory import (
     APPROVED_VOICES,
     NOT_READY,
     RENDER_READY,
+    RenderResult,
     build_render_job,
     render_package,
     validate_render,
@@ -116,3 +117,64 @@ def test_non_ready_package_cannot_become_render_job() -> None:
         assert "READY" in str(error) or "unsupported" in str(error)
     else:
         raise AssertionError("blocked package unexpectedly rendered")
+
+
+def test_guide_only_package_remains_evidence_bound_and_renderable() -> None:
+    package = _package()
+    from app.strategies.catalog import get_opportunity
+
+    opportunity = get_opportunity(package.opportunity_id)
+    assert opportunity is not None
+    assert opportunity.admission_mode == "GUIDE_ONLY"
+    assert build_render_job(package).format == "SHORT_FORM"
+
+
+def _short_result_with_quality(**overrides):
+    base = {
+        "meaningful_scene_count": 6,
+        "scene_diversity": ["hook", "identity", "setup", "evidence", "status", "cta"],
+        "non_caption_visual_element_count": 6,
+        "identity_present": True,
+        "identity_mode": "branded_identity_card",
+        "caption_safe_area": {"left": 96, "right": 96, "bottom": 220},
+        "scene_transitions": True,
+    }
+    base.update(overrides)
+    return base
+
+
+def _quality_result(tmp_path: Path, quality: dict):
+    video = tmp_path / "short.mp4"
+    caption = tmp_path / "short.srt"
+    audio = tmp_path / "short.mp3"
+    for path in (video, caption, audio):
+        path.write_bytes(b"asset")
+    return RenderResult("content", "package", "SHORT_FORM", RENDER_READY, None, str(video), str(caption), str(audio), 30.0, 1080, 1920, "Sarah", APPROVED_VOICES[0][1], "model", "evidence", None, quality_metadata=quality)
+
+
+def test_static_text_only_short_is_not_ready(tmp_path: Path) -> None:
+    blockers = validate_render(_quality_result(tmp_path, _short_result_with_quality(meaningful_scene_count=1, scene_diversity=["same"], non_caption_visual_element_count=0, scene_transitions=False)))
+    assert any("fewer than five" in blocker for blocker in blockers)
+    assert any("scene diversity" in blocker for blocker in blockers)
+
+
+def test_subtitle_only_changes_do_not_count_as_scene_diversity(tmp_path: Path) -> None:
+    blockers = validate_render(_quality_result(tmp_path, _short_result_with_quality(scene_diversity=["caption", "caption", "caption", "caption", "caption", "caption"])))
+    assert any("scene diversity" in blocker for blocker in blockers)
+
+
+def test_five_plus_meaningful_scenes_pass_quality_gate(tmp_path: Path) -> None:
+    result = _quality_result(tmp_path, _short_result_with_quality(meaningful_scene_count=5, scene_diversity=["hook", "identity", "setup", "evidence", "cta"]))
+    assert validate_render(result) == ()
+
+
+def test_logo_and_missing_logo_identity_modes_are_explicit(tmp_path: Path) -> None:
+    assert _short_result_with_quality(identity_mode="official_logo")["identity_mode"] == "official_logo"
+    assert _short_result_with_quality(identity_mode="branded_identity_card")["identity_mode"] == "branded_identity_card"
+    blockers = validate_render(_quality_result(tmp_path, _short_result_with_quality(identity_present=False, identity_mode="none")))
+    assert any("identity" in blocker for blocker in blockers)
+
+
+def test_caption_safe_area_is_required(tmp_path: Path) -> None:
+    blockers = validate_render(_quality_result(tmp_path, _short_result_with_quality(caption_safe_area={"left": 20, "right": 20, "bottom": 80})))
+    assert any("safe-area" in blocker for blocker in blockers)

@@ -31,7 +31,7 @@ def _render(tmp_path: Path, *, package, **kwargs) -> RenderResult:
     audio = tmp_path / "audio.mp3"
     for path in (video, caption, audio):
         path.write_bytes(b"asset")
-    return RenderResult(package.source_inventory_item_id, package.package_id, "SHORT_FORM", RENDER_READY, None, str(video), str(caption), str(audio), 10.0, 1080, 1920, "Sarah", "EXAVITQu4vr4xnSDxMaL", "eleven_multilingual_v2", package.evidence_fingerprint, None)
+    return RenderResult(package.source_inventory_item_id, package.package_id, "SHORT_FORM", RENDER_READY, None, str(video), str(caption), str(audio), 10.0, 1080, 1920, "Sarah", "EXAVITQu4vr4xnSDxMaL", "eleven_multilingual_v2", package.evidence_fingerprint, None, quality_metadata={"meaningful_scene_count": 6, "scene_diversity": ["hook", "identity", "setup", "evidence", "status", "cta"], "non_caption_visual_element_count": 6, "identity_present": True, "identity_mode": "branded_identity_card", "caption_safe_area": {"left": 96, "right": 96, "bottom": 220}, "scene_transitions": True})
 
 
 def test_ready_short_render_enters_handoff_once(tmp_path: Path) -> None:
