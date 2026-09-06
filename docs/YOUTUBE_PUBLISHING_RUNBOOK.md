@@ -1,6 +1,6 @@
 # GamCryp YouTube API Publishing Runbook
 
-Updated: 2026-09-01
+Updated: 2026-09-06
 Status: autonomous YouTube publishing paused pending visual review; live flag is false
 
 ## Purpose
@@ -16,6 +16,8 @@ The Windows distribution worker may load the ignored local `.env` and run in liv
 Refill uses the existing snapshot/opportunity API facts and `build_learning_batch` policy. Stale, invalid, unsupported, or non-refreshable financial facts remain RED; points-only or high-risk content remains YELLOW under the existing rules. A GREEN YouTube package without a matching rendered asset is held in the queue's `pending_asset` collection and is not publishable. X queue generation may continue while X publication remains fail-closed when credentials are unavailable.
 
 The worker's append-only transcript is `data/local/distribution/worker.log`; cooldown and refill state are under `data/local/distribution/`. Set `GAMEFI_DISTRIBUTION_LIVE=false` and disable the scheduled task before stopping autonomous publishing.
+
+The short-form handoff forward buffer is intentionally bounded at 14 queued GREEN renders (normally 7–14 in steady state) to avoid unnecessary ElevenLabs/render credit churn. The one successful public Short per local calendar day cap is unchanged.
 
 ## Architecture
 
