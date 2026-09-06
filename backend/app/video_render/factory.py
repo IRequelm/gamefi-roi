@@ -145,11 +145,21 @@ def render_package(
     subtitle_path = metadata_dir / f"{package.package_id}.subtitle.txt"
     title_path.write_text(package.title_candidates[0], encoding="utf-8")
     subtitle_path.write_text("GamCryp evidence-aware explainer", encoding="utf-8")
+    logo_path = _local_logo_path(package)
+    audio_input = 1
+    input_args = ["-i", str(audio)]
+    video_map = "0:v:0"
+    base_filter = f"drawtext=fontfile={_filter_path(Path('C:/Windows/Fonts/arial.ttf'))}:textfile={_filter_path(title_path)}:fontcolor=white:fontsize={72 if job.format == SHORT_FORM else 64}:x=(w-text_w)/2:y=h*0.18:box=1:boxcolor=0x0d234dCC:boxborderw=24,subtitles={_filter_path(caption_path)}:fontsdir={_filter_path(Path('C:/Windows/Fonts'))}:force_style='FontName=Arial,FontSize={20 if job.format == SHORT_FORM else 18},PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,Outline=2,MarginV=120'"
+    filter_graph = base_filter
+    if logo_path is not None:
+        input_args = ["-loop", "1", "-i", str(logo_path), "-i", str(audio)]
+        audio_input = 2
+        filter_graph = f"[0:v]{base_filter}[base];[1:v]scale=260:260:force_original_aspect_ratio=decrease[logo];[base][logo]overlay=(W-w)/2:H*0.05"
     command = [
         "ffmpeg", "-y", "-f", "lavfi", "-i", f"color=c=0x071329:s={job.width}x{job.height}:r=30",
-        "-i", str(audio), "-t", str(max(1, _audio_duration(audio, run) or _estimate_duration(job.script))),
-        "-vf", f"drawtext=fontfile={_filter_path(Path('C:/Windows/Fonts/arial.ttf'))}:textfile={_filter_path(title_path)}:fontcolor=white:fontsize={72 if job.format == SHORT_FORM else 64}:x=(w-text_w)/2:y=h*0.18:box=1:boxcolor=0x0d234dCC:boxborderw=24,subtitles={_filter_path(caption_path)}:fontsdir={_filter_path(Path('C:/Windows/Fonts'))}:force_style='FontName=Arial,FontSize={20 if job.format == SHORT_FORM else 18},PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,Outline=2,MarginV=120'",
-        "-map", "0:v:0", "-map", "1:a:0", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", str(video_path),
+        *input_args, "-t", str(max(1, _audio_duration(audio, run) or _estimate_duration(job.script))),
+        "-filter_complex" if logo_path is not None else "-vf", filter_graph,
+        "-map", video_map, "-map", f"{audio_input}:a:0", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", str(video_path),
     ]
     try:
         completed = run(command, check=False, capture_output=True, text=True)
@@ -187,6 +197,18 @@ def _script_for(package: ContentPackage) -> str:
     parts.extend(str(point["text"]) for point in package.factual_talking_points if point.get("text"))
     parts.append(package.cta)
     return " ".join(part.strip() for part in parts if part.strip())
+
+
+def _local_logo_path(package: ContentPackage) -> Path | None:
+    if package.opportunity_id is None:
+        return None
+    from app.strategies.catalog import get_opportunity
+
+    opportunity = get_opportunity(package.opportunity_id)
+    if opportunity is None or not opportunity.logo_asset:
+        return None
+    candidate = Path("frontend") / opportunity.logo_asset.lstrip("/")
+    return candidate if candidate.is_file() else None
 
 
 def _failed(package: ContentPackage, reason: str, *, evidence: str = "", width: int = 0, height: int = 0) -> RenderResult:
