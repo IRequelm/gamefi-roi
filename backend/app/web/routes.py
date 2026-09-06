@@ -33,6 +33,7 @@ from app.search.canonical import (
 from app.storage.monetization import MonetizationRepository
 from app.strategies.catalog import get_outbound_destination
 from app.web.seo import (
+    SeoPage,
     curated_rankings_page,
     game_page,
     home_page,
@@ -63,8 +64,12 @@ def serve_home(
     settings: Settings = Depends(get_settings),
     engine: Engine = Depends(get_database_engine),
 ) -> HTMLResponse:
-    service = ApiDataService(engine)
-    page = home_page(service, settings=settings, request=request)
+    try:
+        service = ApiDataService(engine)
+        page = home_page(service, settings=settings, request=request)
+    except SQLAlchemyError as exc:
+        logger.error("public_home_degraded", extra={"error": str(exc)})
+        return _degraded_html_response(request=request, settings=settings, path="/", title="GamCryp temporarily degraded")
     return _html_response(page, request=request, settings=settings, engine=engine)
 
 
@@ -74,8 +79,12 @@ def serve_rankings(
     settings: Settings = Depends(get_settings),
     engine: Engine = Depends(get_database_engine),
 ) -> HTMLResponse:
-    service = ApiDataService(engine)
-    page = rankings_page(service, settings=settings, request=request)
+    try:
+        service = ApiDataService(engine)
+        page = rankings_page(service, settings=settings, request=request)
+    except SQLAlchemyError as exc:
+        logger.error("public_rankings_degraded", extra={"error": str(exc)})
+        return _degraded_html_response(request=request, settings=settings, path="/rankings", title="Rankings temporarily unavailable")
     return _html_response(page, request=request, settings=settings, engine=engine)
 
 
@@ -103,8 +112,12 @@ def serve_opportunities(
     settings: Settings = Depends(get_settings),
     engine: Engine = Depends(get_database_engine),
 ) -> HTMLResponse:
-    service = ApiDataService(engine)
-    page = opportunities_page(service, settings=settings, request=request)
+    try:
+        service = ApiDataService(engine)
+        page = opportunities_page(service, settings=settings, request=request)
+    except SQLAlchemyError as exc:
+        logger.error("public_opportunities_degraded", extra={"error": str(exc)})
+        return _degraded_html_response(request=request, settings=settings, path="/opportunities", title="Opportunities temporarily unavailable")
     return _html_response(page, request=request, settings=settings, engine=engine)
 
 
@@ -193,7 +206,12 @@ def sitemap_xml(
     engine: Engine = Depends(get_database_engine),
 ) -> Response:
     entries = []
-    for page in canonical_page_inventory(engine):
+    try:
+        pages = canonical_page_inventory(engine)
+    except SQLAlchemyError as exc:
+        logger.error("sitemap_degraded", extra={"error": str(exc)})
+        pages = ()
+    for page in pages:
         entries.append(
             "  <url>"
             f"<loc>{escape(page.absolute_url(settings), quote=False)}</loc>"
@@ -209,6 +227,28 @@ def sitemap_xml(
         + "\n</urlset>\n"
     )
     return Response(content=xml, media_type="application/xml", headers={"Cache-Control": "public, max-age=300"})
+
+
+def _degraded_html_response(*, request: Request, settings: Settings, path: str, title: str) -> HTMLResponse:
+    page = SeoPage(
+        path=path,
+        title=title,
+        description="GamCryp is temporarily serving a degraded public view while stored data is unavailable.",
+        body_html=(
+            '<div class="page-shell"><section class="page-head error-state">'
+            '<p class="eyebrow">GamCryp public beta</p>'
+            f"<h1>{escape(title)}</h1>"
+            '<p class="lede">Stored opportunity data is temporarily unavailable. No fresh or estimated values are being invented.</p>'
+            '<p><a class="secondary-button" href="/methodology">Review the methodology</a></p>'
+            "</section></div>"
+        ),
+        json_ld=(),
+    )
+    return HTMLResponse(
+        render_document(page, settings=settings),
+        status_code=200,
+        headers={"Cache-Control": "no-store", "X-GamCryp-Degraded": "database-unavailable"},
+    )
 
 
 @router.get("/{indexnow_key}.txt")

@@ -70,6 +70,8 @@ def worker(tmp_path: Path, *, live: bool = False, x=None, youtube=None) -> Distr
         state_file=tmp_path / "worker.json",
         failure_cooldown_seconds=3600,
         manual_outbox_file=tmp_path / "outbox.json",
+        short_handoff_file=tmp_path / "short-handoff.json",
+        autonomous_cap_file=tmp_path / "cap.json",
     )
     return DistributionWorker(config=config, x_service=x or FakeX(), youtube_distribution=youtube or FakeYouTube(), now=lambda: NOW)
 
@@ -86,7 +88,7 @@ def test_yellow_and_red_items_are_not_auto_processed(tmp_path):
     x = FakeX(awaiting=["yellow-x"], blocked=["red-x"])
     youtube = FakeYouTube(awaiting=["yellow-video"], blocked=["red-video"])
     result = worker(tmp_path, x=x, youtube=youtube).run_once()
-    assert [item["status"] for item in result] == ["idle", "idle"]
+    assert [item["status"] for item in result] == ["idle", "idle", "idle"]
     assert x.calls == []
     assert youtube.calls == []
 

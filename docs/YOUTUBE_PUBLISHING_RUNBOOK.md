@@ -1,7 +1,7 @@
 # GamCryp YouTube API Publishing Runbook
 
-Updated: 2026-09-01
-Status: queue and publisher ready for review; OAuth and live upload not performed
+Updated: 2026-09-06
+Status: autonomous YouTube publishing paused pending visual review; live flag is false
 
 ## Purpose
 
@@ -16,6 +16,8 @@ The Windows distribution worker may load the ignored local `.env` and run in liv
 Refill uses the existing snapshot/opportunity API facts and `build_learning_batch` policy. Stale, invalid, unsupported, or non-refreshable financial facts remain RED; points-only or high-risk content remains YELLOW under the existing rules. A GREEN YouTube package without a matching rendered asset is held in the queue's `pending_asset` collection and is not publishable. X queue generation may continue while X publication remains fail-closed when credentials are unavailable.
 
 The worker's append-only transcript is `data/local/distribution/worker.log`; cooldown and refill state are under `data/local/distribution/`. Set `GAMEFI_DISTRIBUTION_LIVE=false` and disable the scheduled task before stopping autonomous publishing.
+
+The short-form handoff forward buffer is intentionally bounded at 14 queued GREEN renders (normally 7–14 in steady state) to avoid unnecessary ElevenLabs/render credit churn. The one successful public Short per local calendar day cap is unchanged.
 
 ## Architecture
 
@@ -37,6 +39,14 @@ canonical Content Pack
 -> dry-run
 -> explicit private upload
 ```
+
+## Short-form visual quality gate
+
+Short-form renders use the `short-motion-card-v2` visual contract. A GREEN/`RENDER_READY` Short must contain at least five meaningful scenes; the factory currently emits six: hook, identity, setup/mechanics, evidence, status, and CTA. Scene diversity and transitions are recorded in render metadata, and changing subtitle text alone cannot satisfy the gate.
+
+Each Short must also contain a non-caption visual element in every planned beat, an early opportunity identity, and a mobile-safe caption area. Official local logos are used when catalog metadata points to a present asset. Missing logos use a branded GamCryp identity card; fabricated logos, hotlinked images, and gameplay screenshots are not allowed. GUIDE_ONLY and ROI-unavailable content remains subject to the existing evidence restrictions.
+
+The render metadata records the quality version, scene count/diversity, non-caption visual-element count, identity mode, caption safe area, evidence-point count, and ElevenLabs voice/model. Any missing or invalid quality metadata makes the Short `NOT_READY` and prevents queue eligibility.
 
 Direct free-form manifests are not an operator CLI input. This prevents a manually authored manifest from bypassing current distribution readiness.
 
@@ -186,4 +196,30 @@ If an upload outcome is uncertain, inspect the channel and local state before is
 
 ## Safe Disable
 
-Do not run `youtube-publisher authorize` or `youtube-publisher upload`. Removing the private token path or revoking the app in the Google Account also prevents authenticated publishing. No public application request and no active scheduler invoke this publisher.
+To temporarily stop autonomous publishing, update the ignored local `.env` and disable the scheduled task:
+
+```powershell
+$envPath = 'C:\Projects\gamefi-roi\.env'
+(Get-Content $envPath) -replace '^GAMEFI_DISTRIBUTION_LIVE=.*$', 'GAMEFI_DISTRIBUTION_LIVE=false' | Set-Content $envPath -Encoding UTF8
+Stop-ScheduledTask -TaskName 'GamCryp Distribution Worker' -ErrorAction SilentlyContinue
+Disable-ScheduledTask -TaskName 'GamCryp Distribution Worker'
+```
+
+To re-enable unattended operation without changing the one-public-Short-per-local-day cap:
+
+```powershell
+$envPath = 'C:\Projects\gamefi-roi\.env'
+(Get-Content $envPath) -replace '^GAMEFI_DISTRIBUTION_LIVE=.*$', 'GAMEFI_DISTRIBUTION_LIVE=true' | Set-Content $envPath -Encoding UTF8
+Enable-ScheduledTask -TaskName 'GamCryp Distribution Worker'
+Start-ScheduledTask -TaskName 'GamCryp Distribution Worker'
+```
+
+Check the worker with:
+
+```powershell
+Get-ScheduledTask -TaskName 'GamCryp Distribution Worker' | Select-Object TaskName, State
+Get-ScheduledTaskInfo -TaskName 'GamCryp Distribution Worker' | Select-Object LastRunTime, LastTaskResult, NextRunTime, NumberOfMissedRuns
+Get-Content 'C:\Projects\gamefi-roi\data\local\distribution\worker.log' -Tail 40
+```
+
+The task is registered with an at-logon trigger and a 30-minute worker interval. It loads the ignored `.env` at startup, keeps OAuth and upload state under `data/local/youtube/`, and remains fail-closed when X credentials are unavailable. Do not run `youtube-publisher authorize` or `youtube-publisher upload` as part of unattended operation.

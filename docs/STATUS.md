@@ -3,6 +3,8 @@
 Updated: 2026-08-26
 Project version: 0.1
 
+V2 finish-pass operational truth is maintained in `docs/MASTER_CONTROL.md`; this document remains the authoritative gate board and currently has no numbered gate active.
+
 ## Current state
 
 **PROJECT STATUS: V1 COMPLETE — OPERATIONS / GROWTH MODE**
@@ -25,7 +27,7 @@ Post-G16 production scheduler fix: the GitHub Actions beta recalculation workflo
 
 G17 is complete in the repository. It adds referral operations coverage states, a single-operator protected console, safe referral metadata editing, work queue generation, stored-metadata health checks, and manual verified revenue entry. Referral, sponsor, click, and revenue data remain outside ROI, Risk, Confidence, strategy snapshots, validation, and organic ranking order.
 
-G18 is complete. The public beta now serves the expanded V1 surface with 26 opportunities and 10 modeled strategies. The latest Render deployment is live, GitHub Actions recalculation succeeded with 10 scored snapshots and no failures, freshness aging was verified in production, and `stale_strategy_count` returns to 0 after a successful recalculation. No mandatory implementation gate is active. Future work should be classified as Operations, Growth, V1.x improvement, or V2 proposal.
+G18 is complete. The current catalog has 51 opportunities and 15 modeled strategies; the historical G18 acceptance baseline remains 26 opportunities and 10 modeled strategies. The latest scheduled GitHub Actions recalculation succeeded with 10 scored snapshots and no failures, while the public Free Render service remains subject to cold-start availability. No mandatory implementation gate is active. Future work should be classified as Operations, Growth, V1.x improvement, or V2 proposal. See `docs/MASTER_CONTROL.md` for the current operational state.
 
 Post-G18 launch polish is an Operations/Growth patch, not a gate reopen. It cleans public-facing labels, opportunity-card explanations, CTA relationship text, footer contact links, and optional consent-gated GA4 readiness while preserving ROI formulas, adapters, scoring, snapshots, API contracts, referral routing, monetization separation, and organic ranking order.
 

@@ -120,23 +120,43 @@ export class ApiError extends Error {
   }
 }
 
-export async function apiGet(path, fetcher = fetch) {
-  const response = await fetcher(`${API_BASE}${path}`, {
-    headers: { Accept: "application/json" },
-  });
-  if (!response.ok) {
-    let message = `API request failed with status ${response.status}`;
-    try {
-      const payload = await response.json();
-      if (payload.detail) {
-        message = payload.detail;
+export async function apiGet(path, fetcher = fetch, timeoutMs = 10000) {
+  const controller = typeof AbortController === "function" ? new AbortController() : null;
+  let timeoutHandle;
+  try {
+    const response = await Promise.race([
+      fetcher(`${API_BASE}${path}`, {
+        headers: { Accept: "application/json" },
+        ...(controller ? { signal: controller.signal } : {}),
+      }),
+      new Promise((_, reject) => {
+        timeoutHandle = setTimeout(() => {
+          controller?.abort();
+          reject(new ApiError(503, "The data service did not respond in time. Please retry."));
+        }, timeoutMs);
+      }),
+    ]);
+    clearTimeout(timeoutHandle);
+    if (!response.ok) {
+      let message = `API request failed with status ${response.status}`;
+      try {
+        const payload = await response.json();
+        if (payload.detail) {
+          message = payload.detail;
+        }
+      } catch {
+        message = response.statusText || message;
       }
-    } catch {
-      message = response.statusText || message;
+      throw new ApiError(response.status, message);
     }
-    throw new ApiError(response.status, message);
+    return response.json();
+  } catch (error) {
+    clearTimeout(timeoutHandle);
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    throw new ApiError(503, "The data service is temporarily unavailable. Please retry.");
   }
-  return response.json();
 }
 
 export function buildRankingsPath(filters = {}) {
@@ -194,7 +214,7 @@ export function applyCuratedRankingConstraints(rankings, opportunities = [], pat
   };
 }
 
-export function renderHomeShell(games = [], rankings = { items: [], page: { total: 0 } }, opportunities = []) {
+export function renderHomeShell(games = [], rankings = { items: [], page: { total: 0 } }, opportunities = [], degradedMessages = []) {
   const economyOptions = Array.from(new Set(games.flatMap((game) => game.economy_types || []))).sort();
   const opportunityTypeOptions = Array.from(new Set(opportunities.map((opportunity) => opportunity.opportunity_type))).sort();
   return `
@@ -209,6 +229,7 @@ export function renderHomeShell(games = [], rankings = { items: [], page: { tota
           <span>Freshness stays visible</span>
         </div>
       </section>
+      ${renderDegradedNotice(degradedMessages)}
       ${renderHomeAnswerBlock(rankings, opportunities)}
       ${renderTopRankingSummary(rankings)}
       ${renderCatalogStats(rankings, opportunities)}
@@ -307,7 +328,7 @@ export function renderTopRankingSummary(rankings = { items: [] }) {
   return `
     <section class="top-opportunity-card" aria-label="Top ranked organic strategy">
       <div class="top-opportunity-copy">
-        <span class="eyebrow">Top modeled opportunity right now</span>
+        <span class="eyebrow">${snapshot.freshness?.overall_status && snapshot.freshness.overall_status !== "fresh" ? "Top stored modeled opportunity" : "Top modeled opportunity right now"}</span>
         <div class="card-identity">${renderOpportunityLogo(strategy.logo, snapshot.game_name, true)}<h2>${escapeHtml(snapshot.game_name)}</h2></div>
         <p><a class="strategy-link" href="/strategies/${encodeURIComponent(strategy.strategy_id)}" data-link>${escapeHtml(strategy.name)}</a></p>
         <p class="muted">Ranked by modeled 30D ROI, then confidence, risk, and recency according to the organic ranking methodology.</p>
@@ -334,7 +355,7 @@ export function renderHomeAnswerBlock(rankings = { items: [], page: { total: 0 }
     ["Reviewed opportunities", escapeHtml(String(opportunities.length))],
     ["Modeled strategies", escapeHtml(String(rankings.page?.total ?? (rankings.items || []).length))],
     ["Opportunity coverage", escapeHtml(Array.from(new Set(opportunities.map((item) => opportunityTypeLabel(item.opportunity_type)))).sort().join(", ") || "Unavailable")],
-    ["Current top answer", escapeHtml(rankingsSummary(rankings))],
+    ["Top stored answer", escapeHtml(rankingsSummary(rankings))],
     ["Unavailable ROI policy", escapeHtml(`${unavailableCount} opportunities remain unavailable, not zero, until value is reproducible.`)],
     ["Data source", "Stored snapshots served through /api/v1; page requests do not call live providers."],
   ];
@@ -345,9 +366,17 @@ export function renderHomeAnswerBlock(rankings = { items: [], page: { total: 0 }
   );
 }
 
+export function renderDegradedNotice(messages = []) {
+  const unique = Array.from(new Set(messages.filter(Boolean).map(String)));
+  if (!unique.length) {
+    return "";
+  }
+  return `<section class="error-state" role="status"><strong>Some stored data is temporarily unavailable.</strong><p>${escapeHtml(unique.join(" "))} The page remains usable with the data that loaded successfully.</p></section>`;
+}
+
 export function renderRankingsAnswerBlock(rankings = { items: [], page: { total: 0 } }, options = {}) {
   const fields = [
-    ["Comparison page", escapeHtml(options.title || "Current strategy cards")],
+    ["Comparison page", escapeHtml(options.title || "Stored strategy cards")],
     ["Matching modeled strategies", escapeHtml(String(rankings.page?.total ?? (rankings.items || []).length))],
     ["Ranking basis", "30D ROI descending, confidence descending, risk ascending, latest calculation descending, then strategy id."],
     ["Filters", escapeHtml(filterSummary(options.filters || ""))],
@@ -405,7 +434,7 @@ export function renderStrategyHumanSummary(strategy, snapshot) {
     ["How it may earn", escapeHtml(`${labelize(strategy.economy_type)} economics are converted into the generic ROI model.`)],
     ["What you need", `Estimated starting capital is ${formatMoney(snapshot.capital.total_capital)}.`],
     ["Expected return", `${formatMoney(snapshot.earnings.net_earnings_day, { perDay: true })} estimated net earnings and ${formatRatio(snapshot.roi.roi_total_30d)} modeled 30-day ROI.`],
-    ["Cash-out", `Recoverable value is ${formatMoney(snapshot.capital.recoverable_capital)}; exit-adjusted P&L is ${formatMoney(snapshot.roi.exit_adjusted_pnl)}.`],
+    ["Cash-out", `Recoverable value: ${formatMoney(snapshot.capital.recoverable_capital)}. Exit-adjusted P&L: ${formatMoney(snapshot.roi.exit_adjusted_pnl)}.`],
     ["Main catch", escapeHtml(strategyRiskSummary(snapshot))],
   ];
   return renderHumanSummary("Plain-language summary", items);
@@ -605,7 +634,7 @@ function textFromHtml(html) {
 }
 
 export function renderRankingsPage(rankings, options = {}) {
-  const title = options.title || "Current strategy cards";
+  const title = options.title || "Stored strategy cards";
   return `
     <div class="page-shell">
       <section class="page-head">
@@ -841,7 +870,7 @@ export function renderRankingCard(item, options = {}) {
         ${metricItem("Starting capital", formatMoney(snapshot.capital.total_capital))}
         ${metricItem("Net earning/day", formatMoney(snapshot.earnings.net_earnings_day, { perDay: true }))}
         ${metricItem("30-day ROI", formatRatio(snapshot.roi.roi_total_30d))}
-        ${metricItem("Current break-even", formatBreakEven(snapshot.roi.break_even))}
+        ${metricItem("Modeled break-even", formatBreakEven(snapshot.roi.break_even))}
       </div>
       ${renderNetEarningsInterpretation(snapshot)}
       <p class="muted ranking-context">Organic comparison, not a recommendation.</p>
@@ -1004,7 +1033,7 @@ export function renderStrategyDetail(strategy, historyPage = { items: [] }) {
       <section class="section-panel">
         <div class="section-header"><h2>Return Metrics</h2></div>
         <div class="section-body metric-grid">
-          ${metricItem("Current break-even", formatBreakEven(snapshot.roi.break_even))}
+          ${metricItem("Modeled break-even", formatBreakEven(snapshot.roi.break_even))}
           ${metricItem("ROI total 7D", formatRatio(snapshot.roi.roi_total_7d))}
           ${metricItem("30-day modeled ROI", formatRatio(snapshot.roi.roi_total_30d))}
           ${metricItem("ROI total 90D", formatRatio(snapshot.roi.roi_total_90d))}
@@ -1389,12 +1418,13 @@ export function renderStrategySignals(snapshot) {
   const signals = [];
   const roi = snapshot.roi?.roi_total_30d;
   const netSign = decimalSign(snapshot.earnings?.net_earnings_day?.amount ?? "0");
+  const stale = snapshot.freshness?.overall_status && snapshot.freshness.overall_status !== "fresh";
   if (!roi || roi.value === null || roi.value === undefined) {
     signals.push({ label: "ROI not measurable yet", tone: "warning" });
   } else if (netSign > 0) {
-    signals.push({ label: "Profitable now", tone: "good" });
+    signals.push({ label: stale ? "Modeled positive net/day (stale)" : "Profitable now", tone: stale ? "warning" : "good" });
   } else if (netSign < 0) {
-    signals.push({ label: "Unprofitable now", tone: "high" });
+    signals.push({ label: stale ? "Modeled negative net/day (stale)" : "Unprofitable now", tone: stale ? "warning" : "high" });
   } else {
     signals.push({ label: "Flat net earnings", tone: "medium" });
   }
@@ -2057,11 +2087,12 @@ function destinationTargetKind(destination) {
 
 function renderNetEarningsInterpretation(snapshot) {
   const sign = decimalSign(snapshot.earnings?.net_earnings_day?.amount ?? "0");
+  const stale = snapshot.freshness?.overall_status && snapshot.freshness.overall_status !== "fresh";
   if (sign < 0) {
-    return `<p class="metric-note">Currently losing approximately ${formatMoney(snapshot.earnings.net_earnings_day, { perDay: true })}.</p>`;
+    return `<p class="metric-note">${stale ? "Stored model estimates a loss of" : "Currently losing approximately"} ${formatMoney(snapshot.earnings.net_earnings_day, { perDay: true })}.</p>`;
   }
   if (sign > 0) {
-    return `<p class="metric-note">Currently earning approximately ${formatMoney(snapshot.earnings.net_earnings_day, { perDay: true })}.</p>`;
+    return `<p class="metric-note">${stale ? "Stored model estimates net earnings of" : "Currently earning approximately"} ${formatMoney(snapshot.earnings.net_earnings_day, { perDay: true })}.</p>`;
   }
   return '<p class="metric-note">Estimated net earnings are currently flat.</p>';
 }
@@ -2603,12 +2634,19 @@ async function renderCurrentRoute() {
   try {
     const path = window.location.pathname;
     if (path === "/") {
-      const [games, rankings, opportunities] = await Promise.all([
+      const results = await Promise.allSettled([
         apiGet("/games"),
         apiGet("/rankings"),
         apiGet("/opportunities"),
       ]);
-      root.innerHTML = renderHomeShell(games.items, rankings, opportunities.items);
+      const [gamesResult, rankingsResult, opportunitiesResult] = results;
+      const games = gamesResult.status === "fulfilled" ? gamesResult.value : { items: [] };
+      const rankings = rankingsResult.status === "fulfilled" ? rankingsResult.value : { items: [], page: { total: 0 } };
+      const opportunities = opportunitiesResult.status === "fulfilled" ? opportunitiesResult.value : { items: [] };
+      const degradedMessages = results
+        .filter((result) => result.status === "rejected")
+        .map((result) => result.reason?.message || "A data request failed.");
+      root.innerHTML = renderHomeShell(games.items, rankings, opportunities.items, degradedMessages);
       routeAnalyticsContext = rankingAnalyticsContext(rankings, "home");
       bindFinder(root);
     } else if (path === "/rankings") {

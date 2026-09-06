@@ -48,7 +48,7 @@ def test_v1_catalog_targets_identity_and_outbound_coverage_are_complete() -> Non
     destination_by_slug = {destination.destination_slug: destination for destination in destinations}
     strategy_ids = {strategy.strategy_id for strategy in strategies}
     for opportunity in opportunities:
-        assert opportunity.status in {"active", "candidate"}
+        assert opportunity.status in {"active", "candidate", "watchlist"}
         assert opportunity.data_feasibility_status in {"GO", "PARTIAL", "PARKED", "REJECTED"}
         assert opportunity.reward_asset_or_points_type
         assert opportunity.official_source_references

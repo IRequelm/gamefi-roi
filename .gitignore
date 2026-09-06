@@ -30,3 +30,4 @@ Thumbs.db
 # Logs / local data
 *.log
 data/local/
+distribution/publish_queue/youtube_short_handoff.json

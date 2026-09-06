@@ -219,12 +219,15 @@ def test_batch1_catalog_admits_only_defensible_models_and_parks_star_atlas() -> 
     opportunities = {opportunity.opportunity_id: opportunity for opportunity in list_opportunities()}
     strategies = {strategy.strategy_id: strategy for strategy in list_strategies()}
 
-    assert len(opportunities) == 32
+    # The catalog has since expanded beyond the original batch-1 fixture while
+    # retaining the same admission invariant for the parked Star Atlas entry.
+    assert len(opportunities) == 51
     assert len(strategies) == 15
     assert get_opportunity("star-atlas-sage-labs").data_feasibility_status == "PARKED"
     assert get_opportunity("star-atlas-sage-labs").strategy_ids == ()
     assert not any(strategy.opportunity_id == "star-atlas-sage-labs" for strategy in strategies.values())
-    assert not {"honeygain", "earnapp", "hivemapper", "sia-hostd"} & set(opportunities)
+    assert {"honeygain", "earnapp", "hivemapper"} <= set(opportunities)
+    assert "sia-hostd" not in opportunities
     assert {
         "storj-existing-hardware-storage-node",
         "geodnet-empty-hex-triple-band-base-station",
