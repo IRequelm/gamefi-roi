@@ -18,10 +18,13 @@ from app.distribution.x_publisher import XApiError, XAuthError, XAmbiguousApiErr
 from app.distribution.refill import DistributionRefillConfig, DistributionRefiller
 from app.publishing.youtube import YouTubePublisher, YouTubePublisherConfig
 from app.publishing.youtube_distribution import YouTubeDistributionConfig, YouTubeDistributionPublisher
+from app.config.settings import get_settings
 from app.publishing.short_youtube_handoff import (
     DEFAULT_CAP_STATE,
     DEFAULT_QUEUE,
     autonomous_youtube_cap_available,
+    load_handoff,
+    prepare_short_handoff,
     publish_next as publish_next_short_handoff,
     record_autonomous_youtube_success,
 )
@@ -39,12 +42,14 @@ class DistributionWorkerConfig:
     manual_outbox_file: Path = Path("distribution/manual_outbox/x_manual_ready.json")
     short_handoff_file: Path = DEFAULT_QUEUE
     autonomous_cap_file: Path = DEFAULT_CAP_STATE
+    short_handoff_refill_enabled: bool = False
 
     @classmethod
     def from_environment(cls) -> "DistributionWorkerConfig":
         thumbnail = os.getenv("GAMEFI_DISTRIBUTION_THUMBNAIL_DIR", "").strip()
+        live = os.getenv("GAMEFI_DISTRIBUTION_LIVE", "false").strip().lower() in {"1", "true", "yes"}
         return cls(
-            live=os.getenv("GAMEFI_DISTRIBUTION_LIVE", "false").strip().lower() in {"1", "true", "yes"},
+            live=live,
             video_directory=Path(os.getenv("GAMEFI_DISTRIBUTION_VIDEO_DIR", "data/local/youtube/videos")),
             thumbnail_directory=Path(thumbnail) if thumbnail else None,
             state_file=Path(os.getenv("GAMEFI_DISTRIBUTION_WORKER_STATE_FILE", "data/local/distribution/worker_state.json")),
@@ -52,6 +57,7 @@ class DistributionWorkerConfig:
             manual_outbox_file=Path(os.getenv("GAMEFI_MANUAL_X_OUTBOX_FILE", "distribution/manual_outbox/x_manual_ready.json")),
             short_handoff_file=Path(os.getenv("GAMEFI_SHORT_YOUTUBE_HANDOFF_FILE", str(DEFAULT_QUEUE))),
             autonomous_cap_file=Path(os.getenv("GAMEFI_YOUTUBE_AUTONOMOUS_CAP_FILE", str(DEFAULT_CAP_STATE))),
+            short_handoff_refill_enabled=os.getenv("GAMEFI_SHORT_YOUTUBE_HANDOFF_REFILL_ENABLED", "true" if live else "false").strip().lower() in {"1", "true", "yes"},
         )
 
 
@@ -228,9 +234,17 @@ class DistributionWorker:
         return results
 
     def _process_short_handoff(self, now: datetime) -> dict[str, Any]:
-        if not self.config.short_handoff_file.is_file():
-            return {"platform": "YouTubeShortHandoff", "status": "idle", "detail": "handoff queue is empty"}
         try:
+            queue = load_handoff(self.config.short_handoff_file)
+            queued = sum(item.status == "queued" and item.readiness == "GREEN" for item in queue.items)
+            if self.config.short_handoff_refill_enabled and queued < queue.buffer_target:
+                prepare_short_handoff(
+                    settings=get_settings(),
+                    queue_path=self.config.short_handoff_file,
+                    limit=min(13, queue.buffer_target - queued),
+                )
+            if not self.config.short_handoff_file.is_file():
+                return {"platform": "YouTubeShortHandoff", "status": "idle", "detail": "handoff queue is empty"}
             result = publish_next_short_handoff(
                 publisher=self.youtube_distribution.publisher,
                 queue_path=self.config.short_handoff_file,
