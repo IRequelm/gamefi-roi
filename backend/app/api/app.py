@@ -3,9 +3,11 @@
 import logging
 
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
+from sqlalchemy.exc import SQLAlchemyError
 
 from app import __version__
 from app.api.routes.health import router as health_router
@@ -37,6 +39,14 @@ def create_app() -> FastAPI:
     api.include_router(operator_ai_router)
     api.mount("/assets", frontend_assets(), name="frontend-assets")
     api.include_router(web_router)
+    @api.exception_handler(SQLAlchemyError)
+    async def database_error_handler(request: Request, exc: SQLAlchemyError) -> JSONResponse:
+        logging.getLogger(__name__).error("database_request_failed", extra={"path": request.url.path, "error": str(exc)})
+        return JSONResponse(
+            status_code=503,
+            content={"detail": "Stored data is temporarily unavailable. Please retry shortly."},
+            headers={"Retry-After": "30", "X-GamCryp-Degraded": "database-unavailable"},
+        )
     return api
 
 

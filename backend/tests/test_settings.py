@@ -7,7 +7,9 @@ from app.config.settings import get_settings
 
 
 def test_database_url_is_required(monkeypatch) -> None:
-    monkeypatch.delenv("GAMEFI_DATABASE_URL", raising=False)
+    # An ignored local .env may provide the setting; an explicit empty value
+    # keeps this missing-setting regression deterministic in local runs too.
+    monkeypatch.setenv("GAMEFI_DATABASE_URL", "")
     monkeypatch.delenv("GAMEFI_ALLOW_SQLITE_FOR_TESTS", raising=False)
 
     with pytest.raises(ValidationError):

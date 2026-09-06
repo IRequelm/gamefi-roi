@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from app.strategies.defi_kingdoms import DFK_CJEWEL_MAX_LOCK_V1
 from test_api_v1 import _seeded_client
+from sqlalchemy.exc import OperationalError
 
 
 def test_web_mvp_pages_are_served_by_fastapi(monkeypatch, tmp_path) -> None:
@@ -101,3 +102,18 @@ def test_unknown_static_route_uses_web_not_found_state(monkeypatch, tmp_path) ->
     response = client.get("/does-not-exist")
 
     assert response.status_code == 404
+
+
+def test_public_home_degrades_without_database(monkeypatch, tmp_path) -> None:
+    client, _engine = _seeded_client(monkeypatch, tmp_path, "web-degraded.db")
+
+    def fail_home(*args, **kwargs):
+        raise OperationalError("select 1", {}, RuntimeError("database unavailable"))
+
+    monkeypatch.setattr("app.web.routes.home_page", fail_home)
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert response.headers["x-gamcryp-degraded"] == "database-unavailable"
+    assert "Stored opportunity data is temporarily unavailable" in response.text
+    assert "No fresh or estimated values are being invented" in response.text

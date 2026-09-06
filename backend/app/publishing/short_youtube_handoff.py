@@ -27,7 +27,9 @@ from app.publishing.youtube import YouTubeOperationResult, YouTubePublishManifes
 HANDOFF_VERSION = "youtube-short-handoff-v1"
 DEFAULT_QUEUE = Path("distribution/publish_queue/youtube_short_handoff.json")
 DEFAULT_CAP_STATE = Path("data/local/youtube/autonomous_daily_cap.json")
-DEFAULT_BUFFER_TARGET = 35
+# A small forward buffer avoids unnecessary ElevenLabs/render credit churn while
+# keeping unattended publication supplied for several weeks at one per day.
+DEFAULT_BUFFER_TARGET = 14
 
 
 class ShortHandoffItem(BaseModel):
@@ -76,7 +78,8 @@ class DailyCap:
 def load_handoff(path: Path = DEFAULT_QUEUE) -> ShortHandoffQueue:
     if not path.is_file():
         return ShortHandoffQueue()
-    return ShortHandoffQueue.model_validate_json(path.read_text(encoding="utf-8"))
+    queue = ShortHandoffQueue.model_validate_json(path.read_text(encoding="utf-8"))
+    return queue.model_copy(update={"buffer_target": min(queue.buffer_target, DEFAULT_BUFFER_TARGET)})
 
 
 def write_handoff(path: Path, queue: ShortHandoffQueue) -> None:
@@ -97,8 +100,14 @@ def prepare_short_handoff(
         raise ValueError("handoff preparation limit must be positive")
     current = load_handoff(queue_path)
     by_package = {item.package_id: item for item in current.items}
-    candidates = sorted((package for package in (packages or build_content_packages()) if package.format == "SHORT_FORM" and package.generation_status == "READY_FOR_REVIEW" and validate_package(package)), key=lambda item: item.package_id)
-    for package in candidates:
+    candidates = [package for package in (packages or build_content_packages()) if package.format == "SHORT_FORM" and package.generation_status == "READY_FOR_REVIEW" and validate_package(package)]
+    family_counts = {package_family(item.package_id): 0 for item in by_package.values() if item.status == "queued"}
+    opportunity_counts = {package_opportunity(item.package_id): 0 for item in by_package.values() if item.status == "queued"}
+    for item in by_package.values():
+        if item.status == "queued":
+            family_counts[package_family(item.package_id)] = family_counts.get(package_family(item.package_id), 0) + 1
+            opportunity_counts[package_opportunity(item.package_id)] = opportunity_counts.get(package_opportunity(item.package_id), 0) + 1
+    for package in sorted(candidates, key=lambda item: (family_counts.get(item.content_family, 0), opportunity_counts.get(item.opportunity_id or "gamcryp", 0), item.package_id)):
         if len([item for item in by_package.values() if item.status == "queued"]) >= limit:
             break
         existing = by_package.get(package.package_id)
@@ -129,7 +138,9 @@ def prepare_short_handoff(
             video_checksum=video_checksum,
             created_at=datetime.now(UTC).isoformat(),
         )
-    queue = ShortHandoffQueue(buffer_target=current.buffer_target, items=tuple(sorted(by_package.values(), key=lambda item: item.package_id)))
+        family_counts[package.content_family] = family_counts.get(package.content_family, 0) + 1
+        opportunity_counts[package.opportunity_id or "gamcryp"] = opportunity_counts.get(package.opportunity_id or "gamcryp", 0) + 1
+    queue = ShortHandoffQueue(buffer_target=min(current.buffer_target, DEFAULT_BUFFER_TARGET), items=tuple(sorted(by_package.values(), key=lambda item: item.package_id)))
     write_handoff(queue_path, queue)
     return queue
 
@@ -198,6 +209,16 @@ def record_autonomous_youtube_success(path: Path = DEFAULT_CAP_STATE, *, now: da
 def _description(package: ContentPackage) -> str:
     facts = "\n\n".join(str(point["text"]) for point in package.factual_talking_points if point.get("text"))
     return f"{package.hook}\n\n{facts}\n\n{package.cta}"[:5000]
+
+
+def package_family(package_id: str) -> str:
+    parts = package_id.split("-")
+    return parts[2] if len(parts) > 2 else "unknown"
+
+
+def package_opportunity(package_id: str) -> str:
+    parts = package_id.split("-", 3)
+    return parts[3] if len(parts) > 3 else package_id
 
 
 def _handoff_blockers(item: ShortHandoffItem) -> tuple[str, ...]:

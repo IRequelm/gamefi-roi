@@ -48,6 +48,22 @@ def test_ready_short_render_enters_handoff_once(tmp_path: Path) -> None:
     assert all(item.format == "SHORT_FORM" for item in load_handoff(queue_path).items)
 
 
+def test_handoff_buffer_is_bounded_and_deterministic(tmp_path: Path) -> None:
+    package = _package()
+    queue_path = tmp_path / "handoff.json"
+    queue_path.write_text(ShortHandoffQueue(buffer_target=35).model_dump_json(), encoding="utf-8")
+
+    queue = prepare_short_handoff(
+        settings=_settings(),
+        queue_path=queue_path,
+        packages=[package],
+        render=lambda package, **kwargs: _render(tmp_path, package=package),
+    )
+
+    assert queue.buffer_target == 14
+    assert load_handoff(queue_path).buffer_target == 14
+
+
 def test_failed_render_does_not_enter_handoff(tmp_path: Path) -> None:
     package = _package()
 

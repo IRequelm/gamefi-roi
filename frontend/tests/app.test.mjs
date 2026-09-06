@@ -59,7 +59,7 @@ test("rankings rendering includes card metrics and stored API values", () => {
   assert.match(html, /Starting capital/);
   assert.match(html, /Net earning\/day/);
   assert.match(html, /30-day ROI/);
-  assert.match(html, /Current break-even/);
+  assert.match(html, /Modeled break-even/);
   assert.match(html, /82 High/);
   assert.match(html, /79 Very High/);
   assert.match(html, /250.00 USD/);
@@ -524,6 +524,23 @@ test("negative return and warning signals are explicit", () => {
   assert.match(html, /Unprofitable now/);
   assert.match(html, /Low confidence/);
   assert.match(html, /Very high risk/);
+});
+
+test("stale positive results never present as current earnings", () => {
+  const snapshot = snapshotPayload();
+  snapshot.freshness.overall_status = "stale";
+  const html = renderStrategySignals(snapshot);
+
+  assert.match(html, /Modeled positive net\/day \(stale\)/);
+  assert.doesNotMatch(html, /Profitable now/);
+});
+
+test("homepage keeps loaded sections when one API request fails", () => {
+  const html = renderHomeShell([], { items: [], page: { total: 0 } }, [opportunityPayload()], ["Rankings temporarily unavailable."]);
+  assert.match(html, /Some stored data is temporarily unavailable/);
+  assert.match(html, /Rankings temporarily unavailable/);
+  assert.match(html, /Grass/);
+  assert.doesNotMatch(html, /Loading strategy data/);
 });
 
 test("long strategy names stay in card structure with CTA behavior", () => {

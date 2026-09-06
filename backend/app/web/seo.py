@@ -134,7 +134,7 @@ def home_page(service: ApiDataService, *, settings: Settings, request: Request) 
         </section>
         {_render_home_answer_block(rankings, opportunities)}
         {_render_catalog_stats(rankings, opportunities)}
-        {_render_ranking_cards(rankings.items[:3], heading="Current organic leaders")}
+        {_render_ranking_cards(rankings.items[:3], heading="Stored organic leaders")}
         {_render_opportunity_cards(opportunities, heading="Opportunity radar")}
       </div>
     """
@@ -162,11 +162,11 @@ def rankings_page(service: ApiDataService, *, settings: Settings, request: Reque
       <div class="page-shell">
         <section class="page-head">
           <p class="eyebrow">Organic rankings</p>
-          <h1>Current Web3 ROI strategy rankings</h1>
+          <h1>Stored Web3 ROI strategy rankings</h1>
           <p class="lede">{escape(_rankings_summary(rankings))}</p>
           <p class="muted">Organic order is supplied by stored strategy snapshots and risk/confidence scores. Commercial metadata is separate.</p>
         </section>
-        {_render_rankings_answer_block(rankings, "Current Web3 ROI strategy rankings")}
+        {_render_rankings_answer_block(rankings, "Stored Web3 ROI strategy rankings")}
         {_render_curated_links(service)}
         {_render_ranking_cards(rankings.items, heading="Ranked strategies")}
       </div>
@@ -505,9 +505,12 @@ def _render_logo(logo, *, compact: bool = False) -> str:
 
 
 def _ranking_answer(snapshot: StrategySnapshotPayload, strategy: StrategySummary) -> str:
+    stale = getattr(getattr(snapshot, "freshness", None), "overall_status", "fresh") != "fresh"
+    lead = "GamCryp's stored model estimates" if stale else "GamCryp currently models"
+    earnings_label = "stored modeled net earnings" if stale else "Net earnings"
     return (
-        f"GamCryp currently models {strategy.name} at {format_ratio_text(snapshot.roi.roi_total_30d)} 30-day ROI "
-        f"using {format_money_text(snapshot.capital.total_capital)} capital. Net earnings are "
+        f"{lead} {strategy.name} at {format_ratio_text(snapshot.roi.roi_total_30d)} 30-day ROI "
+        f"using {format_money_text(snapshot.capital.total_capital)} capital. {earnings_label} are "
         f"{format_money_text(snapshot.earnings.net_earnings_day, per_day=True)}. Risk is "
         f"{score_text(snapshot.risk)} and Confidence is {score_text(snapshot.confidence)}. "
         f"Latest modeled snapshot was calculated at {format_datetime(snapshot.calculated_at)}."
@@ -539,7 +542,7 @@ def _render_home_answer_block(rankings: RankingsPage, opportunities: list[Opport
         ("Reviewed opportunities", escape(str(len(opportunities)))),
         ("Modeled strategies", escape(str(rankings.page.total))),
         ("Opportunity coverage", escape(", ".join(sorted({opportunity_type_label(item.opportunity_type) for item in opportunities})) or "Unavailable")),
-        ("Current top answer", escape(_rankings_summary(rankings))),
+        ("Top stored answer", escape(_rankings_summary(rankings))),
         ("Unavailable ROI policy", escape(f"{unavailable_count} opportunities remain unavailable, not zero, until value is reproducible.")),
         ("Data source", "Stored snapshots served through /api/v1; page requests do not call live providers."),
     ]
@@ -858,7 +861,7 @@ def _render_ranking_cards(items: list[RankingItem], *, heading: str) -> str:
                 {_metric("Starting capital", format_money_html(snapshot.capital.total_capital))}
                 {_metric("Net earning/day", format_money_html(snapshot.earnings.net_earnings_day, per_day=True))}
                 {_metric("30-day ROI", format_ratio_html(snapshot.roi.roi_total_30d))}
-                {_metric("Current break-even", format_break_even_html(snapshot.roi.break_even))}
+                {_metric("Modeled break-even", format_break_even_html(snapshot.roi.break_even))}
               </div>
               <div class="card-badges">
                 {_badge(f"Confidence {score_text(snapshot.confidence)}", score_class(snapshot.confidence, "confidence"))}
@@ -961,7 +964,7 @@ def _render_snapshot_detail(snapshot: StrategySnapshotPayload) -> str:
         {_summary("Estimated starting capital", format_money_html(snapshot.capital.total_capital))}
         {_summary("Estimated net/day", format_money_html(snapshot.earnings.net_earnings_day, per_day=True))}
         {_summary("30-day modeled ROI", format_ratio_html(snapshot.roi.roi_total_30d))}
-        {_summary("Current break-even", format_break_even_html(snapshot.roi.break_even))}
+        {_summary("Modeled break-even", format_break_even_html(snapshot.roi.break_even))}
       </section>
       <section class="section-panel">
         <div class="section-header"><h2>Risk and Confidence</h2></div>
