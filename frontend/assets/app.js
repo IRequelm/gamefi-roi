@@ -1461,6 +1461,22 @@ export function renderLoading() {
   return '<section class="loading-state"><p>Loading strategy data...</p></section>';
 }
 
+export function renderRouteDegradedNotice(error) {
+  const message = error?.message || "Live data is temporarily unavailable.";
+  return `
+    <section class="error-state" role="status" aria-live="polite">
+      <h2>Live data temporarily unavailable</h2>
+      <p>${escapeHtml(message)} Stored page content remains visible where available. No fresh or estimated values are being invented.</p>
+      <button class="secondary-button" type="button" data-retry-data>Retry</button>
+    </section>
+  `;
+}
+
+function preserveServerRenderedPage(root, initialMarkup, error) {
+  root.innerHTML = `${renderRouteDegradedNotice(error)}${initialMarkup}`;
+  root.querySelector("[data-retry-data]")?.addEventListener("click", () => renderCurrentRoute());
+}
+
 export function formatMoney(money, options = {}) {
   if (!money || money.amount === null || money.amount === undefined) {
     return '<span class="muted">Unavailable</span>';
@@ -2628,7 +2644,9 @@ export function renderOpportunityLogo(logo, label, compact = false) {
 
 async function renderCurrentRoute() {
   const root = document.getElementById("app");
-  root.innerHTML = renderLoading();
+  const initialMarkup = window.__GAMCRYP_INITIAL_ROUTE_RENDERED ? "" : root.innerHTML;
+  window.__GAMCRYP_INITIAL_ROUTE_RENDERED = true;
+  root.setAttribute("aria-busy", "true");
   setActiveNav();
   let routeAnalyticsContext = {};
   try {
@@ -2646,7 +2664,11 @@ async function renderCurrentRoute() {
       const degradedMessages = results
         .filter((result) => result.status === "rejected")
         .map((result) => result.reason?.message || "A data request failed.");
-      root.innerHTML = renderHomeShell(games.items, rankings, opportunities.items, degradedMessages);
+      if (results.every((result) => result.status === "rejected")) {
+        preserveServerRenderedPage(root, initialMarkup, results[0].reason);
+      } else {
+        root.innerHTML = renderHomeShell(games.items, rankings, opportunities.items, degradedMessages);
+      }
       routeAnalyticsContext = rankingAnalyticsContext(rankings, "home");
       bindFinder(root);
     } else if (path === "/rankings") {
@@ -2695,8 +2717,9 @@ async function renderCurrentRoute() {
     }
     trackRouteView(path, routeAnalyticsContext);
   } catch (error) {
-    root.innerHTML = renderError(error);
+    preserveServerRenderedPage(root, initialMarkup, error);
   }
+  root.removeAttribute("aria-busy");
   root.focus({ preventScroll: true });
   mountAnalyticsConsent();
 }
