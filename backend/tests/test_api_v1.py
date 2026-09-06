@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
+from pathlib import Path
 
 from fastapi.testclient import TestClient
 from sqlalchemy import select
@@ -129,6 +130,18 @@ def test_logo_metadata_is_optional_and_parent_scoped(monkeypatch, tmp_path) -> N
         },
     }
     assert dfk["logo"] is None
+
+
+def test_catalog_logo_assets_are_local_and_present() -> None:
+    asset_root = Path(__file__).parents[2] / "frontend" / "assets"
+
+    for opportunity in catalog.list_opportunities():
+        if opportunity.logo_asset is None:
+            continue
+        assert opportunity.logo_asset.startswith("/assets/logos/")
+        asset_path = asset_root / opportunity.logo_asset.removeprefix("/assets/")
+        assert asset_path.is_file(), opportunity.opportunity_id
+        assert asset_path.stat().st_size > 0
 
 
 def test_rankings_order_and_tie_breaking_policy(monkeypatch, tmp_path) -> None:

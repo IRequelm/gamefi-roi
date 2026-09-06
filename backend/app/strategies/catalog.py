@@ -428,6 +428,9 @@ OPPORTUNITIES = (
         feasibility_summary="Official hardware price, daily reward schedule, performance thresholds, and GEOD market pricing support a location-sensitive triple-band station scenario.",
         strategy_ids=("geodnet-empty-hex-triple-band-base-station",),
         outbound_destination_slug="geodnet-official",
+        logo_asset="/assets/logos/geodnet.ico",
+        logo_alt="GEODNET logo",
+        logo_source_reference=("GEODNET official website", "https://geodnet.com/"),
     ),
     _opportunity(
         opportunity_id="weatherxm",
@@ -448,6 +451,9 @@ OPPORTUNITIES = (
         feasibility_summary="Official hardware price, reward mechanism, claim path, WXM market pricing, and API availability support a station scenario with visible cell-level limitations.",
         strategy_ids=("weatherxm-d1-wifi-station",),
         outbound_destination_slug="weatherxm-official",
+        logo_asset="/assets/logos/weatherxm.png",
+        logo_alt="WeatherXM logo",
+        logo_source_reference=("WeatherXM official website", "https://weatherxm.com/"),
     ),
     _opportunity(
         opportunity_id="dimo",
@@ -468,6 +474,9 @@ OPPORTUNITIES = (
         feasibility_summary="Official reward logic, vehicle requirements, subscription costs, and DIMO market pricing support a narrow software-only compatible-car strategy with explicit network-share assumptions.",
         strategy_ids=("dimo-software-only-compatible-car",),
         outbound_destination_slug="dimo-official",
+        logo_asset="/assets/logos/dimo.svg",
+        logo_alt="DIMO logo",
+        logo_source_reference=("DIMO official website", "https://drivedimo.com/"),
     ),
     _opportunity(
         opportunity_id="mysterium-network-node",
@@ -524,6 +533,9 @@ OPPORTUNITIES = (
         data_feasibility_status="PARTIAL",
         feasibility_summary="Rewards are documented, but strategy production and current execution need a narrow adapter.",
         outbound_destination_slug="aavegotchi-official",
+        logo_asset="/assets/logos/aavegotchi.png",
+        logo_alt="Aavegotchi logo",
+        logo_source_reference=("Aavegotchi official website", "https://aavegotchi.com/"),
     ),
     _opportunity(
         opportunity_id="alien-worlds",
@@ -569,6 +581,9 @@ OPPORTUNITIES = (
         data_feasibility_status="PARTIAL",
         feasibility_summary="BIGTIME rewards are documented, but drop rates and Hourglass constraints need live evidence.",
         outbound_destination_slug="big-time-official",
+        logo_asset="/assets/logos/big-time.png",
+        logo_alt="Big Time logo",
+        logo_source_reference=("Big Time official website", "https://bigtime.gg/"),
     ),
     _opportunity(
         opportunity_id="bless",
@@ -663,6 +678,9 @@ OPPORTUNITIES = (
         data_feasibility_status="PARTIAL",
         feasibility_summary="Quest rewards are visible, but GG/XP do not provide a general realizable ROI route.",
         outbound_destination_slug="galxe-official",
+        logo_asset="/assets/logos/galxe.png",
+        logo_alt="Galxe logo",
+        logo_source_reference=("Galxe official website", "https://www.galxe.com/"),
     ),
     _opportunity(
         opportunity_id="gods-unchained",
@@ -678,6 +696,9 @@ OPPORTUNITIES = (
         data_feasibility_status="PARTIAL",
         feasibility_summary="Official API and assets exist, but reward EV and pack/card realization need a narrow model.",
         outbound_destination_slug="gods-unchained-official",
+        logo_asset="/assets/logos/gods-unchained.ico",
+        logo_alt="Gods Unchained logo",
+        logo_source_reference=("Gods Unchained official website", "https://godsunchained.com/"),
     ),
     _opportunity(
         opportunity_id="grass",
@@ -924,6 +945,9 @@ OPPORTUNITIES = (
         data_feasibility_status="PARTIAL",
         feasibility_summary="Driving and reward categories are documented, but device cost, region-specific demand, and reproducible earning rates are not established for financial ROI.",
         outbound_destination_slug="hivemapper-official",
+        logo_asset="/assets/logos/hivemapper.ico",
+        logo_alt="Hivemapper logo",
+        logo_source_reference=("Hivemapper official website", "https://www.hivemapper.com/"),
         guidance=OpportunityGuidance(
             how_to_start=("Review the official contributor and driving requirements.",),
             what_you_need=("A supported mapping device and a compatible mobile setup are described by the project.",),
