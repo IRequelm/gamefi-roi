@@ -15,7 +15,7 @@ This is the durable operational summary for the GamCryp V2 finish pass. Reposito
 
 - Active repository branch: `master`; the current release-closure commit is `6e039fe`.
 - The verified release-closure changes are committed and deployed. Local distribution/runtime state is intentionally kept outside the release commit.
-- Public Render web service: `gamefi-roi-web`, paid `0.5c-512mb` plan, Ohio, Blueprint-managed; latest verified deployed source is `6e039fe`.
+- Public Render web service: `gamefi-roi-web`, paid `0.5c-512mb` plan, Ohio, Blueprint-managed; latest verified deployed source is `04c753a`.
 - The web service no longer has the Free-plan idle sleep limitation. Controlled checks after the upgrade reached the application and Render logs show repeated `/api/v1/ops/status` 200 responses. Individual edge/proxy failures can still occur and must be classified separately.
 - Render Postgres remains on the Free plan at the time of this verification. It is not production-grade: it expires after 30 days and does not provide the paid backup/PITR guarantees. The paid Blueprint target is `basic-256mb`.
 - Direct requests to `gamcryp.com` can still receive Cloudflare/edge `429` Managed Challenge responses with `Cf-Mitigated: challenge`; this is not an application rate-limit response. Browser and controlled low-rate requests also reached 200 for `/`, `/opportunities`, `/methodology`, `/robots.txt`, `/api/v1/rankings`, and a representative strategy page.
@@ -50,7 +50,7 @@ Render application logs showed repeated `/api/v1/ops/status` 200 responses and p
 
 - Opportunities: 51 total; 8 MODELED; 43 GUIDE_ONLY.
 - Modeled strategies: 15.
-- Content inventory: 160 topic candidates; 132 READY short-form; 6 PARTIAL; 22 BLOCKED; 0 READY long-form.
+- Content inventory: 165 topic candidates; 137 READY short-form packages; 6 PARTIAL; 22 BLOCKED; 0 READY long-form.
 - Logo coverage: 9 of 51 opportunities have verified local logo assets; the renderer uses a branded identity-card fallback for the rest.
 - Guidance and ROI-unavailable coverage is generated from the catalog and preserves missing evidence as explicit unavailable state.
 
@@ -132,7 +132,7 @@ Operational gaps still requiring explicit monitoring: snapshot refresh age, queu
 
 ## 13. Release-closure decision
 
-The current public web release is closed for this pass: the deployed commit is `6e039fe`, controlled public routes returned 200, rankings no longer show the empty-filter presentation, and unmodeled realizable opportunities use precise “earning rate unverified” language. No new implementation work is opened from this report. The documented limitations above require operational/vendor action only if unattended publishing or production-grade historical persistence is later desired.
+The current public web release is closed for this pass: the deployed commit is `04c753a`, controlled public routes returned 200, rankings no longer show the empty-filter presentation, unmodeled realizable opportunities use precise “earning rate unverified” language, and truthful negated guarantee warnings no longer block valid content packages. No new implementation work is opened from this report. The documented limitations above require operational/vendor action only if unattended publishing or production-grade historical persistence is later desired.
 
 ## 14. Verification evidence
 
