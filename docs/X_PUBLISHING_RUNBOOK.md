@@ -74,6 +74,8 @@ distribution-worker x-manual-confirm CONTENT_ID
 
 The confirmation records the checksum as manually published for duplicate protection and marks the outbox item published. It does not claim that the X API published the post and never infers publication without the command.
 
+If phone access is important, the same manual-ready item can optionally be delivered by SMTP email. Set `GAMEFI_X_MANUAL_EMAIL_ENABLED=true` and configure the recipient, sender, SMTP host, username, and app password in the ignored local `.env`. Gmail uses `smtp.gmail.com:587` with STARTTLS; use a mailbox app password, not the normal mailbox password. The worker records the last emailed checksum in `data/local/distribution/x_email_state.json`, so unchanged worker cycles do not send duplicates. Email failure is isolated from YouTube.
+
 `GAMEFI_X_CLIENT_SECRET` is optional for a public/native PKCE client and required only when the Developer Console configures the app as confidential. Do not create or use an app until the founder accepts X's current pay-per-use terms and sets an explicit spending limit.
 
 ## One-time human setup

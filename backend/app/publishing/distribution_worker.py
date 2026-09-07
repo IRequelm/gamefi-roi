@@ -16,6 +16,7 @@ from typing import Any, Callable
 from dotenv import load_dotenv
 
 from app.distribution.manual_outbox import XManualOutbox, manual_ready_record
+from app.distribution.x_email_notify import XEmailConfig, XEmailNotificationError, XManualEmailNotifier
 from app.distribution.x_publisher import XApiError, XAuthError, XAmbiguousApiError, XPublisherConfig, XPublisherError, XPublishingService
 from app.distribution.refill import DistributionRefillConfig, DistributionRefiller
 from app.publishing.youtube import YouTubePublisher, YouTubePublisherConfig
@@ -131,6 +132,7 @@ class DistributionWorker:
         self.now = now
         self.state = WorkerState(self.config.state_file)
         self.manual_outbox = XManualOutbox(Path(os.getenv("GAMEFI_MANUAL_X_OUTBOX_FILE", str(self.config.manual_outbox_file))))
+        self.x_email_notifier = XManualEmailNotifier(XEmailConfig.from_environment())
 
     def run_once(self) -> list[dict[str, Any]]:
         now = self.now()
@@ -170,16 +172,20 @@ class DistributionWorker:
                 preview = self.x_service.preview(content_id)
                 key = f"X:{content_id}:{preview.content_checksum}"
                 if self.config.x_publishing_mode == "manual":
-                    outbox_status = self.manual_outbox.prepare(
-                        manual_ready_record(
-                            content_id=content_id,
-                            post_text=preview.exact_final_copy,
-                            source_url=preview.attribution_url,
-                            checksum=preview.content_checksum,
-                            now=now,
-                        )
+                    record = manual_ready_record(
+                        content_id=content_id,
+                        post_text=preview.exact_final_copy,
+                        source_url=preview.attribution_url,
+                        checksum=preview.content_checksum,
+                        now=now,
                     )
-                    return {"platform": "X", "content_id": content_id, "status": "manual_ready", "outbox": outbox_status}
+                    outbox_status = self.manual_outbox.prepare(record)
+                    try:
+                        email_status = self.x_email_notifier.notify_if_needed(self.manual_outbox.current())
+                    except XEmailNotificationError as exc:
+                        logger.error("manual_x_email_failed category=%s", type(exc).__name__)
+                        email_status = "failed"
+                    return {"platform": "X", "content_id": content_id, "status": "manual_ready", "outbox": outbox_status, "email": email_status}
                 if self.state.blocked(key, now=now) or self.state.blocked(f"X:{content_id}", now=now):
                     saw_cooldown = True
                     continue
