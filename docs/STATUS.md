@@ -11,7 +11,7 @@ V2 finish-pass operational truth is maintained in `docs/MASTER_CONTROL.md`; this
 
 G12 is complete and frozen in the G12 baseline Git commit.
 
-G13 is complete for the accepted public beta deployment. The web service is now on Render's paid `0.5c-512mb` plan, while Render Postgres remains Free pending the production database upgrade. GitHub Actions scheduled recalculation remains configured. See `docs/MASTER_CONTROL.md` for current operational truth.
+G13 is complete for the accepted public beta deployment. The repository contains both free-beta and paid-production Render blueprints; the current `gamefi-roi-web` dashboard state must be checked because a Blueprint deployment using `render.yaml` can restore the Free plan. Render Postgres remains Free pending the production database upgrade. GitHub Actions scheduled recalculation remains configured. See `docs/MASTER_CONTROL.md` for current operational truth.
 
 G14 is complete in the repository. It adds the backward-compatible Opportunity catalog, referral/outbound foundation, and public-beta UI readability pass. Render auto-deploy remains off from G13, so the current public URL must be manually deployed to serve the G14 routes and UI.
 
@@ -31,7 +31,7 @@ G18 is complete. The current catalog has 51 opportunities and 15 modeled strateg
 
 Post-G18 launch polish is an Operations/Growth patch, not a gate reopen. It cleans public-facing labels, opportunity-card explanations, CTA relationship text, footer contact links, and optional consent-gated GA4 readiness while preserving ROI formulas, adapters, scoring, snapshots, API contracts, referral routing, monetization separation, and organic ranking order.
 
-2026-09-08 product hardening pass: public opportunity cards now expose one evidence-backed start/earn cue, ranking cards explain leading risk contributors, stale top results use neutral recorded-model language, and catalog counts distinguish modeled strategies from guide-only opportunities. API summaries now carry catalog guidance so server-rendered and browser-rendered pages stay aligned. Publishing/X files were intentionally excluded from this sprint.
+2026-09-08 product hardening pass: public opportunity cards now expose one evidence-backed start/earn cue, ranking cards explain leading risk contributors, stale top results use neutral recorded-model language, catalog counts distinguish modeled strategies from guide-only opportunities, and public metadata canonicalizes to `https://gamcryp.com`. API summaries now carry catalog guidance so server-rendered and browser-rendered pages stay aligned. Publishing/X files were intentionally excluded from this sprint.
 
 ## Gate board
 

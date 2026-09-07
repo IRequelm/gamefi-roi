@@ -14,10 +14,11 @@ This is the durable operational summary for the GamCryp V2 finish pass. Reposito
 ## 2. Current production and repository state
 
 - Active repository branch: `master`; the current local product-hardening commit is `2733d32`.
-- `2733d32` is committed locally but still requires the normal Render deployment step. The last verified deployed source remains `1eb5d40`. Local distribution/runtime state is intentionally kept outside the product commit.
-- Public Render web service: `gamefi-roi-web`, paid `0.5c-512mb` plan, Ohio, Blueprint-managed; latest verified deployed source is `1eb5d40`.
+- Product hardening and canonical-host commits are deployed; latest verified deployed source is `a738300`. Local distribution/runtime state is intentionally kept outside the product commits.
+- Public Render web service: `gamefi-roi-web`, Ohio, Blueprint-managed. The Render dashboard currently reports the service as Free because the deployed `render.yaml` blueprint still declares `plan: free`; the earlier paid-plan selection was not preserved by that blueprint deployment.
+- Current controlled routes return 200, but Free-plan sleep/cold-start behavior remains a live availability limitation until the operator selects the paid web plan or applies the paid production blueprint. No billing change was made by Codex.
 - Canonical public host is `https://gamcryp.com`; Render’s `onrender.com` host is infrastructure-only and must not appear in public canonical, Open Graph, Twitter, JSON-LD, or sitemap URLs.
-- The web service no longer has the Free-plan idle sleep limitation. Controlled checks after the upgrade reached the application and Render logs show repeated `/api/v1/ops/status` 200 responses. Individual edge/proxy failures can still occur and must be classified separately.
+- The web service is currently exposed to the Free-plan idle sleep limitation. Individual edge/proxy failures can still occur and must be classified separately.
 - Render Postgres remains on the Free plan at the time of this verification. It is not production-grade: it expires after 30 days and does not provide the paid backup/PITR guarantees. The paid Blueprint target is `basic-256mb`.
 - Direct requests to `gamcryp.com` can still receive Cloudflare/edge `429` Managed Challenge responses with `Cf-Mitigated: challenge`; this is not an application rate-limit response. Browser and controlled low-rate requests also reached 200 for `/`, `/opportunities`, `/methodology`, `/robots.txt`, `/api/v1/rankings`, and a representative strategy page.
 
@@ -134,7 +135,7 @@ Operational gaps still requiring explicit monitoring: snapshot refresh age, queu
 
 ## 13. Release-closure decision
 
-The current public web release remains the previously verified deployment `1eb5d40`; its controlled public routes returned 200. Product hardening commit `2733d32` is the next release candidate and has passed the focused non-publishing regression suite. It has not been claimed as live until Render reports that commit deployed. Publishing/X files remain intentionally outside this sprint.
+The current public web release is `a738300`; Render reports it Live and controlled routes returned 200. The product hardening changes are live, including evidence-backed guide cues, risk-contribution context, explicit guide-only counts, and canonical `gamcryp.com` metadata. The service plan is currently Free and remains an operational availability limitation. Publishing/X files remain intentionally outside this sprint.
 
 ## 14. Verification evidence
 
