@@ -146,7 +146,7 @@ def test_curated_landing_page_is_indexable(monkeypatch, tmp_path) -> None:
     assert '<meta name="robots" content="index,follow">' in response.text
     assert "Web3 strategies under $25 capital" in response.text
     assert "Quick comparison" in response.text
-    assert "Source-ready" in response.text
+    assert "Evidence-linked" in response.text
     assert SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1.name in response.text
 
 

@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 from app.strategies.defi_kingdoms import DFK_CJEWEL_MAX_LOCK_V1
+from app.web.seo import plain_unavailable_reason
 from test_api_v1 import _seeded_client
 from sqlalchemy.exc import OperationalError
 
@@ -48,6 +51,20 @@ def test_homepage_omits_internal_audit_blocks(monkeypatch, tmp_path) -> None:
     assert "DATA SOURCE" not in html.upper()
     assert "served through /api/v1" not in html
     assert "page requests do not call live providers" not in html
+
+
+def test_unavailable_reason_does_not_claim_priced_rewards_have_no_price() -> None:
+    for opportunity_id in ("akash-provider", "filecoin-storage-provider", "illuvium", "gods-unchained"):
+        opportunity = SimpleNamespace(
+            opportunity_id=opportunity_id,
+            value_realization_status="realizable",
+            data_feasibility_status="PARTIAL",
+            feasibility_summary="Current earning rate and operating costs are not reproducible.",
+            roi_unavailable=None,
+        )
+        reason = plain_unavailable_reason(opportunity)
+        assert "market price" not in reason.lower()
+        assert "earning rate" in reason.lower()
 
 
 def test_web_assets_are_served_and_point_to_api_v1(monkeypatch, tmp_path) -> None:
