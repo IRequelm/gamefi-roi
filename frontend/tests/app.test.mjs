@@ -423,7 +423,7 @@ test("opportunity guidance renders complete, partial, and empty structures safel
     how_you_earn: ["Earn this"],
     how_to_exit_or_claim: ["Claim here"],
   });
-  assert.match(complete, /How it works/);
+  assert.match(complete, /Practical guide/);
   assert.match(complete, /How to start/);
   assert.match(complete, /What you need/);
   assert.match(complete, /How you earn/);
@@ -435,6 +435,16 @@ test("opportunity guidance renders complete, partial, and empty structures safel
   assert.equal(renderOpportunityGuidance(null), "");
   assert.equal(renderOpportunityGuidance({ how_to_start: [null, ""], what_you_need: [] }), "");
   assert.doesNotMatch(complete, /undefined|null/);
+
+  const fallback = renderOpportunityGuidance(null, {
+    platforms: ["desktop"],
+    chains: ["ethereum"],
+    reward_asset_or_points_type: ["MYST"],
+    value_realization_status: "realizable",
+    official_source_references: [{ label: "Official setup guide", url: "https://example.com/setup" }],
+  });
+  assert.match(fallback, /Practical guide|Official guides and references|Official setup guide/);
+  assert.match(fallback, /does not establish a guaranteed earning rate/);
 });
 
 test("risk and confidence badges preserve unavailable scores", () => {

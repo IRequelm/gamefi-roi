@@ -18,6 +18,7 @@ from app.api.v1.schemas import (
     OpportunitySummary,
     RankingItem,
     RankingsPage,
+    SourceReferencePayload,
     StrategySnapshotPayload,
     StrategySummary,
 )
@@ -743,14 +744,12 @@ def _render_depin_setup_summary(opportunity: OpportunityDetail) -> str:
 
 def _render_opportunity_guidance(opportunity: OpportunityDetail) -> str:
     guidance = opportunity.guidance
-    if guidance is None:
-        return ""
     sections = []
     for heading, items in (
-        ("How to start", guidance.how_to_start),
-        ("What you need", guidance.what_you_need),
-        ("How you earn", guidance.how_you_earn),
-        ("How to claim or exit", guidance.how_to_exit_or_claim),
+        ("How to start", guidance.how_to_start if guidance else None),
+        ("What you need", guidance.what_you_need if guidance else None),
+        ("How you earn", guidance.how_you_earn if guidance else None),
+        ("How to claim or exit", guidance.how_to_exit_or_claim if guidance else None),
     ):
         values = [str(item).strip() for item in (items or []) if str(item).strip()]
         if values:
@@ -758,13 +757,63 @@ def _render_opportunity_guidance(opportunity: OpportunityDetail) -> str:
                 f'<article class="human-line"><h3>{escape(heading)}</h3><ul>{"".join(f"<li>{escape(item)}</li>" for item in values)}</ul></article>'
             )
     if not sections:
+        sources = opportunity.official_source_references
+        first_source = sources[0].label if sources else "the official project documentation"
+        platforms = human_list(
+            [*opportunity.platforms, *opportunity.chains],
+            "Exact setup requirements are not fully structured in the current evidence.",
+        )
+        rewards = human_list(
+            opportunity.reward_asset_or_points_type,
+            "The reward or points type is not specified in the current evidence.",
+        )
+        realizable = opportunity.value_realization_status == "realizable"
+        fallback = (
+            ("How to start", f"Start with {first_source}; confirm current eligibility, region, and operating rules before using the project."),
+            ("What you need", platforms),
+            ("How you earn", f"{rewards}. The catalog does not establish a guaranteed earning rate or fixed time to first reward."),
+            (
+                "How to claim or exit",
+                "A value route is marked as realizable, but current payout and withdrawal conditions must be checked in the official references below."
+                if realizable
+                else "A reproducible payout or claim route is not verified yet. Do not treat points or future claims as cash.",
+            ),
+        )
+        sections = [
+            f'<article class="human-line"><h3>{escape(heading)}</h3><p>{escape(value)}</p></article>'
+            for heading, value in fallback
+        ]
+    resources = _render_official_guide_links(opportunity.official_source_references)
+    if not sections and not resources:
         return ""
     return (
         '<section class="section-panel opportunity-guidance">'
-        '<div class="section-header"><h2>How it works</h2></div>'
-        f'<div class="section-body human-summary-grid">{"".join(sections)}</div>'
+        '<div class="section-header"><h2>Practical guide</h2><span class="badge info">Evidence-linked</span></div>'
+        f'<div class="section-body human-summary-grid">{"".join(sections)}{resources}</div>'
         '</section>'
     )
+
+
+def _render_official_guide_links(sources: list[SourceReferencePayload]) -> str:
+    links = [source for source in sources if source.url and source.label]
+    if not links:
+        return ""
+    cards = []
+    for source in links:
+        value = f"{source.label} {source.url}".lower()
+        if "youtube" in value or "video" in value:
+            kind = "Video"
+        elif any(token in value for token in ("start", "setup", "install", "onboard", "getting", "how to")):
+            kind = "Start here"
+        elif any(token in value for token in ("earn", "reward", "payout", "claim", "withdraw", "payment", "token", "econom")):
+            kind = "Earnings / payout"
+        else:
+            kind = "Official reference"
+        cards.append(
+            f'<a class="guide-resource" href="{escape(source.url)}" rel="noopener noreferrer" target="_blank">'
+            f'<span>{escape(kind)}</span><strong>{escape(source.label)}</strong></a>'
+        )
+    return f'<div class="guide-resources"><h3>Official guides and references</h3><div class="guide-resource-grid">{"".join(cards)}</div></div>'
 
 
 def _render_strategy_human_summary(strategy: StrategySummary, snapshot: StrategySnapshotPayload | None) -> str:
