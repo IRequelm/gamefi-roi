@@ -341,7 +341,7 @@ export function renderCatalogStats(rankings = { page: { total: 0 } }, opportunit
       ${summaryItem("Reviewed opportunities", escapeHtml(String(opportunityCount)))}
       ${summaryItem("Modeled strategies", escapeHtml(String(modeledCount)))}
       ${summaryItem("Opportunity coverage", escapeHtml(Array.from(types).join(" · ") || "Unavailable"))}
-      ${summaryItem("ROI not measured", escapeHtml(`${unavailableCount} explicit`))}
+      ${summaryItem("Guide-only opportunities", escapeHtml(String(unavailableCount)))}
     </section>
   `;
 }
@@ -374,7 +374,7 @@ export function renderTopRankingSummary(rankings = { items: [] }) {
   return `
     <section class="top-opportunity-card" aria-label="Top ranked organic strategy">
       <div class="top-opportunity-copy">
-        <span class="eyebrow">${snapshot.freshness?.overall_status && snapshot.freshness.overall_status !== "fresh" ? "Top opportunity (stale model)" : "Top opportunity"}</span>
+        <span class="eyebrow">${snapshot.freshness?.overall_status && snapshot.freshness.overall_status !== "fresh" ? "Highest recorded model — freshness expired" : "Top modeled opportunity"}</span>
         <div class="card-identity">${renderOpportunityLogo(strategy.logo, snapshot.game_name, true)}<h2>${escapeHtml(snapshot.game_name)}</h2></div>
         <p><a class="strategy-link" href="/strategies/${encodeURIComponent(strategy.strategy_id)}" data-link>${escapeHtml(strategy.name)}</a></p>
         <p class="muted">Ranked by modeled 30D ROI, then confidence, risk, and recency according to the organic ranking methodology.</p>
@@ -874,6 +874,7 @@ export function renderOpportunityCard(opportunity) {
       <div class="card-identity">${renderOpportunityLogo(opportunity.logo, opportunity.name, true)}<h3><a class="strategy-link" href="/opportunities/${encodeURIComponent(opportunity.opportunity_id)}" data-link>${escapeHtml(opportunity.name)}</a></h3></div>
       <p class="opportunity-mode"><strong>How it works</strong> ${escapeHtml(participation)}</p>
       <p class="muted">${escapeHtml(opportunityIntro(opportunity))}</p>
+      ${renderCompactOpportunityGuide(opportunity)}
       <p class="muted">${strategyText}</p>
       ${setupLabels.length ? `<p class="muted">Setup: ${escapeHtml(setupLabels.slice(0, 2).join("; "))}</p>` : ""}
       <div class="opportunity-facts">
@@ -910,7 +911,7 @@ export function renderRankingsTable(rankings, options = {}) {
     : items.map((item) => renderRankingCard(item, options)).join("");
   const countLabel = groups
     ? `${groups.length} opportunities · ${items.length} strategies`
-    : `${rankings.page?.total ?? items.length} stored`;
+    : `${rankings.page?.total ?? items.length} strategies`;
   return `
     <section class="section-panel ranking-section">
       <div class="section-header">
@@ -952,6 +953,7 @@ function renderOpportunityRankingGroup(group) {
         </div>
       </div>
       ${renderStrategySignals(snapshot)}
+      ${renderRiskContext(snapshot)}
       <div class="card-metrics">
         ${metricItem("Top strategy capital", formatMoney(snapshot.capital.total_capital))}
         ${metricItem("Top strategy net/day", formatMoney(snapshot.earnings.net_earnings_day, { perDay: true }))}
@@ -992,6 +994,7 @@ export function renderRankingCard(item, options = {}) {
         </div>
       </div>
       ${renderStrategySignals(snapshot)}
+      ${renderRiskContext(snapshot)}
       <div class="card-metrics">
         ${metricItem("Starting capital", formatMoney(snapshot.capital.total_capital))}
         ${metricItem("Net earning/day", formatMoney(snapshot.earnings.net_earnings_day, { perDay: true }))}
@@ -1554,7 +1557,7 @@ export function renderStrategySignals(snapshot) {
   if (!roi || roi.value === null || roi.value === undefined) {
     signals.push({ label: "ROI not measurable yet", tone: "warning" });
   } else if (netSign > 0) {
-    signals.push({ label: stale ? "Modeled positive net/day (stale)" : "Profitable now", tone: stale ? "warning" : "good" });
+    signals.push({ label: stale ? "Modeled positive net/day (stale)" : "Positive modeled net/day", tone: stale ? "warning" : "good" });
   } else if (netSign < 0) {
     signals.push({ label: stale ? "Modeled negative net/day (stale)" : "Unprofitable now", tone: stale ? "warning" : "high" });
   } else {
@@ -1875,6 +1878,23 @@ export function renderValueStatus(status, strategyCount = 0) {
   const measurable = normalized === "realizable" && strategyCount > 0;
   const label = measurable ? "ROI can be measured" : normalized === "realizable" ? "Earning rate unverified" : "ROI not measurable yet";
   return `<span class="badge ${measurable ? "good" : "warning"}">${escapeHtml(label)}</span>`;
+}
+
+function renderRiskContext(snapshot) {
+  const risk = snapshot?.risk;
+  if (!risk?.available) return "";
+  const reasons = (risk.contributions || []).map((item) => String(item?.reason || "").trim()).filter(Boolean).slice(0, 2);
+  if (!reasons.length) return "";
+  return `<p class="risk-context"><strong>Why this exposure?</strong> ${escapeHtml(reasons.join(" "))}</p>`;
+}
+
+function renderCompactOpportunityGuide(opportunity) {
+  const guidance = opportunity?.guidance || {};
+  const start = Array.isArray(guidance.how_to_start) ? guidance.how_to_start[0] : "";
+  const earn = Array.isArray(guidance.how_you_earn) ? guidance.how_you_earn[0] : "";
+  const value = start || earn;
+  if (!value) return "";
+  return `<p class="compact-guide"><strong>${start ? "Start" : "Earn"}</strong> ${escapeHtml(value)}</p>`;
 }
 
 function valueStatusText(status, strategyCount = 0) {

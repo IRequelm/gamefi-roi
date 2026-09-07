@@ -525,6 +525,30 @@ def _ranking_answer(snapshot: StrategySnapshotPayload, strategy: StrategySummary
     )
 
 
+def _risk_context(snapshot: StrategySnapshotPayload) -> str:
+    reasons = [
+        str(contribution.reason).strip()
+        for contribution in snapshot.risk.contributions[:2]
+        if str(contribution.reason).strip()
+    ]
+    if not reasons:
+        return ""
+    return f'<p class="risk-context"><strong>Why this exposure?</strong> {escape(" ".join(reasons))}</p>'
+
+
+def _compact_opportunity_guidance(opportunity: OpportunitySummary) -> str:
+    guidance = opportunity.guidance
+    if guidance is None:
+        return ""
+    start = guidance.how_to_start[0] if guidance.how_to_start else ""
+    earn = guidance.how_you_earn[0] if guidance.how_you_earn else ""
+    value = start or earn
+    if not value:
+        return ""
+    label = "Start" if start else "Earn"
+    return f'<p class="compact-guide"><strong>{label}</strong> {escape(value)}</p>'
+
+
 def _opportunity_answer(
     opportunity: OpportunityDetail,
     strategy: StrategySummary | None,
@@ -923,6 +947,7 @@ def _render_ranking_cards(items: list[RankingItem], *, heading: str) -> str:
                 </div>
               </div>
               <p>{escape(_ranking_answer(snapshot, strategy))}</p>
+              {_risk_context(snapshot)}
               <div class="card-metrics">
                 {_metric("Starting capital", format_money_html(snapshot.capital.total_capital))}
                 {_metric("Net earning/day", format_money_html(snapshot.earnings.net_earnings_day, per_day=True))}
@@ -997,6 +1022,7 @@ def _render_opportunity_cards(opportunities: list[OpportunitySummary], *, headin
               <div class="card-identity">{_render_logo(opportunity.logo, opportunity.name, compact=True)}<h3><a class="strategy-link" href="/opportunities/{escape(opportunity.opportunity_id)}">{escape(opportunity.name)}</a></h3></div>
               <p class="opportunity-mode"><strong>How it works</strong> {escape(participation)}</p>
               <p class="muted">{escape(opportunity_intro(opportunity))}</p>
+              {_compact_opportunity_guidance(opportunity)}
               <p class="muted">{escape(strategy_text)}</p>
               {f'<p class="muted">{escape(setup_text)}</p>' if setup_text else ''}
               <div class="opportunity-facts">
@@ -1031,7 +1057,7 @@ def _render_catalog_stats(rankings: RankingsPage, opportunities: list[Opportunit
         {_summary("Reviewed opportunities", escape(str(opportunity_count)))}
         {_summary("Modeled strategies", escape(f"{modeled_count} across {modeled_opportunity_count} opportunities"))}
         {_summary("Opportunity types", escape(opportunity_types))}
-        {_summary("ROI not measured", escape(f"{unavailable_count} opportunities without a reproducible model"))}
+        {_summary("Guide-only opportunities", escape(str(unavailable_count)))}
       </section>
     """
 

@@ -68,7 +68,8 @@ test("rankings rendering includes card metrics and stored API values", () => {
   assert.match(html, /0.05862/);
   assert.match(html, /\$250/);
   assert.match(html, /5.86%/);
-  assert.match(html, /Profitable now/);
+  assert.match(html, /Positive modeled net\/day/);
+  assert.match(html, /Why this exposure\?/);
   assert.match(html, /Very high exposure/);
   assert.match(html, /Updated /);
   assert.doesNotMatch(html, /Updated 2026-08-16 12:00 UTC/);
@@ -98,14 +99,14 @@ test("home renders results as cards before filters without table ranking markup"
   assert.match(html, /GamCryp public beta/);
   assert.match(html, /Find Web3 earning opportunities/);
   assert.match(html, /Risk and confidence separated/);
-  assert.match(html, /Top opportunity/);
+  assert.match(html, /Top modeled opportunity/);
   assert.match(html, /Ranked by modeled 30D ROI, then confidence, risk, and recency/);
   assert.match(html, /When rewards and exits can be priced reproducibly/);
   assert.match(html, /Reviewed opportunities/);
   assert.match(html, /Modeled strategies/);
   assert.match(html, /Opportunity coverage/);
   assert.match(html, /Games/);
-  assert.match(html, /ROI not measured/);
+  assert.match(html, /Guide-only opportunities/);
   assert.match(html, /ranking-card-grid/);
   assert.match(html, /finder-results/);
   assert.match(html, /filter-panel/);
@@ -204,7 +205,8 @@ test("catalog stats summarize V1 coverage without financial recomputation", () =
   assert.match(html, />10</);
   assert.match(html, /Games.*DePIN.*Nodes.*Points/);
   assert.doesNotMatch(html, /DEPIN_NODE|DEPIN NODE/);
-  assert.match(html, /2 explicit/);
+  assert.match(html, /Guide-only opportunities/);
+  assert.match(html, />2</);
   assert.doesNotMatch(html, /30D ROI|Net\/day|Break-even/);
 });
 
@@ -471,6 +473,17 @@ test("opportunity guidance renders complete, partial, and empty structures safel
   });
   assert.match(fallback, /Practical guide|Official guides and references|Official setup guide/);
   assert.match(fallback, /does not establish a guaranteed earning rate/);
+});
+
+test("opportunity cards expose one actionable guide cue without replacing evidence labels", () => {
+  const html = renderOpportunityCard({
+    ...opportunityPayload(),
+    guidance: { how_to_start: ["Install the official node software."], how_you_earn: ["Earn network rewards." ] },
+  });
+
+  assert.match(html, /<strong>Start<\/strong> Install the official node software\./);
+  assert.match(html, /ROI status/);
+  assert.match(html, /ROI not measurable yet/);
 });
 
 test("risk and confidence badges preserve unavailable scores", () => {

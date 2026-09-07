@@ -173,6 +173,13 @@ class OpportunityLogoPayload(BaseModel):
     source_reference: SourceReferencePayload | None = None
 
 
+class OpportunityGuidancePayload(BaseModel):
+    how_to_start: list[str] | None = None
+    what_you_need: list[str] | None = None
+    how_you_earn: list[str] | None = None
+    how_to_exit_or_claim: list[str] | None = None
+
+
 class OpportunitySummary(BaseModel):
     opportunity_id: str
     opportunity_type: str
@@ -190,13 +197,7 @@ class OpportunitySummary(BaseModel):
     primary_destination: OutboundDestinationPayload | None = None
     roi_unavailable: RoiUnavailablePayload | None = None
     logo: OpportunityLogoPayload | None = None
-
-
-class OpportunityGuidancePayload(BaseModel):
-    how_to_start: list[str] | None = None
-    what_you_need: list[str] | None = None
-    how_you_earn: list[str] | None = None
-    how_to_exit_or_claim: list[str] | None = None
+    guidance: OpportunityGuidancePayload | None = None
 
 
 class OpportunityDetail(OpportunitySummary):
