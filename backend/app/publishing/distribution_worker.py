@@ -35,6 +35,7 @@ logger = logging.getLogger("gamcryp.distribution_worker")
 @dataclass(frozen=True)
 class DistributionWorkerConfig:
     live: bool = False
+    x_publishing_mode: str = "dry_run"
     video_directory: Path = Path("data/local/youtube/videos")
     thumbnail_directory: Path | None = None
     state_file: Path = Path("data/local/distribution/worker_state.json")
@@ -50,6 +51,7 @@ class DistributionWorkerConfig:
         live = os.getenv("GAMEFI_DISTRIBUTION_LIVE", "false").strip().lower() in {"1", "true", "yes"}
         return cls(
             live=live,
+            x_publishing_mode=os.getenv("GAMEFI_X_PUBLISHING_MODE", "dry_run").strip().lower(),
             video_directory=Path(os.getenv("GAMEFI_DISTRIBUTION_VIDEO_DIR", "data/local/youtube/videos")),
             thumbnail_directory=Path(thumbnail) if thumbnail else None,
             state_file=Path(os.getenv("GAMEFI_DISTRIBUTION_WORKER_STATE_FILE", "data/local/distribution/worker_state.json")),
@@ -151,6 +153,8 @@ class DistributionWorker:
             time.sleep(interval_seconds)
 
     def _process_x(self, now: datetime) -> dict[str, Any]:
+        if self.config.x_publishing_mode == "disabled":
+            return {"platform": "X", "status": "disabled"}
         summary = self.x_service.queue_summary()
         candidates = summary.get("publishable", [])
         if not candidates:
@@ -163,6 +167,17 @@ class DistributionWorker:
             try:
                 preview = self.x_service.preview(content_id)
                 key = f"X:{content_id}:{preview.content_checksum}"
+                if self.config.x_publishing_mode == "manual":
+                    outbox_status = self.manual_outbox.prepare(
+                        manual_ready_record(
+                            content_id=content_id,
+                            post_text=preview.exact_final_copy,
+                            source_url=preview.attribution_url,
+                            checksum=preview.content_checksum,
+                            now=now,
+                        )
+                    )
+                    return {"platform": "X", "content_id": content_id, "status": "manual_ready", "outbox": outbox_status}
                 if self.state.blocked(key, now=now) or self.state.blocked(f"X:{content_id}", now=now):
                     saw_cooldown = True
                     continue

@@ -53,6 +53,7 @@ class XQueueItem(BaseModel):
     approval_state: QueueApprovalState
     final_copy: str
     attribution_url: str
+    attribution_url_required: bool = True
     snapshot_id: str | None = None
     snapshot_timestamp: str | None = None
     refreshability: str | None = None
@@ -193,23 +194,46 @@ def _queue_item(pack: ContentPackLite, recommended_order: int, generated_at: str
         ContentReadiness.YELLOW: QueueApprovalState.AWAITING_HUMAN_APPROVAL,
         ContentReadiness.RED: QueueApprovalState.BLOCKED,
     }[pack.editorial.readiness]
+    link_required = _link_required(pack, recommended_order)
+    final_copy = _final_copy(pack, link_required=link_required)
     return XQueueItem(
         content_id=pack.content_id,
         project=pack.facts.project_name,
         status=pack.editorial.readiness,
         approval_required=approval_required,
         approval_state=approval_state,
-        final_copy=pack.editorial.x_post,
+        final_copy=final_copy,
         attribution_url=pack.distribution.x_utm_url,
+        attribution_url_required=link_required,
         snapshot_id=pack.source.snapshot_id,
         snapshot_timestamp=pack.source.snapshot_timestamp,
         refreshability=pack.source.refreshability.value if pack.source.refreshability else None,
         risk_caveat=pack.facts.major_catch,
-        content_checksum=x_content_checksum(pack),
+        content_checksum=x_content_checksum(pack, final_copy),
         recommended_order=recommended_order,
         source_pack_version=pack.content_pack_version,
         generated_at=generated_at,
     )
+
+
+def _link_required(pack: ContentPackLite, recommended_order: int) -> bool:
+    """Keep links useful and measurable without appending one to every post.
+
+    Methodology/source posts always retain a link. Other posts use a stable
+    cadence so the feed remains readable while the source URL stays in queue
+    metadata and the manual outbox.
+    """
+
+    if pack.source.opportunity_id == "gamcryp-methodology":
+        return True
+    return recommended_order % 3 == 0
+
+
+def _final_copy(pack: ContentPackLite, *, link_required: bool) -> str:
+    copy = pack.editorial.x_post.strip()
+    if link_required:
+        return copy
+    return copy.replace(pack.distribution.x_utm_url, "").rstrip()
 
 
 def _order_key(item: XQueueItem) -> tuple[int, str]:

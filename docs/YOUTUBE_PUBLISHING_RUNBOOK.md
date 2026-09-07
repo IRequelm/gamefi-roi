@@ -95,7 +95,7 @@ video-narration generate CONTENT_ID
 
 Assets use `CONTENT_ID` plus a script fingerprint and are stored beside checksum-bound JSON metadata. Matching audio is reused. Changing the script, voice, or model produces a new asset. The metadata records `narration_mode=neural_voice`, `voice_provider=elevenlabs`, voice/model identifiers, the exact spoken text, timestamp, checksum, and quality status.
 
-GREEN video publication still requires the validated package, approved narration metadata, and a valid rendered video. A provider error leaves narration `NOT_READY`; it never falls back to Windows/system voices, pyttsx, generic TTS, another provider, or music-only mode. Music-only and silent formats remain valid only when explicitly approved in the content metadata.
+GREEN video publication still requires the validated package, approved audio metadata, and a valid rendered video. A provider error never falls back to Windows/system voices, pyttsx, generic TTS, or another neural provider. When ElevenLabs returns an account-level quota/auth failure, short-form rendering may use the local `GAMEFI_SHORT_AUDIO_FALLBACK=music_only` path: an attribution-free instrumental bed, no spoken-content claim, and the same visual/evidence gate. Long-form and narration-dependent packages remain `NOT_READY`. Music-only and silent formats are valid only when explicitly represented in the render metadata.
 
 Never paste or commit the OAuth client JSON, access token, refresh token, browser cookies, or authorization headers. Do not place secrets in Content Packs or queue files.
 

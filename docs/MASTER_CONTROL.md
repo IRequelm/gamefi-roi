@@ -67,19 +67,19 @@ Official destinations and reviewed outbound redirects remain allowlisted and sep
 - Windows task `GamCryp Distribution Worker` exists, is enabled, runs at login, and was observed in `Running` state without a terminal window.
 - Short handoff buffer target is bounded at 14; current report is 13 queued GREEN Shorts and 1 previously uploaded item.
 - YouTube daily cap remains one successful public Short per local calendar day. The local cap state records one success for 2026-09-06, so no further upload is permitted today.
-- Failed narration/render never enters the handoff. X failures are isolated from YouTube.
+- Failed narration/render never enters the handoff. For Shorts only, an account-level ElevenLabs quota/auth failure may produce an explicitly marked local `music_only` render using a generated instrumental bed; it is not TTS and remains subject to the same visual/evidence gates. X failures are isolated from YouTube.
 - The visual gate requires six planned motion-card beats, at least five meaningful scenes, scene diversity, non-caption data visuals, identity representation, transitions, validated safe captions, no clipping, and a branded GamCryp opening/CTA frame. The latest local renderer patch is not yet production-deployed.
 
 ## 7. YouTube and narration
 
 - YouTube OAuth configuration and publisher code are present locally; no secret values are recorded here.
 - Existing Hivemapper proof renders passed the structural gate with six scenes, local official logo integration, and ElevenLabs narration.
-- A new GameFi proof attempt was correctly blocked by the ElevenLabs account quota: the authenticated free-tier account reports 0 credits remaining for the requested narration. No fallback TTS was used. Sarah and Bella passed tiny compatibility requests; Laura was rejected after the quota was exhausted during the probe sequence. A real proof narration remains blocked until the quota resets or the operator supplies an authorized funded account.
+- A new GameFi proof attempt was blocked by the ElevenLabs account quota: the authenticated free-tier account reports 0 credits remaining for requested narration. No fallback TTS is permitted. Short-form production now has a local music-only recovery path; narration-dependent and long-form content remains blocked until the quota resets or the operator supplies an authorized funded account.
 - No long-form video is rendered because the enrichment layer found zero truly eligible candidates.
 
 ## 8. X
 
-X remains fail-closed while credentials/API access are unavailable. The manual-ready fallback uses `distribution/manual_outbox/x_manual_ready.json`, with exact text, source URL, content ID, stable fingerprint, and `MANUAL_READY` state. No live X post is attempted.
+X API access remains unavailable. `GAMEFI_X_PUBLISHING_MODE=manual` now lets the local worker prepare one exact GREEN post in `distribution/manual_outbox/x_manual_ready.json` without calling X; the operator pastes it into the normal X website and confirms the checksum. Non-API browser automation is intentionally not implemented because X rules prohibit it. Visible GamCryp links use an occasional deterministic cadence; source URLs remain in metadata.
 
 ## 8a. Operations commands
 
@@ -89,6 +89,8 @@ From the repository root:
 Get-ScheduledTask -TaskName 'GamCryp Distribution Worker' | Select-Object TaskName,State
 Get-Content data/local/youtube/autonomous_daily_cap.json
 Get-Content distribution/publish_queue/youtube_short_handoff.json
+$env:GAMEFI_X_PUBLISHING_MODE='manual'
+$env:GAMEFI_X_PUBLISHING_MODE='disabled'
 $env:GAMEFI_DISTRIBUTION_LIVE='false'
 Get-ScheduledTask -TaskName 'GamCryp Distribution Worker' | Disable-ScheduledTask
 $env:GAMEFI_DISTRIBUTION_LIVE='true'
@@ -130,12 +132,12 @@ Operational gaps still requiring explicit monitoring: snapshot refresh age, queu
 
 1. Render Postgres remains Free; backups/PITR and expiry protection are not production-grade.
 2. Cloudflare/edge Managed Challenge can return 429 to some non-browser probes; security was not weakened.
-3. ElevenLabs currently reports 0 remaining credits; narration fails closed and no fallback TTS is used.
-4. Autonomous YouTube and X publishing remain disabled by policy/configuration.
+3. ElevenLabs currently reports 0 remaining credits; narrated production is blocked, while explicitly marked music-only Shorts may render locally.
+4. Autonomous YouTube remains disabled; X uses local manual-ready handoff rather than API/browser automation.
 
 ## 13. Release-closure decision
 
-The current public web release is `a738300`; Render reports it Live and controlled routes returned 200. The product hardening changes are live, including evidence-backed guide cues, risk-contribution context, explicit guide-only counts, and canonical `gamcryp.com` metadata. The service plan is currently Free and remains an operational availability limitation. Publishing/X files remain intentionally outside this sprint.
+The current public web release is `a738300`; Render reports it Live and controlled routes returned 200. The product hardening changes are live, including evidence-backed guide cues, risk-contribution context, explicit guide-only counts, and canonical `gamcryp.com` metadata. The service plan is currently Free and remains an operational availability limitation. Publishing is still disabled for live YouTube; X has a local manual-ready path.
 
 ## 14. Verification evidence
 

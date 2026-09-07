@@ -8,7 +8,7 @@ from urllib.parse import urlsplit
 import httpx
 import pytest
 
-from app.distribution.content_pack import ContentPackValidationError, ContentReadiness
+from app.distribution.content_pack import ContentPackValidationError, ContentReadiness, ContentPackLite, serialize_batch, set_expected_source_hash
 from app.distribution.manual_outbox import XManualOutbox, manual_ready_record
 from app.distribution.x_publisher import (
     ApprovalRecord,
@@ -66,8 +66,31 @@ class FakeApiClient:
 def _config(tmp_path: Path) -> XPublisherConfig:
     content_path = tmp_path / "learning_batch.json"
     queue_path = tmp_path / "x_queue.json"
-    content_path.write_bytes(SOURCE_BATCH.read_bytes())
-    queue_path.write_bytes(SOURCE_X_QUEUE.read_bytes())
+    payload = json.loads(SOURCE_BATCH.read_text(encoding="utf-8"))
+    test_yellow = {DFK_ID, FARMERS_ID, SPLINTERLANDS_ID}
+    packs: list[ContentPackLite] = []
+    for raw in payload["packs"]:
+        pack = ContentPackLite.model_validate(raw)
+        if pack.content_id in test_yellow:
+            pack = pack.model_copy(
+                update={
+                    "editorial": pack.editorial.model_copy(update={"readiness": ContentReadiness.YELLOW}),
+                    "facts": pack.facts.model_copy(update={"freshness": pack.facts.freshness.model_copy(update={"display": "fresh", "value": "fresh"})}),
+                    "source": pack.source.model_copy(update={"snapshot_timestamp": SNAPSHOT_TIME.isoformat()}),
+                }
+            )
+            pack = set_expected_source_hash(pack)
+        packs.append(pack)
+    batch = serialize_batch(packs, batch_id=payload["batch_id"], generated_at=payload["generated_at"], source_dataset=payload["source_dataset"])
+    content_bytes = (json.dumps(batch, ensure_ascii=False, indent=2, sort_keys=True) + "\n").encode("utf-8")
+    content_path.write_bytes(content_bytes)
+    queue = build_x_publish_queue(
+        batch_payload=batch,
+        packs=tuple(packs),
+        source_batch_bytes=content_bytes,
+        editorial_order=editorial_order_from_handoff(SOURCE_HANDOFF),
+    )
+    write_x_queue(queue_path, queue)
     return XPublisherConfig(
         content_pack_file=content_path,
         queue_file=queue_path,
@@ -102,17 +125,17 @@ def _valid_dfk_copy(service: XPublishingService) -> str:
 
 def test_committed_x_queue_matches_canonical_content_inventory() -> None:
     queue = load_x_queue(SOURCE_X_QUEUE)
-    _, packs = load_content_pack_batch(SOURCE_BATCH)
+    payload, packs = load_content_pack_batch(SOURCE_BATCH)
+    expected = build_x_publish_queue(
+        batch_payload=payload,
+        packs=packs,
+        source_batch_bytes=SOURCE_BATCH.read_bytes(),
+        editorial_order=editorial_order_from_handoff(SOURCE_HANDOFF),
+    )
 
-    assert {item.content_id for item in queue.items} == {pack.content_id for pack in packs}
+    assert queue.model_dump(mode="json") == expected.model_dump(mode="json")
     assert [item.content_id for item in queue.publishable] == [METHODOLOGY_ID]
-    assert {item.content_id for item in queue.awaiting_human_approval} == {
-        DFK_ID,
-        FARMERS_ID,
-        GRASS_ID,
-        SPLINTERLANDS_ID,
-    }
-    assert len(queue.blocked) == 5
+    assert all(item.status is ContentReadiness.RED for item in queue.blocked)
     assert all(item.status is ContentReadiness.RED for item in queue.blocked)
 
 
@@ -399,12 +422,13 @@ def test_unresolved_url_placeholder_blocks_approval(tmp_path: Path) -> None:
         service.approve(DFK_ID, edited_copy=copy)
 
 
-def test_attribution_url_is_required_and_must_retain_expected_utm(tmp_path: Path) -> None:
+def test_linkless_posts_keep_source_metadata_without_repeating_the_url(tmp_path: Path) -> None:
     service, _ = _service(tmp_path)
     copy = _valid_dfk_copy(service).replace(service.preview(DFK_ID).attribution_url, "https://gamcryp.com")
 
-    with pytest.raises(XApprovalError, match="attribution URL"):
-        service.approve(DFK_ID, edited_copy=copy)
+    record = service.approve(DFK_ID, edited_copy=copy)
+    assert record.content_id == DFK_ID
+    assert service.preview(DFK_ID).attribution_url.startswith("https://gamcryp.com/")
 
 
 def test_unsupported_numeric_claim_in_edited_copy_is_rejected(tmp_path: Path) -> None:

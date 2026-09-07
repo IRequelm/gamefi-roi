@@ -636,7 +636,7 @@ class XPublishingService:
         blockers: list[str] = []
         if item.channel != "X":
             blockers.append("queue item channel is not X")
-        if item.content_checksum != x_content_checksum(pack):
+        if item.content_checksum != x_content_checksum(pack, item.final_copy):
             blockers.append("queue content checksum does not match the canonical pack")
         candidate = pack.model_copy(
             update={"editorial": pack.editorial.model_copy(update={"x_post": final_copy})}
@@ -651,7 +651,7 @@ class XPublishingService:
             blockers.append("object serialization placeholder remains")
         if contains_unsupported_idn_hostname(final_copy):
             blockers.append("non-ASCII/IDN URL host syntax is unsupported")
-        if item.attribution_url not in final_copy:
+        if item.attribution_url_required and item.attribution_url not in final_copy:
             blockers.append("exact attribution URL is missing from final copy")
         blockers.extend(_attribution_url_blockers(item))
         weighted_count = x_weighted_character_count(final_copy)

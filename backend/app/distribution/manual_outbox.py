@@ -37,7 +37,17 @@ class XManualOutbox:
         current = self.current()
         if current and not current.published and current.checksum != record.checksum:
             return "retained_existing"
-        if current and current.model_dump(mode="json") == record.model_dump(mode="json"):
+        if current and not current.published and (
+            current.content_id,
+            current.checksum,
+            current.post_text,
+            current.source_url,
+        ) == (
+            record.content_id,
+            record.checksum,
+            record.post_text,
+            record.source_url,
+        ):
             return "unchanged"
         self._write({"version": 1, "item": record.model_dump(mode="json")})
         return "written"

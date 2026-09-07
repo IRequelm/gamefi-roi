@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import hashlib
+from dataclasses import replace
 from types import SimpleNamespace
 
 from app.config.settings import Settings
@@ -46,6 +47,19 @@ def test_ready_short_render_enters_handoff_once(tmp_path: Path) -> None:
     assert queue.items[0].category_id == "28"
     assert queue.items[0].made_for_kids is False
     assert all(item.format == "SHORT_FORM" for item in load_handoff(queue_path).items)
+
+
+def test_music_only_short_render_enters_handoff_without_voice_metadata(tmp_path: Path) -> None:
+    package = _package()
+    queue_path = tmp_path / "handoff.json"
+    result = _render(tmp_path, package=package)
+    result = replace(result, voice_name=None, voice_id=None, model_id=None, audio_mode="music_only")
+    queue = prepare_short_handoff(
+        settings=_settings(), queue_path=queue_path, render_root=tmp_path / "render",
+        packages=[package], render=lambda package, **kwargs: result,
+    )
+    assert queue.items[0].audio_mode == "music_only"
+    assert queue.items[0].narration_provider == "local_music"
 
 
 def test_handoff_buffer_is_bounded_and_deterministic(tmp_path: Path) -> None:

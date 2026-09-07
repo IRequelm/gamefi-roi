@@ -65,6 +65,7 @@ class RenderResult:
     metadata_path: str | None
     rendered_at: str | None = None
     quality_metadata: dict[str, Any] | None = None
+    audio_mode: str = "neural_voice"
 
 
 class RenderError(RuntimeError):
@@ -120,6 +121,7 @@ def render_package(
     voice_name: str | None = None
     voice_id: str | None = None
     last_error: str | None = None
+    audio_mode = "neural_voice"
     next_index = _load_rotation_index(state_path)
     base_config = ElevenLabsConfig.from_settings(settings)
     for offset in range(len(APPROVED_VOICES)):
@@ -143,9 +145,15 @@ def render_package(
             if isinstance(exc, ElevenLabsProviderError) and exc.account_blocked:
                 break
     if narration is None:
-        return _failed(package, f"all approved neural voices failed: {last_error or 'provider error'}", evidence=job.evidence_fingerprint, width=job.width, height=job.height)
-
-    audio = Path(narration.metadata.audio_path)
+        if job.format == SHORT_FORM and _music_only_fallback_enabled() and _last_provider_failure_was_account_blocked(last_error):
+            audio_mode = "music_only"
+            audio = narration_dir / f"{package.package_id}-music.mp3"
+            if not _generate_music_bed(audio, duration=max(3, job.duration_target_seconds), run=run):
+                return _failed(package, "ElevenLabs unavailable and local music fallback could not be generated", evidence=job.evidence_fingerprint, width=job.width, height=job.height)
+        else:
+            return _failed(package, f"all approved neural voices failed: {last_error or 'provider error'}", evidence=job.evidence_fingerprint, width=job.width, height=job.height)
+    else:
+        audio = Path(narration.metadata.audio_path)
     caption_path = caption_dir / f"{package.package_id}.srt"
     _write_captions(caption_path, job.script, _audio_duration(audio, run) or _estimate_duration(job.script))
     caption_text_paths = _write_caption_text_files(caption_path)
@@ -200,7 +208,7 @@ def render_package(
         return _failed(package, "rendered video is not decodable", evidence=job.evidence_fingerprint, width=job.width, height=job.height)
     if job.format == LONG_FORM and duration < LONG_FORM_MIN_SECONDS:
         return _failed(package, "rendered long-form video is shorter than the evidence-backed minimum", evidence=job.evidence_fingerprint, width=job.width, height=job.height)
-    result = RenderResult(package.source_inventory_item_id, package.package_id, job.format, RENDER_READY, None, str(video_path), str(caption_path), str(audio), duration, job.width, job.height, voice_name, voice_id, narration.metadata.model_id, job.evidence_fingerprint, str(metadata_dir / f"{package.package_id}.json"), (now or datetime.now(UTC)).isoformat(), quality_metadata)
+    result = RenderResult(package.source_inventory_item_id, package.package_id, job.format, RENDER_READY, None, str(video_path), str(caption_path), str(audio), duration, job.width, job.height, voice_name, voice_id, narration.metadata.model_id if narration else None, job.evidence_fingerprint, str(metadata_dir / f"{package.package_id}.json"), (now or datetime.now(UTC)).isoformat(), quality_metadata, audio_mode)
     blockers = validate_render(result)
     if blockers:
         return _failed(package, "; ".join(blockers), evidence=job.evidence_fingerprint, width=job.width, height=job.height)
@@ -217,7 +225,9 @@ def validate_render(result: RenderResult) -> tuple[str, ...]:
     if result.caption_path is None or not Path(result.caption_path).is_file():
         blockers.append("captions are missing")
     if result.narration_path is None or not Path(result.narration_path).is_file():
-        blockers.append("approved narration is missing")
+        blockers.append("approved audio is missing")
+    if result.audio_mode not in {"neural_voice", "music_only", "human", "silent"}:
+        blockers.append("audio mode is unknown")
     if result.format == SHORT_FORM and (result.width, result.height) != (1080, 1920):
         blockers.append("short-form aspect ratio is invalid")
     if result.format == LONG_FORM and (result.width, result.height) != (1920, 1080):
@@ -557,3 +567,35 @@ def _filter_path(path: Path) -> str:
 def _safe_process_reason(stderr: str | None) -> str:
     lines = [line.strip() for line in (stderr or "").splitlines() if line.strip()]
     return lines[-1][:240] if lines else "unknown ffmpeg error"
+
+
+def _music_only_fallback_enabled() -> bool:
+    return os.getenv("GAMEFI_SHORT_AUDIO_FALLBACK", "music_only").strip().lower() in {"1", "true", "yes", "music_only"}
+
+
+def _last_provider_failure_was_account_blocked(error: str | None) -> bool:
+    text = (error or "").lower()
+    return "quota" in text or "rate limit" in text or "credentials were rejected" in text
+
+
+def _generate_music_bed(path: Path, *, duration: int, run: Callable[..., subprocess.CompletedProcess[str]]) -> bool:
+    """Create a small local, attribution-free instrumental bed.
+
+    This is deliberately not a TTS fallback: it contains no spoken content and
+    is only used for Shorts whose visual/caption package is independently
+    understandable. No external media or recurring service is required.
+    """
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    command = [
+        "ffmpeg", "-y",
+        "-f", "lavfi", "-i", "sine=frequency=220:sample_rate=44100",
+        "-f", "lavfi", "-i", "sine=frequency=277.18:sample_rate=44100",
+        "-filter_complex", "[0:a]volume=0.035[a0];[1:a]volume=0.025[a1];[a0][a1]amix=inputs=2:duration=longest,afade=t=in:st=0:d=1,afade=t=out:st=" + str(max(duration - 2, 1)) + ":d=2",
+        "-t", str(duration), "-c:a", "libmp3lame", "-b:a", "96k", str(path),
+    ]
+    try:
+        completed = run(command, check=False, capture_output=True, text=True)
+    except OSError:
+        return False
+    return completed.returncode == 0 and path.is_file()

@@ -76,6 +76,19 @@ def worker(tmp_path: Path, *, live: bool = False, x=None, youtube=None) -> Distr
     return DistributionWorker(config=config, x_service=x or FakeX(), youtube_distribution=youtube or FakeYouTube(), now=lambda: NOW)
 
 
+def test_manual_x_mode_exports_exact_green_post_without_network(tmp_path):
+    x = FakeX(publishable=["green-x"])
+    config = DistributionWorkerConfig(
+        x_publishing_mode="manual", video_directory=tmp_path / "videos", state_file=tmp_path / "worker.json",
+        manual_outbox_file=tmp_path / "outbox.json", short_handoff_file=tmp_path / "short-handoff.json",
+        autonomous_cap_file=tmp_path / "cap.json",
+    )
+    result = DistributionWorker(config=config, x_service=x, youtube_distribution=FakeYouTube(), now=lambda: NOW).run_once()
+    assert result[0]["status"] == "manual_ready"
+    assert x.calls == []
+    assert json.loads((tmp_path / "outbox.json").read_text(encoding="utf-8"))["item"]["post_text"] == "Post for green-x"
+
+
 def test_green_x_is_dry_run_by_default_and_persists_no_publication(tmp_path):
     x = FakeX(publishable=["green-x"])
     result = worker(tmp_path, x=x).run_once()

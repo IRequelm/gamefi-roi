@@ -49,9 +49,10 @@ class ShortHandoffItem(BaseModel):
     video_path: str
     caption_path: str
     narration_path: str
-    narration_provider: str
-    narration_voice_id: str
-    narration_model_id: str
+    narration_provider: str = "elevenlabs"
+    narration_voice_id: str = ""
+    narration_model_id: str = ""
+    audio_mode: str = "neural_voice"
     evidence_fingerprint: str
     video_checksum: str
     created_at: str
@@ -117,7 +118,9 @@ def prepare_short_handoff(
         blockers = validate_render(result)
         if result.status != RENDER_READY or blockers:
             continue
-        if result.voice_id is None or result.model_id is None or result.narration_path is None or result.video_path is None or result.caption_path is None:
+        if result.narration_path is None or result.video_path is None or result.caption_path is None:
+            continue
+        if result.audio_mode == "neural_voice" and (result.voice_id is None or result.model_id is None):
             continue
         video_checksum = hashlib.sha256(Path(result.video_path).read_bytes()).hexdigest()
         by_package[package.package_id] = ShortHandoffItem(
@@ -131,9 +134,10 @@ def prepare_short_handoff(
             video_path=result.video_path,
             caption_path=result.caption_path,
             narration_path=result.narration_path,
-            narration_provider="elevenlabs",
-            narration_voice_id=result.voice_id,
-            narration_model_id=result.model_id,
+            narration_provider="elevenlabs" if result.audio_mode == "neural_voice" else "local_music",
+            narration_voice_id=result.voice_id or "",
+            narration_model_id=result.model_id or "",
+            audio_mode=result.audio_mode,
             evidence_fingerprint=package.evidence_fingerprint,
             video_checksum=video_checksum,
             created_at=datetime.now(UTC).isoformat(),
@@ -227,7 +231,10 @@ def _handoff_blockers(item: ShortHandoffItem) -> tuple[str, ...]:
         blockers.append("only SHORT_FORM assets may enter this handoff")
     if item.readiness != "GREEN":
         blockers.append("handoff item is not GREEN")
-    if item.narration_provider != "elevenlabs" or item.narration_voice_id not in {voice_id for _, voice_id in APPROVED_VOICES}:
+    if item.audio_mode == "music_only":
+        if item.narration_provider != "local_music":
+            blockers.append("music-only audio must use the local music provider")
+    elif item.narration_provider != "elevenlabs" or item.narration_voice_id not in {voice_id for _, voice_id in APPROVED_VOICES}:
         blockers.append("approved ElevenLabs narration metadata is required")
     for label, value in (("video", item.video_path), ("captions", item.caption_path), ("narration", item.narration_path)):
         if not Path(value).is_file():

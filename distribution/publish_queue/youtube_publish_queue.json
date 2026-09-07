@@ -8,6 +8,8 @@
       "content_id": "x-grass-roi-unavailable-20260831",
       "description": "A GamCryp Short explaining why points-based opportunities like Grass may be useful to track while ROI remains unavailable.\n\nExplore the source-backed opportunity: https://gamcryp.com/opportunities/grass?utm_campaign=distribution-mvp&utm_content=x-grass-roi-unavailable-20260831&utm_medium=short&utm_source=youtube",
       "generated_at": "2026-08-31T18:00:00Z",
+      "narration_mode": "unknown",
+      "narration_quality_status": "unknown",
       "official_source_refs": [
         {
           "label": "Official site",
@@ -27,7 +29,9 @@
       "thumbnail_asset_state": "missing",
       "title": "Grass: why GamCryp says ROI unavailable",
       "upload_state": "not_uploaded",
-      "video_asset_state": "missing"
+      "video_asset_state": "missing",
+      "voice_model": null,
+      "voice_provider": null
     }
   ],
   "blocked": [
@@ -39,6 +43,8 @@
       "content_id": "x-dimo-subscription-catch-20260831",
       "description": "A GamCryp Short showing why DIMO's vehicle-data rewards need cost, eligibility, risk, and confidence shown together.\n\nExplore the source-backed opportunity: https://gamcryp.com/strategies/dimo-software-only-compatible-car?utm_campaign=distribution-mvp&utm_content=x-dimo-subscription-catch-20260831&utm_medium=short&utm_source=youtube",
       "generated_at": "2026-08-31T18:00:00Z",
+      "narration_mode": "unknown",
+      "narration_quality_status": "unknown",
       "official_source_refs": [
         {
           "label": "Official site",
@@ -58,7 +64,9 @@
       "thumbnail_asset_state": "missing",
       "title": "DIMO: vehicle data rewards need the cost side",
       "upload_state": "not_uploaded",
-      "video_asset_state": "missing"
+      "video_asset_state": "missing",
+      "voice_model": null,
+      "voice_provider": null
     },
     {
       "approval_required": false,
@@ -68,6 +76,8 @@
       "content_id": "x-geodnet-rank-risk-20260831",
       "description": "A GamCryp data-backed Short explaining GEODNET's modeled base-station economics and why high ROI can still carry very high risk.\n\nExplore the source-backed opportunity: https://gamcryp.com/strategies/geodnet-empty-hex-triple-band-base-station?utm_campaign=distribution-mvp&utm_content=x-geodnet-rank-risk-20260831&utm_medium=short&utm_source=youtube",
       "generated_at": "2026-08-31T18:00:00Z",
+      "narration_mode": "unknown",
+      "narration_quality_status": "unknown",
       "official_source_refs": [
         {
           "label": "Official site",
@@ -87,12 +97,15 @@
       "thumbnail_asset_state": "missing",
       "title": "GEODNET ROI looks strong. Here is the catch.",
       "upload_state": "not_uploaded",
-      "video_asset_state": "missing"
+      "video_asset_state": "missing",
+      "voice_model": null,
+      "voice_provider": null
     }
   ],
   "generated_at": "2026-08-31T18:00:00Z",
+  "pending_asset": [],
   "publishable": [],
   "queue_version": "youtube-publish-queue-v1",
-  "source_batch_hash": "34051cbed45a7e2b567d2d6b851267d6da900751c9b00ade093e41bb33e2a4af",
+  "source_batch_hash": "11c886249bb710dfcd37c3a2c9c57441ebb95e81b7684345789d4dc02b89b312",
   "source_batch_id": "distribution-learning-batch-001"
 }

@@ -120,7 +120,9 @@ def test_account_level_elevenlabs_failure_does_not_try_other_voices(tmp_path: Pa
         narration_provider_factory=provider_factory, command_runner=_runner,
     )
 
-    assert result.status == NOT_READY
+    assert result.status == RENDER_READY
+    assert result.audio_mode == "music_only"
+    assert result.voice_id is None
     assert calls == [APPROVED_VOICES[0][1]]
 
 

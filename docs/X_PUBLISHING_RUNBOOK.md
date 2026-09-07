@@ -1,15 +1,17 @@
 # GamCryp X Publishing Runbook
 
-Updated: 2026-09-01
-Status: code and dry-run workflow ready; OAuth and live publishing not authorized
+Updated: 2026-09-08
+Status: local manual-ready workflow; official X API unavailable; no browser automation
 
 ## Purpose
 
-GamCryp publishes to `@GamCryp` only through an operator-controlled, API-first workflow:
+GamCryp prepares posts for `@GamCryp` through an operator-controlled local workflow:
 
 `validated content pack -> X queue -> safety validation -> approval -> explicit publish command`
 
-The publisher consumes existing Content Pack Lite facts. It does not calculate ROI, alter rankings, refresh snapshots, or change risk/confidence. Browser automation is not the primary publisher and is not a dependency.
+The publisher consumes existing Content Pack Lite facts. It does not calculate ROI, alter rankings, refresh snapshots, or change risk/confidence. X's rules prohibit non-API browser automation, so the safe no-SaaS path is a local manual-ready outbox: the worker prepares one exact GREEN post, the operator pastes it into the normal X website, then confirms the exact checksum locally.
+
+Links are intentionally occasional: methodology/source posts and every third ordered post retain the tracked GamCryp URL; other posts keep the source URL in queue/outbox metadata without repeating it in visible copy.
 
 ## Current official X API model
 
@@ -61,9 +63,10 @@ GAMEFI_X_OAUTH_PENDING_FILE=data/local/x/oauth_pending.json
 GAMEFI_X_PUBLISH_LOCK_FILE=data/local/x/publish.lock
 GAMEFI_X_HTTP_TIMEOUT_SECONDS=20
 GAMEFI_X_MAX_SNAPSHOT_AGE_SECONDS=1800
+GAMEFI_X_PUBLISHING_MODE=manual
 ```
 
-When X credentials or API access are unavailable, the autonomous distribution worker writes one current GREEN manual-ready item to `distribution/manual_outbox/x_manual_ready.json`. The record contains the exact validated post text, source URL, prepared timestamp, content checksum, and `published: false`; YELLOW and RED items are excluded. Repeated worker cycles retain the current pending record. After the operator publishes that exact text manually, confirm it explicitly with:
+With `GAMEFI_X_PUBLISHING_MODE=manual`, the distribution worker never calls X. It writes one current GREEN manual-ready item to `distribution/manual_outbox/x_manual_ready.json`. The record contains the exact validated post text, source URL, prepared timestamp, content checksum, and `published: false`; YELLOW and RED items are excluded. Repeated worker cycles retain the current pending record. After the operator publishes that exact text manually, confirm it explicitly with:
 
 ```powershell
 distribution-worker x-manual-confirm CONTENT_ID
@@ -128,7 +131,7 @@ Only after a clean preview and explicit founder instruction:
 x-publisher publish CONTENT_ID --confirm-publish
 ```
 
-There is no active scheduler. `publish-next` exists for a later operator-controlled cadence, but it has the same explicit confirmation and validation requirements. YELLOW is never auto-approved; RED is never publishable.
+There is no active API scheduler. In manual mode, the worker prepares the outbox. `publish-next` remains API-only and explicit. YELLOW is never auto-approved; RED is never publishable.
 
 ## Duplicate and failure recovery
 
@@ -141,10 +144,10 @@ There is no active scheduler. `publish-next` exists for a later operator-control
 
 ## Safely disabling publishing
 
-There is no cron to disable. Remove access to the local token file, revoke the app authorization in X, or remove the app's pay-per-use credits. Do not delete publication history until any ambiguous attempt is reconciled.
+Set `GAMEFI_X_PUBLISHING_MODE=disabled` or stop the Windows worker. Do not delete publication history until any ambiguous attempt is reconciled.
 
 ## Deferred work
 
 - Media upload and long-form video are not part of this text-post MVP.
 - Thread/reply support is parked. Single-Post publishing is sufficient.
-- Automatic scheduling is not active. A future scheduler may consume GREEN only, must remain duplicate-safe, and must stop on auth or validation failure.
+- Automatic scheduling is not active. Browser automation is intentionally not implemented because it would conflict with X rules. A future official API provider may consume GREEN only, must remain duplicate-safe, and must stop on auth or validation failure.
