@@ -408,10 +408,13 @@ export function renderRankingsAnswerBlock(rankings = { items: [], page: { total:
     ["Comparison page", escapeHtml(options.title || "Strategy rankings")],
     ["Matching modeled strategies", escapeHtml(String(rankings.page?.total ?? (rankings.items || []).length))],
     ["Ranking basis", "30D ROI descending, confidence descending, risk ascending, latest calculation descending, then strategy id."],
-    ["Filters", escapeHtml(filterSummary(options.filters || ""))],
     ["Last snapshot update", escapeHtml(latestSnapshotTime(rankings))],
     ["Commercial policy", "Referral, affiliate, and sponsor metadata never changes organic ranking order or analytical scores."],
   ];
+  const filterText = filterSummary(options.filters || "");
+  if (filterText) {
+    fields.splice(3, 0, ["View criteria", escapeHtml(filterText)]);
+  }
   return renderAnswerBlock("Quick comparison", rankingsSummary(rankings), fields);
 }
 
@@ -620,7 +623,7 @@ function latestSnapshotTime(rankings = { items: [] }) {
 function filterSummary(query) {
   const params = new URLSearchParams(query);
   if (![...params.keys()].length) {
-    return "No additional filters.";
+    return "";
   }
   const labels = [];
   if (params.has("opportunity_type")) {

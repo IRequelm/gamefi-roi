@@ -164,11 +164,13 @@ test("answer-ready blocks expose values without changing calculations", () => {
   const opportunity = { ...opportunityPayload(), strategies: [strategy] };
 
   const ranking = renderRankingsAnswerBlock(rankings, { title: "GameFi strategies under $100 capital", filters: "opportunity_type=GAME&capital_max=100" });
+  const unfilteredRanking = renderRankingsAnswerBlock(rankings, { title: "Strategy rankings" });
   const opportunityHtml = renderOpportunityAnswerBlock(opportunity);
   const strategyHtml = renderStrategyAnswerBlock(strategy, strategy.latest_snapshot);
 
   assert.match(ranking, /Quick comparison/);
   assert.match(ranking, /Capital up to \$100/);
+  assert.doesNotMatch(unfilteredRanking, /No additional filters|<dt>Filters<\/dt>/);
   assert.match(opportunityHtml, /Quick opportunity summary/);
   assert.match(strategyHtml, /Quick strategy summary/);
   assert.match(strategyHtml, /Estimated gross earnings\/day/);
