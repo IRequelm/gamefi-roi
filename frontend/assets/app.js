@@ -341,7 +341,7 @@ export function renderTopRankingSummary(rankings = { items: [] }) {
         <p><a class="strategy-link" href="/strategies/${encodeURIComponent(strategy.strategy_id)}" data-link>${escapeHtml(strategy.name)}</a></p>
         <p class="muted">Ranked by modeled 30D ROI, then confidence, risk, and recency according to the organic ranking methodology.</p>
         ${renderStrategySignals(snapshot)}
-        <p class="updated-note">${formatUpdatedAge(snapshot.calculated_at)} · Organic ranking from API</p>
+        <p class="updated-note">${formatUpdatedAge(snapshot.calculated_at)} · Organic ranking</p>
         ${renderCtaRiskNotice(snapshot)}
       </div>
       <div class="choice-metrics">
