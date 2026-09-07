@@ -1,6 +1,6 @@
 # GameFi ROI — Project Status
 
-Updated: 2026-09-07
+Updated: 2026-09-08
 Project version: 0.1
 
 V2 finish-pass operational truth is maintained in `docs/MASTER_CONTROL.md`; this document remains the authoritative gate board and currently has no numbered gate active.
@@ -30,6 +30,8 @@ G17 is complete in the repository. It adds referral operations coverage states, 
 G18 is complete. The current catalog has 51 opportunities and 15 modeled strategies; the historical G18 acceptance baseline remains 26 opportunities and 10 modeled strategies. The latest scheduled GitHub Actions recalculation succeeded with 10 scored snapshots and no failures. The web service has moved to the paid Render plan; the database remains Free and is the current production persistence blocker. No mandatory implementation gate is active. Future work should be classified as Operations, Growth, V1.x improvement, or V2 proposal. See `docs/MASTER_CONTROL.md` for the current operational state.
 
 Post-G18 launch polish is an Operations/Growth patch, not a gate reopen. It cleans public-facing labels, opportunity-card explanations, CTA relationship text, footer contact links, and optional consent-gated GA4 readiness while preserving ROI formulas, adapters, scoring, snapshots, API contracts, referral routing, monetization separation, and organic ranking order.
+
+2026-09-08 product hardening pass: public opportunity cards now expose one evidence-backed start/earn cue, ranking cards explain leading risk contributors, stale top results use neutral recorded-model language, and catalog counts distinguish modeled strategies from guide-only opportunities. API summaries now carry catalog guidance so server-rendered and browser-rendered pages stay aligned. Publishing/X files were intentionally excluded from this sprint.
 
 ## Gate board
 

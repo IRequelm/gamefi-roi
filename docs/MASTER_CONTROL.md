@@ -1,6 +1,6 @@
 # GamCryp V2 Master Control
 
-Updated: 2026-09-07 (Europe/Istanbul)
+Updated: 2026-09-08 (Europe/Istanbul)
 
 This is the durable operational summary for the GamCryp V2 finish pass. Repository files, verified runtime state, provider logs, and deployment evidence outrank chat memory. This document does not override `AGENTS.md`, the master specification, the architecture, the ROI methodology, or the data contract.
 
@@ -13,9 +13,9 @@ This is the durable operational summary for the GamCryp V2 finish pass. Reposito
 
 ## 2. Current production and repository state
 
-- Active repository branch: `master`; the current release-closure commit is `6e039fe`.
-- The verified release-closure changes are committed and deployed. Local distribution/runtime state is intentionally kept outside the release commit.
-- Public Render web service: `gamefi-roi-web`, paid `0.5c-512mb` plan, Ohio, Blueprint-managed; latest verified deployed source is `04c753a`.
+- Active repository branch: `master`; the current local product-hardening commit is `2733d32`.
+- `2733d32` is committed locally but still requires the normal Render deployment step. The last verified deployed source remains `1eb5d40`. Local distribution/runtime state is intentionally kept outside the product commit.
+- Public Render web service: `gamefi-roi-web`, paid `0.5c-512mb` plan, Ohio, Blueprint-managed; latest verified deployed source is `1eb5d40`.
 - The web service no longer has the Free-plan idle sleep limitation. Controlled checks after the upgrade reached the application and Render logs show repeated `/api/v1/ops/status` 200 responses. Individual edge/proxy failures can still occur and must be classified separately.
 - Render Postgres remains on the Free plan at the time of this verification. It is not production-grade: it expires after 30 days and does not provide the paid backup/PITR guarantees. The paid Blueprint target is `basic-256mb`.
 - Direct requests to `gamcryp.com` can still receive Cloudflare/edge `429` Managed Challenge responses with `Cf-Mitigated: challenge`; this is not an application rate-limit response. Browser and controlled low-rate requests also reached 200 for `/`, `/opportunities`, `/methodology`, `/robots.txt`, `/api/v1/rankings`, and a representative strategy page.
@@ -51,8 +51,9 @@ Render application logs showed repeated `/api/v1/ops/status` 200 responses and p
 - Opportunities: 51 total; 8 MODELED; 43 GUIDE_ONLY.
 - Modeled strategies: 15.
 - Content inventory: 165 topic candidates; 137 READY short-form packages; 6 PARTIAL; 22 BLOCKED; 0 READY long-form.
-- Logo coverage: 9 of 51 opportunities have verified local logo assets; the renderer uses a branded identity-card fallback for the rest.
+- Logo coverage: 12 of 51 opportunities have verified local logo assets; the renderer uses a branded identity-card fallback for the rest. Missing official assets remain a content-asset follow-up; no logos are fabricated.
 - Guidance and ROI-unavailable coverage is generated from the catalog and preserves missing evidence as explicit unavailable state.
+- Public opportunity cards expose one compact, evidence-backed start/earn cue when catalog guidance exists. Ranking cards expose up to two recorded risk-contribution reasons, without changing score or ranking semantics.
 
 ## 5. Referral and official destinations
 
@@ -120,7 +121,7 @@ Operational gaps still requiring explicit monitoring: snapshot refresh age, queu
 ## 11. SEO/AEO/GEO
 
 - Repository coverage includes canonical host configuration, server-rendered pages, sitemap, robots policy, answer-ready blocks, logos, and structured-data safeguards.
-- Stale snapshot wording was hardened to use stored/modeled language; browser/API failures now time out and render a usable error or degraded state.
+- Stale snapshot wording is hardened to use recorded/model language; browser/API failures now time out and render a usable error or degraded state. Catalog coverage uses explicit “Guide-only opportunities” counts instead of an ambiguous “ROI not measured” total.
 - Public edge indexability and search-engine indexation are not claimed. The audit edge responses were Cloudflare challenges, not successful crawler responses.
 
 ## 12. Current limitations
@@ -132,11 +133,11 @@ Operational gaps still requiring explicit monitoring: snapshot refresh age, queu
 
 ## 13. Release-closure decision
 
-The current public web release is closed for this pass: the deployed commit is `04c753a`, controlled public routes returned 200, rankings no longer show the empty-filter presentation, unmodeled realizable opportunities use precise “earning rate unverified” language, and truthful negated guarantee warnings no longer block valid content packages. No new implementation work is opened from this report. The documented limitations above require operational/vendor action only if unattended publishing or production-grade historical persistence is later desired.
+The current public web release remains the previously verified deployment `1eb5d40`; its controlled public routes returned 200. Product hardening commit `2733d32` is the next release candidate and has passed the focused non-publishing regression suite. It has not been claimed as live until Render reports that commit deployed. Publishing/X files remain intentionally outside this sprint.
 
 ## 14. Verification evidence
 
-Verified on 2026-09-07 from repository tests, Render dashboard/logs, local queue/cap state, Windows Task Scheduler, local render metadata, and controlled origin/edge requests. No secrets are included.
+Verified on 2026-09-08 from repository tests, source inspection, local rendering/UI contracts, prior Render deployment evidence, and controlled route evidence. No secrets are included.
 
 ## 15. Operating model
 
