@@ -258,7 +258,7 @@ class DistributionWorker:
                 prepare_short_handoff(
                     settings=get_settings(),
                     queue_path=self.config.short_handoff_file,
-                    limit=min(13, queue.buffer_target - queued),
+                    limit=queue.buffer_target,
                 )
             if not self.config.short_handoff_file.is_file():
                 return {"platform": "YouTubeShortHandoff", "status": "idle", "detail": "handoff queue is empty"}
