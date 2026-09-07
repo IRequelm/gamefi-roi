@@ -490,12 +490,33 @@ OPPORTUNITIES = (
         value_realization_status="realizable",
         source_references=(
             ("Mysterium FAQ", "https://docs.mysterium.network/faq"),
+            ("Node setup guide", "https://docs.mysterium.network/content-page"),
+            ("Supported platforms", "https://docs.mysterium.network/supported-platforms"),
+            ("Node overview", "https://docs.mysterium.network/about-mysterium"),
             ("Mystnodes", "https://mystnodes.com/"),
         ),
         data_feasibility_status="GO",
         feasibility_summary="Official device support, network fee, settlement threshold, and dashboard availability support a B2B-only existing-device strategy with explicit demand assumptions.",
         strategy_ids=("mysterium-b2b-existing-device",),
         outbound_destination_slug="mysterium-network-node-official",
+        guidance=OpportunityGuidance(
+            how_to_start=(
+                "Install Mysterium Node using the official setup guide for a supported platform, then register and configure the node in NodeUI.",
+                "Prefer the documented B2B traffic mode unless you have reviewed the legal and privacy implications of accepting public traffic in your country.",
+            ),
+            what_you_need=(
+                "A supported desktop, server, Docker, Raspberry Pi, or other documented platform with a stable internet connection is required.",
+                "The node uses more bandwidth and availability than CPU; configure the node wallet and keep the service reachable through the documented network setup.",
+            ),
+            how_you_earn=(
+                "A node earns MYST when eligible users consume the service through it; demand, region, IP quality, configuration, and uptime affect realized usage.",
+                "The network charges a 20% service fee, and running continuously can improve availability but does not guarantee traffic or earnings.",
+            ),
+            how_to_exit_or_claim=(
+                "Check earnings and withdrawable balance in NodeUI at the documented local node address, typically http://[ip-of-your-node]:4449.",
+                "Unsettled earnings are automatically settled at 5 MYST or can be manually settled to the configured external wallet; blockchain fees still apply.",
+            ),
+        ),
     ),
     _opportunity(
         opportunity_id="star-atlas-sage-labs",

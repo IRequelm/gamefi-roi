@@ -21,7 +21,7 @@ def test_server_opportunity_detail_renders_guidance_without_null_placeholders(mo
 
     for opportunity_id in ("defi-kingdoms", "storj-storage-node"):
         html = client.get(f"/opportunities/{opportunity_id}").text
-        assert "How it works" in html
+        assert "Practical guide" in html
         assert all(label in html for label in ("How to start", "What you need", "How you earn", "How to claim or exit"))
         assert "None" not in html
         assert "undefined" not in html

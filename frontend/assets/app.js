@@ -684,7 +684,7 @@ export function renderOpportunityDetail(opportunity) {
       ${renderOpportunityAnswerBlock(opportunity)}
       ${renderOpportunityHumanSummary(opportunity)}
       ${renderDepinSetupSummary(opportunity)}
-      ${renderOpportunityGuidance(opportunity.guidance)}
+      ${renderOpportunityGuidance(opportunity.guidance, opportunity)}
       <section class="game-grid">
         <div class="game-card">
           <h3>Opportunity type</h3>
@@ -735,26 +735,58 @@ export function renderUnavailableRoiExplanation(opportunity) {
   return `<section class="section-panel roi-unavailable"><div class="section-header"><h2>Why ROI is unavailable</h2></div><div class="section-body"><p class="roi-unavailable-reason">${escapeHtml(String(explanation.reason || "").trim())}</p>${details}</div></section>`;
 }
 
-export function renderOpportunityGuidance(guidance) {
-  if (!guidance) {
-    return "";
-  }
+export function renderOpportunityGuidance(guidance, opportunity = null) {
+  const valuesFor = (items) => (Array.isArray(items) ? items : []).map((item) => String(item || "").trim()).filter(Boolean);
   const sections = [
-    ["How to start", guidance.how_to_start],
-    ["What you need", guidance.what_you_need],
-    ["How you earn", guidance.how_you_earn],
-    ["How to claim or exit", guidance.how_to_exit_or_claim],
+    ["How to start", guidance?.how_to_start],
+    ["What you need", guidance?.what_you_need],
+    ["How you earn", guidance?.how_you_earn],
+    ["How to claim or exit", guidance?.how_to_exit_or_claim],
   ].map(([heading, items]) => {
-    const values = (Array.isArray(items) ? items : []).map((item) => String(item || "").trim()).filter(Boolean);
+    const values = valuesFor(items);
     if (!values.length) {
       return "";
     }
     return `<article class="human-line"><h3>${escapeHtml(heading)}</h3><ul>${values.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></article>`;
   }).join("");
-  if (!sections) {
+  const fallback = !sections && opportunity ? renderEvidenceBoundGuide(opportunity) : "";
+  const resourceLinks = renderOfficialGuideLinks(opportunity?.official_source_references || []);
+  if (!sections && !fallback && !resourceLinks) {
     return "";
   }
-  return `<section class="section-panel opportunity-guidance"><div class="section-header"><h2>How it works</h2></div><div class="section-body human-summary-grid">${sections}</div></section>`;
+  return `<section class="section-panel opportunity-guidance"><div class="section-header"><h2>Practical guide</h2><span class="badge info">Evidence-linked</span></div><div class="section-body human-summary-grid">${sections || fallback}${resourceLinks}</div></section>`;
+}
+
+function renderEvidenceBoundGuide(opportunity) {
+  const sources = opportunity.official_source_references || [];
+  const firstSource = sources[0]?.label || "the official project documentation";
+  const platforms = humanList([...(opportunity.platforms || []), ...(opportunity.chains || [])], "Exact setup requirements are not fully structured in the current evidence.");
+  const rewards = humanList(opportunity.reward_asset_or_points_type, "The reward or points type is not specified in the current evidence.");
+  const realizable = opportunity.value_realization_status === "realizable";
+    return [
+      ["How to start", `Start with ${firstSource}; confirm current eligibility, region, and operating rules before using the project.`],
+      ["What you need", platforms],
+      ["How you earn", `${rewards}. The catalog does not establish a guaranteed earning rate or fixed time to first reward.`],
+      ["How to claim or exit", realizable
+        ? "A value route is marked as realizable, but current payout and withdrawal conditions must be checked in the official references below."
+        : "A reproducible payout or claim route is not verified yet. Do not treat points or future claims as cash."],
+    ].map(([heading, value]) => `<article class="human-line"><h3>${escapeHtml(heading)}</h3><p>${escapeHtml(value)}</p></article>`).join("");
+}
+
+function renderOfficialGuideLinks(sources) {
+  const links = (Array.isArray(sources) ? sources : []).filter((source) => source?.url && source?.label);
+  if (!links.length) {
+    return "";
+  }
+  return `<div class="guide-resources"><h3>Official guides and references</h3><div class="guide-resource-grid">${links.map((source) => `<a class="guide-resource" href="${escapeHtml(source.url)}" rel="noopener noreferrer" target="_blank"><span>${escapeHtml(guideResourceKind(source.label, source.url))}</span><strong>${escapeHtml(source.label)}</strong></a>`).join("")}</div></div>`;
+}
+
+function guideResourceKind(label, url) {
+  const value = `${label} ${url}`.toLowerCase();
+  if (value.includes("youtube") || value.includes("video")) return "Video";
+  if (/(start|setup|install|onboard|getting|how to)/.test(value)) return "Start here";
+  if (/(earn|reward|payout|claim|withdraw|payment|token|econom)/.test(value)) return "Earnings / payout";
+  return "Official reference";
 }
 
 export function renderOpportunityList(opportunities = [], options = {}) {
