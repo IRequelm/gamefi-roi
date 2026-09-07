@@ -132,7 +132,6 @@ def home_page(service: ApiDataService, *, settings: Settings, request: Request) 
             <span>Unavailable ROI stays unavailable</span>
           </div>
         </section>
-        {_render_home_answer_block(rankings, opportunities)}
         {_render_catalog_stats(rankings, opportunities)}
         {_render_ranking_cards(rankings.items[:3], heading="Stored organic leaders")}
         {_render_opportunity_cards(opportunities, heading="Opportunity radar")}
@@ -375,7 +374,6 @@ def strategy_page(
           <p class="lede">{escape(answer)}</p>
           <div class="button-row">
             <a class="secondary-button" href="/opportunities/{escape(strategy.opportunity_id)}">Parent opportunity</a>
-            <a class="secondary-button" href="/games/{escape(strategy.game_id)}">Game view</a>
             {_destination_button(strategy.primary_destination, cta_label_for_snapshot(snapshot, "Start"))}
           </div>
           {_render_cta_risk_notice(snapshot)}
@@ -475,14 +473,19 @@ def _page(
 def record_landing_visit(request: Request, repository: MonetizationRepository, *, path: str) -> None:
     referrer_domain = _referrer_domain(request.headers.get("referer"))
     utm_source = request.query_params.get("utm_source")
+    utm_medium = request.query_params.get("utm_medium")
+    utm_campaign = request.query_params.get("utm_campaign")
+    coarse_session_id = request.headers.get("x-gamcryp-session")
+    if not any((referrer_domain, utm_source, utm_medium, utm_campaign, coarse_session_id)):
+        return
     repository.record_landing_visit(
         landing_path=path,
         referrer_domain=referrer_domain,
         utm_source=utm_source,
-        utm_medium=request.query_params.get("utm_medium"),
-        utm_campaign=request.query_params.get("utm_campaign"),
+        utm_medium=utm_medium,
+        utm_campaign=utm_campaign,
         channel=normalize_acquisition_channel(utm_source=utm_source, referrer_domain=referrer_domain),
-        coarse_session_id=request.headers.get("x-gamcryp-session"),
+        coarse_session_id=coarse_session_id,
     )
 
 
@@ -506,14 +509,15 @@ def _render_logo(logo, *, compact: bool = False) -> str:
 
 def _ranking_answer(snapshot: StrategySnapshotPayload, strategy: StrategySummary) -> str:
     stale = getattr(getattr(snapshot, "freshness", None), "overall_status", "fresh") != "fresh"
-    lead = "GamCryp's stored model estimates" if stale else "GamCryp currently models"
-    earnings_label = "stored modeled net earnings" if stale else "Net earnings"
+    lead = "GamCryp's model estimates" if stale else "GamCryp models"
+    earnings_label = "Estimated net earnings"
+    freshness_note = " This model is stale; review the source dates before acting." if stale else ""
     return (
         f"{lead} {strategy.name} at {format_ratio_text(snapshot.roi.roi_total_30d)} 30-day ROI "
         f"using {format_money_text(snapshot.capital.total_capital)} capital. {earnings_label} are "
         f"{format_money_text(snapshot.earnings.net_earnings_day, per_day=True)}. Risk is "
         f"{score_text(snapshot.risk)} and Confidence is {score_text(snapshot.confidence)}. "
-        f"Latest modeled snapshot was calculated at {format_datetime(snapshot.calculated_at)}."
+        f"Latest modeled snapshot was calculated at {format_datetime(snapshot.calculated_at)}.{freshness_note}"
     )
 
 
@@ -536,23 +540,6 @@ def _rankings_summary(rankings: RankingsPage) -> str:
     return _ranking_answer(top.latest_snapshot, top.strategy)
 
 
-def _render_home_answer_block(rankings: RankingsPage, opportunities: list[OpportunitySummary]) -> str:
-    unavailable_count = sum(1 for opportunity in opportunities if opportunity.strategy_count == 0)
-    fields = [
-        ("Reviewed opportunities", escape(str(len(opportunities)))),
-        ("Modeled strategies", escape(str(rankings.page.total))),
-        ("Opportunity coverage", escape(", ".join(sorted({opportunity_type_label(item.opportunity_type) for item in opportunities})) or "Unavailable")),
-        ("Top stored answer", escape(_rankings_summary(rankings))),
-        ("Unavailable ROI policy", escape(f"{unavailable_count} opportunities remain unavailable, not zero, until value is reproducible.")),
-        ("Data source", "Stored snapshots served through /api/v1; page requests do not call live providers."),
-    ]
-    return _render_answer_block(
-        "Quick overview",
-        "GamCryp is a Web3 opportunity intelligence source for modeled ROI, risk, confidence, freshness, and explicit unavailable states.",
-        fields,
-    )
-
-
 def _render_rankings_answer_block(
     rankings: RankingsPage,
     title: str,
@@ -564,7 +551,7 @@ def _render_rankings_answer_block(
         ("Ranking basis", "30D ROI descending, confidence descending, risk ascending, latest calculation descending, then strategy id."),
         ("Filters", escape(_filter_summary(filters))),
         ("Last snapshot update", escape(format_datetime(_rankings_lastmod(rankings)))),
-        ("Data source", "Latest successful persisted strategy snapshots from /api/v1/rankings."),
+        ("Data source", "Latest successful strategy snapshots."),
         ("Commercial policy", "Referral, affiliate, and sponsor metadata never changes organic ranking order or analytical scores."),
     ]
     return _render_answer_block(
@@ -1056,8 +1043,6 @@ def _render_related_opportunities(opportunity: OpportunityDetail) -> str:
         '<a class="secondary-button" href="/rankings">Organic rankings</a>',
         '<a class="secondary-button" href="/methodology">Methodology</a>',
     ]
-    if opportunity.legacy_game_id:
-        links.append(f'<a class="secondary-button" href="/games/{escape(opportunity.legacy_game_id)}">Game compatibility page</a>')
     return f'<section class="section-panel"><div class="section-header"><h2>Related pages</h2></div><div class="section-body button-row">{"".join(links)}</div></section>'
 
 

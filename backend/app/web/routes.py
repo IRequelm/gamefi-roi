@@ -147,8 +147,11 @@ def serve_game_detail(
     game = service.game_detail(game_id)
     if game is None:
         raise HTTPException(status_code=404, detail=f"Unknown game_id: {game_id}")
-    page = game_page(game, settings=settings, request=request)
-    return _html_response(page, request=request, settings=settings, engine=engine)
+    return RedirectResponse(
+        url=f"/opportunities/{game.opportunity_id}",
+        status_code=301,
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
 
 
 @router.get("/strategies/{strategy_id}")

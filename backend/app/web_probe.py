@@ -24,7 +24,6 @@ def main() -> int:
         "/rankings/gamefi",
         "/opportunities",
         "/opportunities/grass",
-        "/games/farmers-world",
         f"/strategies/{DFK_CJEWEL_MAX_LOCK_V1.strategy_id}",
         "/methodology",
         "/robots.txt",
@@ -39,6 +38,11 @@ def main() -> int:
         if response.status_code != 200:
             print(response.text)
             return 1
+
+    legacy = client.get("/games/farmers-world", follow_redirects=False)
+    if legacy.status_code != 301 or legacy.headers.get("location") != "/opportunities/farmers-world":
+        print(f"[FAIL] /games/farmers-world status={legacy.status_code} location={legacy.headers.get('location')}")
+        return 1
 
     rankings = client.get("/api/v1/rankings").json()
     opportunities = client.get("/api/v1/opportunities").json()

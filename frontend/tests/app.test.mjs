@@ -27,7 +27,6 @@ import {
   renderFreshnessAlert,
   renderGameDetail,
   renderHistory,
-  renderHomeAnswerBlock,
   renderHomeShell,
   renderOpportunityAnswerBlock,
   renderOpportunityCard,
@@ -98,12 +97,13 @@ test("home renders results as cards before filters without table ranking markup"
   assert.match(html, /GamCryp public beta/);
   assert.match(html, /Find Web3 earning opportunities/);
   assert.match(html, /Risk and confidence separated/);
-  assert.match(html, /Top modeled opportunity right now/);
+  assert.match(html, /Top opportunity/);
   assert.match(html, /Ranked by modeled 30D ROI, then confidence, risk, and recency/);
   assert.match(html, /When rewards and exits can be priced reproducibly/);
   assert.match(html, /Reviewed opportunities/);
   assert.match(html, /Modeled strategies/);
-  assert.match(html, /Opportunity types/);
+  assert.match(html, /Opportunity coverage/);
+  assert.match(html, /Games/);
   assert.match(html, /ROI not measured/);
   assert.match(html, /ranking-card-grid/);
   assert.match(html, /finder-results/);
@@ -148,17 +148,15 @@ test("methodology explains ROI availability and trust boundaries", () => {
   assert.doesNotMatch(html, /null|undefined|None/);
 });
 
-test("answer-ready blocks expose stored values without changing calculations", () => {
+test("answer-ready blocks expose values without changing calculations", () => {
   const rankings = rankingPayload();
   const strategy = strategyPayload();
   const opportunity = { ...opportunityPayload(), strategies: [strategy] };
 
-  const home = renderHomeAnswerBlock(rankings, [opportunityPayload()]);
   const ranking = renderRankingsAnswerBlock(rankings, { title: "GameFi strategies under $100 capital", filters: "opportunity_type=GAME&capital_max=100" });
   const opportunityHtml = renderOpportunityAnswerBlock(opportunity);
   const strategyHtml = renderStrategyAnswerBlock(strategy, strategy.latest_snapshot);
 
-  assert.match(home, /Quick overview/);
   assert.match(ranking, /Quick comparison/);
   assert.match(ranking, /Capital up to \$100/);
   assert.match(opportunityHtml, /Quick opportunity summary/);
@@ -169,6 +167,13 @@ test("answer-ready blocks expose stored values without changing calculations", (
   assert.match(strategyHtml, /5\.86%/);
   assert.doesNotMatch(strategyHtml, /0\.05862 30-day ROI/);
   assert.doesNotMatch(opportunityHtml, /DEPIN_NODE|PARTIAL|NONE/);
+});
+
+test("homepage omits implementation and audit language", () => {
+  const html = renderHomeShell([], rankingPayload(), [opportunityPayload()]);
+
+  assert.doesNotMatch(html, /Top stored answer|UNAVAILABLE ROI POLICY|DATA SOURCE/i);
+  assert.doesNotMatch(html, /stored modeled|stored snapshots|served through \/api\/v1|page requests do not call live providers/i);
 });
 
 test("catalog stats summarize V1 coverage without financial recomputation", () => {
@@ -185,7 +190,7 @@ test("catalog stats summarize V1 coverage without financial recomputation", () =
   assert.match(html, />3</);
   assert.match(html, /Modeled strategies/);
   assert.match(html, />10</);
-  assert.match(html, /DePIN \/ Nodes, Games, Points programs/);
+  assert.match(html, /Games.*DePIN.*Nodes.*Points/);
   assert.doesNotMatch(html, /DEPIN_NODE|DEPIN NODE/);
   assert.match(html, /2 explicit/);
   assert.doesNotMatch(html, /30D ROI|Net\/day|Break-even/);
