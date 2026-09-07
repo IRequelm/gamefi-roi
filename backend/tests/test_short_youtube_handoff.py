@@ -31,7 +31,7 @@ def _render(tmp_path: Path, *, package, **kwargs) -> RenderResult:
     audio = tmp_path / "audio.mp3"
     for path in (video, caption, audio):
         path.write_bytes(b"asset")
-    return RenderResult(package.source_inventory_item_id, package.package_id, "SHORT_FORM", RENDER_READY, None, str(video), str(caption), str(audio), 10.0, 1080, 1920, "Sarah", "EXAVITQu4vr4xnSDxMaL", "eleven_multilingual_v2", package.evidence_fingerprint, None, quality_metadata={"meaningful_scene_count": 6, "scene_diversity": ["hook", "identity", "setup", "evidence", "status", "cta"], "non_caption_visual_element_count": 6, "identity_present": True, "identity_mode": "branded_identity_card", "caption_safe_area": {"left": 96, "right": 96, "bottom": 220}, "scene_transitions": True})
+    return RenderResult(package.source_inventory_item_id, package.package_id, "SHORT_FORM", RENDER_READY, None, str(video), str(caption), str(audio), 10.0, 1080, 1920, "Sarah", "EXAVITQu4vr4xnSDxMaL", "eleven_multilingual_v2", package.evidence_fingerprint, None, quality_metadata={"meaningful_scene_count": 6, "scene_diversity": ["hook", "identity", "setup", "evidence", "status", "cta"], "non_caption_visual_element_count": 6, "identity_present": True, "identity_mode": "branded_identity_card", "caption_safe_area": {"left": 96, "right": 96, "bottom": 220}, "caption_safe_area_validated": True, "text_clipping": False, "scene_transitions": True, "static_background_only": False, "caption_only_visuals": False, "brand_opening_present": True, "brand_closing_present": True, "primary_visual_elements": ["identity_card", "setup_diagram", "mechanics_flow", "evidence_metric_card", "branded_cta"]})
 
 
 def test_ready_short_render_enters_handoff_once(tmp_path: Path) -> None:

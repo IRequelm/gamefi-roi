@@ -1,6 +1,6 @@
 # GamCryp V2 Master Control
 
-Updated: 2026-09-06 (Europe/Istanbul)
+Updated: 2026-09-07 (Europe/Istanbul)
 
 This is the durable operational summary for the GamCryp V2 finish pass. Repository files, verified runtime state, provider logs, and deployment evidence outrank chat memory. This document does not override `AGENTS.md`, the master specification, the architecture, the ROI methodology, or the data contract.
 
@@ -15,9 +15,10 @@ This is the durable operational summary for the GamCryp V2 finish pass. Reposito
 
 - Active work branch: `feature/v2-finish-pass`.
 - The local finish-pass branch contains the verified Shorts/render work and the remote-master history; no automatic merge to `master` is performed by this pass.
-- Public Render web service: `gamefi-roi-web`, Free plan, Ohio, Blueprint-managed.
-- The Free plan can spin down after inactivity. Render logs show clean startup and 200 responses after wake-up; this explains transient origin 503s observed during cold starts. A paid always-on upgrade is not part of this pass.
-- Direct requests to `gamcryp.com` during the audit returned Cloudflare Managed Challenge responses with HTTP 429 and `Cf-Mitigated: challenge`. These are edge challenges, not application rate-limit responses. Origin checks against `gamefi-roi-web.onrender.com` returned a mixture of cold-start 503 and post-start 200 responses.
+- Public Render web service: `gamefi-roi-web`, paid `0.5c-512mb` plan, Ohio, Blueprint-managed; latest verified deployed source is `b5efe80`.
+- The web service no longer has the Free-plan idle sleep limitation. Controlled checks after the upgrade reached the application and Render logs show repeated `/api/v1/ops/status` 200 responses. Individual edge/proxy failures can still occur and must be classified separately.
+- Render Postgres remains on the Free plan at the time of this verification. It is not production-grade: it expires after 30 days and does not provide the paid backup/PITR guarantees. The paid Blueprint target is `basic-256mb`.
+- Direct requests to `gamcryp.com` can still receive Cloudflare/edge `429` Managed Challenge responses with `Cf-Mitigated: challenge`; this is not an application rate-limit response. Browser and controlled low-rate requests also reached 200 for `/`, `/opportunities`, `/methodology`, `/robots.txt`, `/api/v1/rankings`, and a representative strategy page.
 
 ## 3. Product invariants
 
@@ -27,6 +28,22 @@ This is the durable operational summary for the GamCryp V2 finish pass. Reposito
 - Affiliate, referral, sponsorship, and commercial metadata never affects ROI, admission, risk, confidence, or organic ranking.
 - YELLOW requires approval; RED never auto-publishes.
 - No basic/system/robotic TTS is publishable. Approved narration is ElevenLabs with Sarah/Bella/Laura rotation.
+
+## 3a. Controlled public route verification
+
+The paid-web verification on 2026-09-07 used low-rate browser-shaped requests. Results were not treated as a crawler/indexability claim:
+
+| Route | Observed result | Interpretation |
+|---|---:|---|
+| `/` | 200 | Origin reached successfully |
+| `/opportunities` | 200 | Origin reached successfully |
+| `/methodology` | 200 | Origin reached successfully |
+| `/robots.txt` | 200 | Origin reached successfully |
+| `/api/v1/rankings` | 200 on a later controlled request | Origin/API reached successfully |
+| representative strategy page | 200 on a later controlled request | Origin/page reached successfully |
+| `/rankings`, `/sitemap.xml` | intermittent timeout/502 during one probe | Edge/origin behavior requires another browser check; not classified as a persistent app defect |
+
+Render application logs showed repeated `/api/v1/ops/status` 200 responses and public `/`, `/opportunities`, `/methodology`, and `/robots.txt` 200 responses. Cloudflare/edge responses without `x-render-origin-server` are not attributed to FastAPI without matching origin logs.
 
 ## 4. Catalog and model counts
 
@@ -47,7 +64,7 @@ Official destinations and reviewed outbound redirects remain allowlisted and sep
 - Short handoff buffer target is bounded at 14; current report is 13 queued GREEN Shorts and 1 previously uploaded item.
 - YouTube daily cap remains one successful public Short per local calendar day. The local cap state records one success for 2026-09-06, so no further upload is permitted today.
 - Failed narration/render never enters the handoff. X failures are isolated from YouTube.
-- The visual gate requires six planned motion-card beats, at least five meaningful scenes, scene diversity, a non-caption visual element, identity representation, transitions, safe captions, and a branded CTA/source frame.
+- The visual gate requires six planned motion-card beats, at least five meaningful scenes, scene diversity, non-caption data visuals, identity representation, transitions, validated safe captions, no clipping, and a branded GamCryp opening/CTA frame. The latest local renderer patch is not yet production-deployed.
 
 ## 7. YouTube and narration
 
@@ -59,6 +76,22 @@ Official destinations and reviewed outbound redirects remain allowlisted and sep
 ## 8. X
 
 X remains fail-closed while credentials/API access are unavailable. The manual-ready fallback uses `distribution/manual_outbox/x_manual_ready.json`, with exact text, source URL, content ID, stable fingerprint, and `MANUAL_READY` state. No live X post is attempted.
+
+## 8a. Operations commands
+
+From the repository root:
+
+```powershell
+Get-ScheduledTask -TaskName 'GamCryp Distribution Worker' | Select-Object TaskName,State
+Get-Content data/local/youtube/autonomous_daily_cap.json
+Get-Content distribution/publish_queue/youtube_short_handoff.json
+$env:GAMEFI_DISTRIBUTION_LIVE='false'
+Get-ScheduledTask -TaskName 'GamCryp Distribution Worker' | Disable-ScheduledTask
+$env:GAMEFI_DISTRIBUTION_LIVE='true'
+Get-ScheduledTask -TaskName 'GamCryp Distribution Worker' | Enable-ScheduledTask
+```
+
+The LIVE flag is local `.env` state and must remain `false` until visual proof approval. Disabling the scheduled task is an additional emergency stop; it does not delete queues.
 
 ## 9. Content and long-form readiness
 
@@ -73,6 +106,16 @@ X remains fail-closed while credentials/API access are unavailable. The manual-r
 - PostHog: repository integration is present and consent-gated with explicit events; production activation is not proven here.
 - First-party inbound/outbound analytics are implemented with privacy-minimal records. Commercial analytics remain separate from model data.
 
+Operational gaps still requiring explicit monitoring: snapshot refresh age, queue backlog, worker liveness, database backup success, and ElevenLabs quota/auth failure duration. Sentry initialization is visible in Render logs, but production alert delivery is not independently verified.
+
+## 10a. Backup and recovery
+
+- Reconstructible from Git: catalog definitions, strategy/model code, migrations, renderer, queue schemas, and policy docs.
+- Not safely reconstructible from Git alone: current PostgreSQL snapshots/history, publishing state, quota state, worker retry state, OAuth/token files, and generated media.
+- Current Render Free Postgres has no production-grade backup/PITR guarantee and is the outstanding persistence blocker.
+- Minimum recovery action: upgrade the database, create a scheduled logical export to an operator-controlled private location, and test one restore before enabling unattended publishing.
+- Until that exists, honest classification is unknown RPO/RTO for database-backed history; local static artifacts remain separately recoverable if copied.
+
 ## 11. SEO/AEO/GEO
 
 - Repository coverage includes canonical host configuration, server-rendered pages, sitemap, robots policy, answer-ready blocks, logos, and structured-data safeguards.
@@ -81,18 +124,19 @@ X remains fail-closed while credentials/API access are unavailable. The manual-r
 
 ## 12. Current blockers
 
-1. Production public availability is constrained by the Free Render instance's cold-start behavior; the audit saw transient origin 503s before clean post-start 200s.
-2. Cloudflare Managed Challenge returns 429 to this controlled non-browser probe for the public host; Cloudflare configuration/verification remains an operator/infrastructure task.
-3. ElevenLabs has authenticated credentials but 0 remaining credits on the configured free-tier account; the third non-DePIN proof cannot be generated until the quota resets or the operator changes the authorized account/plan. No fallback TTS is allowed.
-4. Live YouTube remains disabled until the operator reviews the proof renders and the public availability path is acceptable.
+1. Render Postgres remains Free and must be upgraded before its expiry if the database is to be treated as production state.
+2. Cloudflare/edge Managed Challenge can return 429 to controlled non-browser probes; the controlling zone/rule is not accessible from the currently logged-in Cloudflare account.
+3. The local visual-quality renderer patch needs commit, deployment, and three representative proof reviews before it can be marked production-approved.
+4. ElevenLabs has authenticated credentials but 0 remaining credits on the configured free-tier account; no fallback TTS is allowed.
+5. Live YouTube remains disabled pending visual proof approval and operator decision.
 
 ## 13. Exact next action
 
-Review the two local Hivemapper proof MP4s, wait for or authorize sufficient ElevenLabs quota, render a third non-DePIN proof, then perform a controlled browser-origin route check. Only after all three proof families pass visual review and the intended commit is deployed may the operator set `GAMEFI_DISTRIBUTION_LIVE=true` locally.
+Upgrade Render Postgres, commit/deploy the local visual renderer hardening, review three proof families, then repeat controlled browser-origin route checks. Only after all three proof families pass visual review and the intended commit is deployed may the operator set `GAMEFI_DISTRIBUTION_LIVE=true` locally.
 
 ## 14. Verification evidence
 
-Verified on 2026-09-06 from repository tests, Render dashboard/logs, GitHub Actions run history, local queue/cap state, and controlled origin/edge requests. No secrets are included.
+Verified on 2026-09-07 from repository tests, Render dashboard/logs, local queue/cap state, Windows Task Scheduler, local render metadata, and controlled origin/edge requests. No secrets are included.
 
 ## 15. Operating model
 

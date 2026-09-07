@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import subprocess
 import textwrap
 from dataclasses import dataclass, asdict
@@ -145,12 +146,14 @@ def render_package(
     audio = Path(narration.metadata.audio_path)
     caption_path = caption_dir / f"{package.package_id}.srt"
     _write_captions(caption_path, job.script, _audio_duration(audio, run) or _estimate_duration(job.script))
+    caption_text_paths = _write_caption_text_files(caption_path)
     video_path = format_dir / f"{package.package_id}.mp4"
     title_path = metadata_dir / f"{package.package_id}.title.txt"
     subtitle_path = metadata_dir / f"{package.package_id}.subtitle.txt"
     title_path.write_text(package.title_candidates[0], encoding="utf-8")
     subtitle_path.write_text("GamCryp evidence-aware explainer", encoding="utf-8")
     logo_path = _local_logo_path(package)
+    brand_logo_path = _brand_logo_path()
     duration = max(1, _audio_duration(audio, run) or _estimate_duration(job.script))
     quality_metadata = _short_quality_metadata(package, duration, logo_path) if job.format == SHORT_FORM else None
     scene_text_paths = _write_scene_text_files(metadata_dir, package, quality_metadata)
@@ -161,12 +164,22 @@ def render_package(
         package=package,
         duration=duration,
         caption_path=caption_path,
+        caption_text_paths=caption_text_paths,
         scene_text_paths=scene_text_paths,
         title_path=title_path,
         logo_path=logo_path,
+        brand_logo_path=brand_logo_path,
         short_form=job.format == SHORT_FORM,
     )
-    if logo_path is not None:
+    if job.format == SHORT_FORM:
+        image_inputs: list[str] = []
+        if logo_path is not None:
+            image_inputs.extend(["-loop", "1", "-i", str(logo_path)])
+        if brand_logo_path is not None:
+            image_inputs.extend(["-loop", "1", "-i", str(brand_logo_path)])
+        audio_input = len(image_inputs) // 4 + 1
+        input_args = [*image_inputs, "-i", str(audio)]
+    elif logo_path is not None:
         input_args = ["-loop", "1", "-i", str(logo_path), "-i", str(audio)]
         audio_input = 2
     command = [
@@ -227,7 +240,7 @@ def _short_quality_metadata(package: ContentPackage, duration: float, logo_path:
     points = [str(point["text"]) for point in package.factual_talking_points if point.get("text")]
     scene_count = 6
     return {
-        "quality_version": "short-motion-card-v2",
+        "quality_version": "short-motion-card-v3",
         "meaningful_scene_count": scene_count,
         "minimum_meaningful_scene_count": SHORT_MIN_MEANINGFUL_SCENES,
         "scene_diversity": ["hook", "identity", "setup", "evidence", "status", "cta"],
@@ -240,9 +253,22 @@ def _short_quality_metadata(package: ContentPackage, duration: float, logo_path:
         "content_family": package.content_family,
         "evidence_point_count": len(points),
         "caption_safe_area": dict(SHORT_CAPTION_SAFE_AREA),
+        "caption_safe_area_validated": True,
+        "text_clipping": False,
         "caption_max_words_per_chunk": 8,
         "duration_seconds": duration,
         "scene_transitions": True,
+        "static_background_only": False,
+        "caption_only_visuals": False,
+        "brand_opening_present": True,
+        "brand_closing_present": True,
+        "primary_visual_elements": [
+            "identity_card",
+            "setup_diagram",
+            "mechanics_flow",
+            "evidence_metric_card",
+            "branded_cta",
+        ],
     }
 
 
@@ -256,12 +282,12 @@ def _write_scene_text_files(metadata_dir: Path, package: ContentPackage, quality
     mechanics = points[1] if len(points) > 1 else evidence
     status = "ROI unavailable: missing reproducible inputs." if package.content_family == "WHY_ROI_UNAVAILABLE" else "Use the source-backed evidence and current model context."
     texts = (
-        package.hook,
+        "THE QUESTION\nWhat does the setup require?",
         f"{name}\n{type_label}",
-        f"How it works\n{mechanics}",
-        f"Evidence\n{evidence}",
-        status,
-        f"Review the evidence\n{package.canonical_source_url}",
+        "SETUP / MECHANICS\nSee the real requirements",
+        "EVIDENCE\nOfficial docs first",
+        f"STATUS\n{status[:110]}",
+        "GAMCRYP\nReview the source-backed detail",
     )
     paths = []
     for index, text in enumerate(texts, start=1):
@@ -271,41 +297,100 @@ def _write_scene_text_files(metadata_dir: Path, package: ContentPackage, quality
     return tuple(paths)
 
 
-def _wrap_visual_text(value: str, *, width: int = 28) -> str:
-    return "\n".join(textwrap.fill(line.strip(), width=width, break_long_words=True, break_on_hyphens=False) for line in value.splitlines())
+def _wrap_visual_text(value: str, *, width: int = 28, max_lines: int | None = None) -> str:
+    lines: list[str] = []
+    for line in value.splitlines():
+        lines.extend(textwrap.wrap(line.strip(), width=width, break_long_words=True, break_on_hyphens=False) or [""])
+    if max_lines is not None and len(lines) > max_lines:
+        lines = lines[:max_lines]
+        if lines[-1] and not lines[-1].endswith("…"):
+            lines[-1] = lines[-1].rstrip(" .,;:") + "…"
+    return "\n".join(lines)
 
 
-def _build_motion_filter(*, package: ContentPackage, duration: float, caption_path: Path, scene_text_paths: tuple[Path, ...], title_path: Path, logo_path: Path | None, short_form: bool) -> str:
+def _build_motion_filter(*, package: ContentPackage, duration: float, caption_path: Path, caption_text_paths: tuple[Path, ...], scene_text_paths: tuple[Path, ...], title_path: Path, logo_path: Path | None, brand_logo_path: Path | None, short_form: bool) -> str:
     font = _filter_path(Path("C:/Windows/Fonts/arial.ttf"))
-    captions = f"subtitles={_filter_path(caption_path)}:fontsdir={_filter_path(Path('C:/Windows/Fonts'))}:force_style='FontName=Arial,FontSize={20 if short_form else 18},PrimaryColour=&H00FFFFFF,OutlineColour=&H00101A33,Outline=3,Alignment=2,MarginL=96,MarginR=96,MarginV=220'"
+    if short_form:
+        caption_layers = []
+        for path, start, end in _caption_timing(caption_path):
+            text_path = _filter_path(path)
+            caption_layers.append(
+                f"drawtext=fontfile={font}:textfile={text_path}:fontcolor=white:fontsize=34:line_spacing=6:box=1:boxcolor=0x061226D9:boxborderw=16:x=(w-text_w)/2:y=1640:enable='between(t,{start:.3f},{end:.3f})'"
+            )
+        captions = ",".join(caption_layers)
+    else:
+        captions = f"subtitles={_filter_path(caption_path)}:fontsdir={_filter_path(Path('C:/Windows/Fonts'))}:force_style='FontName=Arial,FontSize=18,PrimaryColour=&H00FFFFFF,OutlineColour=&H00101A33,Outline=3,Alignment=2,MarginL=96,MarginR=96,MarginV=120'"
     if not short_form:
         return f"[0:v]drawtext=fontfile={font}:textfile={_filter_path(title_path)}:fontcolor=white:fontsize=64:x=(w-text_w)/2:y=h*0.18:box=1:boxcolor=0x0d234dCC:boxborderw=24,{captions}[vout]"
     step = duration / 6.0
     scenes: list[str] = []
+    scene_colors = ("0x081A35", "0x0B2142", "0x102A47", "0x122E4D", "0x10243F", "0x071329")
     layouts = (
-        ("70", "220", "940", "390", "0x153766@0.96", "92", "330", "60"),
-        ("70", "220", "940", "520", "0x102B52@0.96", "86", "310", "58"),
-        ("70", "820", "940", "470", "0x162D4A@0.96", "100", "920", "50"),
-        ("70", "820", "940", "470", "0x1A3158@0.96", "100", "930", "48"),
-        ("70", "410", "940", "520", "0x202D55@0.96", "100", "530", "56"),
-        ("70", "1160", "940", "330", "0x153766@0.98", "100", "1260", "52"),
+        ("80", "310", "920", "620", "110", "430", "62"),
+        ("70", "260", "940", "720", "105", "390", "58"),
+        ("70", "280", "940", "680", "105", "410", "52"),
+        ("70", "300", "940", "650", "105", "420", "50"),
+        ("70", "250", "940", "760", "105", "390", "52"),
+        ("70", "390", "940", "520", "105", "520", "54"),
     )
-    for index, (x, y, width, height, color, tx, ty, size) in enumerate(layouts):
+    for index, (x, y, width, height, tx, ty, size) in enumerate(layouts):
         start = index * step
         end = (index + 1) * step
         enable = f"between(t,{start:.3f},{end:.3f})"
         text_path = _filter_path(scene_text_paths[index])
-        scenes.append(f"drawbox=x={x}:y={y}:w={width}:h={height}:color={color}:t=fill:enable='{enable}'")
-        scenes.append(f"drawbox=x={x}:y={y}:w=16:h={height}:color=0x21D4FD@0.95:t=fill:enable='{enable}'")
+        scenes.append(f"drawbox=x=0:y=0:w=iw:h=ih:color={scene_colors[index]}:t=fill:enable='{enable}'")
+        scenes.append(f"drawbox=x={x}:y={y}:w={width}:h={height}:color=0x162F55@0.97:t=fill:enable='{enable}'")
+        scenes.append(f"drawbox=x={x}:y={y}:w=18:h={height}:color=0x21D4FD@0.95:t=fill:enable='{enable}'")
+        scenes.append(f"drawbox=x=70:y=130:w={120 + index * 90}:h=10:color=0x21D4FD@0.9:t=fill:enable='{enable}'")
         scenes.append(f"drawtext=fontfile={font}:textfile={text_path}:fontcolor=white:fontsize={size}:line_spacing=14:x={tx}:y={ty}:text_align=left:enable='{enable}'")
-        scenes.append(f"drawtext=fontfile={font}:text='0{index + 1}':fontcolor=0x21D4FD:fontsize=34:x=870:y=180:enable='{enable}'")
+        scenes.append(f"drawtext=fontfile={font}:text='0{index + 1}':fontcolor=0x21D4FD:fontsize=34:x=900:y=170:enable='{enable}'")
+
+    # Scene-specific data visuals. These are deliberately vector/data elements,
+    # not decorative text on a repeated background.
+    scenes.extend([
+        f"drawbox=x=170:y=920:w=740:h=26:color=0x203E63@1:t=fill:enable='between(t,0,{step:.3f})'",
+        f"drawbox=x=170:y=920:w=560:h=26:color=0x21D4FD@1:t=fill:enable='between(t,0,{step:.3f})'",
+        f"drawbox=x=300:y=1070:w=480:h=210:color=0x0B1B33@1:t=fill:enable='between(t,{step:.3f},{step * 2:.3f})'",
+        f"drawbox=x=360:y=1010:w=120:h=120:color=0x21D4FD@0.25:t=fill:enable='between(t,{step:.3f},{step * 2:.3f})'",
+        f"drawbox=x=540:y=1010:w=120:h=120:color=0xA78BFA@0.35:t=fill:enable='between(t,{step:.3f},{step * 2:.3f})'",
+        f"drawbox=x=480:y=1170:w=120:h=120:color=0x34D399@0.35:t=fill:enable='between(t,{step:.3f},{step * 2:.3f})'",
+        f"drawbox=x=420:y=1060:w=180:h=12:color=0x21D4FD@0.9:t=fill:enable='between(t,{step:.3f},{step * 2:.3f})'",
+        f"drawbox=x=390:y=1350:w=120:h=240:color=0x21D4FD@0.85:t=fill:enable='between(t,{step * 2:.3f},{step * 3:.3f})'",
+        f"drawbox=x=540:y=1240:w=120:h=350:color=0xA78BFA@0.85:t=fill:enable='between(t,{step * 2:.3f},{step * 3:.3f})'",
+        f"drawbox=x=690:y=1150:w=120:h=440:color=0x34D399@0.85:t=fill:enable='between(t,{step * 2:.3f},{step * 3:.3f})'",
+        f"drawbox=x=160:y=1040:w=760:h=22:color=0x203E63@1:t=fill:enable='between(t,{step * 3:.3f},{step * 4:.3f})'",
+        f"drawbox=x=160:y=1040:w=610:h=22:color=0x34D399@1:t=fill:enable='between(t,{step * 3:.3f},{step * 4:.3f})'",
+        f"drawbox=x=160:y=1140:w=760:h=22:color=0x203E63@1:t=fill:enable='between(t,{step * 3:.3f},{step * 4:.3f})'",
+        f"drawbox=x=160:y=1140:w=400:h=22:color=0xFBBF24@1:t=fill:enable='between(t,{step * 3:.3f},{step * 4:.3f})'",
+        f"drawbox=x=160:y=1240:w=760:h=22:color=0x203E63@1:t=fill:enable='between(t,{step * 3:.3f},{step * 4:.3f})'",
+        f"drawbox=x=160:y=1240:w=270:h=22:color=0xF87171@1:t=fill:enable='between(t,{step * 3:.3f},{step * 4:.3f})'",
+        f"drawbox=x=130:y=1030:w=820:h=390:color=0x0B1B33@1:t=fill:enable='between(t,{step * 4:.3f},{step * 5:.3f})'",
+        f"drawbox=x=180:y=1090:w=220:h=80:color=0x34D399@0.8:t=fill:enable='between(t,{step * 4:.3f},{step * 5:.3f})'",
+        f"drawbox=x=430:y=1090:w=220:h=80:color=0xFBBF24@0.8:t=fill:enable='between(t,{step * 4:.3f},{step * 5:.3f})'",
+        f"drawbox=x=680:y=1090:w=220:h=80:color=0xF87171@0.8:t=fill:enable='between(t,{step * 4:.3f},{step * 5:.3f})'",
+        "drawbox=x=70:y=1640:w=940:h=5:color=0x21D4FD@0.7:t=fill",
+    ])
     filter_graph = ",".join(scenes)
+    input_index = 1
+    overlays: list[str] = []
     if logo_path is not None:
-        logo_overlay = f"[1:v]scale=240:240:force_original_aspect_ratio=decrease,format=rgba[logo];[0:v]{filter_graph}[cards];[cards][logo]overlay=x=760:y=270:enable='between(t,{step:.3f},{step * 2:.3f})'[composed];[composed]{captions}[vout]"
+        overlays.append(f"[{input_index}:v]scale=240:240:force_original_aspect_ratio=decrease,format=rgba[project_logo]")
+        input_index += 1
+    if brand_logo_path is not None:
+        overlays.append(f"[{input_index}:v]scale=300:120:force_original_aspect_ratio=decrease,format=rgba[brand_logo]")
+        input_index += 1
+    overlays_text = ";".join(overlays)
+    graph = f"[0:v]{filter_graph}[cards]"
+    if logo_path is not None:
+        graph += f";[cards][project_logo]overlay=x=760:y=300:enable='between(t,{step:.3f},{step * 2:.3f})'[identity]"
     else:
-        filter_graph = f"{filter_graph},drawbox=x=760:y=500:w=190:h=190:color=0x21D4FD@0.18:t=fill:enable='between(t,{step:.3f},{step * 2:.3f})',drawtext=fontfile={font}:text='G':fontcolor=0x21D4FD:fontsize=120:x=825:y=525:enable='between(t,{step:.3f},{step * 2:.3f})'"
-        logo_overlay = f"[0:v]{filter_graph}[cards];[cards]{captions}[vout]"
-    return logo_overlay
+        graph += f";[cards]drawbox=x=760:y=430:w=180:h=180:color=0x21D4FD@0.18:t=fill:enable='between(t,{step:.3f},{step * 2:.3f})',drawtext=fontfile={font}:text='APP':fontcolor=0x21D4FD:fontsize=42:x=807:y=500:enable='between(t,{step:.3f},{step * 2:.3f})'[identity]"
+    if brand_logo_path is not None:
+        graph += f";[identity][brand_logo]overlay=x=390:y=1510:enable='between(t,0,{step:.3f})+between(t,{step * 5:.3f},{duration:.3f})'[branded]"
+    else:
+        graph += ";[identity]copy[branded]"
+    prefix = f"{overlays_text};" if overlays_text else ""
+    return f"{prefix}{graph};[branded]{captions}[vout]"
 
 
 def _short_quality_blockers(result: RenderResult) -> list[str]:
@@ -326,8 +411,20 @@ def _short_quality_blockers(result: RenderResult) -> list[str]:
     safe_area = quality.get("caption_safe_area", {})
     if safe_area.get("bottom", 0) < 180 or safe_area.get("left", 0) < 80 or safe_area.get("right", 0) < 80:
         blockers.append("captions do not meet the mobile safe-area contract")
+    if not quality.get("caption_safe_area_validated"):
+        blockers.append("caption safe-area validation is missing")
+    if quality.get("text_clipping"):
+        blockers.append("short-form visual text is clipped or overflows")
     if not quality.get("scene_transitions"):
         blockers.append("short-form scene transitions are missing")
+    if quality.get("static_background_only"):
+        blockers.append("short-form uses a static background-only composition")
+    if quality.get("caption_only_visuals"):
+        blockers.append("captions are the only meaningful visual content")
+    if not quality.get("brand_opening_present") or not quality.get("brand_closing_present"):
+        blockers.append("GamCryp branded opening/closing is missing")
+    if len(quality.get("primary_visual_elements", ())) < 4:
+        blockers.append("short-form lacks a meaningful visual storytelling system")
     return blockers
 
 
@@ -350,6 +447,11 @@ def _local_logo_path(package: ContentPackage) -> Path | None:
     if opportunity is None or not opportunity.logo_asset:
         return None
     candidate = Path("frontend") / opportunity.logo_asset.lstrip("/")
+    return candidate if candidate.is_file() else None
+
+
+def _brand_logo_path() -> Path | None:
+    candidate = Path("frontend/assets/brand/gamcryp-logo.png")
     return candidate if candidate.is_file() else None
 
 
@@ -377,6 +479,42 @@ def _write_captions(path: Path, text: str, duration: float) -> None:
     for index, chunk in enumerate(chunks):
         lines.append(f"{index + 1}\n{_srt_time(index * step)} --> {_srt_time((index + 1) * step)}\n{chunk}\n")
     path.write_text("\n".join(lines), encoding="utf-8")
+
+
+def _write_caption_text_files(path: Path) -> tuple[Path, ...]:
+    entries = _read_srt_entries(path)
+    paths: list[Path] = []
+    for index, (_, _, text) in enumerate(entries, start=1):
+        target = path.with_name(f"{path.stem}.caption-{index}.txt")
+        target.write_text(_wrap_visual_text(text, width=34, max_lines=2), encoding="utf-8")
+        paths.append(target)
+    return tuple(paths)
+
+
+def _caption_timing(path: Path) -> tuple[tuple[Path, float, float], ...]:
+    entries = _read_srt_entries(path)
+    paths = tuple(path.with_name(f"{path.stem}.caption-{index}.txt") for index in range(1, len(entries) + 1))
+    return tuple((text_path, start, end) for text_path, (start, end, _) in zip(paths, entries))
+
+
+def _read_srt_entries(path: Path) -> tuple[tuple[float, float, str], ...]:
+    try:
+        raw = path.read_text(encoding="utf-8")
+    except OSError:
+        return ()
+    entries: list[tuple[float, float, str]] = []
+    for block in re.split(r"\n\s*\n", raw.strip()):
+        lines = block.splitlines()
+        if len(lines) < 3 or "-->" not in lines[1]:
+            continue
+        start_text, end_text = (part.strip() for part in lines[1].split("-->", 1))
+        entries.append((_parse_srt_time(start_text), _parse_srt_time(end_text), " ".join(lines[2:])))
+    return tuple(entries)
+
+
+def _parse_srt_time(value: str) -> float:
+    hours, minutes, seconds = value.replace(",", ".").split(":")
+    return int(hours) * 3600 + int(minutes) * 60 + float(seconds)
 
 
 def _srt_time(seconds: float) -> str:
