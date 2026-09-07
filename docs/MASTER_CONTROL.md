@@ -13,9 +13,9 @@ This is the durable operational summary for the GamCryp V2 finish pass. Reposito
 
 ## 2. Current production and repository state
 
-- Active work branch: `feature/v2-finish-pass`.
-- The local finish-pass branch contains the verified Shorts/render work and the remote-master history; no automatic merge to `master` is performed by this pass.
-- Public Render web service: `gamefi-roi-web`, paid `0.5c-512mb` plan, Ohio, Blueprint-managed; latest verified deployed source is `b5efe80`.
+- Active repository branch: `master`; the current release-closure commit is `6e039fe`.
+- The verified release-closure changes are committed and deployed. Local distribution/runtime state is intentionally kept outside the release commit.
+- Public Render web service: `gamefi-roi-web`, paid `0.5c-512mb` plan, Ohio, Blueprint-managed; latest verified deployed source is `6e039fe`.
 - The web service no longer has the Free-plan idle sleep limitation. Controlled checks after the upgrade reached the application and Render logs show repeated `/api/v1/ops/status` 200 responses. Individual edge/proxy failures can still occur and must be classified separately.
 - Render Postgres remains on the Free plan at the time of this verification. It is not production-grade: it expires after 30 days and does not provide the paid backup/PITR guarantees. The paid Blueprint target is `basic-256mb`.
 - Direct requests to `gamcryp.com` can still receive Cloudflare/edge `429` Managed Challenge responses with `Cf-Mitigated: challenge`; this is not an application rate-limit response. Browser and controlled low-rate requests also reached 200 for `/`, `/opportunities`, `/methodology`, `/robots.txt`, `/api/v1/rankings`, and a representative strategy page.
@@ -41,7 +41,8 @@ The paid-web verification on 2026-09-07 used low-rate browser-shaped requests. R
 | `/robots.txt` | 200 | Origin reached successfully |
 | `/api/v1/rankings` | 200 on a later controlled request | Origin/API reached successfully |
 | representative strategy page | 200 on a later controlled request | Origin/page reached successfully |
-| `/rankings`, `/sitemap.xml` | intermittent timeout/502 during one probe | Edge/origin behavior requires another browser check; not classified as a persistent app defect |
+| `/rankings` | 200 on the controlled post-deploy check | Origin reached successfully; ranking presentation fix is live |
+| `/sitemap.xml` | not re-probed in this closure check | No application change was made to sitemap generation |
 
 Render application logs showed repeated `/api/v1/ops/status` 200 responses and public `/`, `/opportunities`, `/methodology`, and `/robots.txt` 200 responses. Cloudflare/edge responses without `x-render-origin-server` are not attributed to FastAPI without matching origin logs.
 
@@ -112,7 +113,7 @@ Operational gaps still requiring explicit monitoring: snapshot refresh age, queu
 
 - Reconstructible from Git: catalog definitions, strategy/model code, migrations, renderer, queue schemas, and policy docs.
 - Not safely reconstructible from Git alone: current PostgreSQL snapshots/history, publishing state, quota state, worker retry state, OAuth/token files, and generated media.
-- Current Render Free Postgres has no production-grade backup/PITR guarantee and is the outstanding persistence blocker.
+- Current Render Free Postgres has no production-grade backup/PITR guarantee. This remains a documented operational limitation, not a blocker to using the public read-only catalog.
 - Minimum recovery action: upgrade the database, create a scheduled logical export to an operator-controlled private location, and test one restore before enabling unattended publishing.
 - Until that exists, honest classification is unknown RPO/RTO for database-backed history; local static artifacts remain separately recoverable if copied.
 
@@ -122,17 +123,16 @@ Operational gaps still requiring explicit monitoring: snapshot refresh age, queu
 - Stale snapshot wording was hardened to use stored/modeled language; browser/API failures now time out and render a usable error or degraded state.
 - Public edge indexability and search-engine indexation are not claimed. The audit edge responses were Cloudflare challenges, not successful crawler responses.
 
-## 12. Current blockers
+## 12. Current limitations
 
-1. Render Postgres remains Free and must be upgraded before its expiry if the database is to be treated as production state.
-2. Cloudflare/edge Managed Challenge can return 429 to controlled non-browser probes; the controlling zone/rule is not accessible from the currently logged-in Cloudflare account.
-3. The local visual-quality renderer patch needs commit, deployment, and three representative proof reviews before it can be marked production-approved.
-4. ElevenLabs has authenticated credentials but 0 remaining credits on the configured free-tier account; no fallback TTS is allowed.
-5. Live YouTube remains disabled pending visual proof approval and operator decision.
+1. Render Postgres remains Free; backups/PITR and expiry protection are not production-grade.
+2. Cloudflare/edge Managed Challenge can return 429 to some non-browser probes; security was not weakened.
+3. ElevenLabs currently reports 0 remaining credits; narration fails closed and no fallback TTS is used.
+4. Autonomous YouTube and X publishing remain disabled by policy/configuration.
 
-## 13. Exact next action
+## 13. Release-closure decision
 
-Upgrade Render Postgres, commit/deploy the local visual renderer hardening, review three proof families, then repeat controlled browser-origin route checks. Only after all three proof families pass visual review and the intended commit is deployed may the operator set `GAMEFI_DISTRIBUTION_LIVE=true` locally.
+The current public web release is closed for this pass: the deployed commit is `6e039fe`, controlled public routes returned 200, rankings no longer show the empty-filter presentation, and unmodeled realizable opportunities use precise “earning rate unverified” language. No new implementation work is opened from this report. The documented limitations above require operational/vendor action only if unattended publishing or production-grade historical persistence is later desired.
 
 ## 14. Verification evidence
 
