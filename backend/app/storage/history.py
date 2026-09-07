@@ -12,7 +12,7 @@ from types import MappingProxyType
 from typing import Any
 from uuid import NAMESPACE_URL, uuid5
 
-from sqlalchemy import Engine, desc, select
+from sqlalchemy import Engine, desc, func, select
 from sqlalchemy.engine import Connection
 from sqlalchemy.orm import Session
 
@@ -231,16 +231,31 @@ class HistoryRepository:
             return None if record is None else _snapshot_from_record(record)
 
     def latest_snapshots(self) -> list[StrategySnapshot]:
-        stmt = select(StrategySnapshotRecord).order_by(
-            StrategySnapshotRecord.strategy_id,
-            desc(StrategySnapshotRecord.calculated_at),
-            desc(StrategySnapshotRecord.created_at),
+        ranked = (
+            select(
+                StrategySnapshotRecord.snapshot_id,
+                func.row_number()
+                .over(
+                    partition_by=StrategySnapshotRecord.strategy_id,
+                    order_by=(
+                        desc(StrategySnapshotRecord.calculated_at),
+                        desc(StrategySnapshotRecord.created_at),
+                    ),
+                )
+                .label("snapshot_rank"),
+            )
+            .subquery()
+        )
+        stmt = (
+            select(StrategySnapshotRecord)
+            .join(ranked, ranked.c.snapshot_id == StrategySnapshotRecord.snapshot_id)
+            .where(ranked.c.snapshot_rank == 1)
+            .order_by(StrategySnapshotRecord.strategy_id)
         )
         latest_by_strategy: dict[str, StrategySnapshot] = {}
         with Session(self.engine) as session:
             for record in session.scalars(stmt).all():
-                if record.strategy_id not in latest_by_strategy:
-                    latest_by_strategy[record.strategy_id] = _snapshot_from_record(record)
+                latest_by_strategy[record.strategy_id] = _snapshot_from_record(record)
         return [latest_by_strategy[strategy_id] for strategy_id in sorted(latest_by_strategy)]
 
     def snapshots_in_range(

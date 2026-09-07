@@ -230,7 +230,6 @@ export function renderHomeShell(games = [], rankings = { items: [], page: { tota
         </div>
       </section>
       ${renderDegradedNotice(degradedMessages)}
-      ${renderHomeAnswerBlock(rankings, opportunities)}
       ${renderTopRankingSummary(rankings)}
       ${renderCatalogStats(rankings, opportunities)}
       <section class="finder-grid" aria-label="ROI finder">
@@ -298,12 +297,21 @@ export function renderCatalogStats(rankings = { page: { total: 0 } }, opportunit
   const opportunityCount = opportunities.length;
   const modeledCount = rankings.page?.total ?? (rankings.items || []).length;
   const unavailableCount = opportunities.filter((opportunity) => !opportunity.strategy_count).length;
-  const types = Array.from(new Set(opportunities.map((opportunity) => opportunityTypeLabel(opportunity.opportunity_type)))).sort();
+  const types = new Set();
+  for (const opportunity of opportunities) {
+    const normalized = String(opportunity.opportunity_type || "").toUpperCase();
+    if (normalized === "GAME") types.add("Games");
+    if (normalized === "DEPIN_NODE") {
+      types.add("DePIN");
+      types.add("Nodes");
+    }
+    if (normalized === "POINTS") types.add("Points");
+  }
   return `
     <section class="catalog-stat-grid" aria-label="GamCryp V1 coverage">
       ${summaryItem("Reviewed opportunities", escapeHtml(String(opportunityCount)))}
       ${summaryItem("Modeled strategies", escapeHtml(String(modeledCount)))}
-      ${summaryItem("Opportunity types", escapeHtml(types.join(", ") || "Unavailable"))}
+      ${summaryItem("Opportunity coverage", escapeHtml(Array.from(types).join(" · ") || "Unavailable"))}
       ${summaryItem("ROI not measured", escapeHtml(`${unavailableCount} explicit`))}
     </section>
   `;
@@ -328,7 +336,7 @@ export function renderTopRankingSummary(rankings = { items: [] }) {
   return `
     <section class="top-opportunity-card" aria-label="Top ranked organic strategy">
       <div class="top-opportunity-copy">
-        <span class="eyebrow">${snapshot.freshness?.overall_status && snapshot.freshness.overall_status !== "fresh" ? "Top stored modeled opportunity" : "Top modeled opportunity right now"}</span>
+        <span class="eyebrow">${snapshot.freshness?.overall_status && snapshot.freshness.overall_status !== "fresh" ? "Top opportunity (stale model)" : "Top opportunity"}</span>
         <div class="card-identity">${renderOpportunityLogo(strategy.logo, snapshot.game_name, true)}<h2>${escapeHtml(snapshot.game_name)}</h2></div>
         <p><a class="strategy-link" href="/strategies/${encodeURIComponent(strategy.strategy_id)}" data-link>${escapeHtml(strategy.name)}</a></p>
         <p class="muted">Ranked by modeled 30D ROI, then confidence, risk, and recency according to the organic ranking methodology.</p>
@@ -347,23 +355,6 @@ export function renderTopRankingSummary(rankings = { items: [] }) {
       </div>
     </section>
   `;
-}
-
-export function renderHomeAnswerBlock(rankings = { items: [], page: { total: 0 } }, opportunities = []) {
-  const unavailableCount = opportunities.filter((opportunity) => !opportunity.strategy_count).length;
-  const fields = [
-    ["Reviewed opportunities", escapeHtml(String(opportunities.length))],
-    ["Modeled strategies", escapeHtml(String(rankings.page?.total ?? (rankings.items || []).length))],
-    ["Opportunity coverage", escapeHtml(Array.from(new Set(opportunities.map((item) => opportunityTypeLabel(item.opportunity_type)))).sort().join(", ") || "Unavailable")],
-    ["Top stored answer", escapeHtml(rankingsSummary(rankings))],
-    ["Unavailable ROI policy", escapeHtml(`${unavailableCount} opportunities remain unavailable, not zero, until value is reproducible.`)],
-    ["Data source", "Stored snapshots served through /api/v1; page requests do not call live providers."],
-  ];
-  return renderAnswerBlock(
-    "Quick overview",
-    "GamCryp is a Web3 opportunity intelligence source for modeled ROI, risk, confidence, freshness, and explicit unavailable states.",
-    fields,
-  );
 }
 
 export function renderDegradedNotice(messages = []) {
@@ -688,7 +679,6 @@ export function renderOpportunityDetail(opportunity) {
         <p class="lede">${escapeHtml(opportunityIntro(opportunity))}</p>
         <div class="button-row">
           ${renderDestinationButton(opportunity.primary_destination, opportunity.opportunity_type === "GAME" ? "Start" : "Open", { sourcePage: "opportunity_detail", placement: "primary_cta" })}
-          ${opportunity.legacy_game_id ? `<a class="secondary-button" href="/games/${encodeURIComponent(opportunity.legacy_game_id)}" data-link>Game view</a>` : ""}
         </div>
       </section>
       ${renderOpportunityAnswerBlock(opportunity)}
@@ -1051,7 +1041,7 @@ export function renderStrategyDetail(strategy, historyPage = { items: [] }) {
         <p class="lede">${escapeHtml(strategy.description)}</p>
         <div class="button-row">
           <span class="badge">Strategy version ${escapeHtml(strategy.strategy_version)}</span>
-          <a class="secondary-button" href="/games/${encodeURIComponent(strategy.game_id)}" data-link>${escapeHtml(strategy.game_name)}</a>
+          <a class="secondary-button" href="/opportunities/${encodeURIComponent(strategy.opportunity_id || strategy.game_id)}" data-link>View opportunity</a>
           ${renderDestinationButton(strategy.primary_destination, ctaLabelForSnapshot(snapshot, "Start"), { sourcePage: "strategy_detail", placement: "primary_cta" })}
         </div>
         ${renderCtaRiskNotice(snapshot)}

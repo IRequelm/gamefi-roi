@@ -218,14 +218,6 @@ def canonical_page_inventory(engine: Engine) -> list[CanonicalPage]:
             )
         )
 
-    for game in list_games():
-        strategy_times = [
-            latest_by_strategy[strategy_id].calculated_at
-            for strategy_id in game.strategy_ids
-            if strategy_id in latest_by_strategy
-        ]
-        pages.append(CanonicalPage(f"/games/{game.game_id}", max(strategy_times, default=CATALOG_REVIEWED_AT)))
-
     for strategy in list_strategies():
         snapshot = latest_by_strategy.get(strategy.strategy_id)
         pages.append(

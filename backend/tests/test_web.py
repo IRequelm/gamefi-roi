@@ -13,7 +13,6 @@ def test_web_mvp_pages_are_served_by_fastapi(monkeypatch, tmp_path) -> None:
         "/rankings",
         "/opportunities",
         "/opportunities/grass",
-        "/games/farmers-world",
         f"/strategies/{DFK_CJEWEL_MAX_LOCK_V1.strategy_id}",
         "/methodology",
     ):
@@ -27,6 +26,28 @@ def test_web_mvp_pages_are_served_by_fastapi(monkeypatch, tmp_path) -> None:
         assert 'mailto:info@gamcryp.com">info@gamcryp.com</a>' in response.text
         assert "https://www.youtube.com/@GamCryp" in response.text
         assert "gamcryp@gmail.com" not in response.text
+
+
+def test_legacy_game_route_permanently_redirects_to_canonical_opportunity(monkeypatch, tmp_path) -> None:
+    client, _engine = _seeded_client(monkeypatch, tmp_path, "web-legacy-game-redirect.db")
+
+    response = client.get("/games/farmers-world", follow_redirects=False)
+
+    assert response.status_code == 301
+    assert response.headers["location"] == "/opportunities/farmers-world"
+    assert response.headers["cache-control"] == "public, max-age=86400"
+
+
+def test_homepage_omits_internal_audit_blocks(monkeypatch, tmp_path) -> None:
+    client, _engine = _seeded_client(monkeypatch, tmp_path, "web-home-copy.db")
+
+    html = client.get("/").text
+
+    assert "TOP STORED ANSWER" not in html.upper()
+    assert "UNAVAILABLE ROI POLICY" not in html.upper()
+    assert "DATA SOURCE" not in html.upper()
+    assert "served through /api/v1" not in html
+    assert "page requests do not call live providers" not in html
 
 
 def test_web_assets_are_served_and_point_to_api_v1(monkeypatch, tmp_path) -> None:
