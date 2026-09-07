@@ -40,7 +40,7 @@ def test_beta_scheduler_workflow_uses_policy_aware_snapshot_refresh_with_overlap
     assert "GAMEFI_BETA_DATABASE_URL" in workflow
     assert "GAMEFI_PUBLIC_BASE_URL" in workflow
     assert "vars.GAMEFI_PUBLIC_BASE_URL" in workflow
-    assert "https://gamefi-roi-web.onrender.com" in workflow
+    assert "https://gamcryp.com" in workflow
     assert "GAMEFI_COINGECKO_API_KEY" in workflow
     assert "GAMEFI_DFK_CHAIN_RPC_URL" in workflow
     assert "python -m app.jobs.snapshot_refresh" in workflow

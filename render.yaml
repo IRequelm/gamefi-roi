@@ -43,7 +43,7 @@ services:
       - key: GAMEFI_SECURITY_HEADERS_ENABLED
         value: "true"
       - key: GAMEFI_PUBLIC_BASE_URL
-        value: https://gamefi-roi-web.onrender.com
+        value: https://gamcryp.com
       - key: GAMEFI_INDEXNOW_KEY
         sync: false
       - key: GAMEFI_GOOGLE_SITE_VERIFICATION
