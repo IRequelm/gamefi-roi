@@ -1,6 +1,6 @@
 # GameFi ROI — Project Status
 
-Updated: 2026-08-26
+Updated: 2026-09-07
 Project version: 0.1
 
 V2 finish-pass operational truth is maintained in `docs/MASTER_CONTROL.md`; this document remains the authoritative gate board and currently has no numbered gate active.
@@ -11,7 +11,7 @@ V2 finish-pass operational truth is maintained in `docs/MASTER_CONTROL.md`; this
 
 G12 is complete and frozen in the G12 baseline Git commit.
 
-G13 is complete for the accepted public beta deployment. The beta is live on Render Free Web Service + Free Render Postgres, with GitHub Actions scheduled recalculation. Free-tier limits are accepted public-beta limitations, not production-grade guarantees.
+G13 is complete for the accepted public beta deployment. The web service is now on Render's paid `0.5c-512mb` plan, while Render Postgres remains Free pending the production database upgrade. GitHub Actions scheduled recalculation remains configured. See `docs/MASTER_CONTROL.md` for current operational truth.
 
 G14 is complete in the repository. It adds the backward-compatible Opportunity catalog, referral/outbound foundation, and public-beta UI readability pass. Render auto-deploy remains off from G13, so the current public URL must be manually deployed to serve the G14 routes and UI.
 
@@ -27,7 +27,7 @@ Post-G16 production scheduler fix: the GitHub Actions beta recalculation workflo
 
 G17 is complete in the repository. It adds referral operations coverage states, a single-operator protected console, safe referral metadata editing, work queue generation, stored-metadata health checks, and manual verified revenue entry. Referral, sponsor, click, and revenue data remain outside ROI, Risk, Confidence, strategy snapshots, validation, and organic ranking order.
 
-G18 is complete. The current catalog has 51 opportunities and 15 modeled strategies; the historical G18 acceptance baseline remains 26 opportunities and 10 modeled strategies. The latest scheduled GitHub Actions recalculation succeeded with 10 scored snapshots and no failures, while the public Free Render service remains subject to cold-start availability. No mandatory implementation gate is active. Future work should be classified as Operations, Growth, V1.x improvement, or V2 proposal. See `docs/MASTER_CONTROL.md` for the current operational state.
+G18 is complete. The current catalog has 51 opportunities and 15 modeled strategies; the historical G18 acceptance baseline remains 26 opportunities and 10 modeled strategies. The latest scheduled GitHub Actions recalculation succeeded with 10 scored snapshots and no failures. The web service has moved to the paid Render plan; the database remains Free and is the current production persistence blocker. No mandatory implementation gate is active. Future work should be classified as Operations, Growth, V1.x improvement, or V2 proposal. See `docs/MASTER_CONTROL.md` for the current operational state.
 
 Post-G18 launch polish is an Operations/Growth patch, not a gate reopen. It cleans public-facing labels, opportunity-card explanations, CTA relationship text, footer contact links, and optional consent-gated GA4 readiness while preserving ROI formulas, adapters, scoring, snapshots, API contracts, referral routing, monetization separation, and organic ranking order.
 

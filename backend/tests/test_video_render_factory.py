@@ -137,7 +137,14 @@ def _short_result_with_quality(**overrides):
         "identity_present": True,
         "identity_mode": "branded_identity_card",
         "caption_safe_area": {"left": 96, "right": 96, "bottom": 220},
+        "caption_safe_area_validated": True,
+        "text_clipping": False,
         "scene_transitions": True,
+        "static_background_only": False,
+        "caption_only_visuals": False,
+        "brand_opening_present": True,
+        "brand_closing_present": True,
+        "primary_visual_elements": ["identity_card", "setup_diagram", "mechanics_flow", "evidence_metric_card", "branded_cta"],
     }
     base.update(overrides)
     return base
