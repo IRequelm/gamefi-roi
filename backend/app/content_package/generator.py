@@ -92,7 +92,9 @@ def validate_package(package: ContentPackage) -> bool:
         if not all(str(path).startswith(("opportunity.", "strategy.", "/")) for path in evidence_paths):
             return False
         text = str(point["text"]).lower()
-        if any(term in text for term in ("guarantee", "risk-free", "you will earn", "buy this", "i recommend", "guaranteed return")):
+        # A truthful negated warning such as "does not guarantee traffic" must
+        # remain publishable. Reject promise language, not the word itself.
+        if any(term in text for term in ("guaranteed", "risk-free", "you will earn", "buy this", "i recommend", "guaranteed return")):
             return False
     if package.format == "LONG_FORM":
         if len({section.get("text") for section in package.narration_sections}) != len(package.narration_sections):

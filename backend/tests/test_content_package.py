@@ -66,6 +66,17 @@ def test_evidence_binding_rejects_unsupported_claims() -> None:
     assert validate_package(unsafe) is False
 
 
+def test_truthful_negated_guarantee_warning_remains_publishable() -> None:
+    package = next(
+        package
+        for package in build_content_packages()
+        if package.source_inventory_item_id == "inventory-how_you_earn-mysterium-network-node"
+    )
+
+    assert package.generation_status == "READY_FOR_REVIEW"
+    assert any("does not guarantee" in point["text"] for point in package.factual_talking_points)
+
+
 def test_package_output_is_deterministic_and_ids_are_unique() -> None:
     first = build_content_packages()
     second = build_content_packages()
