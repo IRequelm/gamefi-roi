@@ -365,6 +365,9 @@ OPPORTUNITIES = (
         strategy_ids=_strategy_ids(FARMERS_WORLD_AXE_STRATEGIES),
         outbound_destination_slug="farmers-world-play",
         legacy_game_id="farmers-world",
+        logo_asset="/assets/logos/farmers-world.ico",
+        logo_alt="Farmers World logo",
+        logo_source_reference=("Farmers World official website", "https://www.farmersworld.io/"),
     ),
     _opportunity(
         opportunity_id="splinterlands",
@@ -382,6 +385,9 @@ OPPORTUNITIES = (
         strategy_ids=_strategy_ids(SPLINTERLANDS_MODERN_RANKED_STRATEGIES),
         outbound_destination_slug="splinterlands-play",
         legacy_game_id="splinterlands",
+        logo_asset="/assets/logos/splinterlands.ico",
+        logo_alt="Splinterlands logo",
+        logo_source_reference=("Splinterlands official website", "https://splinterlands.com/"),
     ),
     _opportunity(
         opportunity_id="storj-storage-node",
@@ -499,6 +505,9 @@ OPPORTUNITIES = (
         feasibility_summary="Official device support, network fee, settlement threshold, and dashboard availability support a B2B-only existing-device strategy with explicit demand assumptions.",
         strategy_ids=("mysterium-b2b-existing-device",),
         outbound_destination_slug="mysterium-network-node-official",
+        logo_asset="/assets/logos/mysterium-network.png",
+        logo_alt="Mysterium Network logo",
+        logo_source_reference=("Mysterium Network official website", "https://mysterium.network/"),
         guidance=OpportunityGuidance(
             how_to_start=(
                 "Install Mysterium Node using the official setup guide for a supported platform, then register and configure the node in NodeUI.",
