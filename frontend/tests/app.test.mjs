@@ -43,6 +43,7 @@ import {
   renderSponsoredPlacements,
   renderStrategySignals,
   renderStrategyDetail,
+  renderTopRankingSummary,
   resetAnalyticsForTests,
   sanitizeBrowserSentryEvent,
   sentryFrontendDsn,
@@ -68,7 +69,7 @@ test("rankings rendering includes card metrics and stored API values", () => {
   assert.match(html, /\$250/);
   assert.match(html, /5.86%/);
   assert.match(html, /Profitable now/);
-  assert.match(html, /Very high risk/);
+  assert.match(html, /Very high exposure/);
   assert.match(html, /Updated /);
   assert.doesNotMatch(html, /Updated 2026-08-16 12:00 UTC/);
   assert.match(html, /\/go\/defi-kingdoms-play/);
@@ -109,6 +110,15 @@ test("home renders results as cards before filters without table ranking markup"
   assert.match(html, /finder-results/);
   assert.match(html, /filter-panel/);
   assert.doesNotMatch(html, /<table/);
+});
+
+test("homepage never presents a stale snapshot as the top opportunity", () => {
+  const rankings = rankingPayload();
+  rankings.items[0].latest_snapshot.freshness.overall_status = "stale";
+  const html = renderTopRankingSummary(rankings);
+  assert.match(html, /No fresh modeled leader/);
+  assert.match(html, /Latest results need a refresh/);
+  assert.doesNotMatch(html, /DFK Jeweler/);
 });
 
 test("homepage groups multiple strategies under one opportunity", () => {
@@ -584,7 +594,7 @@ test("negative return and warning signals are explicit", () => {
 
   assert.match(html, /Unprofitable now/);
   assert.match(html, /Low confidence/);
-  assert.match(html, /Very high risk/);
+  assert.match(html, /Very high exposure/);
 });
 
 test("stale positive results never present as current earnings", () => {

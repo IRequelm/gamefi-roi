@@ -28,6 +28,35 @@ const CURATED_RANKING_TITLES = {
   "/rankings/pc-depin": "PC DePIN earning opportunities",
   "/rankings/no-hardware-depin": "No-hardware DePIN earning opportunities",
 };
+const CURATED_RANKING_GROUPS = [
+  {
+    title: "Start here",
+    links: [
+      ["/rankings/highest-roi-gamefi", "Highest modeled ROI"],
+      ["/rankings/high-confidence", "Higher confidence"],
+      ["/rankings/under-25", "Under $25 capital"],
+    ],
+  },
+  {
+    title: "GameFi",
+    links: [
+      ["/rankings/gamefi", "All GameFi"],
+      ["/rankings/lowest-capital-gamefi", "Lowest capital"],
+      ["/rankings/best-passive-gamefi", "Passive strategies"],
+      ["/rankings/gamefi-under-10", "Under $10"],
+      ["/rankings/gamefi-under-50", "Under $50"],
+      ["/rankings/gamefi-under-100", "Under $100"],
+    ],
+  },
+  {
+    title: "DePIN",
+    links: [
+      ["/rankings/best-depin-under-100", "Under $100"],
+      ["/rankings/pc-depin", "PC-friendly"],
+      ["/rankings/no-hardware-depin", "No dedicated hardware"],
+    ],
+  },
+];
 const CURATED_RANKING_CONSTRAINTS = {
   "/rankings/pc-depin": { requiredPlatforms: ["desktop", "browser-extension", "cli", "docker-node"] },
   "/rankings/no-hardware-depin": {
@@ -318,9 +347,18 @@ export function renderCatalogStats(rankings = { page: { total: 0 } }, opportunit
 }
 
 export function renderTopRankingSummary(rankings = { items: [] }) {
-  const top = (rankings.items || [])[0];
+  const top = (rankings.items || []).find((item) => item.latest_snapshot?.freshness?.overall_status === "fresh");
   if (!top) {
-    return "";
+    return `
+      <section class="top-opportunity-card top-opportunity-empty" aria-label="Fresh modeled result status">
+        <div class="top-opportunity-copy">
+          <span class="eyebrow">No fresh modeled leader</span>
+          <h2>Latest results need a refresh</h2>
+          <p class="muted">The catalog still shows the latest modeled comparisons, but none is fresh enough to be presented as today’s top opportunity.</p>
+        </div>
+        <div class="top-opportunity-actions"><a class="secondary-button" href="/rankings" data-link>Review rankings</a></div>
+      </section>
+    `;
   }
   const snapshot = top.latest_snapshot;
   const strategy = top.strategy;
@@ -644,12 +682,21 @@ export function renderRankingsPage(rankings, options = {}) {
 
 function renderCuratedRankingLinks() {
   return `
-    <section class="section-panel">
-      <div class="section-header"><h2>Curated views</h2></div>
-      <div class="section-body button-row">
-        ${Object.entries(CURATED_RANKING_TITLES)
-          .map(([path, title]) => `<a class="secondary-button" href="${escapeHtml(path)}" data-link>${escapeHtml(title)}</a>`)
-          .join("")}
+    <section class="section-panel curated-views">
+      <div class="section-header"><h2>Explore rankings</h2><span class="muted">Use a focused view</span></div>
+      <div class="section-body curated-view-groups">
+        ${CURATED_RANKING_GROUPS.map(
+          (group) => `
+            <div class="curated-view-group">
+              <h3>${escapeHtml(group.title)}</h3>
+              <div class="button-row">
+                ${group.links
+                  .map(([path, label]) => `<a class="secondary-button curated-view-link" href="${escapeHtml(path)}" title="${escapeHtml(CURATED_RANKING_TITLES[path])}" data-link>${escapeHtml(label)}</a>`)
+                  .join("")}
+              </div>
+            </div>
+          `,
+        ).join("")}
       </div>
     </section>
   `;
@@ -814,6 +861,7 @@ export function renderOpportunityCard(opportunity) {
     ? '<span class="badge good">ROI modeled</span>'
     : `<span class="badge warning">${escapeHtml(opportunityCardState(opportunity))}</span>`;
   const setupLabels = depinSetupLabels(opportunity);
+  const participation = opportunityParticipationLabel(opportunity);
   return `
     <article class="opportunity-card">
       <div class="identity-row">
@@ -821,6 +869,7 @@ export function renderOpportunityCard(opportunity) {
         ${renderFeasibilityStatus(opportunity.data_feasibility_status)}
       </div>
       <div class="card-identity">${renderOpportunityLogo(opportunity.logo, opportunity.name, true)}<h3><a class="strategy-link" href="/opportunities/${encodeURIComponent(opportunity.opportunity_id)}" data-link>${escapeHtml(opportunity.name)}</a></h3></div>
+      <p class="opportunity-mode"><strong>How it works</strong> ${escapeHtml(participation)}</p>
       <p class="muted">${escapeHtml(opportunityIntro(opportunity))}</p>
       <p class="muted">${strategyText}</p>
       ${setupLabels.length ? `<p class="muted">Setup: ${escapeHtml(setupLabels.slice(0, 2).join("; "))}</p>` : ""}
@@ -1457,6 +1506,12 @@ export function renderMethodologyPage() {
         <h1>How GamCryp reads Web3 opportunity economics</h1>
         <p class="lede">The model emphasizes explainable assumptions, realizable values, and source quality over hype.</p>
       </section>
+      <section class="method-intro-grid">
+        <article class="method-item method-item-primary"><h2>1. Find an opportunity</h2><p class="muted">Start with the category and setup: play a game, run node software, use existing hardware, or complete points tasks.</p></article>
+        <article class="method-item method-item-primary"><h2>2. Check the economics</h2><p class="muted">If cost, earning rate, and exit route can be reproduced, we show a modeled result. Otherwise we explain what is missing.</p></article>
+        <article class="method-item method-item-primary"><h2>3. Read the warnings</h2><p class="muted">Risk, confidence, and freshness answer different questions. Review all three before opening an external project.</p></article>
+      </section>
+      <h2 class="method-section-title">What the numbers mean</h2>
       <section class="method-grid">
         ${items
           .map(
@@ -1507,7 +1562,7 @@ export function renderStrategySignals(snapshot) {
   }
   if (snapshot.risk?.available && ["HIGH", "VERY HIGH"].includes(snapshot.risk.label)) {
     signals.push({
-      label: snapshot.risk.label === "VERY HIGH" ? "Very high risk" : "High risk",
+      label: snapshot.risk.label === "VERY HIGH" ? "Very high exposure" : "High exposure",
       tone: "high",
     });
   }
@@ -2071,6 +2126,17 @@ function opportunityIntro(opportunity) {
   const rewardText = rewardTypes ? ` Rewards tracked: ${rewardTypes}.` : "";
   const summary = opportunity.feasibility_summary ? ` ${opportunity.feasibility_summary}` : "";
   return `${typeDescription}${rewardText}${summary}`.trim();
+}
+
+function opportunityParticipationLabel(opportunity) {
+  const type = String(opportunity?.opportunity_type || "").toUpperCase();
+  if (type === "GAME") return "Play or complete in-game activity; rewards depend on the published game economy.";
+  if (type === "POINTS") return "Use the app or complete eligible tasks; points may not have a cash-out route yet.";
+  if (type === "DEPIN_NODE") {
+    const setup = depinSetupLabels(opportunity);
+    return setup.length ? setup.join(" + ") : "Run the supported software or provide the required network resource.";
+  }
+  return "Follow the reviewed participation steps on the opportunity page.";
 }
 
 function opportunityCardState(opportunity) {
@@ -2712,10 +2778,11 @@ export function escapeHtml(value) {
 }
 
 export function renderOpportunityLogo(logo, label, compact = false) {
-  if (!logo || !logo.asset || !logo.alt) {
-    return "";
-  }
   const className = compact ? "opportunity-logo opportunity-logo-compact" : "opportunity-logo";
+  if (!logo || !logo.asset || !logo.alt) {
+    const initials = String(label || "?").split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
+    return `<span class="${className} opportunity-logo-fallback" aria-label="${escapeHtml(label || "Opportunity")} identity">${escapeHtml(initials || "?")}</span>`;
+  }
   return `<img class="${className}" src="${escapeHtml(logo.asset)}" alt="${escapeHtml(logo.alt)}" loading="lazy" decoding="async">`;
 }
 

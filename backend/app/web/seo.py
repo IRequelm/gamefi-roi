@@ -114,11 +114,14 @@ def render_document(page: SeoPage, *, settings: Settings) -> str:
 def home_page(service: ApiDataService, *, settings: Settings, request: Request) -> SeoPage:
     rankings = service.rankings_page(limit=50, offset=0)
     opportunities, _total = service.opportunities_page(limit=50, offset=0)
-    top = rankings.items[0] if rankings.items else None
+    top = next(
+        (item for item in rankings.items if item.latest_snapshot and item.latest_snapshot.freshness.overall_status == "fresh"),
+        None,
+    )
     answer = (
         _ranking_answer(top.latest_snapshot, top.strategy)
         if top is not None
-        else "GamCryp has no current modeled strategy snapshot available."
+        else "No fresh modeled leader is available today; the latest comparisons remain visible with their freshness labels."
     )
     body = f"""
       <div class="page-shell">
@@ -134,7 +137,7 @@ def home_page(service: ApiDataService, *, settings: Settings, request: Request) 
           </div>
         </section>
         {_render_catalog_stats(rankings, opportunities)}
-        {_render_ranking_cards(rankings.items[:3], heading="Highest modeled results")}
+        {_render_ranking_cards(rankings.items[:3], heading="Latest modeled results")}
         {_render_opportunity_cards(opportunities, heading="Opportunity radar")}
       </div>
     """
@@ -274,7 +277,7 @@ def opportunity_page(
       <div class="page-shell">
         <section class="page-head">
           <p class="eyebrow">{escape(opportunity_type_label(opportunity.opportunity_type))}</p>
-          <div class="identity-heading">{_render_logo(opportunity.logo)}<h1>{escape(opportunity.name)} ROI status and evidence</h1></div>
+          <div class="identity-heading">{_render_logo(opportunity.logo, opportunity.name)}<h1>{escape(opportunity.name)} ROI status and evidence</h1></div>
           <p class="lede">{escape(answer)}</p>
           <div class="button-row">
             {_destination_button(opportunity.primary_destination, "Open official link")}
@@ -321,7 +324,7 @@ def game_page(game, *, settings: Settings, request: Request) -> SeoPage:
       <div class="page-shell">
         <section class="page-head">
           <p class="eyebrow">Game compatibility page</p>
-          <div class="identity-heading">{_render_logo(game.logo)}<h1>{escape(game.name)} ROI strategies</h1></div>
+          <div class="identity-heading">{_render_logo(game.logo, game.name)}<h1>{escape(game.name)} ROI strategies</h1></div>
           <p class="lede">{escape(description)}</p>
           <div class="button-row">
             {_destination_button(game.primary_destination, cta_label_for_snapshot(snapshot, "Start"))}
@@ -363,7 +366,7 @@ def strategy_page(
       <div class="page-shell">
         <section class="page-head">
           <p class="eyebrow">Strategy intelligence</p>
-          <div class="identity-heading">{_render_logo(strategy.logo)}<div><p class="eyebrow">{escape(strategy.game_name)}</p><h1>{escape(strategy.name)}</h1></div></div>
+          <div class="identity-heading">{_render_logo(strategy.logo, strategy.game_name)}<div><p class="eyebrow">{escape(strategy.game_name)}</p><h1>{escape(strategy.name)}</h1></div></div>
           <p class="lede">{escape(answer)}</p>
           <div class="button-row">
             <a class="secondary-button" href="/opportunities/{escape(strategy.opportunity_id)}">Parent opportunity</a>
@@ -411,6 +414,12 @@ def methodology_page(*, settings: Settings, request: Request) -> SeoPage:
           <h1>How GamCryp reads Web3 opportunity economics</h1>
           <p class="lede">GamCryp publishes strategy-specific economics from explicit assumptions and source evidence. It does not imply guaranteed returns or investment advice.</p>
         </section>
+        <section class="method-intro-grid">
+          <article class="method-item method-item-primary"><h2>1. Find an opportunity</h2><p class="muted">Start with the category and setup: play a game, run node software, use existing hardware, or complete points tasks.</p></article>
+          <article class="method-item method-item-primary"><h2>2. Check the economics</h2><p class="muted">If cost, earning rate, and exit route can be reproduced, we show a modeled result. Otherwise we explain what is missing.</p></article>
+          <article class="method-item method-item-primary"><h2>3. Read the warnings</h2><p class="muted">Risk, confidence, and freshness answer different questions. Review all three before opening an external project.</p></article>
+        </section>
+        <h2 class="method-section-title">What the numbers mean</h2>
         <section class="method-grid">
           <article class="method-item"><h2>Modeled ROI</h2><p class="muted">ROI is calculated only when entry cost, reward rate, realizable reward value or exit path, and relevant costs can be reproduced from evidence.</p></article>
           <article class="method-item"><h2>ROI unavailable</h2><p class="muted">When the economic path cannot be reproduced, GamCryp does not invent a financial ROI number.</p></article>
@@ -493,9 +502,11 @@ def asset_url(path: str) -> str:
     return f"{clean}?v={digest}"
 
 
-def _render_logo(logo, *, compact: bool = False) -> str:
+def _render_logo(logo, label: str = "Opportunity", *, compact: bool = False) -> str:
     if logo is None or not logo.asset or not logo.alt:
-        return ""
+        initials = "".join(part[0] for part in str(label or "Opportunity").split()[:2]).upper() or "?"
+        class_name = "opportunity-logo opportunity-logo-compact" if compact else "opportunity-logo"
+        return f'<span class="{class_name} opportunity-logo-fallback" aria-label="{escape(label or "Opportunity")} identity">{escape(initials)}</span>'
     class_name = "opportunity-logo opportunity-logo-compact" if compact else "opportunity-logo"
     return f'<img class="{class_name}" src="{escape(asset_url(logo.asset))}" alt="{escape(logo.alt)}" loading="lazy" decoding="async">'
 
@@ -733,6 +744,18 @@ def depin_setup_labels(opportunity_or_platforms) -> list[str]:
     return labels
 
 
+def opportunity_participation_label(opportunity: OpportunitySummary) -> str:
+    opportunity_type = str(opportunity.opportunity_type or "").upper()
+    if opportunity_type == "GAME":
+        return "Play or complete in-game activity; rewards depend on the published game economy."
+    if opportunity_type == "POINTS":
+        return "Use the app or complete eligible tasks; points may not have a cash-out route yet."
+    if opportunity_type == "DEPIN_NODE":
+        setup = depin_setup_labels(opportunity)
+        return " + ".join(setup) if setup else "Run the supported software or provide the required network resource."
+    return "Follow the reviewed participation steps on the opportunity page."
+
+
 def _render_depin_setup_summary(opportunity: OpportunityDetail) -> str:
     if opportunity.opportunity_type != "DEPIN_NODE":
         return ""
@@ -893,7 +916,7 @@ def _render_ranking_cards(items: list[RankingItem], *, heading: str) -> str:
               <div class="ranking-card-head">
                 <span class="rank-chip">#{escape(str(item.rank))}</span>
                 <div>
-                  <p class="ranking-parent"><span>Opportunity</span> {_render_logo(strategy.logo, compact=True)} <a class="game-link" href="/opportunities/{escape(strategy.opportunity_id or strategy.game_id)}">{escape(snapshot.game_name)}</a></p>
+                  <p class="ranking-parent"><span>Opportunity</span> {_render_logo(strategy.logo, snapshot.game_name, compact=True)} <a class="game-link" href="/opportunities/{escape(strategy.opportunity_id or strategy.game_id)}">{escape(snapshot.game_name)}</a></p>
                   <h3><a class="strategy-link" href="/strategies/{escape(strategy.strategy_id)}">{escape(strategy.name)}</a></h3>
                 </div>
               </div>
@@ -938,6 +961,7 @@ def _render_opportunity_cards(opportunities: list[OpportunitySummary], *, headin
         )
         setup_labels = depin_setup_labels(opportunity)
         setup_text = f"Setup: {'; '.join(setup_labels[:2])}" if setup_labels else ""
+        participation = opportunity_participation_label(opportunity)
         cards.append(
             f"""
             <article class="opportunity-card">
@@ -945,7 +969,8 @@ def _render_opportunity_cards(opportunities: list[OpportunitySummary], *, headin
                 {_badge(opportunity_type_label(opportunity.opportunity_type), "info")}
                 {_badge(feasibility_label(opportunity.data_feasibility_status), "good" if opportunity.data_feasibility_status == "GO" else "medium")}
               </div>
-              <div class="card-identity">{_render_logo(opportunity.logo, compact=True)}<h3><a class="strategy-link" href="/opportunities/{escape(opportunity.opportunity_id)}">{escape(opportunity.name)}</a></h3></div>
+              <div class="card-identity">{_render_logo(opportunity.logo, opportunity.name, compact=True)}<h3><a class="strategy-link" href="/opportunities/{escape(opportunity.opportunity_id)}">{escape(opportunity.name)}</a></h3></div>
+              <p class="opportunity-mode"><strong>How it works</strong> {escape(participation)}</p>
               <p class="muted">{escape(opportunity_intro(opportunity))}</p>
               <p class="muted">{escape(strategy_text)}</p>
               {f'<p class="muted">{escape(setup_text)}</p>' if setup_text else ''}
@@ -1101,11 +1126,36 @@ def _render_related_opportunities(opportunity: OpportunityDetail) -> str:
 
 
 def _render_curated_links(service: ApiDataService) -> str:
-    links = "".join(
-        f'<a class="secondary-button" href="{escape(page.path)}">{escape(page.title)}</a>'
-        for page in published_curated_ranking_pages(service)
+    labels = {
+        "under-25": "Under $25 capital",
+        "high-confidence": "Higher confidence",
+        "gamefi": "All GameFi",
+        "gamefi-under-10": "Under $10",
+        "gamefi-under-50": "Under $50",
+        "gamefi-under-100": "Under $100",
+        "lowest-capital-gamefi": "Lowest capital",
+        "highest-roi-gamefi": "Highest modeled ROI",
+        "best-passive-gamefi": "Passive strategies",
+        "best-depin-under-100": "Under $100",
+        "pc-depin": "PC-friendly",
+        "no-hardware-depin": "No dedicated hardware",
+    }
+    groups = (
+        ("Start here", ("highest-roi-gamefi", "high-confidence", "under-25")),
+        ("GameFi", ("gamefi", "lowest-capital-gamefi", "best-passive-gamefi", "gamefi-under-10", "gamefi-under-50", "gamefi-under-100")),
+        ("DePIN", ("best-depin-under-100", "pc-depin", "no-hardware-depin")),
     )
-    return f'<section class="section-panel"><div class="section-header"><h2>Curated views</h2></div><div class="section-body button-row">{links}</div></section>'
+    pages = {page.slug: page for page in published_curated_ranking_pages(service)}
+    group_html = []
+    for group_title, slugs in groups:
+        links = "".join(
+            f'<a class="secondary-button curated-view-link" href="{escape(pages[slug].path)}" title="{escape(pages[slug].title)}">{escape(labels[slug])}</a>'
+            for slug in slugs
+            if slug in pages
+        )
+        if links:
+            group_html.append(f'<div class="curated-view-group"><h3>{escape(group_title)}</h3><div class="button-row">{links}</div></div>')
+    return f'<section class="section-panel curated-views"><div class="section-header"><h2>Explore rankings</h2><span class="muted">Use a focused view</span></div><div class="section-body curated-view-groups">{"".join(group_html)}</div></section>'
 
 
 def _empty(title: str, body: str) -> str:
