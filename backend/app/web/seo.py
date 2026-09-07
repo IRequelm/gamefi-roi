@@ -517,7 +517,7 @@ def _ranking_answer(snapshot: StrategySnapshotPayload, strategy: StrategySummary
         f"using {format_money_text(snapshot.capital.total_capital)} capital. {earnings_label} are "
         f"{format_money_text(snapshot.earnings.net_earnings_day, per_day=True)}. Risk is "
         f"{score_text(snapshot.risk)} and Confidence is {score_text(snapshot.confidence)}. "
-        f"Latest modeled snapshot was calculated at {format_datetime(snapshot.calculated_at)}.{freshness_note}"
+        f"Latest model calculation was recorded at {format_datetime(snapshot.calculated_at)}.{freshness_note}"
     )
 
 
