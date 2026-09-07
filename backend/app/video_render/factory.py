@@ -21,7 +21,7 @@ from typing import Any, Callable
 from app.config.settings import Settings
 from app.content_package.generator import ContentPackage, build_content_packages, validate_package
 from app.content_inventory.inventory import LONG_FORM_MIN_SECONDS, LONG_FORM_MIN_WORDS
-from app.publishing.elevenlabs import ElevenLabsConfig, ElevenLabsNarrationProvider, ElevenLabsGenerationResult
+from app.publishing.elevenlabs import ElevenLabsConfig, ElevenLabsNarrationProvider, ElevenLabsGenerationResult, ElevenLabsProviderError
 
 SHORT_FORM = "SHORT_FORM"
 LONG_FORM = "LONG_FORM"
@@ -140,6 +140,8 @@ def render_package(
             break
         except Exception as exc:  # provider errors are isolated and safe
             last_error = str(exc)
+            if isinstance(exc, ElevenLabsProviderError) and exc.account_blocked:
+                break
     if narration is None:
         return _failed(package, f"all approved neural voices failed: {last_error or 'provider error'}", evidence=job.evidence_fingerprint, width=job.width, height=job.height)
 

@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from dataclasses import replace
 
-from app.publishing.elevenlabs import ElevenLabsGenerationResult, NarrationAssetMetadata
+from app.publishing.elevenlabs import ElevenLabsGenerationResult, ElevenLabsProviderError, NarrationAssetMetadata
 from app.video_render.factory import (
     APPROVED_VOICES,
     NOT_READY,
@@ -106,6 +106,22 @@ def test_all_approved_voice_failures_are_not_ready_without_fallback(tmp_path: Pa
     assert result.status == NOT_READY
     assert len(calls) == len(APPROVED_VOICES)
     assert not list((tmp_path / "render" / "short").glob("*.mp4"))
+
+
+def test_account_level_elevenlabs_failure_does_not_try_other_voices(tmp_path: Path) -> None:
+    calls: list[str] = []
+
+    def provider_factory(config):
+        calls.append(config.voice_id)
+        raise ElevenLabsProviderError("ElevenLabs account quota or rate limit was reached", account_blocked=True)
+
+    result = render_package(
+        _package(), settings=_settings(tmp_path), root=tmp_path / "render",
+        narration_provider_factory=provider_factory, command_runner=_runner,
+    )
+
+    assert result.status == NOT_READY
+    assert calls == [APPROVED_VOICES[0][1]]
 
 
 def test_non_ready_package_cannot_become_render_job() -> None:

@@ -87,6 +87,19 @@ def test_rejected_credentials_fail_closed_without_secret_in_error(tmp_path: Path
     assert not list((tmp_path / "narration").glob("*"))
 
 
+def test_quota_failure_is_marked_account_level_without_secret_leak(tmp_path: Path) -> None:
+    provider = ElevenLabsNarrationProvider(
+        _config(tmp_path),
+        client=_client(httpx.Response(429, content=b"quota")),
+    )
+
+    with pytest.raises(ElevenLabsProviderError, match="quota or rate limit") as error:
+        provider.generate(content_id="green-video", script="Script")
+
+    assert error.value.account_blocked is True
+    assert "secret-eleven-key" not in str(error.value)
+
+
 def test_provider_error_does_not_fallback_to_basic_tts(tmp_path: Path) -> None:
     provider = ElevenLabsNarrationProvider(
         _config(tmp_path),

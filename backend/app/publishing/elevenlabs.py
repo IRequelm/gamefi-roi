@@ -27,7 +27,9 @@ class ElevenLabsConfigError(ElevenLabsError):
 
 
 class ElevenLabsProviderError(ElevenLabsError):
-    pass
+    def __init__(self, message: str, *, account_blocked: bool = False) -> None:
+        super().__init__(message)
+        self.account_blocked = account_blocked
 
 
 class NarrationAssetMetadata(BaseModel):
@@ -125,7 +127,9 @@ class ElevenLabsNarrationProvider:
         except httpx.HTTPError as exc:
             raise ElevenLabsProviderError("ElevenLabs narration request failed") from exc
         if response.status_code in {401, 403}:
-            raise ElevenLabsProviderError("ElevenLabs credentials were rejected")
+            raise ElevenLabsProviderError("ElevenLabs credentials were rejected", account_blocked=True)
+        if response.status_code == 429:
+            raise ElevenLabsProviderError("ElevenLabs account quota or rate limit was reached", account_blocked=True)
         if response.status_code >= 400:
             raise ElevenLabsProviderError(f"ElevenLabs narration request returned status {response.status_code}")
         if not response.content:
