@@ -553,10 +553,11 @@ def _render_rankings_answer_block(
         ("Comparison page", escape(title)),
         ("Matching modeled strategies", escape(str(rankings.page.total))),
         ("Ranking basis", "30D ROI descending, confidence descending, risk ascending, latest calculation descending, then strategy id."),
-        ("Filters", escape(_filter_summary(filters))),
         ("Last snapshot update", escape(format_datetime(_rankings_lastmod(rankings)))),
         ("Commercial policy", "Referral, affiliate, and sponsor metadata never changes organic ranking order or analytical scores."),
     ]
+    if filters:
+        fields.insert(3, ("Filters", escape(_filter_summary(filters))))
     return _render_answer_block(
         "Quick comparison",
         _rankings_summary(rankings),
@@ -906,6 +907,7 @@ def _destination_status_text(destination) -> str:
 def _render_ranking_cards(items: list[RankingItem], *, heading: str) -> str:
     if not items:
         return _empty("No current matches", "No successful modeled result currently matches this view.")
+    items = _diversify_ranking_items(items)
     cards = []
     for item in items:
         snapshot = item.latest_snapshot
@@ -946,6 +948,29 @@ def _render_ranking_cards(items: list[RankingItem], *, heading: str) -> str:
         <div class="ranking-card-grid">{''.join(cards)}</div>
       </section>
     """
+
+
+def _diversify_ranking_items(items: list[RankingItem]) -> list[RankingItem]:
+    """Spread repeated opportunities through the visual list without changing ranks."""
+    if len(items) < 2:
+        return items
+    groups: dict[str, list[RankingItem]] = {}
+    group_order: list[str] = []
+    for item in items:
+        opportunity_id = item.strategy.opportunity_id or item.strategy.game_id
+        if opportunity_id not in groups:
+            groups[opportunity_id] = []
+            group_order.append(opportunity_id)
+        groups[opportunity_id].append(item)
+    if len(groups) == len(items):
+        return items
+    diversified: list[RankingItem] = []
+    while len(diversified) < len(items):
+        for opportunity_id in group_order:
+            group = groups[opportunity_id]
+            if group:
+                diversified.append(group.pop(0))
+    return diversified
 
 
 def _render_opportunity_cards(opportunities: list[OpportunitySummary], *, heading: str) -> str:
@@ -996,6 +1021,7 @@ def _render_opportunity_cards(opportunities: list[OpportunitySummary], *, headin
 def _render_catalog_stats(rankings: RankingsPage, opportunities: list[OpportunitySummary]) -> str:
     opportunity_count = len(opportunities)
     modeled_count = rankings.page.total
+    modeled_opportunity_count = sum(1 for opportunity in opportunities if opportunity.strategy_count > 0)
     unavailable_count = sum(1 for opportunity in opportunities if opportunity.strategy_count == 0)
     opportunity_types = ", ".join(
         sorted({opportunity_type_label(opportunity.opportunity_type) for opportunity in opportunities})
@@ -1003,9 +1029,9 @@ def _render_catalog_stats(rankings: RankingsPage, opportunities: list[Opportunit
     return f"""
       <section class="catalog-stat-grid" aria-label="GamCryp V1 coverage">
         {_summary("Reviewed opportunities", escape(str(opportunity_count)))}
-        {_summary("Modeled strategies", escape(str(modeled_count)))}
+        {_summary("Modeled strategies", escape(f"{modeled_count} across {modeled_opportunity_count} opportunities"))}
         {_summary("Opportunity types", escape(opportunity_types))}
-        {_summary("ROI not measured", escape(f"{unavailable_count} explicit"))}
+        {_summary("ROI not measured", escape(f"{unavailable_count} opportunities without a reproducible model"))}
       </section>
     """
 
