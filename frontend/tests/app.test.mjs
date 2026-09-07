@@ -436,7 +436,7 @@ test("priced rewards with unavailable yield do not claim that the market price i
   };
   const html = renderOpportunityDetail(opportunity);
 
-  assert.match(html, /earning rate, costs, or exit assumptions are not reproducible/);
+  assert.match(html, /market price may exist.*earning rate, costs, or exit assumptions are not verified/);
   assert.doesNotMatch(html, /Reward has no reliable market price yet/);
 });
 

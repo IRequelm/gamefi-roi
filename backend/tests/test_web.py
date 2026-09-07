@@ -3,7 +3,7 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 from app.strategies.defi_kingdoms import DFK_CJEWEL_MAX_LOCK_V1
-from app.web.seo import _diversify_ranking_items, plain_unavailable_reason
+from app.web.seo import _diversify_ranking_items, plain_unavailable_reason, value_status_label
 from test_api_v1 import _seeded_client
 from sqlalchemy.exc import OperationalError
 
@@ -86,8 +86,19 @@ def test_unavailable_reason_does_not_claim_priced_rewards_have_no_price() -> Non
             roi_unavailable=None,
         )
         reason = plain_unavailable_reason(opportunity)
-        assert "market price" not in reason.lower()
+        assert "market price may exist" in reason.lower()
         assert "earning rate" in reason.lower()
+
+
+def test_priced_reward_without_reproducible_rate_has_user_facing_status() -> None:
+    assert value_status_label("realizable", 0) == "Earning rate unverified"
+    assert "market price may exist" in plain_unavailable_reason(
+        SimpleNamespace(
+            value_realization_status="realizable",
+            data_feasibility_status="PARTIAL",
+            feasibility_summary="Earning rate and operating costs are not reproducible.",
+        )
+    )
 
 
 def test_web_assets_are_served_and_point_to_api_v1(monkeypatch, tmp_path) -> None:

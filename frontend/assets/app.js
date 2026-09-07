@@ -1870,13 +1870,14 @@ export function renderFeasibilityStatus(status) {
 export function renderValueStatus(status, strategyCount = 0) {
   const normalized = String(status || "unknown");
   const measurable = normalized === "realizable" && strategyCount > 0;
-  const label = measurable ? "ROI can be measured" : "ROI not measurable yet";
+  const label = measurable ? "ROI can be measured" : normalized === "realizable" ? "Earning rate unverified" : "ROI not measurable yet";
   return `<span class="badge ${measurable ? "good" : "warning"}">${escapeHtml(label)}</span>`;
 }
 
 function valueStatusText(status, strategyCount = 0) {
   const normalized = String(status || "unknown");
-  return normalized === "realizable" && strategyCount > 0 ? "ROI can be measured" : "ROI not measurable yet";
+  if (normalized === "realizable" && strategyCount > 0) return "ROI can be measured";
+  return normalized === "realizable" ? "Earning rate unverified" : "ROI not measurable yet";
 }
 
 function unavailableRoiReason(opportunity) {
@@ -2165,7 +2166,7 @@ function plainUnavailableReason(opportunity) {
     return "A reproducible exit value is not available yet.";
   }
   if (valueStatus === "realizable") {
-    return "The reward token may be priced, but earning rate, costs, or exit assumptions are not reproducible yet.";
+    return "A market price may exist for the reward token, but earning rate, costs, or exit assumptions are not verified yet.";
   }
   return "Reward has no reliable market price yet.";
 }

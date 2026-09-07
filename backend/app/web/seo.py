@@ -1460,6 +1460,8 @@ def opportunity_intro(opportunity) -> str:
 def value_status_label(status: str, strategy_count: int) -> str:
     if str(status or "").lower() == "realizable" and strategy_count > 0:
         return "ROI can be measured"
+    if str(status or "").lower() == "realizable":
+        return "Earning rate unverified"
     return "ROI not measurable yet"
 
 
@@ -1487,7 +1489,7 @@ def plain_unavailable_reason(opportunity) -> str:
     if feasibility == "REJECTED" or "unknown" in value_status or "exit" in summary or "realizable value" in summary:
         return "A reproducible exit value is not available yet."
     if value_status == "realizable":
-        return "The reward token may be priced, but earning rate, costs, or exit assumptions are not reproducible yet."
+        return "A market price may exist for the reward token, but earning rate, costs, or exit assumptions are not verified yet."
     return "Reward has no reliable market price yet."
 
 
@@ -1555,6 +1557,7 @@ def _ranking_json_ld(
     items: list[RankingItem],
     breadcrumbs: list[tuple[str, str]],
 ) -> tuple[dict, ...]:
+    items = _diversify_ranking_items(items)
     payloads = (
         _webpage_json(settings, path, name, description),
         _breadcrumb_json(settings, breadcrumbs),
