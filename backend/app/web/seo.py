@@ -127,13 +127,13 @@ def home_page(service: ApiDataService, *, settings: Settings, request: Request) 
           <p class="lede">GamCryp tracks Web3 earning opportunities. When rewards and exits can be priced reproducibly, we calculate modeled ROI. When they cannot, we show why instead of inventing a number.</p>
           <p class="muted">{escape(answer)}</p>
           <div class="hero-proof-points" aria-label="GamCryp data principles">
-            <span>Latest modeled snapshots</span>
+            <span>Recent modeled results</span>
             <span>Risk and confidence separated</span>
             <span>Unavailable ROI stays unavailable</span>
           </div>
         </section>
         {_render_catalog_stats(rankings, opportunities)}
-        {_render_ranking_cards(rankings.items[:3], heading="Stored organic leaders")}
+        {_render_ranking_cards(rankings.items[:3], heading="Organic leaders")}
         {_render_opportunity_cards(opportunities, heading="Opportunity radar")}
       </div>
     """
