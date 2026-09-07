@@ -567,6 +567,16 @@ test("stale positive results never present as current earnings", () => {
   assert.doesNotMatch(html, /Profitable now/);
 });
 
+test("stale answer blocks never describe stored results as current", () => {
+  const strategy = strategyPayload();
+  strategy.latest_snapshot.freshness.overall_status = "stale";
+  const html = renderStrategyAnswerBlock(strategy, strategy.latest_snapshot);
+
+  assert.match(html, /stored modeled result/);
+  assert.match(html, /Stored modeled net earnings/);
+  assert.doesNotMatch(html, /GamCryp currently models/);
+});
+
 test("homepage keeps loaded sections when one API request fails", () => {
   const html = renderHomeShell([], { items: [], page: { total: 0 } }, [opportunityPayload()], ["Rankings temporarily unavailable."]);
   assert.match(html, /Some stored data is temporarily unavailable/);

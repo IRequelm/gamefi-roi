@@ -576,7 +576,10 @@ function rankingsSummary(rankings = { items: [] }) {
 }
 
 function rankingAnswer(snapshot, strategy) {
-  return `GamCryp currently models ${strategy.name} at ${textFromHtml(formatRatio(snapshot.roi.roi_total_30d))} 30-day ROI using ${textFromHtml(formatMoney(snapshot.capital.total_capital))} capital. Net earnings are ${textFromHtml(formatMoney(snapshot.earnings.net_earnings_day, { perDay: true }))}. Risk is ${scoreText(snapshot.risk)} and Confidence is ${scoreText(snapshot.confidence)}. Latest modeled snapshot was calculated at ${formatDateTime(snapshot.calculated_at)}.`;
+  const stale = String(snapshot.freshness?.overall_status || "unknown").toLowerCase() !== "fresh";
+  const lead = stale ? "GamCryp's stored modeled result for" : "GamCryp currently models";
+  const earningsLabel = stale ? "Stored modeled net earnings are" : "Net earnings are";
+  return `${lead} ${strategy.name} at ${textFromHtml(formatRatio(snapshot.roi.roi_total_30d))} 30-day ROI using ${textFromHtml(formatMoney(snapshot.capital.total_capital))} capital. ${earningsLabel} ${textFromHtml(formatMoney(snapshot.earnings.net_earnings_day, { perDay: true }))}. Risk is ${scoreText(snapshot.risk)} and Confidence is ${scoreText(snapshot.confidence)}. Latest modeled snapshot was calculated at ${formatDateTime(snapshot.calculated_at)}.`;
 }
 
 function latestSnapshotTime(rankings = { items: [] }) {
