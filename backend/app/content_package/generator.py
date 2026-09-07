@@ -120,7 +120,9 @@ def _build_package(item: ContentInventoryItem, output_format: str) -> ContentPac
     points = _talking_points(item, opportunity, strategies)
     narration_sections = _narration_sections(item, points)
     sections = _outline(item, output_format, narration_sections)
-    script_text = " ".join([_hook(item, opportunity), *(str(section["text"]) for section in narration_sections), f"Review the evidence on {item.source_url}."])
+    hook = _hook(item, opportunity, strategies)
+    cta = _cta(item, opportunity)
+    script_text = " ".join([hook, *(str(section["text"]) for section in narration_sections), cta])
     estimated_words = len(script_text.split())
     canonical = item.source_url
     evidence = hashlib.sha256(json.dumps({
@@ -139,11 +141,11 @@ def _build_package(item: ContentInventoryItem, output_format: str) -> ContentPac
         opportunity_id=item.opportunity_id,
         strategy_ids=item.strategy_ids,
         title_candidates=_titles(item, opportunity),
-        hook=_hook(item, opportunity),
+        hook=hook,
         factual_talking_points=tuple(points),
         required_source_references=tuple(references),
         prohibited_claims=("guaranteed returns", "investment advice", "risk-free earnings", "unsupported token prices", "invented hardware requirements"),
-        cta=f"Review the evidence on {canonical}.",
+        cta=cta,
         narration_script_outline=tuple(sections),
         narration_sections=tuple(narration_sections),
         estimated_narration_words=estimated_words,
@@ -216,17 +218,37 @@ def _titles(item: ContentInventoryItem, opportunity: OpportunityCatalogEntry | N
     return (f"{name}: {family}", f"GamCryp {family}: {name}")
 
 
-def _hook(item: ContentInventoryItem, opportunity: OpportunityCatalogEntry | None) -> str:
+def _hook(item: ContentInventoryItem, opportunity: OpportunityCatalogEntry | None, strategies: tuple[StrategyCatalogEntry | None, ...] = ()) -> str:
     name = opportunity.name if opportunity is not None else "GamCryp"
-    return f"Start with the evidence behind {name}'s {item.content_family.replace('_', ' ').lower()} topic."
+    if item.content_family == "WHY_ROI_UNAVAILABLE":
+        return "Can this actually make money? We cannot verify it yet."
+    if item.content_family == "DEPIN_SETUP" or opportunity and opportunity.opportunity_type == "DEPIN_NODE":
+        return "Can your PC, device, or connection earn while you are away?"
+    if item.content_family in {"STRATEGY_COMPARISON", "LOW_COST_RANKING"} and strategies:
+        return "The headline return is only the start. What does the catch look like?"
+    if opportunity and opportunity.opportunity_type == "GAME":
+        return "Can this game actually pay you? Let us check the earning path."
+    if item.content_family == "METHODOLOGY_EXPLAINER":
+        return "They say it earns. We check what can actually be measured."
+    if item.content_family == "RISK_VS_CONFIDENCE":
+        return "High confidence does not mean low risk. Here is the difference."
+    return f"What would it take for {name} to actually earn?"
+
+
+def _cta(item: ContentInventoryItem, opportunity: OpportunityCatalogEntry | None) -> str:
+    if item.content_family == "WHY_ROI_UNAVAILABLE":
+        return "GamCryp shows what is missing instead of inventing a number. See the full breakdown on GamCryp."
+    if item.content_family in {"METHODOLOGY_EXPLAINER", "RISK_VS_CONFIDENCE", "HOW_TO_USE_GAMCRYP"}:
+        return "We check the economics so you do not have to. Full framework on GamCryp."
+    return "They say it earns. We check the numbers. See the full breakdown on GamCryp."
 
 
 def _visuals(item: ContentInventoryItem) -> tuple[str, ...]:
     if item.content_family == "DEPIN_SETUP":
-        return ("Opportunity identity card", "Setup requirements card", "Source reference end card")
+        return ("Official opportunity logo", "Official product, dashboard, device, or node visual", "Setup requirements card", "Evidence metric card", "GamCryp CTA end card")
     if item.content_family == "WHY_ROI_UNAVAILABLE":
-        return ("Evidence-gap card", "Missing-input list", "Methodology end card")
-    return ("Clean canonical page or catalog card", "Evidence reference card", "GamCryp CTA end card")
+        return ("Official opportunity logo", "Official product, dashboard, device, or game visual", "Evidence-gap card", "Missing-input list", "GamCryp CTA end card")
+    return ("Official opportunity logo", "Official product, dashboard, device, or game visual", "Evidence reference card", "Key metric card", "GamCryp CTA end card")
 
 
 def _site_fact(item: ContentInventoryItem) -> str:

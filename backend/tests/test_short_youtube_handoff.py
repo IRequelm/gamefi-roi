@@ -32,7 +32,7 @@ def _render(tmp_path: Path, *, package, **kwargs) -> RenderResult:
     audio = tmp_path / "audio.mp3"
     for path in (video, caption, audio):
         path.write_bytes(b"asset")
-    return RenderResult(package.source_inventory_item_id, package.package_id, "SHORT_FORM", RENDER_READY, None, str(video), str(caption), str(audio), 10.0, 1080, 1920, "Sarah", "EXAVITQu4vr4xnSDxMaL", "eleven_multilingual_v2", package.evidence_fingerprint, None, quality_metadata={"meaningful_scene_count": 6, "scene_diversity": ["hook", "identity", "setup", "evidence", "status", "cta"], "non_caption_visual_element_count": 6, "identity_present": True, "identity_mode": "branded_identity_card", "caption_safe_area": {"left": 96, "right": 96, "bottom": 220}, "caption_safe_area_validated": True, "text_clipping": False, "scene_transitions": True, "static_background_only": False, "caption_only_visuals": False, "brand_opening_present": True, "brand_closing_present": True, "primary_visual_elements": ["identity_card", "setup_diagram", "mechanics_flow", "evidence_metric_card", "branded_cta"]})
+    return RenderResult(package.source_inventory_item_id, package.package_id, "SHORT_FORM", RENDER_READY, None, str(video), str(caption), str(audio), 10.0, 1080, 1920, "Sarah", "EXAVITQu4vr4xnSDxMaL", "eleven_multilingual_v2", package.evidence_fingerprint, None, quality_metadata={"meaningful_scene_count": 6, "scene_diversity": ["hook", "identity", "setup", "evidence", "status", "cta"], "non_caption_visual_element_count": 6, "identity_present": True, "identity_mode": "branded_identity_card", "caption_safe_area": {"left": 96, "right": 96, "bottom": 220}, "caption_safe_area_validated": True, "text_clipping": False, "scene_transitions": True, "static_background_only": False, "caption_only_visuals": False, "brand_opening_present": True, "brand_closing_present": True, "creative_status": "CREATIVE_QA_PASSED", "product_visual_count": 1, "hook_qa": {"status": "PASSED", "blockers": []}, "gamcryp_product_placement": True, "frame_qa": {"status": "PASSED", "frames": ["a", "b", "c", "d", "e"]}, "primary_visual_elements": ["identity_card", "setup_diagram", "mechanics_flow", "evidence_metric_card", "branded_cta"]})
 
 
 def test_ready_short_render_enters_handoff_once(tmp_path: Path) -> None:
@@ -49,7 +49,7 @@ def test_ready_short_render_enters_handoff_once(tmp_path: Path) -> None:
     assert all(item.format == "SHORT_FORM" for item in load_handoff(queue_path).items)
 
 
-def test_music_only_short_render_enters_handoff_without_voice_metadata(tmp_path: Path) -> None:
+def test_music_only_short_render_is_blocked_from_handoff(tmp_path: Path) -> None:
     package = _package()
     queue_path = tmp_path / "handoff.json"
     result = _render(tmp_path, package=package)
@@ -58,8 +58,7 @@ def test_music_only_short_render_enters_handoff_without_voice_metadata(tmp_path:
         settings=_settings(), queue_path=queue_path, render_root=tmp_path / "render",
         packages=[package], render=lambda package, **kwargs: result,
     )
-    assert queue.items[0].audio_mode == "music_only"
-    assert queue.items[0].narration_provider == "local_music"
+    assert queue.items == ()
 
 
 def test_handoff_buffer_is_bounded_and_deterministic(tmp_path: Path) -> None:

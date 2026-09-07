@@ -22,6 +22,7 @@ from pydantic import BaseModel, ConfigDict
 from app.config.settings import Settings
 from app.content_package.generator import ContentPackage, build_content_packages, validate_package
 from app.video_render.factory import APPROVED_VOICES, RENDER_READY, RenderResult, render_package, validate_render
+from app.video_render.creative_qa import creative_preflight, frame_qa
 from app.publishing.youtube import YouTubeOperationResult, YouTubePublishManifest, YouTubePublisher
 
 HANDOFF_VERSION = "youtube-short-handoff-v1"
@@ -121,7 +122,11 @@ def prepare_short_handoff(
         if len([item for item in by_package.values() if item.status == "queued"]) >= limit:
             break
         existing = by_package.get(package.package_id)
-        if existing and existing.evidence_fingerprint == package.evidence_fingerprint and Path(existing.video_path).is_file():
+        if existing and existing.evidence_fingerprint == package.evidence_fingerprint and Path(existing.video_path).is_file() and _stored_render_creative_ready(existing):
+            continue
+        if packages is None and (creative_blockers := creative_preflight(package)):
+            # Do not spend narration credits or create a publishable-looking
+            # asset when the creative director has not approved the package.
             continue
         result = render(package, settings=settings, root=render_root)
         blockers = validate_render(result)
@@ -129,7 +134,9 @@ def prepare_short_handoff(
             continue
         if result.narration_path is None or result.video_path is None or result.caption_path is None:
             continue
-        if result.audio_mode == "neural_voice" and (result.voice_id is None or result.model_id is None):
+        if result.audio_mode != "neural_voice":
+            continue
+        if result.voice_id is None or result.model_id is None:
             continue
         video_checksum = hashlib.sha256(Path(result.video_path).read_bytes()).hexdigest()
         by_package[package.package_id] = ShortHandoffItem(
@@ -143,7 +150,7 @@ def prepare_short_handoff(
             video_path=result.video_path,
             caption_path=result.caption_path,
             narration_path=result.narration_path,
-            narration_provider="elevenlabs" if result.audio_mode == "neural_voice" else "local_music",
+            narration_provider="elevenlabs",
             narration_voice_id=result.voice_id or "",
             narration_model_id=result.model_id or "",
             audio_mode=result.audio_mode,
@@ -171,6 +178,9 @@ def publish_next(
     if item is None:
         return {"status": "idle", "detail": "no queued GREEN short"}
     blockers = _handoff_blockers(item)
+    package = next((candidate for candidate in build_content_packages() if candidate.package_id == item.package_id), None)
+    if package is not None:
+        blockers = (*blockers, *creative_preflight(package))
     if blockers:
         return {"status": "not_ready", "content_id": item.content_id, "detail": "; ".join(blockers)}
     current = now or datetime.now(UTC)
@@ -240,9 +250,8 @@ def _handoff_blockers(item: ShortHandoffItem) -> tuple[str, ...]:
         blockers.append("only SHORT_FORM assets may enter this handoff")
     if item.readiness != "GREEN":
         blockers.append("handoff item is not GREEN")
-    if item.audio_mode == "music_only":
-        if item.narration_provider != "local_music":
-            blockers.append("music-only audio must use the local music provider")
+    if item.audio_mode != "neural_voice":
+        blockers.append("publishable Shorts require approved ElevenLabs narration; music-only audio is not publishable")
     elif item.narration_provider != "elevenlabs" or item.narration_voice_id not in {voice_id for _, voice_id in APPROVED_VOICES}:
         blockers.append("approved ElevenLabs narration metadata is required")
     for label, value in (("video", item.video_path), ("captions", item.caption_path), ("narration", item.narration_path)):
@@ -250,7 +259,29 @@ def _handoff_blockers(item: ShortHandoffItem) -> tuple[str, ...]:
             blockers.append(f"{label} asset is missing")
     if Path(item.video_path).is_file() and hashlib.sha256(Path(item.video_path).read_bytes()).hexdigest() != item.video_checksum:
         blockers.append("video checksum does not match handoff metadata")
+    if Path(item.video_path).is_file() and any(candidate.package_id == item.package_id for candidate in build_content_packages()):
+        qa = frame_qa(Path(item.video_path), Path("data/local/video_render/qa") / item.package_id)
+        if qa.get("status") != "PASSED":
+            blockers.append("BLOCKED_VISUAL_QA: representative frame extraction failed")
     return tuple(blockers)
+
+
+def _stored_render_creative_ready(item: ShortHandoffItem) -> bool:
+    """Require new editorial metadata before reusing an old MP4."""
+    video = Path(item.video_path)
+    metadata = video.parent.parent / "metadata" / f"{item.package_id}.json"
+    try:
+        payload = json.loads(metadata.read_text(encoding="utf-8"))
+        quality = payload.get("quality_metadata") or {}
+    except (OSError, ValueError, TypeError):
+        return False
+    return (
+        quality.get("creative_status") == "CREATIVE_QA_PASSED"
+        and quality.get("hook_qa", {}).get("status") == "PASSED"
+        and int(quality.get("product_visual_count", 0)) >= 1
+        and quality.get("gamcryp_product_placement") is True
+        and quality.get("brand_closing_present") is True
+    )
 
 
 def _load_cap(path: Path, now: datetime) -> DailyCap:

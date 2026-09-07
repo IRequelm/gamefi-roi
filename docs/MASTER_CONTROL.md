@@ -63,18 +63,18 @@ Official destinations and reviewed outbound redirects remain allowlisted and sep
 
 ## 6. Distribution state
 
-- `GAMEFI_DISTRIBUTION_LIVE=false` in the local `.env`; autonomous live YouTube publishing is disabled pending manual visual approval and production availability follow-up.
+- `GAMEFI_DISTRIBUTION_LIVE=true` in the local `.env`, but the current queue is fail-closed by the creative gates and today's one-success cap is already consumed; no additional upload is permitted today.
 - Windows task `GamCryp Distribution Worker` exists, is enabled, runs at login, and was observed in `Running` state without a terminal window.
-- Short handoff buffer target is bounded at 14; current report is 13 queued GREEN Shorts and 1 previously uploaded item.
+- Short handoff buffer target is bounded at 14; current report is 14 queued GREEN handoff records and 2 previously uploaded records. The 14 queued records are not publishable under the current creative contract until re-rendered with approved product visuals.
 - YouTube daily cap remains one successful public Short per local calendar day. The local cap state records one success for 2026-09-06, so no further upload is permitted today.
-- Failed narration/render never enters the handoff. For Shorts only, an account-level ElevenLabs quota/auth failure may produce an explicitly marked local `music_only` render using a generated instrumental bed; it is not TTS and remains subject to the same visual/evidence gates. X failures are isolated from YouTube.
-- The visual gate requires six planned motion-card beats, at least five meaningful scenes, scene diversity, non-caption data visuals, identity representation, transitions, validated safe captions, no clipping, and a branded GamCryp opening/CTA frame. The latest local renderer patch is not yet production-deployed.
+- Failed narration/render never enters the handoff. Music-only or silent media is never publishable: every Short requires approved ElevenLabs narration with provider/voice/model metadata. X failures are isolated from YouTube.
+- The visual gate requires a category-specific hook, six planned beats with at least five meaningful scenes, scene diversity, approved non-caption product visuals, identity representation, transitions, validated safe captions, no clipping, a natural GamCryp evaluation close, and representative post-render frame QA. GamCryp is not shown as a generic intro.
 
 ## 7. YouTube and narration
 
 - YouTube OAuth configuration and publisher code are present locally; no secret values are recorded here.
-- Existing Hivemapper proof renders passed the structural gate with six scenes, local official logo integration, and ElevenLabs narration.
-- A new GameFi proof attempt was blocked by the ElevenLabs account quota: the authenticated free-tier account reports 0 credits remaining for requested narration. No fallback TTS is permitted. Short-form production now has a local music-only recovery path; narration-dependent and long-form content remains blocked until the quota resets or the operator supplies an authorized funded account.
+- Existing proof renders passed only the earlier structural gate; they are not approved under the current creative-director contract until an approved real product/UI/device visual is present and frame QA passes.
+- ElevenLabs account quota/auth failure remains fail-closed. No basic TTS, music-only, or silent fallback is permitted for publishable Shorts. Missing approved product visuals also block before narration credits are spent.
 - No long-form video is rendered because the enrichment layer found zero truly eligible candidates.
 
 ## 8. X
@@ -132,7 +132,7 @@ Operational gaps still requiring explicit monitoring: snapshot refresh age, queu
 
 1. Render Postgres remains Free; backups/PITR and expiry protection are not production-grade.
 2. Cloudflare/edge Managed Challenge can return 429 to some non-browser probes; security was not weakened.
-3. ElevenLabs currently reports 0 remaining credits; narrated production is blocked, while explicitly marked music-only Shorts may render locally.
+3. ElevenLabs currently reports 0 remaining credits; narrated production is blocked. Music-only and silent Shorts cannot enter the publish queue.
 4. Autonomous YouTube remains disabled; X uses local manual-ready handoff rather than API/browser automation.
 
 ## 13. Release-closure decision

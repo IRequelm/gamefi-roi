@@ -65,13 +65,22 @@ def _runner(command, **kwargs):
 
     if command[0] == "ffprobe":
         return CompletedProcess(command, 0, stdout=("600\n" if "package-long_form" in str(command) else "4.25\n"), stderr="")
-    Path(command[-1]).write_bytes(b"video")
+    if str(command[-1]).endswith(".png"):
+        checkpoint = float(command[command.index("-ss") + 1])
+        Path(command[-1]).write_bytes(b"frame" * (50 + int(checkpoint * 100)))
+    else:
+        Path(command[-1]).write_bytes(b"video")
     return CompletedProcess(command, 0, stdout="", stderr="")
 
 
-def test_ready_short_renders_with_captions_and_evidence(tmp_path: Path) -> None:
+def test_ready_short_renders_with_captions_and_evidence(tmp_path: Path, monkeypatch) -> None:
+    package = _package()
+    assets = tmp_path / "assets" / (package.opportunity_id or "gamcryp")
+    assets.mkdir(parents=True)
+    (assets / "official-product-ui.png").write_bytes(b"approved fixture" * 20)
+    monkeypatch.setenv("GAMEFI_SHORT_ASSET_ROOT", str(tmp_path / "assets"))
     calls: list[str] = []
-    result = render_package(_package(), settings=_settings(tmp_path), root=tmp_path / "render", narration_provider_factory=_provider_factory(tmp_path, calls), command_runner=_runner)
+    result = render_package(package, settings=_settings(tmp_path), root=tmp_path / "render", narration_provider_factory=_provider_factory(tmp_path, calls), command_runner=_runner)
 
     assert result.status == RENDER_READY, result.reason
     assert result.width == 1080 and result.height == 1920
@@ -80,7 +89,7 @@ def test_ready_short_renders_with_captions_and_evidence(tmp_path: Path) -> None:
     assert calls == [APPROVED_VOICES[0][1]]
     assert validate_render(result) == ()
     metadata = json.loads(Path(result.metadata_path).read_text(encoding="utf-8"))
-    assert metadata["evidence_fingerprint"] == _package().evidence_fingerprint
+    assert metadata["evidence_fingerprint"] == package.evidence_fingerprint
 
 
 def test_ready_long_uses_landscape_dimensions(tmp_path: Path) -> None:
@@ -120,8 +129,8 @@ def test_account_level_elevenlabs_failure_does_not_try_other_voices(tmp_path: Pa
         narration_provider_factory=provider_factory, command_runner=_runner,
     )
 
-    assert result.status == RENDER_READY
-    assert result.audio_mode == "music_only"
+    assert result.status == NOT_READY
+    assert "narration is required" in (result.reason or "")
     assert result.voice_id is None
     assert calls == [APPROVED_VOICES[0][1]]
 
@@ -162,6 +171,11 @@ def _short_result_with_quality(**overrides):
         "caption_only_visuals": False,
         "brand_opening_present": True,
         "brand_closing_present": True,
+        "creative_status": "CREATIVE_QA_PASSED",
+        "product_visual_count": 1,
+        "hook_qa": {"status": "PASSED", "blockers": []},
+        "gamcryp_product_placement": True,
+        "frame_qa": {"status": "PASSED", "frames": ["a", "b", "c", "d", "e"]},
         "primary_visual_elements": ["identity_card", "setup_diagram", "mechanics_flow", "evidence_metric_card", "branded_cta"],
     }
     base.update(overrides)

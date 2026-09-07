@@ -22,6 +22,7 @@ from app.config.settings import Settings
 from app.content_package.generator import ContentPackage, build_content_packages, validate_package
 from app.content_inventory.inventory import LONG_FORM_MIN_SECONDS, LONG_FORM_MIN_WORDS
 from app.publishing.elevenlabs import ElevenLabsConfig, ElevenLabsNarrationProvider, ElevenLabsGenerationResult, ElevenLabsProviderError
+from app.video_render.creative_qa import asset_plan, creative_preflight, frame_qa, hook_blockers
 
 SHORT_FORM = "SHORT_FORM"
 LONG_FORM = "LONG_FORM"
@@ -146,13 +147,7 @@ def render_package(
             if isinstance(exc, ElevenLabsProviderError) and exc.account_blocked:
                 break
     if narration is None:
-        if job.format == SHORT_FORM and _music_only_fallback_enabled() and _last_provider_failure_was_account_blocked(last_error):
-            audio_mode = "music_only"
-            audio = narration_dir / f"{package.package_id}-music.mp3"
-            if not _generate_music_bed(audio, duration=max(3, job.duration_target_seconds), run=run):
-                return _failed(package, "ElevenLabs unavailable and local music fallback could not be generated", evidence=job.evidence_fingerprint, width=job.width, height=job.height)
-        else:
-            return _failed(package, f"all approved neural voices failed: {last_error or 'provider error'}", evidence=job.evidence_fingerprint, width=job.width, height=job.height)
+        return _failed(package, f"approved ElevenLabs narration is required: {last_error or 'provider error'}", evidence=job.evidence_fingerprint, width=job.width, height=job.height)
     else:
         audio = Path(narration.metadata.audio_path)
     caption_path = caption_dir / f"{package.package_id}.srt"
@@ -167,6 +162,7 @@ def render_package(
     brand_logo_path = _brand_logo_path()
     duration = max(1, _audio_duration(audio, run) or _estimate_duration(job.script))
     quality_metadata = _short_quality_metadata(package, duration, logo_path) if job.format == SHORT_FORM else None
+    product_visual_path = Path(quality_metadata["asset_plan"]["product_visual_paths"][0]) if quality_metadata and quality_metadata["asset_plan"]["product_visual_paths"] else None
     scene_text_paths = _write_scene_text_files(metadata_dir, package, quality_metadata)
     audio_input = 1
     input_args = ["-i", str(audio)]
@@ -179,6 +175,7 @@ def render_package(
         scene_text_paths=scene_text_paths,
         title_path=title_path,
         logo_path=logo_path,
+        product_visual_path=product_visual_path,
         brand_logo_path=brand_logo_path,
         short_form=job.format == SHORT_FORM,
     )
@@ -186,6 +183,8 @@ def render_package(
         image_inputs: list[str] = []
         if logo_path is not None:
             image_inputs.extend(["-loop", "1", "-i", str(logo_path)])
+        if product_visual_path is not None:
+            image_inputs.extend(["-loop", "1", "-i", str(product_visual_path)])
         if brand_logo_path is not None:
             image_inputs.extend(["-loop", "1", "-i", str(brand_logo_path)])
         audio_input = len(image_inputs) // 4 + 1
@@ -209,6 +208,8 @@ def render_package(
         return _failed(package, "rendered video is not decodable", evidence=job.evidence_fingerprint, width=job.width, height=job.height)
     if job.format == LONG_FORM and duration < LONG_FORM_MIN_SECONDS:
         return _failed(package, "rendered long-form video is shorter than the evidence-backed minimum", evidence=job.evidence_fingerprint, width=job.width, height=job.height)
+    if job.format == SHORT_FORM and quality_metadata is not None:
+        quality_metadata["frame_qa"] = frame_qa(video_path, root / "qa" / package.package_id, runner=run)
     result = RenderResult(package.source_inventory_item_id, package.package_id, job.format, RENDER_READY, None, str(video_path), str(caption_path), str(audio), duration, job.width, job.height, voice_name, voice_id, narration.metadata.model_id if narration else None, job.evidence_fingerprint, str(metadata_dir / f"{package.package_id}.json"), (now or datetime.now(UTC)).isoformat(), quality_metadata, audio_mode)
     blockers = validate_render(result)
     if blockers:
@@ -251,6 +252,8 @@ def _short_quality_metadata(package: ContentPackage, duration: float, logo_path:
     name = opportunity.name if opportunity is not None else "GamCryp"
     opportunity_type = opportunity.opportunity_type if opportunity is not None else "CATALOG"
     points = [str(point["text"]) for point in package.factual_talking_points if point.get("text")]
+    plan = asset_plan(package)
+    hook_errors = hook_blockers(package)
     scene_count = 6
     return {
         "quality_version": "short-motion-card-v3",
@@ -275,10 +278,17 @@ def _short_quality_metadata(package: ContentPackage, duration: float, logo_path:
         "caption_only_visuals": False,
         "brand_opening_present": True,
         "brand_closing_present": True,
+        "creative_status": "CREATIVE_QA_PASSED" if not creative_preflight(package) else "BLOCKED_CREATIVE_QA",
+        "hook": package.hook,
+        "hook_qa": {"status": "PASSED" if not hook_errors else "FAILED", "blockers": hook_errors},
+        "asset_plan": plan.safe_dict(),
+        "product_visual_count": len(plan.product_visual_paths),
+        "gamcryp_product_placement": True,
+        "chart": {"used": False, "reason": "No verified comparison metric set was available."},
         "primary_visual_elements": [
             "identity_card",
             "setup_diagram",
-            "mechanics_flow",
+            "evidence_or_product_visual",
             "evidence_metric_card",
             "branded_cta",
         ],
@@ -293,19 +303,23 @@ def _write_scene_text_files(metadata_dir: Path, package: ContentPackage, quality
     type_label = str(quality["opportunity_type"]).replace("_", " ").title()
     evidence = points[0] if points else "Evidence-backed guidance is required before publishing."
     mechanics = points[1] if len(points) > 1 else evidence
-    status = "ROI unavailable: missing reproducible inputs." if package.content_family == "WHY_ROI_UNAVAILABLE" else "Use the source-backed evidence and current model context."
+    status = "ROI unavailable: missing reproducible inputs." if package.content_family == "WHY_ROI_UNAVAILABLE" else "Check cost, earning path, risk, and freshness before acting."
+    hook = package.hook
+    point_one = points[0] if points else "The evidence-backed earning path is not yet documented."
+    point_two = points[1] if len(points) > 1 else "Use the official source and GamCryp model context."
+    cta = package.cta
     texts = (
-        "THE QUESTION\nWhat does the setup require?",
+        f"HOOK\n{hook}",
         f"{name}\n{type_label}",
-        "SETUP / MECHANICS\nSee the real requirements",
-        "EVIDENCE\nOfficial docs first",
+        f"HOW IT WORKS\n{point_one[:150]}",
+        f"EVIDENCE\n{point_two[:150]}",
         f"STATUS\n{status[:110]}",
-        "GAMCRYP\nReview the source-backed detail",
+        f"GAMCRYP\n{cta[:150]}",
     )
     paths = []
     for index, text in enumerate(texts, start=1):
         path = metadata_dir / f"{package.package_id}.scene-{index}.txt"
-        path.write_text(_wrap_visual_text(text[:320]), encoding="utf-8")
+        path.write_text(_wrap_visual_text(text[:320], max_lines=4), encoding="utf-8")
         paths.append(path)
     return tuple(paths)
 
@@ -321,7 +335,7 @@ def _wrap_visual_text(value: str, *, width: int = 28, max_lines: int | None = No
     return "\n".join(lines)
 
 
-def _build_motion_filter(*, package: ContentPackage, duration: float, caption_path: Path, caption_text_paths: tuple[Path, ...], scene_text_paths: tuple[Path, ...], title_path: Path, logo_path: Path | None, brand_logo_path: Path | None, short_form: bool) -> str:
+def _build_motion_filter(*, package: ContentPackage, duration: float, caption_path: Path, caption_text_paths: tuple[Path, ...], scene_text_paths: tuple[Path, ...], title_path: Path, logo_path: Path | None, product_visual_path: Path | None, brand_logo_path: Path | None, short_form: bool) -> str:
     font = _filter_path(Path("C:/Windows/Fonts/arial.ttf"))
     if short_form:
         caption_layers = []
@@ -358,25 +372,16 @@ def _build_motion_filter(*, package: ContentPackage, duration: float, caption_pa
         scenes.append(f"drawtext=fontfile={font}:textfile={text_path}:fontcolor=white:fontsize={size}:line_spacing=14:x={tx}:y={ty}:text_align=left:enable='{enable}'")
         scenes.append(f"drawtext=fontfile={font}:text='0{index + 1}':fontcolor=0x21D4FD:fontsize=34:x=900:y=170:enable='{enable}'")
 
-    # Scene-specific data visuals. These are deliberately vector/data elements,
-    # not decorative text on a repeated background.
+    # Scene-specific structure. Decorative bars are deliberately not treated as
+    # charts; a chart is only rendered when verified comparison metrics exist.
     scenes.extend([
         f"drawbox=x=170:y=920:w=740:h=26:color=0x203E63@1:t=fill:enable='between(t,0,{step:.3f})'",
-        f"drawbox=x=170:y=920:w=560:h=26:color=0x21D4FD@1:t=fill:enable='between(t,0,{step:.3f})'",
+        f"drawbox=x=170:y=920:w=420:h=26:color=0x21D4FD@1:t=fill:enable='between(t,0,{step:.3f})'",
         f"drawbox=x=300:y=1070:w=480:h=210:color=0x0B1B33@1:t=fill:enable='between(t,{step:.3f},{step * 2:.3f})'",
         f"drawbox=x=360:y=1010:w=120:h=120:color=0x21D4FD@0.25:t=fill:enable='between(t,{step:.3f},{step * 2:.3f})'",
         f"drawbox=x=540:y=1010:w=120:h=120:color=0xA78BFA@0.35:t=fill:enable='between(t,{step:.3f},{step * 2:.3f})'",
         f"drawbox=x=480:y=1170:w=120:h=120:color=0x34D399@0.35:t=fill:enable='between(t,{step:.3f},{step * 2:.3f})'",
         f"drawbox=x=420:y=1060:w=180:h=12:color=0x21D4FD@0.9:t=fill:enable='between(t,{step:.3f},{step * 2:.3f})'",
-        f"drawbox=x=390:y=1350:w=120:h=240:color=0x21D4FD@0.85:t=fill:enable='between(t,{step * 2:.3f},{step * 3:.3f})'",
-        f"drawbox=x=540:y=1240:w=120:h=350:color=0xA78BFA@0.85:t=fill:enable='between(t,{step * 2:.3f},{step * 3:.3f})'",
-        f"drawbox=x=690:y=1150:w=120:h=440:color=0x34D399@0.85:t=fill:enable='between(t,{step * 2:.3f},{step * 3:.3f})'",
-        f"drawbox=x=160:y=1040:w=760:h=22:color=0x203E63@1:t=fill:enable='between(t,{step * 3:.3f},{step * 4:.3f})'",
-        f"drawbox=x=160:y=1040:w=610:h=22:color=0x34D399@1:t=fill:enable='between(t,{step * 3:.3f},{step * 4:.3f})'",
-        f"drawbox=x=160:y=1140:w=760:h=22:color=0x203E63@1:t=fill:enable='between(t,{step * 3:.3f},{step * 4:.3f})'",
-        f"drawbox=x=160:y=1140:w=400:h=22:color=0xFBBF24@1:t=fill:enable='between(t,{step * 3:.3f},{step * 4:.3f})'",
-        f"drawbox=x=160:y=1240:w=760:h=22:color=0x203E63@1:t=fill:enable='between(t,{step * 3:.3f},{step * 4:.3f})'",
-        f"drawbox=x=160:y=1240:w=270:h=22:color=0xF87171@1:t=fill:enable='between(t,{step * 3:.3f},{step * 4:.3f})'",
         f"drawbox=x=130:y=1030:w=820:h=390:color=0x0B1B33@1:t=fill:enable='between(t,{step * 4:.3f},{step * 5:.3f})'",
         f"drawbox=x=180:y=1090:w=220:h=80:color=0x34D399@0.8:t=fill:enable='between(t,{step * 4:.3f},{step * 5:.3f})'",
         f"drawbox=x=430:y=1090:w=220:h=80:color=0xFBBF24@0.8:t=fill:enable='between(t,{step * 4:.3f},{step * 5:.3f})'",
@@ -389,6 +394,9 @@ def _build_motion_filter(*, package: ContentPackage, duration: float, caption_pa
     if logo_path is not None:
         overlays.append(f"[{input_index}:v]scale=240:240:force_original_aspect_ratio=decrease,format=rgba[project_logo]")
         input_index += 1
+    if product_visual_path is not None:
+        overlays.append(f"[{input_index}:v]scale=760:520:force_original_aspect_ratio=decrease,format=rgba[product_visual]")
+        input_index += 1
     if brand_logo_path is not None:
         overlays.append(f"[{input_index}:v]scale=300:120:force_original_aspect_ratio=decrease,format=rgba[brand_logo]")
         input_index += 1
@@ -398,10 +406,16 @@ def _build_motion_filter(*, package: ContentPackage, duration: float, caption_pa
         graph += f";[cards][project_logo]overlay=x=760:y=300:enable='between(t,{step:.3f},{step * 2:.3f})'[identity]"
     else:
         graph += f";[cards]drawbox=x=760:y=430:w=180:h=180:color=0x21D4FD@0.18:t=fill:enable='between(t,{step:.3f},{step * 2:.3f})',drawtext=fontfile={font}:text='APP':fontcolor=0x21D4FD:fontsize=42:x=807:y=500:enable='between(t,{step:.3f},{step * 2:.3f})'[identity]"
-    if brand_logo_path is not None:
-        graph += f";[identity][brand_logo]overlay=x=390:y=1510:enable='between(t,0,{step:.3f})+between(t,{step * 5:.3f},{duration:.3f})'[branded]"
+    if product_visual_path is not None:
+        graph += f";[identity][product_visual]overlay=x=160:y=930:enable='between(t,{step * 2:.3f},{step * 4:.3f})'[product]"
     else:
-        graph += ";[identity]copy[branded]"
+        graph += ";[identity]copy[product]"
+    if brand_logo_path is not None:
+        # GamCryp is the evaluator and belongs in the close, not as a generic
+        # intro before the viewer understands the opportunity.
+        graph += f";[product][brand_logo]overlay=x=390:y=1510:enable='between(t,{step * 5:.3f},{duration:.3f})'[branded]"
+    else:
+        graph += ";[product]copy[branded]"
     prefix = f"{overlays_text};" if overlays_text else ""
     return f"{prefix}{graph};[branded]{captions}[vout]"
 
@@ -434,8 +448,18 @@ def _short_quality_blockers(result: RenderResult) -> list[str]:
         blockers.append("short-form uses a static background-only composition")
     if quality.get("caption_only_visuals"):
         blockers.append("captions are the only meaningful visual content")
-    if not quality.get("brand_opening_present") or not quality.get("brand_closing_present"):
-        blockers.append("GamCryp branded opening/closing is missing")
+    if not quality.get("brand_closing_present"):
+        blockers.append("GamCryp closing is missing")
+    if quality.get("creative_status") != "CREATIVE_QA_PASSED":
+        blockers.append("editorial visual QA has not passed")
+    if quality.get("product_visual_count", 0) < 1:
+        blockers.append("approved product or app visual is missing")
+    if quality.get("hook_qa", {}).get("status") != "PASSED":
+        blockers.append("opening hook QA has not passed")
+    if not quality.get("gamcryp_product_placement"):
+        blockers.append("GamCryp product placement is missing")
+    if quality.get("frame_qa", {}).get("status") != "PASSED":
+        blockers.append("post-render representative frame QA has not passed")
     if len(quality.get("primary_visual_elements", ())) < 4:
         blockers.append("short-form lacks a meaningful visual storytelling system")
     return blockers

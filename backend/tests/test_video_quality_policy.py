@@ -34,8 +34,8 @@ def _green_video_pack(*, mode: str, provider: str | None = None, quality: str = 
         ("neural_voice", "system", "approved", "forbidden"),
         ("neural_voice", "elevenlabs", "not_ready", "not approved"),
         ("neural_voice", "elevenlabs", "approved", None),
-        ("music_only", None, "approved", None),
-        ("silent", None, "approved", None),
+        ("music_only", None, "approved", "publishable Shorts require approved narration"),
+        ("silent", None, "approved", "publishable Shorts require approved narration"),
         ("unknown", None, "unknown", "unknown"),
     ],
 )
