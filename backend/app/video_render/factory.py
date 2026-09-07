@@ -137,7 +137,8 @@ def render_package(
                 timeout_seconds=base_config.timeout_seconds,
             )
             narration = provider_factory(config).generate(content_id=package.source_inventory_item_id, script=job.script, now=now)
-            voice_name, voice_id = name, candidate_id
+            voice_id = narration.metadata.voice_id
+            voice_name = next((voice for voice, identifier in APPROVED_VOICES if identifier == voice_id), name)
             _save_rotation_index(state_path, (index + 1) % len(APPROVED_VOICES))
             break
         except Exception as exc:  # provider errors are isolated and safe

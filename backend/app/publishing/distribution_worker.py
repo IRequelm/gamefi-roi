@@ -13,6 +13,8 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, Callable
 
+from dotenv import load_dotenv
+
 from app.distribution.manual_outbox import XManualOutbox, manual_ready_record
 from app.distribution.x_publisher import XApiError, XAuthError, XAmbiguousApiError, XPublisherConfig, XPublisherError, XPublishingService
 from app.distribution.refill import DistributionRefillConfig, DistributionRefiller
@@ -309,6 +311,10 @@ def _optional_path(name: str) -> Path | None:
 
 
 def main(argv: list[str] | None = None) -> int:
+    # Task Scheduler launches without a shell profile; load the existing local
+    # .env convention before reading worker flags. Explicit process variables
+    # still take precedence.
+    load_dotenv(override=False)
     parser = argparse.ArgumentParser(description="Run the fail-closed GamCryp distribution worker.")
     parser.add_argument("--once", action="store_true", help="Process one interval and exit.")
     parser.add_argument("--interval-seconds", type=int, default=1800)

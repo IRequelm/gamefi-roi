@@ -458,7 +458,11 @@ def _strategy_pack(
             model_version=snapshot["versions"]["model_version"],
             scoring_methodology_version=snapshot["versions"].get("scoring_methodology_version"),
             refreshability=classify_refreshability(strategy["strategy_id"]).refreshability,
-            official_source_refs=[SourceReference(**official_source)] if official_source else [],
+            # The catalog/API reference also carries source_role. The
+            # distribution content-pack contract intentionally stores only
+            # the public label and URL, so do not leak newer fields into this
+            # strict legacy serialization model.
+            official_source_refs=[SourceReference(label=official_source["label"], url=official_source["url"])] if official_source else [],
         ),
         facts=ContentFactSet(
             project_name=snapshot["game_name"],
@@ -619,7 +623,7 @@ def _major_catch(snapshot: dict[str, Any]) -> str:
 def _source_refs(opportunity: dict[str, Any]) -> list[SourceReference]:
     primary = opportunity.get("primary_destination") or {}
     source = primary.get("source_reference")
-    return [SourceReference(**source)] if source else []
+    return [SourceReference(label=source["label"], url=source["url"])] if source else []
 
 
 def _format_money(amount: str, currency: str) -> str:

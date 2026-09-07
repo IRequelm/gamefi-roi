@@ -113,9 +113,9 @@
         "opportunity_id": "defi-kingdoms",
         "refreshability": "AUTO_REFRESHABLE",
         "scoring_methodology_version": "risk-confidence-v1",
-        "snapshot_id": "764e8060-1b4e-5b9c-af27-afd945f7956b",
-        "snapshot_timestamp": "2026-09-06T14:19:20.089297Z",
-        "source_snapshot_hash": "03a74d45aa764ced090ffb481cbbe04c6bc0746a783289575065e8f002f12200",
+        "snapshot_id": "45155508-ec56-5c95-a18c-7c2b0034926a",
+        "snapshot_timestamp": "2026-09-07T21:41:43.221906Z",
+        "source_snapshot_hash": "fcda377dcb111a5dece80dd9d562239ab43050862c575d4bc00edecb9658152e",
         "strategy_id": "dfk-crystalvale-jeweler-cjewel-5000-max-lock",
         "strategy_version": "v1"
       }
@@ -252,22 +252,22 @@
           "claim_id": "capital",
           "display_value": "$0.002",
           "source_path": "snapshot.capital.total_capital.amount",
-          "source_value": "0.0019990845115609752303483",
+          "source_value": "0.00199775807664837580",
           "text": "Modeled capital is $0.002."
         },
         {
           "claim_id": "net_day",
           "display_value": "<$0.0001/day",
           "source_path": "snapshot.earnings.net_earnings_day.amount",
-          "source_value": "-2.269676549874336285980986517E-7",
+          "source_value": "-1.897181044831940061119788470E-7",
           "text": "Modeled net earnings are <$0.0001/day."
         },
         {
           "claim_id": "roi_30d",
-          "display_value": "-0.34%",
+          "display_value": "-0.28%",
           "source_path": "snapshot.roi.roi_total_30d.value",
-          "source_value": "-0.003406073935466696108782561115",
-          "text": "Modeled 30D ROI is -0.34%."
+          "source_value": "-0.002848965147994536314594425162",
+          "text": "Modeled 30D ROI is -0.28%."
         }
       ],
       "content_id": "x-farmers-world-tiny-economics-20260831",
@@ -288,7 +288,7 @@
         "narration_quality_status": "unknown",
         "readiness": "RED",
         "visual_plan": [],
-        "x_post": "Farmers World is a useful reminder: cheap entry is not the same as good economics.\n\nGamCryp's axe strategy shows capital $0.002, net/day <$0.0001/day, and 30D ROI of -0.34%.\n\nThis is why GamCryp separates modeled return from risk, liquidity, and confidence.\n\nhttps://gamcryp.com/strategies/farmers-world-axe-wood-production?utm_campaign=distribution-mvp&utm_content=x-farmers-world-tiny-economics-20260831&utm_medium=social&utm_source=x"
+        "x_post": "Farmers World is a useful reminder: cheap entry is not the same as good economics.\n\nGamCryp's axe strategy shows capital $0.002, net/day <$0.0001/day, and 30D ROI of -0.28%.\n\nThis is why GamCryp separates modeled return from risk, liquidity, and confidence.\n\nhttps://gamcryp.com/strategies/farmers-world-axe-wood-production?utm_campaign=distribution-mvp&utm_content=x-farmers-world-tiny-economics-20260831&utm_medium=social&utm_source=x"
       },
       "facts": {
         "break_even": {
@@ -303,7 +303,7 @@
           "source_path": "snapshot.capital.total_capital.amount",
           "status": "available",
           "unit": "USD",
-          "value": "0.0019990845115609752303483"
+          "value": "0.00199775807664837580"
         },
         "confidence": {
           "display": "MODERATE 77/100",
@@ -320,18 +320,18 @@
         },
         "major_catch": "Risk is HIGH; review the strategy assumptions before acting.",
         "modeled_return": {
-          "display": "-0.34%",
+          "display": "-0.28%",
           "source_path": "snapshot.roi.roi_total_30d.value",
           "status": "available",
           "unit": "ratio",
-          "value": "-0.003406073935466696108782561115"
+          "value": "-0.002848965147994536314594425162"
         },
         "net_earnings": {
           "display": "<$0.0001/day",
           "source_path": "snapshot.earnings.net_earnings_day.amount",
           "status": "available",
           "unit": "USD/day",
-          "value": "-2.269676549874336285980986517E-7"
+          "value": "-1.897181044831940061119788470E-7"
         },
         "opportunity_type": "GAME",
         "project_name": "Farmers World",
@@ -356,9 +356,9 @@
         "opportunity_id": "farmers-world",
         "refreshability": "AUTO_REFRESHABLE",
         "scoring_methodology_version": "risk-confidence-v1",
-        "snapshot_id": "8e6be591-9dc4-52ea-94d6-fd795163c3fa",
-        "snapshot_timestamp": "2026-09-06T14:19:20.089297Z",
-        "source_snapshot_hash": "793975161f4f8b7adf523ecf90da5d7da04d0134c688593d3caf88eabf69a3f3",
+        "snapshot_id": "3f2137d7-6b01-53c3-93ec-e923d25c1812",
+        "snapshot_timestamp": "2026-09-07T21:41:43.221906Z",
+        "source_snapshot_hash": "d3d8c39a207b394b571507e369602bf0ff7d6190642459fee3b66da3feb6705b",
         "strategy_id": "farmers-world-axe-wood-production",
         "strategy_version": "v1"
       }
@@ -722,17 +722,17 @@
         },
         {
           "claim_id": "net_day",
-          "display_value": "$0.0001/day",
+          "display_value": "$0.0002/day",
           "source_path": "snapshot.earnings.net_earnings_day.amount",
-          "source_value": "0.0001312247019384594215000",
-          "text": "Modeled net earnings are $0.0001/day."
+          "source_value": "0.0001650837132414137892500",
+          "text": "Modeled net earnings are $0.0002/day."
         },
         {
           "claim_id": "roi_30d",
-          "display_value": "0.04%",
+          "display_value": "0.05%",
           "source_path": "snapshot.roi.roi_total_30d.value",
-          "source_value": "0.0003936741058153782645000",
-          "text": "Modeled 30D ROI is 0.04%."
+          "source_value": "0.0004952511397242413677500",
+          "text": "Modeled 30D ROI is 0.05%."
         }
       ],
       "content_id": "x-splinterlands-expected-value-20260831",
@@ -753,15 +753,15 @@
         "narration_quality_status": "unknown",
         "readiness": "RED",
         "visual_plan": [],
-        "x_post": "Splinterlands is modeled as expected value, not guaranteed income.\n\nGamCryp's Modern Ranked SPS strategy uses $10 capital, $0.0001/day net, and 0.04% 30D ROI.\n\nThe catch: win rate and SPS per win are assumptions, so confidence stays LOW and uncertainty is explicit.\n\nhttps://gamcryp.com/strategies/splinterlands-modern-ranked-sps-ev?utm_campaign=distribution-mvp&utm_content=x-splinterlands-expected-value-20260831&utm_medium=social&utm_source=x"
+        "x_post": "Splinterlands is modeled as expected value, not guaranteed income.\n\nGamCryp's Modern Ranked SPS strategy uses $10 capital, $0.0002/day net, and 0.05% 30D ROI.\n\nThe catch: win rate and SPS per win are assumptions, so confidence stays LOW and uncertainty is explicit.\n\nhttps://gamcryp.com/strategies/splinterlands-modern-ranked-sps-ev?utm_campaign=distribution-mvp&utm_content=x-splinterlands-expected-value-20260831&utm_medium=social&utm_source=x"
       },
       "facts": {
         "break_even": {
-          "display": "76,205 days",
+          "display": "60,575 days",
           "source_path": "snapshot.roi.break_even.days",
           "status": "available",
           "unit": "days",
-          "value": "76205.16451765087574063539008"
+          "value": "60575.32753322722178622043174"
         },
         "capital": {
           "display": "$10",
@@ -785,18 +785,18 @@
         },
         "major_catch": "Performance-dependent SPS rewards are modeled as expected value, not guaranteed earnings.",
         "modeled_return": {
-          "display": "0.04%",
+          "display": "0.05%",
           "source_path": "snapshot.roi.roi_total_30d.value",
           "status": "available",
           "unit": "ratio",
-          "value": "0.0003936741058153782645000"
+          "value": "0.0004952511397242413677500"
         },
         "net_earnings": {
-          "display": "$0.0001/day",
+          "display": "$0.0002/day",
           "source_path": "snapshot.earnings.net_earnings_day.amount",
           "status": "available",
           "unit": "USD/day",
-          "value": "0.0001312247019384594215000"
+          "value": "0.0001650837132414137892500"
         },
         "opportunity_type": "GAME",
         "project_name": "Splinterlands",
@@ -821,9 +821,9 @@
         "opportunity_id": "splinterlands",
         "refreshability": "AUTO_REFRESHABLE",
         "scoring_methodology_version": "risk-confidence-v1",
-        "snapshot_id": "650dce45-895c-5e6c-aa7d-f9eec96a587c",
-        "snapshot_timestamp": "2026-09-06T14:19:20.089297Z",
-        "source_snapshot_hash": "dfcd959557e57f1fc0039c32e1508a15aa173855c670e13886af7fdda52c791f",
+        "snapshot_id": "70655b2b-69fe-5043-9ea3-2d62507d34d8",
+        "snapshot_timestamp": "2026-09-07T21:41:43.221906Z",
+        "source_snapshot_hash": "f5a17d0801152d8fd7907a167bb8544f8574cadcfaac38ee174a1d9e9da3856d",
         "strategy_id": "splinterlands-modern-ranked-sps-ev",
         "strategy_version": "v1"
       }

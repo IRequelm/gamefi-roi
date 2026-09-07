@@ -16,6 +16,11 @@ from app.config.settings import Settings
 
 ELEVENLABS_BASE_URL = "https://api.elevenlabs.io/v1"
 DEFAULT_OUTPUT_FORMAT = "mp3_44100_128"
+APPROVED_REUSE_VOICE_IDS = {
+    "EXAVITQu4vr4xnSDxMaL",  # Sarah
+    "FGY2WhTYpPnrIDTdsKH5",  # Bella
+    "hpp4J3VqNfWAUOO0d1Us",  # Laura
+}
 
 
 class ElevenLabsError(RuntimeError):
@@ -116,6 +121,24 @@ class ElevenLabsNarrationProvider:
             if _sha256_file(output) == existing.audio_checksum:
                 return ElevenLabsGenerationResult(metadata=existing, reused=True)
 
+        # Narration is also produced by the package-generation pipeline. Reuse
+        # a verified local asset from that store before contacting ElevenLabs;
+        # otherwise a render-only rebuild can spend the account quota again for
+        # the same content and approved voice/model.
+        for candidate_metadata_path in _local_reuse_metadata_paths(self.config.output_directory, content_id):
+            candidate = _load_metadata(candidate_metadata_path)
+            if not candidate or candidate.content_id != content_id:
+                continue
+            candidate_audio = Path(candidate.audio_path)
+            if (
+                candidate.script_fingerprint == fingerprint
+                and candidate.voice_id in APPROVED_REUSE_VOICE_IDS
+                and candidate.model_id == model_id
+                and candidate_audio.is_file()
+                and _sha256_file(candidate_audio) == candidate.audio_checksum
+            ):
+                return ElevenLabsGenerationResult(metadata=candidate, reused=True)
+
         try:
             response = self.client.post(
                 f"{ELEVENLABS_BASE_URL}/text-to-speech/{voice_id}",
@@ -160,6 +183,24 @@ def _load_metadata(path: Path) -> NarrationAssetMetadata | None:
         return NarrationAssetMetadata.model_validate_json(path.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return None
+
+
+def _local_reuse_metadata_paths(output_directory: Path, content_id: str) -> list[Path]:
+    """Return bounded local narration metadata candidates for safe reuse."""
+    directories = [
+        output_directory,
+        Path("data/local/youtube/narration"),
+        Path("data/local/video_render/narration"),
+    ]
+    paths: list[Path] = []
+    seen: set[Path] = set()
+    for directory in directories:
+        directory = directory.resolve()
+        if directory in seen or not directory.is_dir():
+            continue
+        seen.add(directory)
+        paths.extend(directory.glob(f"{content_id}-*.json"))
+    return paths
 
 
 def _sha256_file(path: Path) -> str:

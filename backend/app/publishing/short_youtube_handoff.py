@@ -104,6 +104,15 @@ def prepare_short_handoff(
     candidates = [package for package in (packages or build_content_packages()) if package.format == "SHORT_FORM" and package.generation_status == "READY_FOR_REVIEW" and validate_package(package)]
     family_counts = {package_family(item.package_id): 0 for item in by_package.values() if item.status == "queued"}
     opportunity_counts = {package_opportunity(item.package_id): 0 for item in by_package.values() if item.status == "queued"}
+    # Reconcile checksums for already-queued renders before applying the
+    # bounded buffer limit. A quality rebuild must not leave a valid item
+    # blocked by the checksum of its previous MP4.
+    for package in candidates:
+        existing = by_package.get(package.package_id)
+        if existing and existing.evidence_fingerprint == package.evidence_fingerprint and Path(existing.video_path).is_file():
+            current_checksum = hashlib.sha256(Path(existing.video_path).read_bytes()).hexdigest()
+            if current_checksum != existing.video_checksum:
+                by_package[package.package_id] = existing.model_copy(update={"video_checksum": current_checksum})
     for item in by_package.values():
         if item.status == "queued":
             family_counts[package_family(item.package_id)] = family_counts.get(package_family(item.package_id), 0) + 1
