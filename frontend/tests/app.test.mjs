@@ -416,6 +416,20 @@ test("structured unavailable ROI omits empty explanation sections and stays conc
   assert.ok(visibleText(card).length < 900);
 });
 
+test("priced rewards with unavailable yield do not claim that the market price is missing", () => {
+  const opportunity = {
+    ...opportunityPayload(),
+    value_realization_status: "realizable",
+    data_feasibility_status: "PARTIAL",
+    roi_unavailable: null,
+    feasibility_summary: "Current earning rate and operating costs are not reproducible.",
+  };
+  const html = renderOpportunityDetail(opportunity);
+
+  assert.match(html, /earning rate, costs, or exit assumptions are not reproducible/);
+  assert.doesNotMatch(html, /Reward has no reliable market price yet/);
+});
+
 test("opportunity guidance renders complete, partial, and empty structures safely", () => {
   const complete = renderOpportunityGuidance({
     how_to_start: ["Start here"],
@@ -587,8 +601,8 @@ test("stale answer blocks never describe stored results as current", () => {
   strategy.latest_snapshot.freshness.overall_status = "stale";
   const html = renderStrategyAnswerBlock(strategy, strategy.latest_snapshot);
 
-  assert.match(html, /stored modeled result/);
-  assert.match(html, /Stored modeled net earnings/);
+  assert.match(html, /GamCryp&#039;s model estimates/);
+  assert.match(html, /Estimated net earnings/);
   assert.doesNotMatch(html, /GamCryp currently models/);
 });
 

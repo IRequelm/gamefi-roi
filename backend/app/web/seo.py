@@ -134,7 +134,7 @@ def home_page(service: ApiDataService, *, settings: Settings, request: Request) 
           </div>
         </section>
         {_render_catalog_stats(rankings, opportunities)}
-        {_render_ranking_cards(rankings.items[:3], heading="Organic leaders")}
+        {_render_ranking_cards(rankings.items[:3], heading="Highest modeled results")}
         {_render_opportunity_cards(opportunities, heading="Opportunity radar")}
       </div>
     """
@@ -162,11 +162,11 @@ def rankings_page(service: ApiDataService, *, settings: Settings, request: Reque
       <div class="page-shell">
         <section class="page-head">
           <p class="eyebrow">Organic rankings</p>
-          <h1>Stored Web3 ROI strategy rankings</h1>
+          <h1>Web3 ROI strategy rankings</h1>
           <p class="lede">{escape(_rankings_summary(rankings))}</p>
-          <p class="muted">Organic order is supplied by stored strategy snapshots and risk/confidence scores. Commercial metadata is separate.</p>
+          <p class="muted">Ranked by modeled 30-day ROI, then confidence, risk, and recency. Commercial metadata is separate.</p>
         </section>
-        {_render_rankings_answer_block(rankings, "Stored Web3 ROI strategy rankings")}
+        {_render_rankings_answer_block(rankings, "Web3 ROI strategy rankings")}
         {_render_curated_links(service)}
         {_render_ranking_cards(rankings.items, heading="Ranked strategies")}
       </div>
@@ -284,15 +284,7 @@ def opportunity_page(
         {_render_opportunity_human_summary(opportunity, strategy, snapshot)}
         {_render_depin_setup_summary(opportunity)}
         {_render_opportunity_guidance(opportunity)}
-        <section class="section-panel">
-          <div class="section-header"><h2>Executive Summary</h2></div>
-          <div class="section-body metric-grid">
-            {_metric("Opportunity type", opportunity_type_label(opportunity.opportunity_type))}
-            {_metric("ROI status", value_status_label(opportunity.value_realization_status, opportunity.strategy_count))}
-            {_metric("Review state", feasibility_label(opportunity.data_feasibility_status))}
-            {_metric("Reward model", ", ".join(opportunity.reward_asset_or_points_type) or "Unspecified")}
-          </div>
-        </section>
+        {_render_opportunity_status(opportunity)}
         {_render_strategy_cards(opportunity.strategies, heading="Strategies in this opportunity")}
         {_render_unavailable_roi(opportunity) if not opportunity.strategies else ""}
         {_render_sources(opportunity)}
@@ -386,7 +378,7 @@ def strategy_page(
         <section class="section-panel">
           <div class="section-header"><h2>Methodology Context</h2></div>
           <div class="section-body">
-            <p class="muted">Model version {escape(snapshot.versions.model_version if snapshot else "Unavailable")} and strategy version {escape(strategy.strategy_version)}. ROI is strategy-specific and is calculated from stored snapshots, not from live page requests.</p>
+            <p class="muted">Model version {escape(snapshot.versions.model_version if snapshot else "Unavailable")} and strategy version {escape(strategy.strategy_version)}. ROI is strategy-specific and based on the latest persisted calculation.</p>
             <p><a class="strategy-link" href="/methodology">Read the GamCryp methodology</a></p>
           </div>
         </section>
@@ -417,7 +409,7 @@ def methodology_page(*, settings: Settings, request: Request) -> SeoPage:
         <section class="page-head">
           <p class="eyebrow">Methodology</p>
           <h1>How GamCryp reads Web3 opportunity economics</h1>
-          <p class="lede">GamCryp publishes strategy-specific economics from stored snapshots, explicit assumptions, and source provenance. It does not imply guaranteed returns or investment advice.</p>
+          <p class="lede">GamCryp publishes strategy-specific economics from explicit assumptions and source evidence. It does not imply guaranteed returns or investment advice.</p>
         </section>
         <section class="method-grid">
           <article class="method-item"><h2>Modeled ROI</h2><p class="muted">ROI is calculated only when entry cost, reward rate, realizable reward value or exit path, and relevant costs can be reproduced from evidence.</p></article>
@@ -536,7 +528,7 @@ def _opportunity_answer(
 
 def _rankings_summary(rankings: RankingsPage) -> str:
     if not rankings.items:
-        return "No successful stored strategy snapshots currently match this page."
+        return "No successful modeled results currently match this page."
     top = rankings.items[0]
     return _ranking_answer(top.latest_snapshot, top.strategy)
 
@@ -552,7 +544,6 @@ def _render_rankings_answer_block(
         ("Ranking basis", "30D ROI descending, confidence descending, risk ascending, latest calculation descending, then strategy id."),
         ("Filters", escape(_filter_summary(filters))),
         ("Last snapshot update", escape(format_datetime(_rankings_lastmod(rankings)))),
-        ("Data source", "Latest successful strategy snapshots."),
         ("Commercial policy", "Referral, affiliate, and sponsor metadata never changes organic ranking order or analytical scores."),
     ]
     return _render_answer_block(
@@ -637,7 +628,6 @@ def _strategy_answer_fields(strategy: StrategySummary, snapshot: StrategySnapsho
         ("Required time/effort", "Not separately quantified in this strategy snapshot."),
         ("Major assumptions", escape(_major_assumptions(snapshot))),
         ("Warnings", escape(_warning_summary(snapshot.warnings))),
-        ("Financial data source", "Latest successful persisted snapshot; no live provider call during page view."),
     ]
 
 
@@ -648,7 +638,7 @@ def _render_answer_block(title: str, summary: str, fields: list[tuple[str, str]]
     )
     return f"""
       <section class="answer-card" data-ai-answer-block="true">
-        <div class="section-header"><h2>{escape(title)}</h2><span class="badge info">Source-ready</span></div>
+        <div class="section-header"><h2>{escape(title)}</h2><span class="badge info">Evidence-linked</span></div>
         <div class="section-body">
           <p class="answer-summary">{escape(summary)}</p>
           <dl class="answer-grid">{items}</dl>
@@ -679,6 +669,7 @@ def _render_opportunity_human_summary(
     reward_types = human_list(opportunity.reward_asset_or_points_type, "Reward type not specified yet")
     modeled = strategy is not None and snapshot is not None
     unavailable = plain_unavailable_reason(opportunity)
+    no_model_message = "No financial model is published for this opportunity yet; see the explanation below for the specific evidence gap."
     items = [
         ("What it is", escape(f"{opportunity.name} is tracked as {opportunity_type_label(opportunity.opportunity_type).lower()}.")),
         ("How it may earn", escape(reward_types)),
@@ -687,20 +678,34 @@ def _render_opportunity_human_summary(
             "Cost and return",
             f"Modeled in {escape(strategy.name)}; open the strategy for current capital, costs, and ROI."
             if modeled and strategy is not None
-            else escape(unavailable),
+            else escape(no_model_message),
         ),
         (
             "Cash-out",
             "Realizable value is modeled inside the strategy snapshot where market data supports it."
             if modeled
-            else escape(unavailable),
+            else escape("A payout route is not modeled yet; do not treat the reward as cash."),
         ),
         (
             "Main catch",
-            escape("Review risk, confidence, and freshness before acting." if opportunity.data_feasibility_status == "GO" else unavailable),
+            escape("Review risk, confidence, and freshness before acting." if opportunity.data_feasibility_status == "GO" else "Review the evidence and limitations before acting."),
         ),
     ]
     return _render_human_summary("Plain-language summary", items)
+
+
+def _render_opportunity_status(opportunity: OpportunityDetail) -> str:
+    return f"""
+      <section class="section-panel opportunity-status">
+        <div class="section-header"><h2>At a glance</h2></div>
+        <div class="section-body metric-grid">
+          {_metric("Opportunity type", opportunity_type_label(opportunity.opportunity_type))}
+          {_metric("ROI status", value_status_label(opportunity.value_realization_status, opportunity.strategy_count))}
+          {_metric("Review state", feasibility_label(opportunity.data_feasibility_status))}
+          {_metric("Reward type", ", ".join(opportunity.reward_asset_or_points_type) or "Unspecified")}
+        </div>
+      </section>
+    """
 
 
 def depin_setup_labels(opportunity_or_platforms) -> list[str]:
@@ -877,7 +882,7 @@ def _destination_status_text(destination) -> str:
 
 def _render_ranking_cards(items: list[RankingItem], *, heading: str) -> str:
     if not items:
-        return _empty("No current matches", "No successful stored strategy snapshot currently matches this view.")
+        return _empty("No current matches", "No successful modeled result currently matches this view.")
     cards = []
     for item in items:
         snapshot = item.latest_snapshot
@@ -1040,7 +1045,7 @@ def _render_snapshot_detail(snapshot: StrategySnapshotPayload) -> str:
 
 def _render_history_context(history_items: list[StrategySnapshotPayload]) -> str:
     if len(history_items) < 2:
-        return _empty("Historical context", "Insufficient history for a trend view. At least two stored snapshots are needed.")
+        return _empty("Historical context", "Insufficient history for a trend view. At least two model calculations are needed.")
     latest = history_items[-1]
     previous = history_items[-2]
     body = f"""
@@ -1405,6 +1410,8 @@ def plain_unavailable_reason(opportunity) -> str:
         return "Reward value is not yet verifiable."
     if feasibility == "REJECTED" or "unknown" in value_status or "exit" in summary or "realizable value" in summary:
         return "A reproducible exit value is not available yet."
+    if value_status == "realizable":
+        return "The reward token may be priced, but earning rate, costs, or exit assumptions are not reproducible yet."
     return "Reward has no reliable market price yet."
 
 

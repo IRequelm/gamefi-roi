@@ -367,12 +367,11 @@ export function renderDegradedNotice(messages = []) {
 
 export function renderRankingsAnswerBlock(rankings = { items: [], page: { total: 0 } }, options = {}) {
   const fields = [
-    ["Comparison page", escapeHtml(options.title || "Stored strategy cards")],
+    ["Comparison page", escapeHtml(options.title || "Strategy rankings")],
     ["Matching modeled strategies", escapeHtml(String(rankings.page?.total ?? (rankings.items || []).length))],
     ["Ranking basis", "30D ROI descending, confidence descending, risk ascending, latest calculation descending, then strategy id."],
     ["Filters", escapeHtml(filterSummary(options.filters || ""))],
     ["Last snapshot update", escapeHtml(latestSnapshotTime(rankings))],
-    ["Data source", "Latest successful persisted strategy snapshots from /api/v1/rankings."],
     ["Commercial policy", "Referral, affiliate, and sponsor metadata never changes organic ranking order or analytical scores."],
   ];
   return renderAnswerBlock("Quick comparison", rankingsSummary(rankings), fields);
@@ -412,9 +411,9 @@ export function renderOpportunityHumanSummary(opportunity) {
     ["What it is", escapeHtml(`${opportunity.name} is tracked as ${opportunityTypeLabel(opportunity.opportunity_type).toLowerCase()}.`)],
     ["How it may earn", escapeHtml(rewardTypes)],
     ["What you need", escapeHtml(access)],
-    ["Cost and return", modeled ? `Modeled in ${escapeHtml(primaryStrategy.name)}; open the strategy for current capital, costs, and ROI.` : escapeHtml(plainUnavailableReason(opportunity))],
-    ["Cash-out", modeled ? "Realizable value is modeled inside the strategy snapshot where market data supports it." : escapeHtml(plainUnavailableReason(opportunity))],
-    ["Main catch", escapeHtml(opportunity.data_feasibility_status === "GO" ? "Review risk, confidence, and freshness before acting." : plainUnavailableReason(opportunity))],
+    ["Cost and return", modeled ? `Modeled in ${escapeHtml(primaryStrategy.name)}; open the strategy for current capital, costs, and ROI.` : "No financial model is published yet; see the evidence gap below."],
+    ["Cash-out", modeled ? "Realizable value is modeled inside the strategy snapshot where market data supports it." : "A payout route is not modeled yet; do not treat the reward as cash."],
+    ["Main catch", escapeHtml(opportunity.data_feasibility_status === "GO" ? "Review risk, confidence, and freshness before acting." : "Review the evidence and limitations before acting.")],
   ];
   return renderHumanSummary("Plain-language summary", items);
 }
@@ -540,14 +539,13 @@ function strategyAnswerFields(strategy, snapshot) {
     ["Required time/effort", "Not separately quantified in this strategy snapshot."],
     ["Major assumptions", escapeHtml(majorAssumptions(snapshot))],
     ["Warnings", escapeHtml(warningSummary(snapshot.warnings || []))],
-    ["Financial data source", "Latest successful persisted snapshot; no live provider call during page view."],
   ];
 }
 
 function renderAnswerBlock(title, summary, fields) {
   return `
     <section class="answer-card" data-ai-answer-block="true">
-      <div class="section-header"><h2>${escapeHtml(title)}</h2><span class="badge info">Source-ready</span></div>
+      <div class="section-header"><h2>${escapeHtml(title)}</h2><span class="badge info">Evidence-linked</span></div>
       <div class="section-body">
         <p class="answer-summary">${escapeHtml(summary)}</p>
         <dl class="answer-grid">
@@ -568,9 +566,9 @@ function rankingsSummary(rankings = { items: [] }) {
 
 function rankingAnswer(snapshot, strategy) {
   const stale = String(snapshot.freshness?.overall_status || "unknown").toLowerCase() !== "fresh";
-  const lead = stale ? "GamCryp's stored modeled result for" : "GamCryp currently models";
-  const earningsLabel = stale ? "Stored modeled net earnings are" : "Net earnings are";
-  return `${lead} ${strategy.name} at ${textFromHtml(formatRatio(snapshot.roi.roi_total_30d))} 30-day ROI using ${textFromHtml(formatMoney(snapshot.capital.total_capital))} capital. ${earningsLabel} ${textFromHtml(formatMoney(snapshot.earnings.net_earnings_day, { perDay: true }))}. Risk is ${scoreText(snapshot.risk)} and Confidence is ${scoreText(snapshot.confidence)}. Latest model calculation was recorded at ${formatDateTime(snapshot.calculated_at)}.`;
+  const lead = stale ? "GamCryp's model estimates" : "GamCryp models";
+  const freshnessNote = stale ? " This model is stale; review the source dates before acting." : "";
+  return `${lead} ${strategy.name} at ${textFromHtml(formatRatio(snapshot.roi.roi_total_30d))} 30-day ROI using ${textFromHtml(formatMoney(snapshot.capital.total_capital))} capital. Estimated net earnings are ${textFromHtml(formatMoney(snapshot.earnings.net_earnings_day, { perDay: true }))}. Risk is ${scoreText(snapshot.risk)} and Confidence is ${scoreText(snapshot.confidence)}. Latest model calculation was recorded at ${formatDateTime(snapshot.calculated_at)}.${freshnessNote}`;
 }
 
 function latestSnapshotTime(rankings = { items: [] }) {
@@ -628,13 +626,13 @@ function textFromHtml(html) {
 }
 
 export function renderRankingsPage(rankings, options = {}) {
-  const title = options.title || "Stored strategy cards";
+  const title = options.title || "Strategy rankings";
   return `
     <div class="page-shell">
       <section class="page-head">
         <p class="eyebrow">Organic rankings</p>
         <h1>${escapeHtml(title)}</h1>
-        <p class="lede">The order is supplied by the API: 30D ROI, confidence, risk, last calculation time, then strategy id. Brand or referral metadata never changes this order.</p>
+        <p class="lede">Ranked by modeled 30-day ROI, then confidence, risk, and recency. Brand or referral metadata never changes this order.</p>
       </section>
       ${renderRankingsAnswerBlock(rankings, { title })}
       ${renderCuratedRankingLinks()}
@@ -2100,6 +2098,9 @@ function plainUnavailableReason(opportunity) {
   if (feasibility === "REJECTED" || valueStatus.includes("unknown") || summary.includes("exit") || summary.includes("realizable value")) {
     return "A reproducible exit value is not available yet.";
   }
+  if (valueStatus === "realizable") {
+    return "The reward token may be priced, but earning rate, costs, or exit assumptions are not reproducible yet.";
+  }
   return "Reward has no reliable market price yet.";
 }
 
@@ -2181,10 +2182,10 @@ function renderNetEarningsInterpretation(snapshot) {
   const sign = decimalSign(snapshot.earnings?.net_earnings_day?.amount ?? "0");
   const stale = snapshot.freshness?.overall_status && snapshot.freshness.overall_status !== "fresh";
   if (sign < 0) {
-    return `<p class="metric-note">${stale ? "Stored model estimates a loss of" : "Currently losing approximately"} ${formatMoney(snapshot.earnings.net_earnings_day, { perDay: true })}.</p>`;
+    return `<p class="metric-note">${stale ? "The model estimates a loss of" : "Modeled net earnings are"} ${formatMoney(snapshot.earnings.net_earnings_day, { perDay: true })}.</p>`;
   }
   if (sign > 0) {
-    return `<p class="metric-note">${stale ? "Stored model estimates net earnings of" : "Currently earning approximately"} ${formatMoney(snapshot.earnings.net_earnings_day, { perDay: true })}.</p>`;
+    return `<p class="metric-note">${stale ? "The model estimates net earnings of" : "Modeled net earnings are"} ${formatMoney(snapshot.earnings.net_earnings_day, { perDay: true })}.</p>`;
   }
   return '<p class="metric-note">Estimated net earnings are currently flat.</p>';
 }
