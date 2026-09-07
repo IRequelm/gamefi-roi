@@ -29,6 +29,22 @@ This is the durable operational summary for the GamCryp V2 finish pass. Reposito
 - YELLOW requires approval; RED never auto-publishes.
 - No basic/system/robotic TTS is publishable. Approved narration is ElevenLabs with Sarah/Bella/Laura rotation.
 
+## 3a. Controlled public route verification
+
+The paid-web verification on 2026-09-07 used low-rate browser-shaped requests. Results were not treated as a crawler/indexability claim:
+
+| Route | Observed result | Interpretation |
+|---|---:|---|
+| `/` | 200 | Origin reached successfully |
+| `/opportunities` | 200 | Origin reached successfully |
+| `/methodology` | 200 | Origin reached successfully |
+| `/robots.txt` | 200 | Origin reached successfully |
+| `/api/v1/rankings` | 200 on a later controlled request | Origin/API reached successfully |
+| representative strategy page | 200 on a later controlled request | Origin/page reached successfully |
+| `/rankings`, `/sitemap.xml` | intermittent timeout/502 during one probe | Edge/origin behavior requires another browser check; not classified as a persistent app defect |
+
+Render application logs showed repeated `/api/v1/ops/status` 200 responses and public `/`, `/opportunities`, `/methodology`, and `/robots.txt` 200 responses. Cloudflare/edge responses without `x-render-origin-server` are not attributed to FastAPI without matching origin logs.
+
 ## 4. Catalog and model counts
 
 - Opportunities: 51 total; 8 MODELED; 43 GUIDE_ONLY.
@@ -61,6 +77,22 @@ Official destinations and reviewed outbound redirects remain allowlisted and sep
 
 X remains fail-closed while credentials/API access are unavailable. The manual-ready fallback uses `distribution/manual_outbox/x_manual_ready.json`, with exact text, source URL, content ID, stable fingerprint, and `MANUAL_READY` state. No live X post is attempted.
 
+## 8a. Operations commands
+
+From the repository root:
+
+```powershell
+Get-ScheduledTask -TaskName 'GamCryp Distribution Worker' | Select-Object TaskName,State
+Get-Content data/local/youtube/autonomous_daily_cap.json
+Get-Content distribution/publish_queue/youtube_short_handoff.json
+$env:GAMEFI_DISTRIBUTION_LIVE='false'
+Get-ScheduledTask -TaskName 'GamCryp Distribution Worker' | Disable-ScheduledTask
+$env:GAMEFI_DISTRIBUTION_LIVE='true'
+Get-ScheduledTask -TaskName 'GamCryp Distribution Worker' | Enable-ScheduledTask
+```
+
+The LIVE flag is local `.env` state and must remain `false` until visual proof approval. Disabling the scheduled task is an additional emergency stop; it does not delete queues.
+
 ## 9. Content and long-form readiness
 
 - `config/distribution/content_inventory.json` and `content_packages.json` were regenerated from current catalog truth.
@@ -73,6 +105,16 @@ X remains fail-closed while credentials/API access are unavailable. The manual-r
 - Sentry: repository integration is present; Render logs show initialization, but full production error coverage is not independently verified here.
 - PostHog: repository integration is present and consent-gated with explicit events; production activation is not proven here.
 - First-party inbound/outbound analytics are implemented with privacy-minimal records. Commercial analytics remain separate from model data.
+
+Operational gaps still requiring explicit monitoring: snapshot refresh age, queue backlog, worker liveness, database backup success, and ElevenLabs quota/auth failure duration. Sentry initialization is visible in Render logs, but production alert delivery is not independently verified.
+
+## 10a. Backup and recovery
+
+- Reconstructible from Git: catalog definitions, strategy/model code, migrations, renderer, queue schemas, and policy docs.
+- Not safely reconstructible from Git alone: current PostgreSQL snapshots/history, publishing state, quota state, worker retry state, OAuth/token files, and generated media.
+- Current Render Free Postgres has no production-grade backup/PITR guarantee and is the outstanding persistence blocker.
+- Minimum recovery action: upgrade the database, create a scheduled logical export to an operator-controlled private location, and test one restore before enabling unattended publishing.
+- Until that exists, honest classification is unknown RPO/RTO for database-backed history; local static artifacts remain separately recoverable if copied.
 
 ## 11. SEO/AEO/GEO
 
