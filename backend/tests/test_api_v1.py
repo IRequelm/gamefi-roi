@@ -129,7 +129,15 @@ def test_logo_metadata_is_optional_and_parent_scoped(monkeypatch, tmp_path) -> N
             "source_role": "OFFICIAL_PROJECT",
         },
     }
-    assert dfk["logo"] is None
+    assert dfk["logo"] == {
+        "asset": "/assets/logos/defi-kingdoms.png",
+        "alt": "DeFi Kingdoms logo",
+        "source_reference": {
+            "label": "DeFi Kingdoms official documentation",
+            "url": "https://docs.defikingdoms.com/",
+            "source_role": "OFFICIAL_PROJECT",
+        },
+    }
 
 
 def test_catalog_logo_assets_are_local_and_present() -> None:

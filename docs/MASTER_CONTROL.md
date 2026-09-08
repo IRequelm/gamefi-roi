@@ -79,7 +79,7 @@ Official destinations and reviewed outbound redirects remain allowlisted and sep
 
 ## 8. X
 
-X API access remains unavailable. `GAMEFI_X_PUBLISHING_MODE=manual` now lets the local worker prepare one exact GREEN post in `distribution/manual_outbox/x_manual_ready.json` without calling X; the operator pastes it into the normal X website and confirms the checksum. Non-API browser automation is intentionally not implemented because X rules prohibit it. Visible GamCryp links use an occasional deterministic cadence; source URLs remain in metadata.
+X API access remains unavailable. `GAMEFI_X_PUBLISHING_MODE=manual` now lets the local worker prepare one exact GREEN post in `distribution/manual_outbox/x_manual_ready.json` without calling X; the operator pastes it into the normal X website and confirms the checksum. Non-API browser automation is intentionally not implemented because X rules prohibit it. Visible GamCryp links use an occasional deterministic cadence; source URLs remain in metadata. Own posts now carry bounded hashtags, explicitly verified handles when configured, and local media metadata with a verified-facts fallback card. The manual amplification radar is fail-closed and writes only actionable, deduplicated candidates to `distribution/manual_outbox/x_amplification_ready.json`; it never calls X. `GAMEFI_X_AMPLIFICATION_AUTO_REPOST=false` remains required.
 
 ## 8a. Operations commands
 

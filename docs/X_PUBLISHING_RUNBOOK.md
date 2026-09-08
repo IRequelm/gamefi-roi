@@ -7,11 +7,26 @@ Status: local manual-ready workflow; official X API unavailable; no browser auto
 
 GamCryp prepares posts for `@GamCryp` through an operator-controlled local workflow:
 
-`validated content pack -> X queue -> safety validation -> approval -> explicit publish command`
+`validated content pack -> X enrichment -> X queue -> safety validation -> approval -> explicit publish command`
 
 The publisher consumes existing Content Pack Lite facts. It does not calculate ROI, alter rankings, refresh snapshots, or change risk/confidence. X's rules prohibit non-API browser automation, so the safe no-SaaS path is a local manual-ready outbox: the worker prepares one exact GREEN post, the operator pastes it into the normal X website, then confirms the exact checksum locally.
 
-Links are intentionally occasional: methodology/source posts and every third ordered post retain the tracked GamCryp URL; other posts keep the source URL in queue/outbox metadata without repeating it in visible copy.
+Links are intentionally occasional: methodology/source posts and every third ordered post retain the tracked GamCryp URL; other posts keep the source URL in queue/outbox metadata without repeating it in visible copy. Enrichment adds only deterministic, bounded hashtags and an explicitly verified official handle. An absent handle is normal and never inferred.
+
+## Enrichment and media
+
+- `config/distribution/x_official_accounts.json` is the allowlist for official project handles. Every entry requires an explicit HTTPS official-source URL and `verified: true`; an empty registry is safe.
+- Hashtags are derived from the project name and catalog category, capped at 13, and never enter ROI, risk, confidence, admission, or ranking calculations.
+- X previews and manual-ready records carry media metadata. Selection is local-only: catalog official logo, approved local product asset under `data/local/video_assets`, then a deterministic GamCryp SVG card containing only content-pack facts. Missing external media never blocks a valid post and no arbitrary hotlink/screenshot is used.
+- The verified handle remains metadata even when the source copy has no room under X's weighted 280-character limit; claims and the canonical source URL are not silently removed to make room.
+
+## Manual amplification radar
+
+The API-blocked amplification path is deliberately manual and fail-closed. An operator or future approved feed may place normalized source posts in `distribution/inbox/x_signal_feed.json`. Only accounts in `config/distribution/x_source_whitelist.json` with explicit verification, stable status URLs, fresh timestamps, direct catalog relevance, and no unsafe/promotional language can become `REPOST_NOW`. Other relevant signals become `MANUAL_REVIEW`; invalid, stale, untrusted, or irrelevant signals are ignored.
+
+Actionable candidates are written to `distribution/manual_outbox/x_amplification_ready.json`, deduplicated by source account + source post ID + URL, with history in `distribution/manual_outbox/x_amplification_history.json`. If the existing SMTP handoff is enabled, a bounded digest with subject `GamCryp X Amplification` is sent once per digest. The worker never calls X for amplification and never uses browser automation.
+
+The future provider boundary is intentionally inactive: `GAMEFI_X_AMPLIFICATION_AUTO_REPOST=false` is the required default. An eventual official API adapter must consume only `REPOST_NOW`, preserve source/repost IDs and fingerprints in an audit log, and keep quote posts human-reviewed first. X failures remain isolated from YouTube.
 
 ## Current official X API model
 
@@ -64,6 +79,12 @@ GAMEFI_X_PUBLISH_LOCK_FILE=data/local/x/publish.lock
 GAMEFI_X_HTTP_TIMEOUT_SECONDS=20
 GAMEFI_X_MAX_SNAPSHOT_AGE_SECONDS=1800
 GAMEFI_X_PUBLISHING_MODE=manual
+GAMEFI_X_AMPLIFICATION_AUTO_REPOST=false
+GAMEFI_X_AMPLIFICATION_FEED_FILE=distribution/inbox/x_signal_feed.json
+GAMEFI_X_AMPLIFICATION_WHITELIST_FILE=config/distribution/x_source_whitelist.json
+GAMEFI_X_AMPLIFICATION_OUTBOX_FILE=distribution/manual_outbox/x_amplification_ready.json
+GAMEFI_X_AMPLIFICATION_HISTORY_FILE=distribution/manual_outbox/x_amplification_history.json
+GAMEFI_X_AMPLIFICATION_EMAIL_STATE_FILE=data/local/distribution/x_amplification_email_state.json
 ```
 
 With `GAMEFI_X_PUBLISHING_MODE=manual`, the distribution worker never calls X. It writes one current GREEN manual-ready item to `distribution/manual_outbox/x_manual_ready.json`. The record contains the exact validated post text, source URL, prepared timestamp, content checksum, and `published: false`; YELLOW and RED items are excluded. Repeated worker cycles retain the current pending record. After the operator publishes that exact text manually, confirm it explicitly with:

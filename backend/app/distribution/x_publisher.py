@@ -37,6 +37,7 @@ from app.distribution.x_queue import (
     x_content_checksum,
     x_weighted_character_count,
 )
+from app.distribution.x_enrichment import enrich_own_post
 
 logger = logging.getLogger(__name__)
 
@@ -195,6 +196,12 @@ class PublishPreview(BaseModel):
     would_publish: bool
     blockers: tuple[str, ...]
     network_called: bool = False
+    official_handle: str | None = None
+    hashtags: tuple[str, ...] = ()
+    media_path: str | None = None
+    media_kind: str | None = None
+    media_source: str | None = None
+    enrichment_fingerprint: str | None = None
 
 
 class PublishResult(BaseModel):
@@ -494,6 +501,8 @@ class XPublishingService:
         pack = _find_pack(packs, content_id)
         approval = self.approvals.latest(content_id)
         final_copy, approval_state = _effective_copy(item, pack, approval)
+        enriched = enrich_own_post(pack, final_copy)
+        final_copy = enriched.final_copy
         checksum = x_content_checksum(pack, final_copy)
         blockers = list(self._copy_blockers(item, pack, final_copy))
         blockers.extend(self._publication_blockers(item, checksum))
@@ -515,6 +524,12 @@ class XPublishingService:
             refreshability=item.refreshability,
             would_publish=not blockers,
             blockers=tuple(dict.fromkeys(blockers)),
+            official_handle=enriched.official_handle,
+            hashtags=enriched.hashtags,
+            media_path=enriched.media.path,
+            media_kind=enriched.media.kind,
+            media_source=enriched.media.source,
+            enrichment_fingerprint=enriched.enrichment_fingerprint,
         )
 
     def approve(self, content_id: str, *, edited_copy: str | None = None) -> ApprovalRecord:

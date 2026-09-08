@@ -16,7 +16,17 @@ from typing import Any, Callable
 from dotenv import load_dotenv
 
 from app.distribution.manual_outbox import XManualOutbox, manual_ready_record
-from app.distribution.x_email_notify import XEmailConfig, XEmailNotificationError, XManualEmailNotifier
+from app.distribution.x_email_notify import XAmplificationEmailNotifier, XEmailConfig, XEmailNotificationError, XManualEmailNotifier
+from app.distribution.x_amplification import (
+    DEFAULT_FEED,
+    DEFAULT_HISTORY,
+    DEFAULT_OUTBOX,
+    DEFAULT_WHITELIST,
+    XAmplificationOutbox,
+    classify_candidate,
+    load_feed,
+    load_whitelist,
+)
 from app.distribution.x_publisher import XApiError, XAuthError, XAmbiguousApiError, XPublisherConfig, XPublisherError, XPublishingService
 from app.distribution.refill import DistributionRefillConfig, DistributionRefiller
 from app.publishing.youtube import YouTubePublisher, YouTubePublisherConfig
@@ -47,6 +57,10 @@ class DistributionWorkerConfig:
     short_handoff_file: Path = DEFAULT_QUEUE
     autonomous_cap_file: Path = DEFAULT_CAP_STATE
     short_handoff_refill_enabled: bool = False
+    x_amplification_feed_file: Path = DEFAULT_FEED
+    x_amplification_whitelist_file: Path = DEFAULT_WHITELIST
+    x_amplification_outbox_file: Path = DEFAULT_OUTBOX
+    x_amplification_history_file: Path = DEFAULT_HISTORY
 
     @classmethod
     def from_environment(cls) -> "DistributionWorkerConfig":
@@ -63,6 +77,10 @@ class DistributionWorkerConfig:
             short_handoff_file=Path(os.getenv("GAMEFI_SHORT_YOUTUBE_HANDOFF_FILE", str(DEFAULT_QUEUE))),
             autonomous_cap_file=Path(os.getenv("GAMEFI_YOUTUBE_AUTONOMOUS_CAP_FILE", str(DEFAULT_CAP_STATE))),
             short_handoff_refill_enabled=os.getenv("GAMEFI_SHORT_YOUTUBE_HANDOFF_REFILL_ENABLED", "true" if live else "false").strip().lower() in {"1", "true", "yes"},
+            x_amplification_feed_file=Path(os.getenv("GAMEFI_X_AMPLIFICATION_FEED_FILE", str(DEFAULT_FEED))),
+            x_amplification_whitelist_file=Path(os.getenv("GAMEFI_X_AMPLIFICATION_WHITELIST_FILE", str(DEFAULT_WHITELIST))),
+            x_amplification_outbox_file=Path(os.getenv("GAMEFI_X_AMPLIFICATION_OUTBOX_FILE", str(DEFAULT_OUTBOX))),
+            x_amplification_history_file=Path(os.getenv("GAMEFI_X_AMPLIFICATION_HISTORY_FILE", str(DEFAULT_HISTORY))),
         )
 
 
@@ -133,6 +151,7 @@ class DistributionWorker:
         self.state = WorkerState(self.config.state_file)
         self.manual_outbox = XManualOutbox(Path(os.getenv("GAMEFI_MANUAL_X_OUTBOX_FILE", str(self.config.manual_outbox_file))))
         self.x_email_notifier = XManualEmailNotifier(XEmailConfig.from_environment())
+        self.x_amplification_email_notifier = XAmplificationEmailNotifier(XEmailConfig.from_environment())
 
     def run_once(self) -> list[dict[str, Any]]:
         now = self.now()
@@ -145,6 +164,9 @@ class DistributionWorker:
             logger.error("distribution_refill_failed category=%s", type(exc).__name__)
             results.append({"platform": "distribution", "status": "refill_failed", "error_category": type(exc).__name__})
         results.append(self._process_x(now))
+        amplification_result = self._process_x_amplification(now)
+        if amplification_result.get("status") != "idle":
+            results.append(amplification_result)
         results.extend(self._process_youtube(now))
         results.append(self._process_short_handoff(now))
         return results
@@ -178,6 +200,12 @@ class DistributionWorker:
                         source_url=preview.attribution_url,
                         checksum=preview.content_checksum,
                         now=now,
+                        official_handle=getattr(preview, "official_handle", None),
+                        hashtags=getattr(preview, "hashtags", ()),
+                        media_path=getattr(preview, "media_path", None),
+                        media_kind=getattr(preview, "media_kind", None),
+                        media_source=getattr(preview, "media_source", None),
+                        enrichment_fingerprint=getattr(preview, "enrichment_fingerprint", None),
                     )
                     outbox_status = self.manual_outbox.prepare(record)
                     try:
@@ -201,6 +229,12 @@ class DistributionWorker:
                             source_url=preview.attribution_url,
                             checksum=preview.content_checksum,
                             now=now,
+                            official_handle=getattr(preview, "official_handle", None),
+                            hashtags=getattr(preview, "hashtags", ()),
+                            media_path=getattr(preview, "media_path", None),
+                            media_kind=getattr(preview, "media_kind", None),
+                            media_source=getattr(preview, "media_source", None),
+                            enrichment_fingerprint=getattr(preview, "enrichment_fingerprint", None),
                         )
                     )
                 else:
@@ -215,6 +249,26 @@ class DistributionWorker:
         if saw_cooldown:
             return {"platform": "X", "status": "cooldown"}
         return {"platform": "X", "status": "idle", "detail": "no unblocked GREEN queue item"}
+
+    def _process_x_amplification(self, now: datetime) -> dict[str, Any]:
+        """Build a manual-only amplification digest; never calls X."""
+        try:
+            posts = load_feed(self.config.x_amplification_feed_file)
+            if not posts:
+                return {"platform": "XAmplification", "status": "idle", "detail": "no approved signal feed"}
+            whitelist = load_whitelist(self.config.x_amplification_whitelist_file)
+            candidates = [classify_candidate(post, whitelist, now=now) for post in posts]
+            outbox = XAmplificationOutbox(self.config.x_amplification_outbox_file, self.config.x_amplification_history_file)
+            status = outbox.write(candidates)
+            try:
+                email_status = self.x_amplification_email_notifier.notify_if_needed(outbox)
+            except XEmailNotificationError as exc:
+                logger.error("x_amplification_email_failed category=%s", type(exc).__name__)
+                email_status = "failed"
+            return {"platform": "XAmplification", "status": status, "actionable": len(outbox.current()), "email": email_status}
+        except Exception as exc:
+            logger.error("x_amplification_failed category=%s", type(exc).__name__)
+            return {"platform": "XAmplification", "status": "failed", "error_category": type(exc).__name__}
 
     def _record_x_failure(self, key: str, content_id: str, category: str, now: datetime) -> None:
         self.state.record_failure(key, error_category=category, now=now, cooldown_seconds=self.config.failure_cooldown_seconds)
@@ -327,6 +381,9 @@ def main(argv: list[str] | None = None) -> int:
     subcommands = parser.add_subparsers(dest="command")
     confirm = subcommands.add_parser("x-manual-confirm", help="Confirm the current manually published X outbox item.")
     confirm.add_argument("content_id")
+    amp_confirm = subcommands.add_parser("x-amplification-confirm", help="Mark a manually handled amplification candidate; this never publishes to X.")
+    amp_confirm.add_argument("fingerprint")
+    amp_confirm.add_argument("--repost-id", default=None)
     args = parser.parse_args(argv)
     logging.basicConfig(level=os.getenv("GAMEFI_DISTRIBUTION_LOG_LEVEL", "INFO"))
     if args.command == "x-manual-confirm":
@@ -344,6 +401,16 @@ def main(argv: list[str] | None = None) -> int:
         except (XPublisherError, OSError, ValueError, json.JSONDecodeError) as exc:
             print(json.dumps({"status": "error", "error": str(exc)}))
             return 1
+    if args.command == "x-amplification-confirm":
+        from app.distribution.x_amplification import XAmplificationOutbox
+        config = DistributionWorkerConfig.from_environment()
+        outbox = XAmplificationOutbox(config.x_amplification_outbox_file, config.x_amplification_history_file)
+        if not any(item.fingerprint == args.fingerprint for item in outbox.current()):
+            print(json.dumps({"status": "error", "error": "amplification fingerprint is not pending"}))
+            return 1
+        outbox.mark_handled(args.fingerprint, repost_id=args.repost_id, status="manual_handled")
+        print(json.dumps({"fingerprint": args.fingerprint, "status": "amplification_manual_confirmed", "published": False}))
+        return 0
     worker = DistributionWorker()
     if args.once:
         print(json.dumps(worker.run_once(), indent=2, sort_keys=True))

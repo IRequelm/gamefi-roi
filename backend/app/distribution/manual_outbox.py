@@ -22,6 +22,12 @@ class XManualReadyRecord(BaseModel):
     prepared_at: str
     checksum: str
     published: bool = False
+    official_handle: str | None = None
+    hashtags: tuple[str, ...] = ()
+    media_path: str | None = None
+    media_kind: str | None = None
+    media_source: str | None = None
+    enrichment_fingerprint: str | None = None
 
 
 class XManualOutbox:
@@ -82,6 +88,6 @@ class XManualOutbox:
                 os.unlink(temporary_name)
 
 
-def manual_ready_record(*, content_id: str, post_text: str, source_url: str, checksum: str, now: datetime | None = None) -> XManualReadyRecord:
+def manual_ready_record(*, content_id: str, post_text: str, source_url: str, checksum: str, now: datetime | None = None, official_handle: str | None = None, hashtags: tuple[str, ...] = (), media_path: str | None = None, media_kind: str | None = None, media_source: str | None = None, enrichment_fingerprint: str | None = None) -> XManualReadyRecord:
     prepared_at = (now or datetime.now(UTC)).isoformat()
-    return XManualReadyRecord(content_id=content_id, post_text=post_text, source_url=source_url, prepared_at=prepared_at, checksum=checksum)
+    return XManualReadyRecord(content_id=content_id, post_text=post_text, source_url=source_url, prepared_at=prepared_at, checksum=checksum, official_handle=official_handle, hashtags=hashtags, media_path=media_path, media_kind=media_kind, media_source=media_source, enrichment_fingerprint=enrichment_fingerprint)
