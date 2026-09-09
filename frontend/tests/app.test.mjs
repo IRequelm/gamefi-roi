@@ -91,12 +91,28 @@ test("rankings page exposes only published curated links", () => {
   assert.match(html, /no-hardware-depin/);
   assert.doesNotMatch(html, /phone-depin/);
 });
+test("rankings page groups repeated strategies by opportunity", () => {
+  const payload = rankingPayload();
+  const second = {
+    ...payload.items[0],
+    rank: 2,
+    strategy: {
+      ...payload.items[0].strategy,
+      strategy_id: "dfk-crystalvale-jeweler-cjewel-100-max-lock",
+      name: "DFK Jeweler 100 JEWEL Max Lock",
+    },
+  };
+  const html = renderRankingsPage({ ...payload, items: [payload.items[0], second], page: { ...payload.page, total: 2 } });
+
+  assert.equal((html.match(/opportunity-group-card/g) || []).length, 1);
+  assert.match(html, /1 opportunities · 2 strategies/);
+});
 test("home renders results as cards before filters without table ranking markup", () => {
   const html = renderHomeShell([{ game_id: "defi-kingdoms", name: "DeFi Kingdoms", economy_types: ["locked-yield-reward"] }], rankingPayload(), [
     opportunityPayload(),
   ]);
 
-  assert.match(html, /GamCryp public beta/);
+  assert.match(html, /GamCryp opportunity intelligence/);
   assert.match(html, /Find Web3 earning opportunities/);
   assert.match(html, /Risk and confidence separated/);
   assert.match(html, /Top modeled opportunity/);
@@ -626,8 +642,8 @@ test("stale answer blocks never describe stored results as current", () => {
   strategy.latest_snapshot.freshness.overall_status = "stale";
   const html = renderStrategyAnswerBlock(strategy, strategy.latest_snapshot);
 
-  assert.match(html, /GamCryp&#039;s model estimates/);
-  assert.match(html, /Estimated net earnings/);
+  assert.match(html, /Stored modeled result for/);
+  assert.match(html, /Modeled net earnings/);
   assert.doesNotMatch(html, /GamCryp currently models/);
 });
 

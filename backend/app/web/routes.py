@@ -98,8 +98,12 @@ def serve_curated_rankings(
     landing = get_curated_ranking_page(landing_slug)
     if landing is None:
         raise HTTPException(status_code=404, detail=f"Unknown ranking landing page: {landing_slug}")
-    service = ApiDataService(engine)
-    rankings = curated_rankings_for_page(service, landing)
+    try:
+        service = ApiDataService(engine)
+        rankings = curated_rankings_for_page(service, landing)
+    except SQLAlchemyError as exc:
+        logger.error("public_curated_rankings_degraded", extra={"error": str(exc), "landing_slug": landing_slug})
+        return _degraded_html_response(request=request, settings=settings, path=f"/rankings/{landing_slug}", title="Ranking view temporarily unavailable")
     if not is_curated_ranking_page_publishable(landing, rankings):
         raise HTTPException(status_code=404, detail=f"Ranking landing page is not publishable yet: {landing_slug}")
     page = curated_rankings_page(service, settings=settings, request=request, landing=landing, rankings=rankings)
@@ -128,8 +132,12 @@ def serve_opportunity_detail(
     settings: Settings = Depends(get_settings),
     engine: Engine = Depends(get_database_engine),
 ) -> HTMLResponse:
-    service = ApiDataService(engine)
-    opportunity = service.opportunity_detail(opportunity_id)
+    try:
+        service = ApiDataService(engine)
+        opportunity = service.opportunity_detail(opportunity_id)
+    except SQLAlchemyError as exc:
+        logger.error("public_opportunity_degraded", extra={"error": str(exc), "opportunity_id": opportunity_id})
+        return _degraded_html_response(request=request, settings=settings, path=f"/opportunities/{opportunity_id}", title="Opportunity temporarily unavailable")
     if opportunity is None:
         raise HTTPException(status_code=404, detail=f"Unknown opportunity_id: {opportunity_id}")
     page = opportunity_page(opportunity, settings=settings, request=request)
@@ -143,8 +151,12 @@ def serve_game_detail(
     settings: Settings = Depends(get_settings),
     engine: Engine = Depends(get_database_engine),
 ) -> HTMLResponse:
-    service = ApiDataService(engine)
-    game = service.game_detail(game_id)
+    try:
+        service = ApiDataService(engine)
+        game = service.game_detail(game_id)
+    except SQLAlchemyError as exc:
+        logger.error("public_legacy_game_degraded", extra={"error": str(exc), "game_id": game_id})
+        return _degraded_html_response(request=request, settings=settings, path=f"/games/{game_id}", title="Opportunity temporarily unavailable")
     if game is None:
         raise HTTPException(status_code=404, detail=f"Unknown game_id: {game_id}")
     return RedirectResponse(
@@ -161,11 +173,15 @@ def serve_strategy_detail(
     settings: Settings = Depends(get_settings),
     engine: Engine = Depends(get_database_engine),
 ) -> HTMLResponse:
-    service = ApiDataService(engine)
-    strategy = service.strategy_detail(strategy_id)
+    try:
+        service = ApiDataService(engine)
+        strategy = service.strategy_detail(strategy_id)
+        history = service.history_page(strategy_id, limit=50, offset=0)
+    except SQLAlchemyError as exc:
+        logger.error("public_strategy_degraded", extra={"error": str(exc), "strategy_id": strategy_id})
+        return _degraded_html_response(request=request, settings=settings, path=f"/strategies/{strategy_id}", title="Strategy temporarily unavailable")
     if strategy is None:
         raise HTTPException(status_code=404, detail=f"Unknown strategy_id: {strategy_id}")
-    history = service.history_page(strategy_id, limit=50, offset=0)
     history_items = [] if history is None else history.items
     page = strategy_page(strategy, history_items, settings=settings, request=request)
     return _html_response(page, request=request, settings=settings, engine=engine)
@@ -239,7 +255,7 @@ def _degraded_html_response(*, request: Request, settings: Settings, path: str, 
         description="GamCryp is temporarily serving a degraded public view while stored data is unavailable.",
         body_html=(
             '<div class="page-shell"><section class="page-head error-state">'
-            '<p class="eyebrow">GamCryp public beta</p>'
+            '<p class="eyebrow">GamCryp opportunity intelligence</p>'
             f"<h1>{escape(title)}</h1>"
             '<p class="lede">Stored opportunity data is temporarily unavailable. No fresh or estimated values are being invented.</p>'
             '<p><a class="secondary-button" href="/methodology">Review the methodology</a></p>'

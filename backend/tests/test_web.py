@@ -189,3 +189,20 @@ def test_public_home_degrades_without_database(monkeypatch, tmp_path) -> None:
     assert response.headers["x-gamcryp-degraded"] == "database-unavailable"
     assert "Stored opportunity data is temporarily unavailable" in response.text
     assert "No fresh or estimated values are being invented" in response.text
+
+
+def test_public_detail_routes_degrade_without_database(monkeypatch, tmp_path) -> None:
+    client, _engine = _seeded_client(monkeypatch, tmp_path, "web-detail-degraded.db")
+
+    def fail(*args, **kwargs):
+        raise OperationalError("select 1", {}, RuntimeError("database unavailable"))
+
+    monkeypatch.setattr("app.web.routes.ApiDataService.opportunity_detail", fail)
+    opportunity_response = client.get("/opportunities/grass")
+    assert opportunity_response.status_code == 200
+    assert opportunity_response.headers["x-gamcryp-degraded"] == "database-unavailable"
+
+    monkeypatch.setattr("app.web.routes.ApiDataService.strategy_detail", fail)
+    strategy_response = client.get(f"/strategies/{DFK_CJEWEL_MAX_LOCK_V1.strategy_id}")
+    assert strategy_response.status_code == 200
+    assert strategy_response.headers["x-gamcryp-degraded"] == "database-unavailable"

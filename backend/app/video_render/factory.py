@@ -21,7 +21,7 @@ from typing import Any, Callable
 from app.config.settings import Settings
 from app.content_package.generator import ContentPackage, build_content_packages, validate_package
 from app.content_inventory.inventory import LONG_FORM_MIN_SECONDS, LONG_FORM_MIN_WORDS
-from app.publishing.elevenlabs import ElevenLabsConfig, ElevenLabsNarrationProvider, ElevenLabsGenerationResult, ElevenLabsProviderError
+from app.publishing.elevenlabs import ElevenLabsConfig, ElevenLabsNarrationProvider, ElevenLabsGenerationResult, ElevenLabsProviderError, reuse_existing_narration
 from app.video_render.creative_qa import asset_plan, creative_preflight, frame_qa, hook_blockers
 
 SHORT_FORM = "SHORT_FORM"
@@ -100,6 +100,7 @@ def render_package(
     now: datetime | None = None,
     narration_provider_factory: Callable[[ElevenLabsConfig], ElevenLabsNarrationProvider] | None = None,
     command_runner: Callable[..., subprocess.CompletedProcess[str]] | None = None,
+    reuse_local_narration: bool = False,
 ) -> RenderResult:
     try:
         job = build_render_job(package)
@@ -125,7 +126,12 @@ def render_package(
     audio_mode = "neural_voice"
     next_index = _load_rotation_index(state_path)
     base_config = ElevenLabsConfig.from_settings(settings)
-    for offset in range(len(APPROVED_VOICES)):
+    if reuse_local_narration:
+        narration = reuse_existing_narration(package.source_inventory_item_id, narration_dir)
+        if narration is not None:
+            voice_id = narration.metadata.voice_id
+            voice_name = next((voice for voice, identifier in APPROVED_VOICES if identifier == voice_id), None)
+    for offset in range(len(APPROVED_VOICES)) if narration is None else ():
         index = (next_index + offset) % len(APPROVED_VOICES)
         name, candidate_id = APPROVED_VOICES[index]
         try:
@@ -151,7 +157,8 @@ def render_package(
     else:
         audio = Path(narration.metadata.audio_path)
     caption_path = caption_dir / f"{package.package_id}.srt"
-    _write_captions(caption_path, job.script, _audio_duration(audio, run) or _estimate_duration(job.script))
+    spoken_script = narration.metadata.source_script if narration and narration.reused else job.script
+    _write_captions(caption_path, spoken_script, _audio_duration(audio, run) or _estimate_duration(spoken_script))
     caption_text_paths = _write_caption_text_files(caption_path)
     video_path = format_dir / f"{package.package_id}.mp4"
     title_path = metadata_dir / f"{package.package_id}.title.txt"
@@ -162,10 +169,17 @@ def render_package(
     brand_logo_path = _brand_logo_path()
     duration = max(1, _audio_duration(audio, run) or _estimate_duration(job.script))
     quality_metadata = _short_quality_metadata(package, duration, logo_path) if job.format == SHORT_FORM else None
+    if quality_metadata is not None:
+        quality_metadata["narration_reused"] = bool(narration and narration.reused)
+        quality_metadata["narration_script_matches_package"] = bool(
+            narration is None or narration.metadata.source_script.strip() == job.script.strip()
+        )
     product_visual_path = Path(quality_metadata["asset_plan"]["product_visual_paths"][0]) if quality_metadata and quality_metadata["asset_plan"]["product_visual_paths"] else None
     scene_text_paths = _write_scene_text_files(metadata_dir, package, quality_metadata)
     audio_input = 1
     input_args = ["-i", str(audio)]
+    sting_path: Path | None = None
+    sting_input: int | None = None
     video_map = "[vout]"
     filter_graph = _build_motion_filter(
         package=package,
@@ -180,6 +194,7 @@ def render_package(
         short_form=job.format == SHORT_FORM,
     )
     if job.format == SHORT_FORM:
+        sting_path = _ensure_brand_sting(root, run)
         image_inputs: list[str] = []
         if logo_path is not None:
             image_inputs.extend(["-loop", "1", "-i", str(logo_path)])
@@ -189,13 +204,31 @@ def render_package(
             image_inputs.extend(["-loop", "1", "-i", str(brand_logo_path)])
         audio_input = len(image_inputs) // 4 + 1
         input_args = [*image_inputs, "-i", str(audio)]
+        if sting_path is not None:
+            sting_input = audio_input + 1
+            input_args.extend(["-i", str(sting_path)])
     elif logo_path is not None:
         input_args = ["-loop", "1", "-i", str(logo_path), "-i", str(audio)]
         audio_input = 2
+    audio_map = f"{audio_input}:a:0"
+    if sting_input is not None:
+        intro_outro_delay_ms = max(0, int((duration - 0.8) * 1000))
+        filter_graph += (
+            f";[{audio_input}:a]volume=1[voice];"
+            f"[{sting_input}:a]asplit=2[sting_intro][sting_outro];"
+            f"[sting_intro]volume=0.16[intro_sting];"
+            f"[sting_outro]volume=0.12,adelay={intro_outro_delay_ms}[outro_sting];"
+            f"[voice][intro_sting][outro_sting]amix=inputs=3:duration=first:dropout_transition=0:normalize=0[aout]"
+        )
+        audio_map = "[aout]"
+        if quality_metadata is not None:
+            quality_metadata["brand_sting_present"] = True
+    elif quality_metadata is not None:
+        quality_metadata["brand_sting_present"] = False
     command = [
         "ffmpeg", "-y", "-f", "lavfi", "-i", f"color=c=0x071329:s={job.width}x{job.height}:r=30",
         *input_args, "-t", str(duration), "-filter_complex", filter_graph,
-        "-map", video_map, "-map", f"{audio_input}:a:0", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", str(video_path),
+        "-map", video_map, "-map", audio_map, "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", str(video_path),
     ]
     try:
         completed = run(command, check=False, capture_output=True, text=True)
@@ -237,7 +270,7 @@ def validate_render(result: RenderResult) -> tuple[str, ...]:
     if result.format == LONG_FORM and (result.duration_seconds is None or result.duration_seconds < LONG_FORM_MIN_SECONDS):
         blockers.append("long-form duration is below the evidence-backed minimum")
     if result.format == SHORT_FORM:
-        blockers.extend(_short_quality_blockers(result))
+        blockers.extend(short_quality_blockers(result.quality_metadata or {}))
     return tuple(blockers)
 
 
@@ -407,7 +440,7 @@ def _build_motion_filter(*, package: ContentPackage, duration: float, caption_pa
     else:
         graph += f";[cards]drawbox=x=760:y=430:w=180:h=180:color=0x21D4FD@0.18:t=fill:enable='between(t,{step:.3f},{step * 2:.3f})',drawtext=fontfile={font}:text='APP':fontcolor=0x21D4FD:fontsize=42:x=807:y=500:enable='between(t,{step:.3f},{step * 2:.3f})'[identity]"
     if product_visual_path is not None:
-        graph += f";[identity][product_visual]overlay=x=160:y=930:enable='between(t,{step * 2:.3f},{step * 4:.3f})'[product]"
+        graph += f";[identity][product_visual]overlay=x=160:y=760:enable='between(t,{step * 2:.3f},{step * 4:.3f})'[product]"
     else:
         graph += ";[identity]copy[product]"
     if brand_logo_path is not None:
@@ -420,10 +453,8 @@ def _build_motion_filter(*, package: ContentPackage, duration: float, caption_pa
     return f"{prefix}{graph};[branded]{captions}[vout]"
 
 
-def _short_quality_blockers(result: RenderResult) -> list[str]:
-    if result.format != SHORT_FORM:
-        return []
-    quality = result.quality_metadata or {}
+def short_quality_blockers(quality: dict[str, Any]) -> list[str]:
+    """Validate the persisted short-form creative contract at publish time."""
     blockers: list[str] = []
     if int(quality.get("meaningful_scene_count", 0)) < SHORT_MIN_MEANINGFUL_SCENES:
         blockers.append("short-form render has fewer than five meaningful scenes")
@@ -462,7 +493,32 @@ def _short_quality_blockers(result: RenderResult) -> list[str]:
         blockers.append("post-render representative frame QA has not passed")
     if len(quality.get("primary_visual_elements", ())) < 4:
         blockers.append("short-form lacks a meaningful visual storytelling system")
+    if not quality.get("brand_sting_present"):
+        blockers.append("brand opening/closing sting is missing")
+    if quality.get("narration_script_matches_package") is False:
+        blockers.append("reused narration does not match the current package script")
     return blockers
+
+
+def _ensure_brand_sting(root: Path, run: Callable[..., subprocess.CompletedProcess[str]]) -> Path | None:
+    """Create a tiny local GamCryp sonic logo without calling a speech provider."""
+    path = root / "audio" / "gamcryp-brand-sting.wav"
+    if path.is_file() and path.stat().st_size > 100:
+        return path
+    path.parent.mkdir(parents=True, exist_ok=True)
+    command = [
+        "ffmpeg", "-y",
+        "-f", "lavfi", "-i", "sine=frequency=523:duration=0.18",
+        "-f", "lavfi", "-i", "sine=frequency=659:duration=0.22",
+        "-f", "lavfi", "-i", "sine=frequency=784:duration=0.42",
+        "-filter_complex", "[0:a]adelay=0[a0];[1:a]adelay=160[a1];[2:a]adelay=320[a2];[a0][a1][a2]amix=inputs=3:duration=longest:normalize=0,afade=t=out:st=0.55:d=0.25[a]",
+        "-map", "[a]", "-t", "0.8", "-ar", "44100", "-ac", "1", str(path),
+    ]
+    try:
+        completed = run(command, check=False, capture_output=True, text=True)
+    except OSError:
+        return None
+    return path if completed.returncode == 0 and path.is_file() else None
 
 
 def _script_for(package: ContentPackage) -> str:
@@ -484,6 +540,11 @@ def _local_logo_path(package: ContentPackage) -> Path | None:
     if opportunity is None or not opportunity.logo_asset:
         return None
     candidate = Path("frontend") / opportunity.logo_asset.lstrip("/")
+    # ffmpeg's Windows build cannot decode SVG inputs reliably. Keep the
+    # renderer fail-closed for the asset itself, but use the safe branded
+    # identity card when the catalog only has a vector logo.
+    if candidate.suffix.lower() not in {".png", ".jpg", ".jpeg", ".webp", ".ico"}:
+        return None
     return candidate if candidate.is_file() else None
 
 

@@ -52,6 +52,7 @@ class DistributionWorkerConfig:
     video_directory: Path = Path("data/local/youtube/videos")
     thumbnail_directory: Path | None = None
     state_file: Path = Path("data/local/distribution/worker_state.json")
+    heartbeat_file: Path = Path("data/local/distribution/worker_heartbeat.json")
     failure_cooldown_seconds: int = 1800
     manual_outbox_file: Path = Path("distribution/manual_outbox/x_manual_ready.json")
     short_handoff_file: Path = DEFAULT_QUEUE
@@ -72,6 +73,7 @@ class DistributionWorkerConfig:
             video_directory=Path(os.getenv("GAMEFI_DISTRIBUTION_VIDEO_DIR", "data/local/youtube/videos")),
             thumbnail_directory=Path(thumbnail) if thumbnail else None,
             state_file=Path(os.getenv("GAMEFI_DISTRIBUTION_WORKER_STATE_FILE", "data/local/distribution/worker_state.json")),
+            heartbeat_file=Path(os.getenv("GAMEFI_DISTRIBUTION_HEARTBEAT_FILE", "data/local/distribution/worker_heartbeat.json")),
             failure_cooldown_seconds=int(os.getenv("GAMEFI_DISTRIBUTION_FAILURE_COOLDOWN_SECONDS", "1800")),
             manual_outbox_file=Path(os.getenv("GAMEFI_MANUAL_X_OUTBOX_FILE", "distribution/manual_outbox/x_manual_ready.json")),
             short_handoff_file=Path(os.getenv("GAMEFI_SHORT_YOUTUBE_HANDOFF_FILE", str(DEFAULT_QUEUE))),
@@ -156,6 +158,7 @@ class DistributionWorker:
     def run_once(self) -> list[dict[str, Any]]:
         now = self.now()
         results = []
+        self._write_heartbeat(status="running", now=now, results=results)
         try:
             refill_result = self.refiller.run(now=now)
             if refill_result.get("status") != "disabled":
@@ -167,16 +170,59 @@ class DistributionWorker:
         amplification_result = self._process_x_amplification(now)
         if amplification_result.get("status") != "idle":
             results.append(amplification_result)
-        results.extend(self._process_youtube(now))
+        # The legacy Content Pack queue remains available for explicit
+        # operator/CLI use. Autonomous publishing uses only the Short handoff,
+        # which carries the current render, narration, and creative QA proof.
+        results.append({"platform": "YouTubeLegacyQueue", "status": "disabled_for_autonomous_worker"})
         results.append(self._process_short_handoff(now))
+        self._write_heartbeat(status="ok", now=self.now(), results=results)
         return results
 
     def run_forever(self, *, interval_seconds: int = 1800) -> None:
         if interval_seconds < 60:
             raise ValueError("worker interval must be at least 60 seconds")
         while True:
-            self.run_once()
+            try:
+                self.run_once()
+            except Exception as exc:  # Keep the long-lived scheduler alive after an unexpected cycle failure.
+                now = self.now()
+                logger.exception("distribution_cycle_failed category=%s", type(exc).__name__)
+                self._write_heartbeat(status="failed", now=now, results=[], error_category=type(exc).__name__)
             time.sleep(interval_seconds)
+
+    def _write_heartbeat(
+        self,
+        *,
+        status: str,
+        now: datetime,
+        results: list[dict[str, Any]],
+        error_category: str | None = None,
+    ) -> None:
+        payload = {
+            "version": 1,
+            "status": status,
+            "pid": os.getpid(),
+            "updated_at": now.astimezone(UTC).isoformat(),
+            "platform_statuses": [
+                {"platform": item.get("platform"), "status": item.get("status")}
+                for item in results
+            ],
+        }
+        if error_category:
+            payload["error_category"] = error_category
+        path = self.config.heartbeat_file
+        path.parent.mkdir(parents=True, exist_ok=True)
+        descriptor, temporary = tempfile.mkstemp(prefix=f".{path.name}.", dir=str(path.parent), text=True)
+        try:
+            with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+                json.dump(payload, handle, indent=2, sort_keys=True)
+                handle.write("\n")
+                handle.flush()
+                os.fsync(handle.fileno())
+            os.replace(temporary, path)
+        finally:
+            if os.path.exists(temporary):
+                os.unlink(temporary)
 
     def _process_x(self, now: datetime) -> dict[str, Any]:
         if self.config.x_publishing_mode == "disabled":

@@ -223,7 +223,9 @@ def _hook(item: ContentInventoryItem, opportunity: OpportunityCatalogEntry | Non
     if item.content_family == "WHY_ROI_UNAVAILABLE":
         return "Can this actually make money? We cannot verify it yet."
     if item.content_family == "DEPIN_SETUP" or opportunity and opportunity.opportunity_type == "DEPIN_NODE":
-        return "Can your PC, device, or connection earn while you are away?"
+        # Keep the spoken/visual opening short enough for a mobile-safe first
+        # card. The longer setup context belongs in later scenes.
+        return "Can your PC earn while you are away?"
     if item.content_family in {"STRATEGY_COMPARISON", "LOW_COST_RANKING"} and strategies:
         return "The headline return is only the start. What does the catch look like?"
     if opportunity and opportunity.opportunity_type == "GAME":

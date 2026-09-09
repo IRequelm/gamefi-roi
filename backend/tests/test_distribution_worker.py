@@ -72,6 +72,7 @@ def worker(tmp_path: Path, *, live: bool = False, x=None, youtube=None) -> Distr
         manual_outbox_file=tmp_path / "outbox.json",
         short_handoff_file=tmp_path / "short-handoff.json",
         autonomous_cap_file=tmp_path / "cap.json",
+        heartbeat_file=tmp_path / "heartbeat.json",
     )
     return DistributionWorker(config=config, x_service=x or FakeX(), youtube_distribution=youtube or FakeYouTube(), now=lambda: NOW)
 
@@ -89,6 +90,15 @@ def test_manual_x_mode_exports_exact_green_post_without_network(tmp_path):
     assert json.loads((tmp_path / "outbox.json").read_text(encoding="utf-8"))["item"]["post_text"] == "Post for green-x"
 
 
+def test_worker_writes_success_heartbeat_after_cycle(tmp_path):
+    worker(tmp_path).run_once()
+    heartbeat = json.loads((tmp_path / "heartbeat.json").read_text(encoding="utf-8"))
+    assert heartbeat["status"] == "ok"
+    assert heartbeat["pid"] > 0
+    assert heartbeat["updated_at"].endswith("+00:00")
+    assert any(item["platform"] == "YouTubeLegacyQueue" for item in heartbeat["platform_statuses"])
+
+
 def test_green_x_is_dry_run_by_default_and_persists_no_publication(tmp_path):
     x = FakeX(publishable=["green-x"])
     result = worker(tmp_path, x=x).run_once()
@@ -101,7 +111,7 @@ def test_yellow_and_red_items_are_not_auto_processed(tmp_path):
     x = FakeX(awaiting=["yellow-x"], blocked=["red-x"])
     youtube = FakeYouTube(awaiting=["yellow-video"], blocked=["red-video"])
     result = worker(tmp_path, x=x, youtube=youtube).run_once()
-    assert [item["status"] for item in result] == ["idle", "idle", "idle"]
+    assert [item["status"] for item in result] == ["idle", "disabled_for_autonomous_worker", "idle"]
     assert x.calls == []
     assert youtube.calls == []
 
@@ -120,12 +130,7 @@ def test_failed_item_is_cooled_down_and_state_survives_restart(tmp_path):
 
 def test_missing_youtube_asset_fails_closed(tmp_path):
     result = worker(tmp_path, youtube=FakeYouTube(publishable=["video-1"])).run_once()
-    assert result[1] == {
-        "platform": "YouTube",
-        "content_id": "video-1",
-        "status": "blocked",
-        "detail": "video asset is missing",
-    }
+    assert result[1] == {"platform": "YouTubeLegacyQueue", "status": "disabled_for_autonomous_worker"}
 
 
 def test_youtube_queue_continues_after_one_item_failure(tmp_path):
@@ -143,9 +148,9 @@ def test_youtube_queue_continues_after_one_item_failure(tmp_path):
 
     youtube = PreviewFails(publishable=youtube.publishable)
     result = worker(tmp_path, youtube=youtube).run_once()
-    assert result[1]["status"] == "failed"
-    assert result[2]["status"] == "dry_run"
-    assert youtube.calls == ["dry:good-video"]
+    assert result[1]["status"] == "disabled_for_autonomous_worker"
+    assert result[2]["status"] == "idle"
+    assert youtube.calls == []
 
 
 def test_x_auth_failure_does_not_block_youtube_queue_processing(tmp_path):
@@ -158,8 +163,9 @@ def test_x_auth_failure_does_not_block_youtube_queue_processing(tmp_path):
     result = worker(tmp_path, x=x, youtube=youtube).run_once()
 
     assert result[0]["status"] == "failed"
-    assert result[1]["status"] == "dry_run"
-    assert youtube.calls == ["dry:good-video"]
+    assert result[1]["status"] == "disabled_for_autonomous_worker"
+    assert result[2]["status"] == "idle"
+    assert youtube.calls == []
 
 
 def test_x_auth_failure_exports_one_manual_ready_item_without_blocking_youtube(tmp_path):
@@ -170,7 +176,7 @@ def test_x_auth_failure_exports_one_manual_ready_item_without_blocking_youtube(t
     second = worker(tmp_path, x=x, youtube=youtube).run_once()
 
     assert first[0]["status"] == "manual_ready"
-    assert first[1]["status"] == "idle"
+    assert first[1]["status"] == "disabled_for_autonomous_worker"
     assert outbox["item"]["status"] == "MANUAL_READY"
     assert outbox["item"]["published"] is False
     assert second[0]["status"] == "cooldown"

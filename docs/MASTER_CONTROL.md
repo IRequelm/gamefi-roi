@@ -1,8 +1,16 @@
 # GamCryp V2 Master Control
 
-Updated: 2026-09-08 (Europe/Istanbul)
+Updated: 2026-09-09 (Europe/Istanbul)
 
 This is the durable operational summary for the GamCryp V2 finish pass. Repository files, verified runtime state, provider logs, and deployment evidence outrank chat memory. This document does not override `AGENTS.md`, the master specification, the architecture, the ROI methodology, or the data contract.
+
+## 0a. Product-hardening pass (local, pending deployment)
+
+- The homepage and degraded fallback now use product language rather than the public-beta label.
+- The homepage top-model view selects at most one strategy per opportunity without changing API ranking order.
+- The browser rankings view groups repeated strategies under their opportunity, so one project cannot visually occupy the first several cards.
+- These changes are tested locally but are not considered production-live until the deployed commit is verified on `gamcryp.com`.
+- Current proof media remains local-only; no additional YouTube publication is permitted after the one successful publication recorded for the local calendar day.
 
 ## 1. Source-of-truth rules
 
@@ -13,12 +21,12 @@ This is the durable operational summary for the GamCryp V2 finish pass. Reposito
 
 ## 2. Current production and repository state
 
-- Active repository branch: `master`; the current local product-hardening commit is `2733d32`.
+- Active repository branch: `master`; current product-hardening changes are in the local working tree and are not yet committed.
 - Product hardening and canonical-host commits are deployed; latest verified deployed source is `a738300`. Local distribution/runtime state is intentionally kept outside the product commits.
-- Public Render web service: `gamefi-roi-web`, Ohio, Blueprint-managed. The Render dashboard currently reports the service as Free because the deployed `render.yaml` blueprint still declares `plan: free`; the earlier paid-plan selection was not preserved by that blueprint deployment.
-- Current controlled routes return 200, but Free-plan sleep/cold-start behavior remains a live availability limitation until the operator selects the paid web plan or applies the paid production blueprint. No billing change was made by Codex.
+- Public Render web service: `gamefi-roi-web`, Ohio, Blueprint-managed. The operator dashboard showed the paid `0.5c-512mb` web plan on 2026-09-09. This removes the Free web-service sleep limitation, but does not guarantee application or database availability.
+- The production source commit still requires a fresh dashboard/live-route check after the current local hardening changes are deployed. No billing change was made by Codex.
 - Canonical public host is `https://gamcryp.com`; Render’s `onrender.com` host is infrastructure-only and must not appear in public canonical, Open Graph, Twitter, JSON-LD, or sitemap URLs.
-- The web service is currently exposed to the Free-plan idle sleep limitation. Individual edge/proxy failures can still occur and must be classified separately.
+- The paid web service may still show application, database, deploy, or edge/proxy failures; these must be classified separately rather than attributed to sleep.
 - Render Postgres remains on the Free plan at the time of this verification. It is not production-grade: it expires after 30 days and does not provide the paid backup/PITR guarantees. The paid Blueprint target is `basic-256mb`.
 - Direct requests to `gamcryp.com` can still receive Cloudflare/edge `429` Managed Challenge responses with `Cf-Mitigated: challenge`; this is not an application rate-limit response. Browser and controlled low-rate requests also reached 200 for `/`, `/opportunities`, `/methodology`, `/robots.txt`, `/api/v1/rankings`, and a representative strategy page.
 
@@ -65,10 +73,10 @@ Official destinations and reviewed outbound redirects remain allowlisted and sep
 
 - `GAMEFI_DISTRIBUTION_LIVE=true` in the local `.env`, but the current queue is fail-closed by the creative gates and today's one-success cap is already consumed; no additional upload is permitted today.
 - Windows task `GamCryp Distribution Worker` exists, is enabled, runs at login, and was observed in `Running` state without a terminal window.
-- Short handoff buffer target is bounded at 14; current report is 14 queued GREEN handoff records and 2 previously uploaded records. The 14 queued records are not publishable under the current creative contract until re-rendered with approved product visuals.
-- YouTube daily cap remains one successful public Short per local calendar day. The local cap state records one success for 2026-09-06, so no further upload is permitted today.
+- Short handoff buffer target is bounded at 14; the current local handoff contains 0 queued and 3 previously uploaded records. New items are admitted only after the current creative contract, narration, asset, checksum, and frame-QA checks pass.
+- YouTube daily cap remains one successful public Short per local calendar day. The local cap state records one success for 2026-09-09, so no further upload is permitted today. The cap check and successful-upload state update are protected by a process lock.
 - Failed narration/render never enters the handoff. Music-only or silent media is never publishable: every Short requires approved ElevenLabs narration with provider/voice/model metadata. X failures are isolated from YouTube.
-- The visual gate requires a category-specific hook, six planned beats with at least five meaningful scenes, scene diversity, approved non-caption product visuals, identity representation, transitions, validated safe captions, no clipping, a natural GamCryp evaluation close, and representative post-render frame QA. GamCryp is not shown as a generic intro.
+- The visual gate requires a category-specific hook, six planned beats with at least five meaningful scenes, scene diversity, approved non-caption product visuals, identity representation, transitions, validated safe captions, no clipping, a natural GamCryp evaluation close, a brand sting, matching narration/script metadata, and representative post-render frame QA. GamCryp is not shown as a generic intro.
 
 ## 7. YouTube and narration
 
@@ -112,7 +120,7 @@ The LIVE flag is local `.env` state and must remain `false` until visual proof a
 - PostHog: repository integration is present and consent-gated with explicit events; production activation is not proven here.
 - First-party inbound/outbound analytics are implemented with privacy-minimal records. Commercial analytics remain separate from model data.
 
-Operational gaps still requiring explicit monitoring: snapshot refresh age, queue backlog, worker liveness, database backup success, and ElevenLabs quota/auth failure duration. Sentry initialization is visible in Render logs, but production alert delivery is not independently verified.
+Operational gaps still requiring explicit monitoring: snapshot refresh age, queue backlog, worker heartbeat freshness, database backup success, and ElevenLabs quota/auth failure duration. The worker now writes an atomic local heartbeat, but alerting on stale/missing heartbeat is not yet independently verified. Sentry initialization is visible in Render logs, but production alert delivery is not independently verified.
 
 ## 10a. Backup and recovery
 
@@ -133,15 +141,15 @@ Operational gaps still requiring explicit monitoring: snapshot refresh age, queu
 1. Render Postgres remains Free; backups/PITR and expiry protection are not production-grade.
 2. Cloudflare/edge Managed Challenge can return 429 to some non-browser probes; security was not weakened.
 3. ElevenLabs currently reports 0 remaining credits; narrated production is blocked. Music-only and silent Shorts cannot enter the publish queue.
-4. Autonomous YouTube remains disabled; X uses local manual-ready handoff rather than API/browser automation.
+4. Autonomous YouTube worker is enabled locally, but today's one-public-Short cap is already consumed; X uses local manual-ready handoff rather than API/browser automation.
 
 ## 13. Release-closure decision
 
-The current public web release is `a738300`; Render reports it Live and controlled routes returned 200. The product hardening changes are live, including evidence-backed guide cues, risk-contribution context, explicit guide-only counts, and canonical `gamcryp.com` metadata. The service plan is currently Free and remains an operational availability limitation. Publishing is still disabled for live YouTube; X has a local manual-ready path.
+The current previously verified public web release is `a738300`; the operator dashboard later showed the paid web plan, but the current local hardening changes are still pending deployment/live verification. Publishing remains limited by the one-success daily YouTube cap; X has a local manual-ready path.
 
 ## 14. Verification evidence
 
-Verified on 2026-09-08 from repository tests, source inspection, local rendering/UI contracts, prior Render deployment evidence, and controlled route evidence. No secrets are included.
+Verified on 2026-09-09 from repository tests, source inspection, local rendering/UI contracts, operator Render screenshots, prior controlled route evidence, and local route tests. No secrets are included.
 
 ## 15. Operating model
 

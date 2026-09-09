@@ -1,0 +1,11 @@
+{
+  "content_id": "x-hivemapper-manual-draft-20260909",
+  "status": "DRAFT_MANUAL_READY",
+  "official_handle": null,
+  "hashtags": ["#Hivemapper", "#DePIN", "#Web3", "#GamCryp"],
+  "post_text": "Can your PC earn while you are away?\n\nHivemapper rewards contributors who map roads with supported hardware and the companion setup. The catch: earnings depend on the device, activity, program rules, and token exit conditions.\n\nGamCryp checks the cost, earning path, risk, and evidence before calling the economics attractive.\n\nFull breakdown: https://gamcryp.com/opportunities/hivemapper\n\n#Hivemapper #DePIN #Web3 #GamCryp",
+  "source_url": "https://gamcryp.com/opportunities/hivemapper",
+  "checksum": "3651dbec8e8a26a9714e656e095bf0fa631787f1ae462dddf0c0a15edd49a59c",
+  "published": false,
+  "note": "The single-slot x_manual_ready.json outbox already contains an older unconfirmed methodology handoff; this draft does not overwrite it."
+}

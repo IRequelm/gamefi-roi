@@ -89,7 +89,10 @@ def frame_qa(
     Semantic review still belongs to a human creative review. This automated
     layer prevents a missing/duplicate frame set from being called reviewed.
     """
-    checkpoints = (0.0, 0.2, 0.45, 0.7, 0.95)
+    duration = _probe_duration(video_path, runner)
+    if duration is None or duration <= 0:
+        return {"status": "FAILED", "checkpoints": (), "frames": [], "reason": "video duration probe failed"}
+    checkpoints = tuple(round(duration * fraction, 3) for fraction in (0.0, 0.2, 0.45, 0.7, 0.95))
     output_dir.mkdir(parents=True, exist_ok=True)
     frames: list[str] = []
     for index, checkpoint in enumerate(checkpoints, start=1):
@@ -108,6 +111,15 @@ def frame_qa(
     }
 
 
+def _probe_duration(video_path: Path, runner: Callable[..., subprocess.CompletedProcess[str]]) -> float | None:
+    command = ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", str(video_path)]
+    completed = runner(command, check=False, capture_output=True, text=True)
+    try:
+        return float((completed.stdout or "").strip())
+    except (TypeError, ValueError):
+        return None
+
+
 def _find_logo(package: ContentPackage) -> Path | None:
     if not package.opportunity_id:
         return None
@@ -117,6 +129,8 @@ def _find_logo(package: ContentPackage) -> Path | None:
     if opportunity is None or not opportunity.logo_asset:
         return None
     candidate = Path("frontend") / opportunity.logo_asset.lstrip("/")
+    if candidate.suffix.lower() not in {".png", ".jpg", ".jpeg", ".webp", ".ico"}:
+        return None
     return candidate if candidate.is_file() else None
 
 

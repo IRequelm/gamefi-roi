@@ -42,6 +42,8 @@ def test_frame_qa_requires_five_distinct_extractable_frames(tmp_path: Path):
 
     def runner(command, **kwargs):
         calls.append(command)
+        if command[0] == "ffprobe":
+            return CompletedProcess(command, 0, stdout="10.0", stderr="")
         Path(command[-1]).write_bytes(bytes([len(calls)]) * (100 + len(calls)))
         return CompletedProcess(command, 0, stdout="", stderr="")
 

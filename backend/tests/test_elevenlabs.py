@@ -11,6 +11,8 @@ from app.publishing.elevenlabs import (
     ElevenLabsConfigError,
     ElevenLabsNarrationProvider,
     ElevenLabsProviderError,
+    NarrationAssetMetadata,
+    reuse_existing_narration,
 )
 
 
@@ -119,3 +121,30 @@ def test_safe_result_does_not_expose_api_key(tmp_path: Path) -> None:
     result = provider.generate(content_id="green-video", script="Script")
 
     assert "secret-eleven-key" not in json.dumps(result.safe_dict())
+
+
+def test_visual_rebuild_reuses_verified_existing_audio_without_provider_call(tmp_path: Path) -> None:
+    audio = tmp_path / "narration" / "legacy-short-old.mp3"
+    audio.parent.mkdir(parents=True)
+    audio.write_bytes(b"approved-existing-audio")
+    import hashlib
+
+    metadata = NarrationAssetMetadata(
+        content_id="legacy-short",
+        script_fingerprint="legacy-script",
+        source_script="Start with the evidence behind this opportunity.",
+        spoken_text="Start with the evidence behind this opportunity.",
+        voice_id="FGY2WhTYpPnrIDTdsKH5",
+        model_id="eleven_multilingual_v2",
+        generated_at="2026-01-01T00:00:00+00:00",
+        audio_path=str(audio),
+        audio_checksum=hashlib.sha256(audio.read_bytes()).hexdigest(),
+    )
+    metadata_path = audio.with_suffix(".json")
+    metadata_path.write_text(metadata.model_dump_json(indent=2), encoding="utf-8")
+
+    reused = reuse_existing_narration("legacy-short", tmp_path / "narration")
+
+    assert reused is not None
+    assert reused.reused is True
+    assert reused.metadata.audio_path == str(audio)

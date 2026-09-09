@@ -1,13 +1,13 @@
 # GamCryp YouTube API Publishing Runbook
 
 Updated: 2026-09-06
-Status: autonomous YouTube publishing paused pending visual review; live flag is false
+Status: autonomous YouTube publishing uses the quality-gated Short handoff; live publication remains fail-closed when the cap, assets, narration, or worker health are not valid
 
 ## Purpose
 
 GamCryp uses the official YouTube Data API v3 for operator-controlled video uploads, metadata, thumbnails, and verification. Publishing consumes validated Content Pack Lite data. It does not calculate financial values or alter ROI, ranking, risk, confidence, referrals, analytics, snapshots, or publication readiness.
 
-The operator CLI remains available for review and one-off operations. Browser automation is not a publishing dependency.
+The operator CLI remains available for review and one-off operations. Browser automation is not a publishing dependency. The autonomous worker does not publish from the legacy Content Pack queue; that queue is reserved for explicit operator/CLI use.
 
 ## Autonomous local distribution
 
@@ -15,7 +15,9 @@ The Windows distribution worker may load the ignored local `.env` and run in liv
 
 Refill uses the existing snapshot/opportunity API facts and `build_learning_batch` policy. Stale, invalid, unsupported, or non-refreshable financial facts remain RED; points-only or high-risk content remains YELLOW under the existing rules. A GREEN YouTube package without a matching rendered asset is held in the queue's `pending_asset` collection and is not publishable. X queue generation may continue while X publication remains fail-closed when credentials are unavailable.
 
-The worker's append-only transcript is `data/local/distribution/worker.log`; cooldown and refill state are under `data/local/distribution/`. Set `GAMEFI_DISTRIBUTION_LIVE=false` and disable the scheduled task before stopping autonomous publishing.
+The runner explicitly changes to the repository root before loading the worker, so relative state paths remain stable under Task Scheduler. The worker's append-only transcript is `data/local/distribution/worker.log`; cooldown, refill, and heartbeat state are under `data/local/distribution/`. The atomic liveness record is `data/local/distribution/worker_heartbeat.json`; its `updated_at` must be recent and its status must be `ok` before treating unattended distribution as healthy. Set `GAMEFI_DISTRIBUTION_LIVE=false` and disable the scheduled task before stopping autonomous publishing.
+
+Run `powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\check_distribution_worker.ps1` from the repository root to fail closed when the heartbeat is missing, failed, invalid, or older than 45 minutes. Monitoring may treat any non-zero exit code as an alert.
 
 The short-form handoff forward buffer is intentionally bounded at 14 queued GREEN renders (normally 7–14 in steady state) to avoid unnecessary ElevenLabs/render credit churn. The one successful public Short per local calendar day cap is unchanged.
 
@@ -95,7 +97,7 @@ video-narration generate CONTENT_ID
 
 Assets use `CONTENT_ID` plus a script fingerprint and are stored beside checksum-bound JSON metadata. Matching audio is reused. Changing the script, voice, or model produces a new asset. The metadata records `narration_mode=neural_voice`, `voice_provider=elevenlabs`, voice/model identifiers, the exact spoken text, timestamp, checksum, and quality status.
 
-GREEN video publication still requires the validated package, approved audio metadata, and a valid rendered video. A provider error never falls back to Windows/system voices, pyttsx, generic TTS, or another neural provider. When ElevenLabs returns an account-level quota/auth failure, short-form rendering may use the local `GAMEFI_SHORT_AUDIO_FALLBACK=music_only` path: an attribution-free instrumental bed, no spoken-content claim, and the same visual/evidence gate. Long-form and narration-dependent packages remain `NOT_READY`. Music-only and silent formats are valid only when explicitly represented in the render metadata.
+GREEN video publication still requires the validated package, approved audio metadata, and a valid rendered video. A provider error never falls back to Windows/system voices, pyttsx, generic TTS, or another neural provider. When ElevenLabs returns an account-level quota/auth failure, short-form rendering may create a local diagnostic/music-only artifact, but it is never eligible for the handoff or publication. Long-form and narration-dependent packages remain `NOT_READY`. Every publishable Short requires approved ElevenLabs narration with provider, voice, model, and script-match metadata.
 
 Never paste or commit the OAuth client JSON, access token, refresh token, browser cookies, or authorization headers. Do not place secrets in Content Packs or queue files.
 
@@ -180,7 +182,7 @@ youtube-publisher verify --video-id VIDEO_ID --thumbnail
 youtube-publisher metadata --video-id VIDEO_ID --title "Updated title" --confirm-update
 ```
 
-These commands operate only on an explicitly supplied video ID. They are not scheduled.
+These commands operate only on an explicitly supplied video ID. They are not scheduled. Unattended publication uses only the quality-gated Short handoff, never the legacy queue.
 
 ## Duplicate And Failure Safety
 

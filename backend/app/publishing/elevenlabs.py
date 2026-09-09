@@ -203,6 +203,30 @@ def _local_reuse_metadata_paths(output_directory: Path, content_id: str) -> list
     return paths
 
 
+def reuse_existing_narration(content_id: str, output_directory: Path) -> ElevenLabsGenerationResult | None:
+    """Reuse a verified local narration for a visual-only rebuild.
+
+    This is intentionally explicit and bounded. It never contacts ElevenLabs,
+    accepts only approved voices/models, and verifies the audio checksum before
+    returning an asset. The caller is responsible for treating legacy-script
+    reuse as an editorial review condition.
+    """
+    for candidate_metadata_path in _local_reuse_metadata_paths(output_directory, content_id):
+        candidate = _load_metadata(candidate_metadata_path)
+        if not candidate or candidate.content_id != content_id:
+            continue
+        audio = Path(candidate.audio_path)
+        if (
+            candidate.voice_id in APPROVED_REUSE_VOICE_IDS
+            and candidate.narration_mode == "neural_voice"
+            and candidate.narration_quality_status == "approved"
+            and audio.is_file()
+            and _sha256_file(audio) == candidate.audio_checksum
+        ):
+            return ElevenLabsGenerationResult(metadata=candidate, reused=True)
+    return None
+
+
 def _sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:

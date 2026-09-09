@@ -11,6 +11,8 @@ import hashlib
 import json
 import os
 import tempfile
+import time
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
 from pathlib import Path
@@ -21,7 +23,7 @@ from pydantic import BaseModel, ConfigDict
 
 from app.config.settings import Settings
 from app.content_package.generator import ContentPackage, build_content_packages, validate_package
-from app.video_render.factory import APPROVED_VOICES, RENDER_READY, RenderResult, render_package, validate_render
+from app.video_render.factory import APPROVED_VOICES, RENDER_READY, RenderResult, render_package, short_quality_blockers, validate_render
 from app.video_render.creative_qa import creative_preflight, frame_qa
 from app.publishing.youtube import YouTubeOperationResult, YouTubePublishManifest, YouTubePublisher
 
@@ -184,9 +186,6 @@ def publish_next(
     if blockers:
         return {"status": "not_ready", "content_id": item.content_id, "detail": "; ".join(blockers)}
     current = now or datetime.now(UTC)
-    cap = _load_cap(cap_path, current)
-    if live and not cap.available:
-        return {"status": "daily_cap", "content_id": item.content_id, "detail": "one successful autonomous public YouTube publication already recorded for the local calendar day"}
     manifest = YouTubePublishManifest(
         content_id=item.content_id,
         video_path=Path(item.video_path),
@@ -200,10 +199,20 @@ def publish_next(
         campaign_medium="short",
         campaign_campaign="content-package-handoff",
     )
-    operation = publisher.upload_video(manifest) if live else publisher.dry_run_upload(manifest)
-    if live and operation.status == "uploaded":
-        _save_cap(cap_path, DailyCap(cap.date, cap.successful_publications + 1))
-        _replace_item(queue_path, queue, item.model_copy(update={"status": "uploaded"}))
+    if live:
+        # Hold the lock across the cap check, upload, and state update. This
+        # prevents a second worker/CLI process from publishing a second Short
+        # after both processes observed an available cap.
+        with _daily_cap_lock(cap_path):
+            cap = _load_cap(cap_path, current)
+            if not cap.available:
+                return {"status": "daily_cap", "content_id": item.content_id, "detail": "one successful autonomous public YouTube publication already recorded for the local calendar day"}
+            operation = publisher.upload_video(manifest)
+            if operation.status == "uploaded":
+                _save_cap(cap_path, DailyCap(cap.date, cap.successful_publications + 1))
+                _replace_item(queue_path, queue, item.model_copy(update={"status": "uploaded"}))
+    else:
+        operation = publisher.dry_run_upload(manifest)
     return {"status": operation.status if live else "dry_run", "content_id": item.content_id, "video_id": operation.video_id}
 
 
@@ -225,8 +234,9 @@ def autonomous_youtube_cap_available(path: Path = DEFAULT_CAP_STATE, *, now: dat
 
 def record_autonomous_youtube_success(path: Path = DEFAULT_CAP_STATE, *, now: datetime | None = None) -> None:
     current = now or datetime.now(UTC)
-    cap = _load_cap(path, current)
-    _save_cap(path, DailyCap(cap.date, cap.successful_publications + 1))
+    with _daily_cap_lock(path):
+        cap = _load_cap(path, current)
+        _save_cap(path, DailyCap(cap.date, cap.successful_publications + 1))
 
 
 def _description(package: ContentPackage) -> str:
@@ -263,7 +273,29 @@ def _handoff_blockers(item: ShortHandoffItem) -> tuple[str, ...]:
         qa = frame_qa(Path(item.video_path), Path("data/local/video_render/qa") / item.package_id)
         if qa.get("status") != "PASSED":
             blockers.append("BLOCKED_VISUAL_QA: representative frame extraction failed")
+        quality = _load_render_quality_metadata(item)
+        if quality is None:
+            blockers.append("BLOCKED_VISUAL_QA: persisted creative quality metadata is missing")
+        else:
+            blockers.extend(short_quality_blockers(quality))
     return tuple(blockers)
+
+
+def _load_render_quality_metadata(item: ShortHandoffItem) -> dict[str, Any] | None:
+    video = Path(item.video_path)
+    candidates = (
+        video.parent.parent / "metadata" / f"{item.package_id}.json",
+        video.parent.parent.parent / "metadata" / f"{item.package_id}.json",
+    )
+    for metadata in candidates:
+        try:
+            payload = json.loads(metadata.read_text(encoding="utf-8"))
+            quality = payload.get("quality_metadata")
+            if isinstance(quality, dict):
+                return quality
+        except (OSError, ValueError, TypeError):
+            continue
+    return None
 
 
 def _stored_render_creative_ready(item: ShortHandoffItem) -> bool:
@@ -293,6 +325,34 @@ def _load_cap(path: Path, now: datetime) -> DailyCap:
     except (OSError, ValueError, TypeError):
         pass
     return DailyCap(local_date, 0)
+
+
+@contextmanager
+def _daily_cap_lock(cap_path: Path):
+    """Cross-platform process lock for the one-public-Short daily cap."""
+    lock_path = cap_path.with_name(f"{cap_path.name}.lock")
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    deadline = time.monotonic() + 30
+    while True:
+        try:
+            descriptor = os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+            os.write(descriptor, str(os.getpid()).encode("ascii", errors="ignore"))
+            os.close(descriptor)
+            break
+        except FileExistsError:
+            try:
+                if time.time() - lock_path.stat().st_mtime > 6 * 60 * 60:
+                    lock_path.unlink()
+                    continue
+            except OSError:
+                pass
+            if time.monotonic() >= deadline:
+                raise TimeoutError("timed out waiting for the YouTube daily-cap lock")
+            time.sleep(0.1)
+    try:
+        yield
+    finally:
+        lock_path.unlink(missing_ok=True)
 
 
 def _save_cap(path: Path, cap: DailyCap) -> None:

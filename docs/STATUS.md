@@ -1,9 +1,13 @@
 # GameFi ROI — Project Status
 
-Updated: 2026-09-08
+Updated: 2026-09-09
 Project version: 0.1
 
+2026-09-09 distribution hardening: autonomous worker execution is restricted to the quality-gated Short handoff, the one-public-Short daily cap is process-locked, and an atomic worker heartbeat is emitted for operator health checks. The local Task Scheduler runner anchors execution at the repository root; re-registration still requires Windows task-registration permission.
+
 V2 finish-pass operational truth is maintained in `docs/MASTER_CONTROL.md`; this document remains the authoritative gate board and currently has no numbered gate active.
+
+2026-09-09 product-hardening pass: local pending changes remove the public-beta label from public/degraded copy, diversify the homepage top-model view by opportunity, and group repeated strategies under one opportunity on the browser rankings surface. These changes require deployment and controlled public-route verification before they are treated as live.
 
 ## Current state
 

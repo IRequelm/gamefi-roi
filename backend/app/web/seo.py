@@ -126,7 +126,7 @@ def home_page(service: ApiDataService, *, settings: Settings, request: Request) 
     body = f"""
       <div class="page-shell">
         <section class="page-head">
-          <p class="eyebrow">GamCryp public beta</p>
+          <p class="eyebrow">GamCryp opportunity intelligence</p>
           <h1>Web3 earning opportunities with ROI, Risk, Confidence, and evidence.</h1>
           <p class="lede">GamCryp tracks Web3 earning opportunities. When rewards and exits can be priced reproducibly, we calculate modeled ROI. When they cannot, we show why instead of inventing a number.</p>
           <p class="muted">{escape(answer)}</p>
@@ -137,7 +137,10 @@ def home_page(service: ApiDataService, *, settings: Settings, request: Request) 
           </div>
         </section>
         {_render_catalog_stats(rankings, opportunities)}
-        {_render_ranking_cards(rankings.items[:3], heading="Latest modeled results")}
+        {_render_ranking_cards(
+            _distinct_opportunity_items(rankings.items, limit=3),
+            heading="Latest modeled results" if top is not None else "Latest recorded models",
+        )}
         {_render_opportunity_cards(opportunities, heading="Opportunity radar")}
       </div>
     """
@@ -513,8 +516,8 @@ def _render_logo(logo, label: str = "Opportunity", *, compact: bool = False) -> 
 
 def _ranking_answer(snapshot: StrategySnapshotPayload, strategy: StrategySummary) -> str:
     stale = getattr(getattr(snapshot, "freshness", None), "overall_status", "fresh") != "fresh"
-    lead = "GamCryp's model estimates" if stale else "GamCryp models"
-    earnings_label = "Estimated net earnings"
+    lead = "Stored modeled result for" if stale else "GamCryp models"
+    earnings_label = "Modeled net earnings"
     freshness_note = " This model is stale; review the source dates before acting." if stale else ""
     return (
         f"{lead} {strategy.name} at {format_ratio_text(snapshot.roi.roi_total_30d)} 30-day ROI "
@@ -996,6 +999,21 @@ def _diversify_ranking_items(items: list[RankingItem]) -> list[RankingItem]:
             if group:
                 diversified.append(group.pop(0))
     return diversified
+
+
+def _distinct_opportunity_items(items: list[RankingItem], *, limit: int) -> list[RankingItem]:
+    """Select a compact top view without changing the underlying ranking order."""
+    selected: list[RankingItem] = []
+    seen: set[str] = set()
+    for item in items:
+        opportunity_id = item.strategy.opportunity_id or item.strategy.game_id or item.strategy.strategy_id
+        if opportunity_id in seen:
+            continue
+        seen.add(opportunity_id)
+        selected.append(item)
+        if len(selected) >= limit:
+            break
+    return selected
 
 
 def _render_opportunity_cards(opportunities: list[OpportunitySummary], *, heading: str) -> str:

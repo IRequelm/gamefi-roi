@@ -249,7 +249,7 @@ export function renderHomeShell(games = [], rankings = { items: [], page: { tota
   return `
     <div class="page-shell">
       <section class="page-head">
-        <p class="eyebrow">GamCryp public beta</p>
+        <p class="eyebrow">GamCryp opportunity intelligence</p>
         <h1>Find Web3 earning opportunities with evidence behind them.</h1>
         <p class="lede">GamCryp tracks Web3 earning opportunities. When rewards and exits can be priced reproducibly, we calculate modeled ROI. When they cannot, we show why instead of inventing a number.</p>
         <div class="hero-proof-points" aria-label="GamCryp data principles">
@@ -607,9 +607,9 @@ function rankingsSummary(rankings = { items: [] }) {
 
 function rankingAnswer(snapshot, strategy) {
   const stale = String(snapshot.freshness?.overall_status || "unknown").toLowerCase() !== "fresh";
-  const lead = stale ? "GamCryp's model estimates" : "GamCryp models";
+  const lead = stale ? "Stored modeled result for" : "GamCryp models";
   const freshnessNote = stale ? " This model is stale; review the source dates before acting." : "";
-  return `${lead} ${strategy.name} at ${textFromHtml(formatRatio(snapshot.roi.roi_total_30d))} 30-day ROI using ${textFromHtml(formatMoney(snapshot.capital.total_capital))} capital. Estimated net earnings are ${textFromHtml(formatMoney(snapshot.earnings.net_earnings_day, { perDay: true }))}. Risk is ${scoreText(snapshot.risk)} and Confidence is ${scoreText(snapshot.confidence)}. Latest model calculation was recorded at ${formatDateTime(snapshot.calculated_at)}.${freshnessNote}`;
+  return `${lead} ${strategy.name} at ${textFromHtml(formatRatio(snapshot.roi.roi_total_30d))} 30-day ROI using ${textFromHtml(formatMoney(snapshot.capital.total_capital))} capital. Modeled net earnings are ${textFromHtml(formatMoney(snapshot.earnings.net_earnings_day, { perDay: true }))}. Risk is ${scoreText(snapshot.risk)} and Confidence is ${scoreText(snapshot.confidence)}. Latest model calculation was recorded at ${formatDateTime(snapshot.calculated_at)}.${freshnessNote}`;
 }
 
 function latestSnapshotTime(rankings = { items: [] }) {
@@ -677,7 +677,7 @@ export function renderRankingsPage(rankings, options = {}) {
       </section>
       ${renderRankingsAnswerBlock(rankings, { title })}
       ${renderCuratedRankingLinks()}
-      ${renderRankingsTable(rankings)}
+      ${renderRankingsTable(rankings, { groupByOpportunity: true })}
       ${renderSponsoredPlacements(rankings.sponsored_placements || [])}
     </div>
   `;

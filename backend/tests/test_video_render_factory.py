@@ -65,7 +65,9 @@ def _runner(command, **kwargs):
 
     if command[0] == "ffprobe":
         return CompletedProcess(command, 0, stdout=("600\n" if "package-long_form" in str(command) else "4.25\n"), stderr="")
-    if str(command[-1]).endswith(".png"):
+    if str(command[-1]).endswith(".wav"):
+        Path(command[-1]).write_bytes(b"audio" * 50)
+    elif str(command[-1]).endswith(".png"):
         checkpoint = float(command[command.index("-ss") + 1])
         Path(command[-1]).write_bytes(b"frame" * (50 + int(checkpoint * 100)))
     else:
@@ -169,8 +171,10 @@ def _short_result_with_quality(**overrides):
         "scene_transitions": True,
         "static_background_only": False,
         "caption_only_visuals": False,
-        "brand_opening_present": True,
-        "brand_closing_present": True,
+          "brand_opening_present": True,
+          "brand_closing_present": True,
+          "brand_sting_present": True,
+          "narration_script_matches_package": True,
         "creative_status": "CREATIVE_QA_PASSED",
         "product_visual_count": 1,
         "hook_qa": {"status": "PASSED", "blockers": []},
@@ -205,6 +209,11 @@ def test_subtitle_only_changes_do_not_count_as_scene_diversity(tmp_path: Path) -
 def test_five_plus_meaningful_scenes_pass_quality_gate(tmp_path: Path) -> None:
     result = _quality_result(tmp_path, _short_result_with_quality(meaningful_scene_count=5, scene_diversity=["hook", "identity", "setup", "evidence", "cta"]))
     assert validate_render(result) == ()
+
+
+def test_reused_narration_must_match_current_package_script(tmp_path: Path) -> None:
+    blockers = validate_render(_quality_result(tmp_path, _short_result_with_quality(narration_script_matches_package=False)))
+    assert any("narration does not match" in blocker for blocker in blockers)
 
 
 def test_logo_and_missing_logo_identity_modes_are_explicit(tmp_path: Path) -> None:
