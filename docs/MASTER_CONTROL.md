@@ -4,12 +4,12 @@ Updated: 2026-09-09 (Europe/Istanbul)
 
 This is the durable operational summary for the GamCryp V2 finish pass. Repository files, verified runtime state, provider logs, and deployment evidence outrank chat memory. This document does not override `AGENTS.md`, the master specification, the architecture, the ROI methodology, or the data contract.
 
-## 0a. Product-hardening pass (local, pending deployment)
+## 0a. Product-hardening pass (deployed and verified)
 
 - The homepage and degraded fallback now use product language rather than the public-beta label.
 - The homepage top-model view selects at most one strategy per opportunity without changing API ranking order.
 - The browser rankings view groups repeated strategies under their opportunity, so one project cannot visually occupy the first several cards.
-- These changes are tested locally but are not considered production-live until the deployed commit is verified on `gamcryp.com`.
+- These changes are deployed in `cbf28b0` and verified on `gamcryp.com` after the Render health check passed.
 - Current proof media remains local-only; no additional YouTube publication is permitted after the one successful publication recorded for the local calendar day.
 
 ## 1. Source-of-truth rules
@@ -21,10 +21,10 @@ This is the durable operational summary for the GamCryp V2 finish pass. Reposito
 
 ## 2. Current production and repository state
 
-- Active repository branch: `master`; current product-hardening changes are in the local working tree and are not yet committed.
+- Active repository branch: `master`; current product-hardening changes are committed in `cbf28b0` and deployed.
 - Product hardening and canonical-host commits are deployed; latest verified deployed source is `a738300`. Local distribution/runtime state is intentionally kept outside the product commits.
 - Public Render web service: `gamefi-roi-web`, Ohio, Blueprint-managed. The operator dashboard showed the paid `0.5c-512mb` web plan on 2026-09-09. This removes the Free web-service sleep limitation, but does not guarantee application or database availability.
-- The production source commit still requires a fresh dashboard/live-route check after the current local hardening changes are deployed. No billing change was made by Codex.
+- The `cbf28b0` production deploy passed build, Alembic migration, and `/api/v1/ops/status` health checks. No billing change was made by Codex.
 - Canonical public host is `https://gamcryp.com`; Render’s `onrender.com` host is infrastructure-only and must not appear in public canonical, Open Graph, Twitter, JSON-LD, or sitemap URLs.
 - The paid web service may still show application, database, deploy, or edge/proxy failures; these must be classified separately rather than attributed to sleep.
 - Render Postgres remains on the Free plan at the time of this verification. It is not production-grade: it expires after 30 days and does not provide the paid backup/PITR guarantees. The paid Blueprint target is `basic-256mb`.
@@ -105,7 +105,7 @@ $env:GAMEFI_DISTRIBUTION_LIVE='true'
 Get-ScheduledTask -TaskName 'GamCryp Distribution Worker' | Enable-ScheduledTask
 ```
 
-The LIVE flag is local `.env` state and must remain `false` until visual proof approval. Disabling the scheduled task is an additional emergency stop; it does not delete queues.
+The LIVE flag is local `.env` state and is currently `true` for the quality-gated worker. Disabling the scheduled task is an additional emergency stop; it does not delete queues.
 
 ## 9. Content and long-form readiness
 
@@ -120,7 +120,7 @@ The LIVE flag is local `.env` state and must remain `false` until visual proof a
 - PostHog: repository integration is present and consent-gated with explicit events; production activation is not proven here.
 - First-party inbound/outbound analytics are implemented with privacy-minimal records. Commercial analytics remain separate from model data.
 
-Operational gaps still requiring explicit monitoring: snapshot refresh age, queue backlog, worker heartbeat freshness, database backup success, and ElevenLabs quota/auth failure duration. The worker now writes an atomic local heartbeat, but alerting on stale/missing heartbeat is not yet independently verified. Sentry initialization is visible in Render logs, but production alert delivery is not independently verified.
+Operational gaps still requiring explicit monitoring: snapshot refresh age, queue backlog, worker heartbeat freshness, database backup success, and ElevenLabs quota/auth failure duration. The worker writes an atomic local heartbeat and the repository includes a non-zero-exit freshness check; external alert delivery is not configured. Sentry initialization is visible in Render logs, but production alert delivery is not independently verified.
 
 ## 10a. Backup and recovery
 
@@ -145,7 +145,7 @@ Operational gaps still requiring explicit monitoring: snapshot refresh age, queu
 
 ## 13. Release-closure decision
 
-The current previously verified public web release is `a738300`; the operator dashboard later showed the paid web plan, but the current local hardening changes are still pending deployment/live verification. Publishing remains limited by the one-success daily YouTube cap; X has a local manual-ready path.
+The current verified public web release is `cbf28b0`; Render build, migration, health check, public routes, and the manual snapshot workflow were verified on 2026-09-10. Publishing remains limited by the one-success daily YouTube cap; X has a local manual-ready path.
 
 ## 14. Verification evidence
 

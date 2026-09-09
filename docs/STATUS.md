@@ -7,7 +7,7 @@ Project version: 0.1
 
 V2 finish-pass operational truth is maintained in `docs/MASTER_CONTROL.md`; this document remains the authoritative gate board and currently has no numbered gate active.
 
-2026-09-09 product-hardening pass: local pending changes remove the public-beta label from public/degraded copy, diversify the homepage top-model view by opportunity, and group repeated strategies under one opportunity on the browser rankings surface. These changes require deployment and controlled public-route verification before they are treated as live.
+2026-09-10 product-hardening pass: the public-beta label removal, opportunity-diversified homepage model view, repeated-strategy grouping, and distribution hardening were deployed as `cbf28b0` and passed controlled public-route verification. Snapshot refresh was manually triggered after deploy and completed successfully; provider/data-contract limitations remain explicitly surfaced.
 
 ## Current state
 
