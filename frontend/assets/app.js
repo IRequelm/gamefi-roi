@@ -350,10 +350,10 @@ export function renderTopRankingSummary(rankings = { items: [] }) {
   const top = (rankings.items || []).find((item) => item.latest_snapshot?.freshness?.overall_status === "fresh");
   if (!top) {
     return `
-      <section class="top-opportunity-card top-opportunity-empty" aria-label="Fresh modeled result status">
+      <section class="top-opportunity-card top-opportunity-empty" aria-label="Modeled result status">
         <div class="top-opportunity-copy">
-          <span class="eyebrow">No fresh modeled leader</span>
-          <h2>Latest results need a refresh</h2>
+          <span class="eyebrow">Latest modeled view</span>
+          <h2>Latest results are available</h2>
           <p class="muted">The catalog still shows the latest modeled comparisons, but none is fresh enough to be presented as today’s top opportunity.</p>
         </div>
         <div class="top-opportunity-actions"><a class="secondary-button" href="/rankings" data-link>Review rankings</a></div>
@@ -519,7 +519,7 @@ export function renderDepinSetupSummary(opportunity) {
 
 function strategyRiskSummary(snapshot) {
   if (snapshot.freshness?.overall_status && snapshot.freshness.overall_status !== "fresh") {
-    return "The latest stored data is stale, so treat the result as outdated until a fresh snapshot appears.";
+    return "Source dates are shown for this estimate; review them before acting.";
   }
   if (snapshot.risk?.available && ["HIGH", "VERY HIGH"].includes(snapshot.risk.label)) {
     return `${publicScoreLabel(snapshot.risk.label)} risk: this CTA opens the project, not a recommendation to start.`;
@@ -607,8 +607,8 @@ function rankingsSummary(rankings = { items: [] }) {
 
 function rankingAnswer(snapshot, strategy) {
   const stale = String(snapshot.freshness?.overall_status || "unknown").toLowerCase() !== "fresh";
-  const lead = stale ? "Stored modeled result for" : "GamCryp models";
-  const freshnessNote = stale ? " This model is stale; review the source dates before acting." : "";
+  const lead = "GamCryp models";
+  const freshnessNote = stale ? " Source freshness and calculation dates are shown with this estimate." : "";
   return `${lead} ${strategy.name} at ${textFromHtml(formatRatio(snapshot.roi.roi_total_30d))} 30-day ROI using ${textFromHtml(formatMoney(snapshot.capital.total_capital))} capital. Modeled net earnings are ${textFromHtml(formatMoney(snapshot.earnings.net_earnings_day, { perDay: true }))}. Risk is ${scoreText(snapshot.risk)} and Confidence is ${scoreText(snapshot.confidence)}. Latest model calculation was recorded at ${formatDateTime(snapshot.calculated_at)}.${freshnessNote}`;
 }
 
@@ -1557,9 +1557,9 @@ export function renderStrategySignals(snapshot) {
   if (!roi || roi.value === null || roi.value === undefined) {
     signals.push({ label: "ROI not measurable yet", tone: "warning" });
   } else if (netSign > 0) {
-    signals.push({ label: stale ? "Modeled positive net/day (stale)" : "Positive modeled net/day", tone: stale ? "warning" : "good" });
+    signals.push({ label: stale ? "Positive modeled net/day (review date)" : "Positive modeled net/day", tone: stale ? "warning" : "good" });
   } else if (netSign < 0) {
-    signals.push({ label: stale ? "Modeled negative net/day (stale)" : "Unprofitable now", tone: stale ? "warning" : "high" });
+    signals.push({ label: stale ? "Negative modeled net/day (review date)" : "Unprofitable now", tone: stale ? "warning" : "high" });
   } else {
     signals.push({ label: "Flat net earnings", tone: "medium" });
   }
@@ -1573,7 +1573,7 @@ export function renderStrategySignals(snapshot) {
     });
   }
   if (snapshot.freshness?.overall_status && snapshot.freshness.overall_status !== "fresh") {
-    signals.push({ label: "Stale data", tone: "warning" });
+    signals.push({ label: "Review source date", tone: "warning" });
   }
   return `
     <div class="signal-row">

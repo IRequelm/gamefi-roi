@@ -121,7 +121,7 @@ def home_page(service: ApiDataService, *, settings: Settings, request: Request) 
     answer = (
         _ranking_answer(top.latest_snapshot, top.strategy)
         if top is not None
-        else "No fresh modeled leader is available today; the latest comparisons remain visible with their freshness labels."
+        else "Latest modeled comparisons are shown with their recorded calculation dates."
     )
     body = f"""
       <div class="page-shell">
@@ -516,9 +516,9 @@ def _render_logo(logo, label: str = "Opportunity", *, compact: bool = False) -> 
 
 def _ranking_answer(snapshot: StrategySnapshotPayload, strategy: StrategySummary) -> str:
     stale = getattr(getattr(snapshot, "freshness", None), "overall_status", "fresh") != "fresh"
-    lead = "Stored modeled result for" if stale else "GamCryp models"
+    lead = "GamCryp models"
     earnings_label = "Modeled net earnings"
-    freshness_note = " This model is stale; review the source dates before acting." if stale else ""
+    freshness_note = " Source freshness and calculation dates are shown with this estimate." if stale else ""
     return (
         f"{lead} {strategy.name} at {format_ratio_text(snapshot.roi.roi_total_30d)} 30-day ROI "
         f"using {format_money_text(snapshot.capital.total_capital)} capital. {earnings_label} are "
@@ -1329,7 +1329,7 @@ def strategy_risk_summary(snapshot) -> str:
         return "No snapshot available for risk assessment."
     if hasattr(snapshot, "freshness") and hasattr(snapshot.freshness, "overall_status"):
         if snapshot.freshness.overall_status and snapshot.freshness.overall_status != "fresh":
-            return "The latest stored data is stale, so treat the result as outdated until a fresh snapshot appears."
+            return "Source dates are shown for this estimate; review them before acting."
     if is_elevated_risk(snapshot):
         return "Elevated risk: this CTA opens the project, not a recommendation to start."
     if hasattr(snapshot, "confidence") and snapshot.confidence.available:

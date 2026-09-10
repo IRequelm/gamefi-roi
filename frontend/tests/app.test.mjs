@@ -133,8 +133,8 @@ test("homepage never presents a stale snapshot as the top opportunity", () => {
   const rankings = rankingPayload();
   rankings.items[0].latest_snapshot.freshness.overall_status = "stale";
   const html = renderTopRankingSummary(rankings);
-  assert.match(html, /No fresh modeled leader/);
-  assert.match(html, /Latest results need a refresh/);
+  assert.match(html, /Latest modeled view/);
+  assert.match(html, /Latest results are available/);
   assert.doesNotMatch(html, /DFK Jeweler/);
 });
 
@@ -633,7 +633,7 @@ test("stale positive results never present as current earnings", () => {
   snapshot.freshness.overall_status = "stale";
   const html = renderStrategySignals(snapshot);
 
-  assert.match(html, /Modeled positive net\/day \(stale\)/);
+  assert.match(html, /Positive modeled net\/day \(review date\)/);
   assert.doesNotMatch(html, /Profitable now/);
 });
 
@@ -642,7 +642,7 @@ test("stale answer blocks never describe stored results as current", () => {
   strategy.latest_snapshot.freshness.overall_status = "stale";
   const html = renderStrategyAnswerBlock(strategy, strategy.latest_snapshot);
 
-  assert.match(html, /Stored modeled result for/);
+  assert.match(html, /GamCryp models/);
   assert.match(html, /Modeled net earnings/);
   assert.doesNotMatch(html, /GamCryp currently models/);
 });
