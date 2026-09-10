@@ -354,7 +354,7 @@ export function renderTopRankingSummary(rankings = { items: [] }) {
         <div class="top-opportunity-copy">
           <span class="eyebrow">Latest modeled view</span>
           <h2>Latest results are available</h2>
-          <p class="muted">The catalog still shows the latest modeled comparisons, but none is fresh enough to be presented as today’s top opportunity.</p>
+          <p class="muted">The catalog shows the latest modeled comparisons with their source and calculation dates.</p>
         </div>
         <div class="top-opportunity-actions"><a class="secondary-button" href="/rankings" data-link>Review rankings</a></div>
       </section>
