@@ -8,7 +8,7 @@ from datetime import UTC, datetime
 
 from app.discovery.content_intelligence import brief_json, build_editorial_brief
 from app.discovery.engine import DiscoveryRecord, EvidenceRecord, Signal, evaluate_admission, score_discovery
-from app.discovery.providers import GoogleTrendsProvider, UnavailableProvider
+from app.discovery.providers import CoinGeckoMarketProvider, GoogleTrendsProvider, UnavailableProvider
 from app.content_inventory.inventory import READY, build_content_inventory
 from app.strategies.catalog import get_opportunity
 
@@ -50,7 +50,12 @@ def main() -> None:
     status.add_argument("--json", action="store_true")
     args = parser.parse_args()
     trends = GoogleTrendsProvider().probe()
-    providers = [trends, UnavailableProvider("youtube_data_api", "No authorized live API credentials configured." ).probe(), UnavailableProvider("x_api", "No authorized live API credentials configured.").probe()]
+    providers = [
+        trends,
+        CoinGeckoMarketProvider().query(),
+        UnavailableProvider("youtube_data_api", "No authorized live API credentials configured.").probe(),
+        UnavailableProvider("x_api", "No authorized live API credentials configured.").probe(),
+    ]
     record = demo_record() if args.command == "daily-plan" and args.dry_run_e2e else None
     decision = evaluate_admission(record) if record else None
     current_candidates = []

@@ -22,6 +22,7 @@ Provider status:
 - YouTube Data API: blocked without authorized credentials.
 - X API: blocked without authorized credentials.
 - Official research: evidence records are supported; no unverified financial values are admitted.
+- CoinGecko market quotes: the discovery worker now captures live USD token quotes for Akash, Aethir, Grass, and Hivemapper through the existing provenance-preserving `sources/` connector. These are market observations only; they are never treated as earnings, demand, or ROI inputs by themselves.
 
 Safety boundaries:
 
@@ -34,3 +35,5 @@ Safety boundaries:
 Production sync requires the normal production PostgreSQL URL and migration rollout. Local discovery workers must not write production unless an explicitly authenticated sync path is added in a future change; there is currently no public ingestion endpoint.
 
 The discovery worker is currently a no-publish provider-intelligence loop. It runs one bounded cycle with `--once`, atomically writes provider status/relative signals to `data/local/discovery/worker_state.json`, and can be scheduled separately from the distribution worker. It does not admit records or publish content until the authenticated production sync path is enabled.
+
+The current market-evidence review keeps `akash-provider` as the highest-priority research candidate, but does not promote it to `MODELED`: individual utilization, hardware/energy cost, lease fill, and realizable reward evidence are still required. A spot quote alone is not a reproducible strategy input. The same gate applies to Aethir and Hivemapper; Grass remains points/reward-route limited.

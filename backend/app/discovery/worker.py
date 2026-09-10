@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
-from app.discovery.providers import GoogleTrendsProvider, ProviderResult, UnavailableProvider
+from app.discovery.providers import CoinGeckoMarketProvider, GoogleTrendsProvider, ProviderResult, UnavailableProvider
 
 
 @dataclass(frozen=True)
@@ -34,6 +34,7 @@ class DiscoveryWorker:
     def run_once(self) -> dict[str, object]:
         results = (
             GoogleTrendsProvider().probe(),
+            CoinGeckoMarketProvider().query(),
             UnavailableProvider("youtube_data_api", "No authorized live API credentials configured.").probe(),
             UnavailableProvider("x_api", "No authorized live API credentials configured.").probe(),
         )

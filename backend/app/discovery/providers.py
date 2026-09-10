@@ -3,11 +3,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 import json
 from statistics import mean
 from urllib.parse import quote
 from urllib.request import Request, urlopen
+
+from app.config.settings import get_settings
+from app.sources.coingecko import CoinGeckoMarketDataSource
+from app.sources.market_data import TokenPriceRequest
 
 
 @dataclass(frozen=True)
@@ -56,6 +60,51 @@ class GoogleTrendsProvider:
             return ProviderResult("google_trends", "LIVE", retrieved, tuple(signals))
         except Exception as exc:
             return ProviderResult("google_trends", "BLOCKED", retrieved, limitation=f"Live retrieval failed: {type(exc).__name__}: {exc}")
+
+
+class CoinGeckoMarketProvider:
+    """Discovery-facing adapter over the existing provenance-preserving market connector."""
+
+    default_assets = ("akash-network", "aethir", "grass", "hivemapper")
+
+    def query(self, provider_asset_ids: tuple[str, ...] = default_assets, *, timeout_seconds: int | None = None) -> ProviderResult:
+        retrieved = datetime.now(UTC)
+        if not provider_asset_ids:
+            return ProviderResult("coingecko_market", "INVALID_REQUEST", retrieved, limitation="At least one CoinGecko asset id is required.")
+        try:
+            settings = get_settings()
+            source = CoinGeckoMarketDataSource(settings)
+            try:
+                observations = source.get_token_prices(
+                    TokenPriceRequest(
+                        provider_asset_ids=provider_asset_ids,
+                        quote_currency="USD",
+                        freshness_window=timedelta(seconds=timeout_seconds or settings.market_data_price_freshness_seconds),
+                    )
+                )
+            finally:
+                source.close()
+            signals = tuple(
+                {
+                    "name": "market_price_usd",
+                    "asset_id": asset_id,
+                    "value": str(observation.value) if observation.value is not None else None,
+                    "unit": "USD",
+                    "source": "coingecko",
+                    "source_locator": observation.source_locator,
+                    "observed_at": observation.observed_at.isoformat() if observation.observed_at else None,
+                    "retrieved_at": observation.retrieved_at.isoformat(),
+                    "freshness": observation.status.value,
+                    "status": "LIVE" if observation.value is not None else "MISSING",
+                    "explanation": "Current token quote only; it is not an earnings or ROI estimate.",
+                }
+                for asset_id, observation in zip(provider_asset_ids, observations, strict=True)
+            )
+            if not any(signal["value"] is not None for signal in signals):
+                return ProviderResult("coingecko_market", "QUERY_EMPTY", retrieved, signals, "CoinGecko returned no usable token prices.")
+            return ProviderResult("coingecko_market", "LIVE", retrieved, signals)
+        except Exception as exc:
+            return ProviderResult("coingecko_market", "BLOCKED", retrieved, limitation=f"Live market retrieval failed: {type(exc).__name__}: {exc}")
 
 
 def _get_json(url: str, timeout: int) -> dict[str, object]:
