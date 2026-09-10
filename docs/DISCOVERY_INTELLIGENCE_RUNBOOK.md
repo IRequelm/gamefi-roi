@@ -9,6 +9,7 @@ $env:PYTHONPATH = "backend"
 .venv\Scripts\python.exe -m app.distribution.content_intelligence_cli status --json
 .venv\Scripts\python.exe -m app.distribution.content_intelligence_cli daily-plan --json
 .venv\Scripts\python.exe -m app.distribution.content_intelligence_cli daily-plan --dry-run-e2e --json
+.venv\Scripts\python.exe -m app.discovery.worker --once
 ```
 
 `--dry-run-e2e` uses a clearly labeled fixture to demonstrate discovery → scoring → evidence-gated `AUTO_ADD_GUIDE` → editorial brief. It performs no publication. Google Trends query extraction is implemented, but blocked or unparseable provider responses are reported explicitly; fixture values are never substituted.
@@ -31,3 +32,5 @@ Safety boundaries:
 - No public write endpoint or runtime source-code mutation is introduced.
 
 Production sync requires the normal production PostgreSQL URL and migration rollout. Local discovery workers must not write production unless an explicitly authenticated sync path is added in a future change; there is currently no public ingestion endpoint.
+
+The discovery worker is currently a no-publish provider-intelligence loop. It runs one bounded cycle with `--once`, atomically writes provider status/relative signals to `data/local/discovery/worker_state.json`, and can be scheduled separately from the distribution worker. It does not admit records or publish content until the authenticated production sync path is enabled.
