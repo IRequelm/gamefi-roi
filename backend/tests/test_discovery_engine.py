@@ -1,4 +1,5 @@
 from datetime import UTC, datetime
+import json
 
 from sqlalchemy import create_engine
 
@@ -55,7 +56,38 @@ def test_dynamic_catalog_persists_and_brief_is_explainable():
 
 
 def test_trends_provider_is_explicit_when_query_values_are_not_safe_to_infer(monkeypatch):
-    monkeypatch.setattr("app.discovery.providers.urlopen", lambda *args, **kwargs: type("R", (), {"status": 200, "__enter__": lambda self: self, "__exit__": lambda *args: None})())
+    monkeypatch.setattr("app.discovery.providers.urlopen", lambda *args, **kwargs: type("R", (), {"status": 200, "read": lambda self: b"not-json", "__enter__": lambda self: self, "__exit__": lambda *args: None})())
     result = GoogleTrendsProvider().probe()
-    assert result.status == "REACHABLE_NEEDS_QUERY_API"
+    assert result.status == "BLOCKED"
     assert not result.signals
+
+
+def test_trends_query_normalizes_relative_series_without_calling_it_volume(monkeypatch):
+    class Response:
+        status = 200
+
+        def __init__(self, body):
+            self.body = body
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return None
+
+        def read(self):
+            return self.body
+
+    explore = {"widgets": [{"id": "TIMESERIES", "token": "token", "request": {"series": "fixture"}}]}
+    series = {"default": {"timelineData": [
+        {"value": [10, 20]}, {"value": [20, 25]}, {"value": [40, 30]}, {"value": [50, 35]},
+    ]}}
+    responses = iter([
+        Response((")]}'" + "," + json.dumps(explore)).encode()),
+        Response((")]}'" + "," + json.dumps(series)).encode()),
+    ])
+    monkeypatch.setattr("app.discovery.providers.urlopen", lambda *args, **kwargs: next(responses))
+    result = GoogleTrendsProvider().query(("GameFi", "DePIN"))
+    assert result.status == "LIVE"
+    assert result.signals[0]["status"] == "LIVE_RELATIVE_INDEX"
+    assert "not absolute search volume" in result.signals[0]["explanation"]
