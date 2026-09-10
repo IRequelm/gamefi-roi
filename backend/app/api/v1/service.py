@@ -53,7 +53,9 @@ from app.risk.results import METHODOLOGY_VERSION, SnapshotScoreResult
 from app.storage.history import HistoryRepository, StrategyCalculationFailure, StrategySnapshot
 from app.storage.monetization import MonetizationRepository
 from app.storage.scoring import ScoringRepository
+from app.storage.discovery import DiscoveryRepository
 from app.strategies.catalog import (
+    CATALOG_REVIEWED_AT,
     GameCatalogEntry,
     OpportunityCatalogEntry,
     OutboundDestination,
@@ -82,9 +84,11 @@ RANKING_ORDERING = [
 
 class ApiDataService:
     def __init__(self, engine: Engine) -> None:
+        self.engine = engine
         self.history = HistoryRepository(engine)
         self.monetization = MonetizationRepository(engine)
         self.scoring = ScoringRepository(engine)
+        self.discovery = DiscoveryRepository(engine)
 
     def games_page(self, *, limit: int, offset: int) -> tuple[list[GameSummary], int]:
         games = list(list_games())
@@ -93,11 +97,16 @@ class ApiDataService:
 
     def opportunities_page(self, *, limit: int, offset: int) -> tuple[list[OpportunitySummary], int]:
         opportunities = list(list_opportunities())
+        static_ids = {opportunity.opportunity_id for opportunity in opportunities}
+        opportunities.extend(opportunity for opportunity in self.discovery.dynamic_opportunities() if opportunity.opportunity_id not in static_ids)
+        opportunities.sort(key=lambda opportunity: opportunity.opportunity_id)
         page = _paginate(opportunities, limit=limit, offset=offset)
         return [_opportunity_summary(opportunity) for opportunity in page], len(opportunities)
 
     def opportunity_detail(self, opportunity_id: str) -> OpportunityDetail | None:
         opportunity = get_opportunity(opportunity_id)
+        if opportunity is None:
+            opportunity = next((item for item in self.discovery.dynamic_opportunities() if item.opportunity_id == opportunity_id), None)
         if opportunity is None:
             return None
         strategies = [
@@ -524,6 +533,7 @@ def _game_summary(game: GameCatalogEntry) -> GameSummary:
 
 
 def _opportunity_summary(opportunity: OpportunityCatalogEntry) -> OpportunitySummary:
+    destinations = _catalog_destinations(opportunity)
     return OpportunitySummary(
         opportunity_id=opportunity.opportunity_id,
         opportunity_type=opportunity.opportunity_type,
@@ -538,7 +548,7 @@ def _opportunity_summary(opportunity: OpportunityCatalogEntry) -> OpportunitySum
         strategy_count=len(opportunity.strategy_ids),
         admission_mode=opportunity.admission_mode,
         legacy_game_id=opportunity.legacy_game_id,
-        primary_destination=_maybe_outbound_destination(primary_destination_for_opportunity(opportunity.opportunity_id)),
+        primary_destination=_maybe_outbound_destination(destinations[0] if destinations else None),
         roi_unavailable=(
             RoiUnavailablePayload(
                 reason=opportunity.roi_unavailable.reason,
@@ -567,15 +577,44 @@ def _opportunity_detail(
     *,
     strategies: list[StrategySummary],
 ) -> OpportunityDetail:
+    destinations = _catalog_destinations(opportunity)
     return OpportunityDetail(
         **_opportunity_summary(opportunity).model_dump(),
         feasibility_summary=opportunity.feasibility_summary,
         official_source_references=[_source_reference(reference) for reference in opportunity.official_source_references],
-        outbound_destinations=[
-            _outbound_destination(destination)
-            for destination in outbound_destinations_for_opportunity(opportunity.opportunity_id)
-        ],
+        outbound_destinations=[_outbound_destination(destination) for destination in destinations],
         strategies=strategies,
+    )
+
+
+def _catalog_destinations(opportunity: OpportunityCatalogEntry) -> tuple[OutboundDestination, ...]:
+    destinations = outbound_destinations_for_opportunity(opportunity.opportunity_id)
+    if destinations or not opportunity.official_source_references:
+        return destinations
+    reference = opportunity.official_source_references[0]
+    return (
+        OutboundDestination(
+            destination_id=f"dest-{opportunity.opportunity_id}-official-v1",
+            destination_slug=f"{opportunity.opportunity_id}-official",
+            opportunity_id=opportunity.opportunity_id,
+            opportunity_type=opportunity.opportunity_type,
+            game_id=opportunity.legacy_game_id,
+            strategy_id=None,
+            destination_type="official_site",
+            label=f"Open {opportunity.name}",
+            official_url=reference.url,
+            referral_url=None,
+            referral_code=None,
+            affiliate_program=None,
+            status="active",
+            is_affiliate=False,
+            commercial_relationship="none",
+            disclosure_text="Official outbound link. No affiliate relationship is configured for this destination.",
+            source_reference=reference,
+            reviewed_at=CATALOG_REVIEWED_AT,
+            verification_status="verified",
+            allowed_surfaces=("web", "api", "redirect"),
+        ),
     )
 
 

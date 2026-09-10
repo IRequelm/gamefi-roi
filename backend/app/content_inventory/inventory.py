@@ -7,6 +7,7 @@ import json
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
+from sqlalchemy.engine import Engine
 
 from app.search.canonical import CURATED_RANKING_PAGES, canonical_path
 from app.strategies.catalog import (
@@ -53,8 +54,15 @@ class ContentInventoryItem:
     long_form_missing_evidence: tuple[str, ...] = ()
 
 
-def build_content_inventory() -> list[ContentInventoryItem]:
+def build_content_inventory(engine: Engine | None = None) -> list[ContentInventoryItem]:
     opportunities = list_opportunities()
+    if engine is not None:
+        from app.storage.discovery import DiscoveryRepository
+        static_ids = {opportunity.opportunity_id for opportunity in opportunities}
+        opportunities = tuple(opportunities) + tuple(
+            opportunity for opportunity in DiscoveryRepository(engine).dynamic_opportunities()
+            if opportunity.opportunity_id not in static_ids
+        )
     strategies = list_strategies()
     items: list[ContentInventoryItem] = _site_items()
     for opportunity in opportunities:
