@@ -106,6 +106,7 @@ def test_v1_production_task_registry_covers_modeled_strategy_catalog() -> None:
 def test_v1_api_history_and_search_surfaces_cover_all_modeled_strategies(monkeypatch, tmp_path) -> None:
     engine = _migrated_engine(monkeypatch, tmp_path, "g18-surfaces.db")
     _seed_snapshots_and_scores(engine, calculated_at=NOW)
+    monkeypatch.setattr("app.api.v1.service._utc_now", lambda: NOW)
     client = TestClient(create_app())
 
     rankings = client.get("/api/v1/rankings").json()
