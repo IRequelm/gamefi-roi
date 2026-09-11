@@ -216,6 +216,13 @@ def test_reused_narration_must_match_current_package_script(tmp_path: Path) -> N
     assert any("narration does not match" in blocker for blocker in blockers)
 
 
+def test_approved_reused_narration_can_receive_visual_rebuild(tmp_path: Path) -> None:
+    quality = _short_result_with_quality(narration_script_matches_package=False)
+    quality["narration_reused"] = True
+    blockers = validate_render(_quality_result(tmp_path, quality))
+    assert not any("narration does not match" in blocker for blocker in blockers)
+
+
 def test_logo_and_missing_logo_identity_modes_are_explicit(tmp_path: Path) -> None:
     assert _short_result_with_quality(identity_mode="official_logo")["identity_mode"] == "official_logo"
     assert _short_result_with_quality(identity_mode="branded_identity_card")["identity_mode"] == "branded_identity_card"

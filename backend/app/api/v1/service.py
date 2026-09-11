@@ -783,6 +783,15 @@ def _passes_filters(
     chain: str | None,
     economy_type: str | None,
 ) -> bool:
+    # Public rankings are a current-data surface. Historical/detail endpoints
+    # continue to expose stale snapshots with their warnings, but stale models
+    # must not compete for the live leader position.
+    if _overall_freshness(
+        {key: int(value) for key, value in dict(snapshot.freshness_summary.get("status_counts", {})).items()},
+        snapshot=snapshot,
+        now=_utc_now(),
+    ) != "fresh":
+        return False
     capital = _decimal_from_money(snapshot.capital_metrics["total_capital"])
     if capital_min is not None and capital < capital_min:
         return False

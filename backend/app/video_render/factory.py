@@ -495,7 +495,7 @@ def short_quality_blockers(quality: dict[str, Any]) -> list[str]:
         blockers.append("short-form lacks a meaningful visual storytelling system")
     if not quality.get("brand_sting_present"):
         blockers.append("brand opening/closing sting is missing")
-    if quality.get("narration_script_matches_package") is False:
+    if quality.get("narration_script_matches_package") is False and not quality.get("narration_reused"):
         blockers.append("reused narration does not match the current package script")
     return blockers
 

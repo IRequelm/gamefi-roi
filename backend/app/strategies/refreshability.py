@@ -20,9 +20,6 @@ class RefreshabilityDecision:
 
 _AUTO_STRATEGY_IDS = frozenset(
     {
-        "dfk-crystalvale-jeweler-cjewel-max-lock",
-        "dfk-crystalvale-jeweler-cjewel-100-max-lock",
-        "dfk-crystalvale-jeweler-cjewel-5000-max-lock",
         "farmers-world-axe-wood-production",
         "farmers-world-axe-wood-production-3x",
         "farmers-world-axe-wood-production-10x",
@@ -40,7 +37,14 @@ _PARTIAL_STRATEGY_IDS = frozenset(
         "mysterium-b2b-existing-device",
     }
 )
-_NOT_REFRESHABLE_STRATEGY_IDS = frozenset({"storj-existing-hardware-storage-node"})
+_NOT_REFRESHABLE_STRATEGY_IDS = frozenset(
+    {
+        "storj-existing-hardware-storage-node",
+        "dfk-crystalvale-jeweler-cjewel-max-lock",
+        "dfk-crystalvale-jeweler-cjewel-100-max-lock",
+        "dfk-crystalvale-jeweler-cjewel-5000-max-lock",
+    }
+)
 
 
 def classify_refreshability(strategy_id: str) -> RefreshabilityDecision:
@@ -61,6 +65,14 @@ def classify_refreshability(strategy_id: str) -> RefreshabilityDecision:
             ),
         )
     if strategy_id in _NOT_REFRESHABLE_STRATEGY_IDS:
+        if strategy_id.startswith("dfk-"):
+            return RefreshabilityDecision(
+                refreshability=Refreshability.NOT_REFRESHABLE,
+                reason=(
+                    "Live DFK Jeweler data currently reports a non-positive aggregate cJEWEL balance; "
+                    "the strategy is paused instead of converting a zero denominator into ROI."
+                ),
+            )
         return RefreshabilityDecision(
             refreshability=Refreshability.NOT_REFRESHABLE,
             reason="No approved live source loader exists for the required Storj economics.",

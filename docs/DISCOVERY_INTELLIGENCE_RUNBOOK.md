@@ -37,3 +37,7 @@ Production sync requires the normal production PostgreSQL URL and migration roll
 The discovery worker is currently a no-publish provider-intelligence loop. It runs one bounded cycle with `--once`, atomically writes provider status/relative signals to `data/local/discovery/worker_state.json`, and can be scheduled separately from the distribution worker. It does not admit records or publish content until the authenticated production sync path is enabled.
 
 The current market-evidence review keeps `akash-provider` as the highest-priority research candidate, but does not promote it to `MODELED`: individual utilization, hardware/energy cost, lease fill, and realizable reward evidence are still required. A spot quote alone is not a reproducible strategy input. The same gate applies to Aethir and Hivemapper; Grass remains points/reward-route limited.
+
+Production recalculation now pauses the three DFK Jeweler strategies because the live contract response produced a non-positive aggregate cJEWEL balance, which would make the reward-share denominator invalid. Historical snapshots and failure records are retained. Public rankings exclude snapshots whose freshness deadline has passed; detail/history surfaces continue to show them with warnings.
+
+For video rebuilds, `reuse_local_narration=True` reuses an approved local ElevenLabs asset for the same content identity and allows a visual-only rebuild when the new visual hook, product asset, scene system, and frame QA pass. It never calls ElevenLabs and never permits music-only fallback.

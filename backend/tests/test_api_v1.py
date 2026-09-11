@@ -323,8 +323,8 @@ def test_old_otherwise_valid_snapshot_ages_into_stale_without_mutating_source_su
     payload = response.json()
     assert payload["freshness"]["overall_status"] == "stale"
     assert payload["freshness"]["status_counts"]["stale"] == 0
-    assert any(
-        item["strategy"]["strategy_id"] == DFK_CJEWEL_MAX_LOCK_V1.strategy_id for item in rankings.json()["items"]
+    assert all(
+        item["strategy"]["strategy_id"] != DFK_CJEWEL_MAX_LOCK_V1.strategy_id for item in rankings.json()["items"]
     )
 
     with Session(engine) as session:
