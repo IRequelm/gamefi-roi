@@ -329,6 +329,7 @@ def outbound_redirect(
         distinct_id=product_analytics.distinct_id_for_outbound_click(coarse_session_id, click_event_id),
         source_page=request.query_params.get("source_page"),
         placement=request.query_params.get("placement"),
+        user_agent_category=_user_agent_category(request.headers.get("user-agent", "")),
     )
 
     logger.info(
@@ -355,6 +356,7 @@ def _track_outbound_product_analytics(
     distinct_id: str,
     source_page: str | None,
     placement: str | None,
+    user_agent_category: str,
 ) -> None:
     properties = {
         "destination_slug": destination.destination_slug,
@@ -370,6 +372,13 @@ def _track_outbound_product_analytics(
         "source_page": source_page,
         "placement": placement,
         "page_path": f"/go/{destination.destination_slug}",
+        # /go is intentionally usable without analytics consent, so it also
+        # receives crawler and link-preview requests. Keep those observable
+        # instead of silently discarding them, but make them separable from
+        # human traffic in PostHog. This server event is the single authority
+        # for outbound_go_click; the browser only sends its GA event.
+        "event_origin": "server_redirect",
+        "traffic_class": "automated" if user_agent_category == "bot" else "human_or_unknown",
     }
     event_names = ["outbound_go_click"]
     event_names.append("referral_outbound_click" if destination.target_url_kind == "referral" else "official_fallback_outbound_click")

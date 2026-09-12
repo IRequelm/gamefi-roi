@@ -2765,11 +2765,10 @@ function bindOutboundAnalytics(event) {
   };
   trackAnalyticsEvent("start_click", params);
   trackAnalyticsEvent("outbound_click", params);
-  trackProductAnalyticsEvent("outbound_go_click", productParams);
-  trackProductAnalyticsEvent(
-    link.dataset.targetUrlKind === "referral" ? "referral_outbound_click" : "official_fallback_outbound_click",
-    productParams,
-  );
+  // The /go redirect records the authoritative PostHog conversion server-side.
+  // Do not mirror it here: browser and redirect captures otherwise inflate the
+  // same outbound click while consent-less crawler/link-preview traffic remains
+  // impossible to distinguish in historical totals.
 }
 
 function bindProductAnalyticsClick(event) {

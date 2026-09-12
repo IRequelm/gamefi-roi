@@ -106,13 +106,21 @@ def test_refill_is_bounded_and_restart_safe(tmp_path: Path) -> None:
     assert calls == ["fetch", "fetch"]
 
 
-def test_stale_source_pack_is_not_green() -> None:
+def test_stale_nonfinancial_source_is_explicitly_warned() -> None:
     _, packs = load_content_pack_batch(SOURCE_PACK)
+    base = next(pack for pack in packs if pack.source.opportunity_id == "gamcryp-methodology")
+    stale = set_expected_source_hash(
+        base.model_copy(
+            update={
+                "facts": base.facts.model_copy(
+                    update={"freshness": base.facts.freshness.model_copy(update={"value": "stale", "display": "stale"})}
+                )
+            }
+        )
+    )
 
-    stale = [pack for pack in packs if pack.facts.freshness.display.lower() == "stale"]
-
-    assert stale
-    assert all(validate_pack(pack).readiness is ContentReadiness.RED for pack in stale)
+    validation = validate_pack(stale)
+    assert "source snapshot is stale" in validation.warnings
 
 
 def test_youtube_green_without_render_asset_is_pending_asset(tmp_path: Path) -> None:

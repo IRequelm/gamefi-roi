@@ -113,7 +113,11 @@ def render_document(page: SeoPage, *, settings: Settings) -> str:
 
 def home_page(service: ApiDataService, *, settings: Settings, request: Request) -> SeoPage:
     rankings = service.rankings_page(limit=50, offset=0)
-    opportunities, _total = service.opportunities_page(limit=50, offset=0)
+    # The homepage is server-rendered for crawlers as well as hydrated in the
+    # browser. Keep its catalog window above the supported public catalog so
+    # the visible “reviewed” count cannot disagree with the API merely because
+    # the catalog crossed a legacy 50-item page boundary.
+    opportunities, _total = service.opportunities_page(limit=100, offset=0)
     top = next(
         (item for item in rankings.items if item.latest_snapshot and item.latest_snapshot.freshness.overall_status == "fresh"),
         None,

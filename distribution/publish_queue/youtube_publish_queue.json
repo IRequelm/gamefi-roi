@@ -18,7 +18,7 @@
       ],
       "package_checksum": "f41789e9ae88f2a1a880c0b73c206f1e8219ed71b9a2a507043c83187c227c6d",
       "project": "Grass",
-      "recommended_order": 3,
+      "recommended_order": 1,
       "refreshability": null,
       "short_script": "Grass is a good example of a Web3 earning opportunity where GamCryp should not invent ROI. The user contributes bandwidth and may earn points. But points are not the same as a realizable market return. GamCryp marks ROI unavailable until a lawful, reproducible value route exists. That protects users from fake precision.",
       "source_pack_version": "content-pack-lite-v1",
@@ -34,78 +34,11 @@
       "voice_provider": null
     }
   ],
-  "blocked": [
-    {
-      "approval_required": false,
-      "approval_state": "blocked",
-      "attribution_url": "https://gamcryp.com/strategies/dimo-software-only-compatible-car?utm_campaign=distribution-mvp&utm_content=x-dimo-subscription-catch-20260831&utm_medium=short&utm_source=youtube",
-      "channel": "YOUTUBE_SHORT",
-      "content_id": "x-dimo-subscription-catch-20260831",
-      "description": "A GamCryp Short showing why DIMO's vehicle-data rewards need cost, eligibility, risk, and confidence shown together.\n\nExplore the source-backed opportunity: https://gamcryp.com/strategies/dimo-software-only-compatible-car?utm_campaign=distribution-mvp&utm_content=x-dimo-subscription-catch-20260831&utm_medium=short&utm_source=youtube",
-      "generated_at": "2026-08-31T18:00:00Z",
-      "narration_mode": "unknown",
-      "narration_quality_status": "unknown",
-      "official_source_refs": [
-        {
-          "label": "Official site",
-          "url": "https://drivedimo.com/"
-        }
-      ],
-      "package_checksum": "e72a5280e8d69ca7e63f3ce00fd449020cc4a44475a065a69a2956d698ccf337",
-      "project": "DIMO",
-      "recommended_order": 1,
-      "refreshability": "PARTIAL_REFRESH_ONLY",
-      "short_script": "DIMO is a DePIN vehicle-data project. The user connects a compatible car and may receive DIMO rewards. GamCryp's software-only scenario uses $8.99 of capital, -$0.2994/day net, and -99.91% 30D ROI. That is not a verdict on the project. It is the current modeled scenario. The major catch is that rewards depend on vehicle eligibility, network points, and recurring costs.",
-      "source_pack_version": "content-pack-lite-v1",
-      "source_snapshot_hash": "e1edc6308bbaa366e226e38459a88c147bbc0c89615d54d791488794a631bc59",
-      "source_snapshot_id": "c106eb2d-ea46-5ca8-8bf3-2c9b5c014588",
-      "source_snapshot_timestamp": "2026-08-31T20:57:14.569455Z",
-      "status": "RED",
-      "thumbnail_asset_state": "missing",
-      "title": "DIMO: vehicle data rewards need the cost side",
-      "upload_state": "not_uploaded",
-      "video_asset_state": "missing",
-      "voice_model": null,
-      "voice_provider": null
-    },
-    {
-      "approval_required": false,
-      "approval_state": "blocked",
-      "attribution_url": "https://gamcryp.com/strategies/geodnet-empty-hex-triple-band-base-station?utm_campaign=distribution-mvp&utm_content=x-geodnet-rank-risk-20260831&utm_medium=short&utm_source=youtube",
-      "channel": "YOUTUBE_SHORT",
-      "content_id": "x-geodnet-rank-risk-20260831",
-      "description": "A GamCryp data-backed Short explaining GEODNET's modeled base-station economics and why high ROI can still carry very high risk.\n\nExplore the source-backed opportunity: https://gamcryp.com/strategies/geodnet-empty-hex-triple-band-base-station?utm_campaign=distribution-mvp&utm_content=x-geodnet-rank-risk-20260831&utm_medium=short&utm_source=youtube",
-      "generated_at": "2026-08-31T18:00:00Z",
-      "narration_mode": "unknown",
-      "narration_quality_status": "unknown",
-      "official_source_refs": [
-        {
-          "label": "Official site",
-          "url": "https://geodnet.com/"
-        }
-      ],
-      "package_checksum": "8bf63f0def350677953415db7c33d6699e9aa71074742e6e4c4f5be11b1d6de8",
-      "project": "GEODNET",
-      "recommended_order": 2,
-      "refreshability": "PARTIAL_REFRESH_ONLY",
-      "short_script": "GEODNET is one of the clearest examples of why ROI alone is not enough. The user runs a geospatial base station. GamCryp's current scenario uses $695 of modeled capital, $2.56/day of net earnings, and 11.05% 30D ROI. But this is an empty-hex, quality-dependent model. If your location, signal, or competition is worse, the result can change sharply. Use GamCryp to inspect the numbers, confidence, and risk before treating the model as useful.",
-      "source_pack_version": "content-pack-lite-v1",
-      "source_snapshot_hash": "fe5df283de08f23cbec903e0a1237d636fe8954fc966d697919fdab59bebec87",
-      "source_snapshot_id": "c8de3c90-74b1-5c9a-9e8b-66a41b33766d",
-      "source_snapshot_timestamp": "2026-08-31T20:57:14.569455Z",
-      "status": "RED",
-      "thumbnail_asset_state": "missing",
-      "title": "GEODNET ROI looks strong. Here is the catch.",
-      "upload_state": "not_uploaded",
-      "video_asset_state": "missing",
-      "voice_model": null,
-      "voice_provider": null
-    }
-  ],
+  "blocked": [],
   "generated_at": "2026-08-31T18:00:00Z",
   "pending_asset": [],
   "publishable": [],
   "queue_version": "youtube-publish-queue-v1",
-  "source_batch_hash": "05514cb5f18b451aa0c8715e0dc6ec30b73e01a2aec5b9a9960871b6c47157bb",
+  "source_batch_hash": "4958f74d92bb98ad10f261e83688cae94d6ee51db71b3848c93627838df17e32",
   "source_batch_id": "distribution-learning-batch-001"
 }

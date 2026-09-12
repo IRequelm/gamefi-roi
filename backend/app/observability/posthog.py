@@ -55,6 +55,8 @@ POSTHOG_ALLOWED_PROPERTIES = frozenset(
         "environment",
         "release",
         "app_version",
+        "event_origin",
+        "traffic_class",
     }
 )
 _MAX_TEXT_LENGTH = 160

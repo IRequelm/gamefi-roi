@@ -198,6 +198,8 @@ def test_outbound_redirect_tracks_official_and_referral_product_events(monkeypat
     assert captured[0]["properties"]["target_url_kind"] == "referral"
     assert captured[0]["properties"]["commercial_relationship"] == "affiliate"
     assert captured[0]["properties"]["is_affiliate"] is True
+    assert captured[0]["properties"]["event_origin"] == "server_redirect"
+    assert captured[0]["properties"]["traffic_class"] == "human_or_unknown"
     assert captured[2]["properties"]["target_url_kind"] == "official"
     assert captured[2]["properties"]["source_page"] == "home"
     assert captured[2]["properties"]["placement"] == "top_opportunity"

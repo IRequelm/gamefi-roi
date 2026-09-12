@@ -37,18 +37,25 @@ def build_learning_batch(
 
     ranking_items = {item["strategy"]["strategy_id"]: item for item in rankings_payload["items"]}
     opportunities = {item["opportunity_id"]: item for item in opportunities_payload["items"]}
-    packs = [
-        _geodnet_leader_pack(ranking_items["geodnet-empty-hex-triple-band-base-station"], base_url, created_at),
-        _dfk_lock_pack(ranking_items["dfk-crystalvale-jeweler-cjewel-5000-max-lock"], base_url, created_at),
-        _farmers_world_tiny_pack(ranking_items["farmers-world-axe-wood-production"], base_url, created_at),
-        _weatherxm_location_pack(ranking_items["weatherxm-d1-wifi-station"], base_url, created_at),
-        _splinterlands_ev_pack(ranking_items["splinterlands-modern-ranked-sps-ev"], base_url, created_at),
-        _storj_existing_hardware_pack(ranking_items["storj-existing-hardware-storage-node"], base_url, created_at),
-        _dimo_subscription_pack(ranking_items["dimo-software-only-compatible-car"], base_url, created_at),
-        _mysterium_demand_pack(ranking_items["mysterium-b2b-existing-device"], base_url, created_at),
-        _grass_unavailable_pack(opportunities["grass"], base_url, created_at),
-        _methodology_pack(base_url, created_at),
-    ]
+    # The first learning batch predates the current catalog and named a fixed
+    # set of strategy IDs. A stale ranking response (or a deliberate
+    # fail-closed empty ranking page) must reduce the batch, not crash the
+    # unattended worker. Every retained pack is still generated from the exact
+    # current API item; absent strategies are simply omitted.
+    strategy_builders = (
+        ("geodnet-empty-hex-triple-band-base-station", _geodnet_leader_pack),
+        ("dfk-crystalvale-jeweler-cjewel-5000-max-lock", _dfk_lock_pack),
+        ("farmers-world-axe-wood-production", _farmers_world_tiny_pack),
+        ("weatherxm-d1-wifi-station", _weatherxm_location_pack),
+        ("splinterlands-modern-ranked-sps-ev", _splinterlands_ev_pack),
+        ("storj-existing-hardware-storage-node", _storj_existing_hardware_pack),
+        ("dimo-software-only-compatible-car", _dimo_subscription_pack),
+        ("mysterium-b2b-existing-device", _mysterium_demand_pack),
+    )
+    packs = [builder(ranking_items[strategy_id], base_url, created_at) for strategy_id, builder in strategy_builders if strategy_id in ranking_items]
+    if "grass" in opportunities:
+        packs.append(_grass_unavailable_pack(opportunities["grass"], base_url, created_at))
+    packs.append(_methodology_pack(base_url, created_at))
     return [_finalize_readiness(pack) for pack in packs]
 
 

@@ -1,6 +1,6 @@
 # GamCryp V2 Master Control
 
-Updated: 2026-09-09 (Europe/Istanbul)
+Updated: 2026-09-13 (Europe/Istanbul)
 
 This is the durable operational summary for the GamCryp V2 finish pass. Repository files, verified runtime state, provider logs, and deployment evidence outrank chat memory. This document does not override `AGENTS.md`, the master specification, the architecture, the ROI methodology, or the data contract.
 
@@ -119,6 +119,7 @@ The LIVE flag is local `.env` state and is currently `true` for the quality-gate
 - Sentry: repository integration is present; Render logs show initialization, but full production error coverage is not independently verified here.
 - PostHog: repository integration is present and consent-gated with explicit events; production activation is not proven here.
 - First-party inbound/outbound analytics are implemented with privacy-minimal records. Commercial analytics remain separate from model data.
+- PostHog outbound attribution uses the server-side `/go` redirect as the single `outbound_go_click` authority. Browser-side PostHog duplication was removed; future redirect events carry `event_origin=server_redirect` and `traffic_class=automated|human_or_unknown` so crawler/link-preview traffic can be separated. Historical totals before this change are not treated as unique human clicks.
 
 Operational gaps still requiring explicit monitoring: snapshot refresh age, queue backlog, worker heartbeat freshness, database backup success, and ElevenLabs quota/auth failure duration. The worker writes an atomic local heartbeat and the repository includes a non-zero-exit freshness check; external alert delivery is not configured. Sentry initialization is visible in Render logs, but production alert delivery is not independently verified.
 
@@ -141,7 +142,9 @@ Operational gaps still requiring explicit monitoring: snapshot refresh age, queu
 1. Render Postgres remains Free; backups/PITR and expiry protection are not production-grade.
 2. Cloudflare/edge Managed Challenge can return 429 to some non-browser probes; security was not weakened.
 3. ElevenLabs currently reports 0 remaining credits; narrated production is blocked. Music-only and silent Shorts cannot enter the publish queue.
-4. Autonomous YouTube worker is enabled locally, but today's one-public-Short cap is already consumed; X uses local manual-ready handoff rather than API/browser automation.
+4. The worker restarted successfully on 2026-09-13 after its legacy refill batch was made tolerant of missing/stale ranking IDs. It is healthy, but it has no queued GREEN Short because no approved visual+narration package currently qualifies.
+5. X uses local manual-ready handoff rather than API/browser automation. Email notification is not configured, but the outbox remains Git-visible and remotely readable.
+6. The public homepage still needs deployment reconciliation: live `/api/v1/opportunities` reports 51 catalog entries while server-rendered homepage content shows its older 50-reviewed/8-opportunity slice. The safe homepage/catalog correction is included in the pending production release.
 
 ## 13. Release-closure decision
 
