@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from app.strategies.taxonomy import canonical_type
 
 from app.strategies.defi_kingdoms import DFK_CJEWEL_MAX_LOCK_V1, DFK_JEWELER_STRATEGIES
 from app.strategies.farmers_world import FARMERS_WORLD_AXE_STRATEGIES, FARMERS_WORLD_AXE_WOOD_V1
@@ -105,6 +106,9 @@ class OpportunityCatalogEntry:
     logo_asset: str | None = None
     logo_alt: str | None = None
     logo_source_reference: SourceReference | None = None
+
+    def __post_init__(self) -> None:
+        canonical_type(self.opportunity_type)
 
     @property
     def admission_mode(self) -> str:

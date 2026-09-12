@@ -55,13 +55,13 @@ def test_dry_run_classifies_existing_production_tasks_without_provider_calls(mon
     assert result.mode == "dry-run"
     assert result.refreshed_count == 0
     assert result.failed_count == 0
-    assert result.skipped_count == 8
+    assert result.skipped_count == 5
     assert result.partial_skipped == 4
-    assert result.not_refreshable_skipped == 4
+    assert result.not_refreshable_skipped == 1
     assert len(result.refreshability) == len(tasks)
-    assert sum(entry.refreshability == Refreshability.AUTO_REFRESHABLE for entry in result.refreshability) == 7
+    assert sum(entry.refreshability == Refreshability.AUTO_REFRESHABLE for entry in result.refreshability) == 10
     assert sum(entry.refreshability == Refreshability.PARTIAL_REFRESH_ONLY for entry in result.refreshability) == 4
-    assert sum(entry.refreshability == Refreshability.NOT_REFRESHABLE for entry in result.refreshability) == 4
+    assert sum(entry.refreshability == Refreshability.NOT_REFRESHABLE for entry in result.refreshability) == 1
 
 
 def test_config_observations_keep_stable_source_identity_across_recalculation_times() -> None:
@@ -128,7 +128,7 @@ def test_refresh_summary_separates_refresh_and_skip_categories(monkeypatch) -> N
     result = run_snapshot_refresh(settings=_test_settings())
     assert result.auto_refreshed == 1
     assert result.partial_skipped == 4
-    assert result.not_refreshable_skipped == 4
+    assert result.not_refreshable_skipped == 1
     assert result.failed == 0
 
 

@@ -53,7 +53,7 @@ def test_production_recalculation_persists_snapshots_scores_and_failures(monkeyp
         cadence_minutes=30,
     )
 
-    assert summary.status == "ok"
+    assert summary.status == "failed"
     assert len(summary.snapshot_ids) == 1
     assert len(summary.failure_ids) == 1
     assert summary.score_count == 1

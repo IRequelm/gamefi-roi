@@ -6,6 +6,7 @@ from collections.abc import Sequence
 from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any
+from app.strategies.refreshability import classify_refreshability, Refreshability
 
 from sqlalchemy import Engine
 from sqlalchemy import text
@@ -418,13 +419,25 @@ def ops_status_payload(*, engine: Engine, settings: Settings) -> OpsStatusPayloa
             )
         )
 
+    eligible = {s.strategy_id for s in list_strategies() if classify_refreshability(s.strategy_id).refreshability == Refreshability.AUTO_REFRESHABLE}
+    stale_eligible = [s.strategy_id for s in strategies if s.strategy_id in eligible and s.freshness_status != "fresh"]
+    unresolved = [f for f in failures if f.strategy_id in eligible and (f.strategy_id not in latest_snapshots or f.failed_at > latest_snapshots[f.strategy_id].calculated_at)]
+    last_attempt = max([f.failed_at for f in failures] + [s.calculated_at for s in latest_snapshots.values()], default=None)
     return OpsStatusPayload(
-        status="ok",
+        status="degraded" if stale_eligible or unresolved else "ok",
         generated_at=generated_at,
         database=database_status,
         scheduler={
             "cadence_minutes": settings.scheduler_cadence_minutes,
             "last_successful_run_at": last_successful_run_at,
+            "last_recalculation_attempted_at": last_attempt,
+            "eligible_count": len(eligible),
+            "fresh_eligible_count": len(eligible) - len(stale_eligible),
+            "stale_eligible_strategy_ids": stale_eligible,
+            "unresolved_failure_count": len(unresolved),
+            "historical_failure_count": len(failures),
+            "skipped_policy_count": len(strategies) - len(eligible),
+            "newest_snapshot_age_seconds": (generated_at - last_successful_run_at).total_seconds() if last_successful_run_at else None,
             "last_successful_snapshot_per_strategy": {
                 strategy.strategy_id: (
                     latest_snapshots[strategy.strategy_id].calculated_at
@@ -450,7 +463,7 @@ def _database_status(engine: Engine) -> dict[str, Any]:
         with engine.connect() as connection:
             connection.execute(text("select 1"))
     except SQLAlchemyError as exc:
-        return {"status": "error", "detail": str(exc)}
+        return {"status": "error", "detail": type(exc).__name__}
     return {"status": "ok"}
 
 

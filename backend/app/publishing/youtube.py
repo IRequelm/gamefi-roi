@@ -358,6 +358,21 @@ class PublishStateStore:
         self._write_records(records)
         return record
 
+    def mark_ambiguous(self, content_id: str) -> PublishRecord:
+        """Retain an unreconciled historical upload without permitting retry."""
+        records = self._read_records()
+        raw = records.get(content_id)
+        if not isinstance(raw, dict):
+            raise YouTubeManifestError("No local publication record exists to reconcile")
+        raw["status"] = "ambiguous"
+        raw["video_id"] = None
+        records[content_id] = raw
+        self._write_records(records)
+        reconciled = self.find(content_id)
+        if reconciled is None:
+            raise YouTubeManifestError("Reconciled publication record could not be reloaded")
+        return reconciled
+
     def _read_records(self) -> dict[str, Any]:
         if not self.path.exists():
             return {}
@@ -464,6 +479,31 @@ class YouTubePublisher:
             detail=detail,
             response=manifest.safe_summary(),
         )
+
+    def check_capabilities(self) -> dict[str, Any]:
+        """Read-only live probe; scopes prove authorization, never upload success."""
+        result = {"configured": self.validate_auth_state().configured,
+                  "authenticated": False, "channel_verified": False,
+                  "upload_scope_verified": False, "upload_test_performed": False}
+        try:
+            credentials = load_refreshed_credentials(config=self.config, token_store=self.token_store, request_factory=self.request_factory)
+            result["authenticated"] = bool(credentials.valid)
+            service = self.service
+            owned = self._execute(service.channels().list(part="id,snippet,contentDetails", mine=True), operation="verify_channel")
+            intended = self._execute(service.channels().list(part="id", forHandle=self.config.channel_handle), operation="resolve_channel")
+            intended_ids = {item["id"] for item in intended.get("items", [])}
+            channels = owned.get("items", [])
+            result["channel_ids"] = [item["id"] for item in channels]
+            result["channel_verified"] = len(channels) == 1 and channels[0]["id"] in intended_ids
+            raw = json.loads(self.config.token_file.read_text(encoding="utf-8"))
+            scopes = raw.get("scopes", [])
+            result["upload_scope_verified"] = result["channel_verified"] and any(scope in scopes for scope in (
+                "https://www.googleapis.com/auth/youtube.upload", "https://www.googleapis.com/auth/youtube.force-ssl", "https://www.googleapis.com/auth/youtube"))
+            result["detail"] = "Read-only auth/channel probe; permission inferred from stored scopes; no upload performed."
+        except Exception as exc:
+            result["error_category"] = type(exc).__name__
+            result["detail"] = "Capability probe failed; no upload capability is claimed."
+        return result
 
     def upload_video(self, manifest: YouTubePublishManifest) -> YouTubeOperationResult:
         self.config.require_oauth_config(require_token_path=True)
@@ -615,6 +655,29 @@ class YouTubePublisher:
         if record.video_checksum_sha256 != checksum:
             raise DuplicateUploadError("content_id already exists with a different video checksum; choose a new content_id or review state")
         return record
+
+    def reconcile_local_state(self) -> dict[str, Any]:
+        """Read recorded uploads and block retries for missing channel videos."""
+        outcome: dict[str, Any] = {"verified": [], "ambiguous": [], "errors": []}
+        for raw in self.state_store._read_records().values():
+            try:
+                record = PublishRecord(**raw)
+            except (TypeError, ValueError):
+                outcome["errors"].append({"error_category": "YouTubeManifestError"})
+                continue
+            if record.status != "uploaded" or not record.video_id:
+                if record.status == "ambiguous":
+                    outcome["ambiguous"].append(record.content_id)
+                continue
+            try:
+                self.get_video_status(record.video_id)
+                outcome["verified"].append(record.content_id)
+            except YouTubeApiError:
+                self.state_store.mark_ambiguous(record.content_id)
+                outcome["ambiguous"].append(record.content_id)
+            except Exception as exc:
+                outcome["errors"].append({"content_id": record.content_id, "error_category": type(exc).__name__})
+        return outcome
 
     def _video_body(self, manifest: YouTubePublishManifest) -> dict[str, Any]:
         snippet: dict[str, Any] = {"title": manifest.title, "description": manifest.description}

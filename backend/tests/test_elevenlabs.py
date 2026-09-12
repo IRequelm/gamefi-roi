@@ -131,7 +131,7 @@ def test_visual_rebuild_reuses_verified_existing_audio_without_provider_call(tmp
 
     metadata = NarrationAssetMetadata(
         content_id="legacy-short",
-        script_fingerprint="legacy-script",
+        script_fingerprint=hashlib.sha256(b"Start with the evidence behind this opportunity.").hexdigest(),
         source_script="Start with the evidence behind this opportunity.",
         spoken_text="Start with the evidence behind this opportunity.",
         voice_id="FGY2WhTYpPnrIDTdsKH5",

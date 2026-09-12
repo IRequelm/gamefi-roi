@@ -43,6 +43,8 @@ class RefreshCommandResult:
     failed: int = 0
     snapshot_summary: ProductionRecalculationSummary | None = None
     distribution_regenerated: bool = False
+    status: str = "planned"
+    eligible_count: int = 0
 
 
 def build_refresh_plan(tasks: tuple[StrategyCalculationTask, ...]) -> tuple[RefreshPlanEntry, ...]:
@@ -99,6 +101,8 @@ def run_snapshot_refresh(
             partial_skipped=partial_skipped,
             not_refreshable_skipped=not_refreshable_skipped,
             failed=0,
+            status="dry_run",
+            eligible_count=len(eligible_tasks),
         )
 
     engine = _database_engine(active_settings)
@@ -136,6 +140,8 @@ def run_snapshot_refresh(
         failed=len(summary.failure_ids),
         snapshot_summary=summary,
         distribution_regenerated=distribution_regenerated,
+        status="failure" if summary.failure_ids else "skipped_lock_busy" if summary.status == "skipped_lock_busy" else "degraded" if skipped_count else "success",
+        eligible_count=len(eligible_tasks),
     )
 
 
@@ -175,7 +181,9 @@ def main() -> int:
     )
     print(json.dumps(asdict(result), default=_json_default, indent=2, sort_keys=True))
     lock_busy = result.snapshot_summary is not None and result.snapshot_summary.status == "skipped_lock_busy"
-    return 0 if result.mode == "dry-run" or result.refreshed_count or result.failed_count or lock_busy else 1
+    if result.failed_count:
+        return 1
+    return 0 if result.mode == "dry-run" or result.refreshed_count or result.skipped_count or lock_busy else 1
 
 
 if __name__ == "__main__":

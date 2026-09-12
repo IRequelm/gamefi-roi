@@ -82,7 +82,7 @@ def test_ready_short_renders_with_captions_and_evidence(tmp_path: Path, monkeypa
     (assets / "official-product-ui.png").write_bytes(b"approved fixture" * 20)
     monkeypatch.setenv("GAMEFI_SHORT_ASSET_ROOT", str(tmp_path / "assets"))
     calls: list[str] = []
-    result = render_package(package, settings=_settings(tmp_path), root=tmp_path / "render", narration_provider_factory=_provider_factory(tmp_path, calls), command_runner=_runner)
+    result = render_package(package, settings=_settings(tmp_path), root=tmp_path / "render", narration_provider_factory=_provider_factory(tmp_path, calls), command_runner=_runner, allow_narration_generation=True)
 
     assert result.status == RENDER_READY, result.reason
     assert result.width == 1080 and result.height == 1920
@@ -96,7 +96,7 @@ def test_ready_short_renders_with_captions_and_evidence(tmp_path: Path, monkeypa
 
 def test_ready_long_uses_landscape_dimensions(tmp_path: Path) -> None:
     package = _package("LONG_FORM")
-    result = render_package(package, settings=_settings(tmp_path), root=tmp_path / "render", narration_provider_factory=_provider_factory(tmp_path, []), command_runner=_runner)
+    result = render_package(package, settings=_settings(tmp_path), root=tmp_path / "render", narration_provider_factory=_provider_factory(tmp_path, []), command_runner=_runner, allow_narration_generation=True)
 
     assert result.status == RENDER_READY, result.reason
     assert (result.width, result.height) == (1920, 1080)
@@ -112,10 +112,10 @@ def test_long_script_uses_distinct_bound_evidence_sections_without_filler() -> N
 
 def test_all_approved_voice_failures_are_not_ready_without_fallback(tmp_path: Path) -> None:
     calls: list[str] = []
-    result = render_package(_package(), settings=_settings(tmp_path), root=tmp_path / "render", narration_provider_factory=_provider_factory(tmp_path, calls, fail=True), command_runner=_runner)
+    result = render_package(_package(), settings=_settings(tmp_path), root=tmp_path / "render", narration_provider_factory=_provider_factory(tmp_path, calls, fail=True), command_runner=_runner, allow_narration_generation=True)
 
     assert result.status == NOT_READY
-    assert len(calls) == len(APPROVED_VOICES)
+    assert len(calls) == 1
     assert not list((tmp_path / "render" / "short").glob("*.mp4"))
 
 
@@ -129,6 +129,7 @@ def test_account_level_elevenlabs_failure_does_not_try_other_voices(tmp_path: Pa
     result = render_package(
         _package(), settings=_settings(tmp_path), root=tmp_path / "render",
         narration_provider_factory=provider_factory, command_runner=_runner,
+        allow_narration_generation=True,
     )
 
     assert result.status == NOT_READY
@@ -216,11 +217,11 @@ def test_reused_narration_must_match_current_package_script(tmp_path: Path) -> N
     assert any("narration does not match" in blocker for blocker in blockers)
 
 
-def test_approved_reused_narration_can_receive_visual_rebuild(tmp_path: Path) -> None:
+def test_reused_narration_does_not_bypass_script_validation(tmp_path: Path) -> None:
     quality = _short_result_with_quality(narration_script_matches_package=False)
     quality["narration_reused"] = True
     blockers = validate_render(_quality_result(tmp_path, quality))
-    assert not any("narration does not match" in blocker for blocker in blockers)
+    assert any("narration does not match" in blocker for blocker in blockers)
 
 
 def test_logo_and_missing_logo_identity_modes_are_explicit(tmp_path: Path) -> None:

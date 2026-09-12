@@ -112,6 +112,9 @@ class ElevenLabsNarrationProvider:
         text = script.strip()
         if not text:
             raise ElevenLabsConfigError("validated narration script must not be blank")
+        cached = reuse_existing_narration(content_id, self.config.output_directory, script=text)
+        if cached is not None:
+            return cached
         api_key, voice_id, model_id = self.config.require_complete()
         fingerprint = hashlib.sha256(text.encode("utf-8")).hexdigest()
         output = self.config.output_directory / f"{content_id}-{fingerprint[:16]}.{self.config.output_format.split('_', 1)[0]}"
@@ -203,7 +206,7 @@ def _local_reuse_metadata_paths(output_directory: Path, content_id: str) -> list
     return paths
 
 
-def reuse_existing_narration(content_id: str, output_directory: Path) -> ElevenLabsGenerationResult | None:
+def reuse_existing_narration(content_id: str, output_directory: Path, *, script: str | None = None) -> ElevenLabsGenerationResult | None:
     """Reuse a verified local narration for a visual-only rebuild.
 
     This is intentionally explicit and bounded. It never contacts ElevenLabs,
@@ -215,9 +218,15 @@ def reuse_existing_narration(content_id: str, output_directory: Path) -> ElevenL
         candidate = _load_metadata(candidate_metadata_path)
         if not candidate or candidate.content_id != content_id:
             continue
+        if candidate.script_fingerprint != hashlib.sha256(candidate.source_script.strip().encode("utf-8")).hexdigest():
+            continue
+        if script is not None and " ".join(candidate.source_script.split()) != " ".join(script.split()):
+            continue
         audio = Path(candidate.audio_path)
         if (
             candidate.voice_id in APPROVED_REUSE_VOICE_IDS
+            and candidate.voice_provider == "elevenlabs"
+            and candidate.model_id in {"eleven_multilingual_v2", "eleven_turbo_v2_5", "eleven_flash_v2_5"}
             and candidate.narration_mode == "neural_voice"
             and candidate.narration_quality_status == "approved"
             and audio.is_file()

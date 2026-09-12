@@ -8,6 +8,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from hashlib import sha256
 from urllib.parse import urlparse
+from app.strategies.taxonomy import canonical_type
 
 
 def _now() -> datetime:
@@ -94,6 +95,10 @@ def score_discovery(record: DiscoveryRecord) -> DiscoveryRecord:
 
 
 def evaluate_admission(record: DiscoveryRecord) -> AdmissionDecision:
+    try:
+        canonical_type(record.category)
+    except ValueError:
+        return AdmissionDecision("QUARANTINE", "Invalid canonical opportunity type; research is required.", ("canonical opportunity_type",))
     parsed = urlparse(record.official_url or "")
     identity = bool(record.canonical_name.strip() and parsed.scheme == "https" and parsed.netloc)
     verified_facts = {e.fact for e in record.evidence if e.verified}

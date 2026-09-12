@@ -35,7 +35,7 @@ def test_paid_render_blueprint_preserves_production_cron_and_paid_database() -> 
 def test_beta_scheduler_workflow_uses_policy_aware_snapshot_refresh_with_overlap_guard() -> None:
     workflow = (ROOT / ".github/workflows/render-beta-recalculation.yml").read_text(encoding="utf-8")
 
-    assert "cron: \"*/30 * * * *\"" in workflow
+    assert "cron: \"*/5 * * * *\"" in workflow
     assert "cancel-in-progress: false" in workflow
     assert "GAMEFI_BETA_DATABASE_URL" in workflow
     assert "GAMEFI_PUBLIC_BASE_URL" in workflow

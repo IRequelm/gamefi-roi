@@ -17,6 +17,7 @@ DEFAULT_PUBLIC_DFK_CHAIN_RPC_URL = "https://subnets.avax.network/defi-kingdoms/d
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
+        env_file_encoding="utf-8-sig",
         env_prefix="GAMEFI_",
         extra="ignore",
     )

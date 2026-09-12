@@ -125,7 +125,7 @@ def check_config(settings_loader: Callable[[], Settings] = get_settings) -> tupl
             CheckResult(
                 name="config",
                 ok=False,
-                detail=f"Configuration invalid: {exc}",
+                detail=f"Configuration invalid ({type(exc).__name__}); inspect variable names locally.",
             ),
             None,
         )
@@ -198,7 +198,7 @@ def check_database(settings: Settings | None) -> tuple[CheckResult, Engine | Non
         check_connectivity(engine)
     except SQLAlchemyError as exc:
         engine.dispose()
-        return CheckResult(name="database", ok=False, detail=f"Database check failed: {exc}"), None
+        return CheckResult(name="database", ok=False, detail=f"Database check failed: {type(exc).__name__}"), None
 
     return CheckResult(name="database", ok=True, detail="Database connectivity verified"), engine
 
@@ -214,7 +214,7 @@ def check_migrations(settings: Settings | None, engine: Engine | None) -> CheckR
             context = MigrationContext.configure(connection)
             current_heads = set(context.get_current_heads())
     except Exception as exc:  # Alembic can raise several config/runtime exceptions.
-        return CheckResult(name="migrations", ok=False, detail=f"Migration check failed: {exc}")
+        return CheckResult(name="migrations", ok=False, detail=f"Migration check failed: {type(exc).__name__}")
 
     if current_heads == heads:
         return CheckResult(name="migrations", ok=True, detail=f"Database at head {', '.join(sorted(heads))}")

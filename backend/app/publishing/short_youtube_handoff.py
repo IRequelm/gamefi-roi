@@ -26,6 +26,8 @@ from app.content_package.generator import ContentPackage, build_content_packages
 from app.video_render.factory import APPROVED_VOICES, RENDER_READY, RenderResult, render_package, short_quality_blockers, validate_render
 from app.video_render.creative_qa import creative_preflight, frame_qa
 from app.publishing.youtube import YouTubeOperationResult, YouTubePublishManifest, YouTubePublisher
+from app.publishing.youtube import PublishStateStore
+from app.publishing.elevenlabs import _atomic_write_text
 
 HANDOFF_VERSION = "youtube-short-handoff-v1"
 DEFAULT_QUEUE = Path("distribution/publish_queue/youtube_short_handoff.json")
@@ -67,6 +69,7 @@ class ShortHandoffQueue(BaseModel):
     version: str = HANDOFF_VERSION
     buffer_target: int = DEFAULT_BUFFER_TARGET
     items: tuple[ShortHandoffItem, ...] = ()
+    blocked: dict[str, dict[str, Any]] = {}
 
 
 @dataclass(frozen=True)
@@ -88,7 +91,7 @@ def load_handoff(path: Path = DEFAULT_QUEUE) -> ShortHandoffQueue:
 
 def write_handoff(path: Path, queue: ShortHandoffQueue) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(queue.model_dump_json(indent=2) + "\n", encoding="utf-8")
+    _atomic_write_text(path, queue.model_dump_json(indent=2) + "\n")
 
 
 def prepare_short_handoff(
@@ -104,18 +107,15 @@ def prepare_short_handoff(
         raise ValueError("handoff preparation limit must be positive")
     current = load_handoff(queue_path)
     by_package = {item.package_id: item for item in current.items}
+    blocked = dict(current.blocked)
+    publication_state = PublishStateStore(Path(settings.youtube_publish_state_file))
     candidates = [package for package in (packages or build_content_packages()) if package.format == "SHORT_FORM" and package.generation_status == "READY_FOR_REVIEW" and validate_package(package)]
     family_counts = {package_family(item.package_id): 0 for item in by_package.values() if item.status == "queued"}
     opportunity_counts = {package_opportunity(item.package_id): 0 for item in by_package.values() if item.status == "queued"}
     # Reconcile checksums for already-queued renders before applying the
     # bounded buffer limit. A quality rebuild must not leave a valid item
     # blocked by the checksum of its previous MP4.
-    for package in candidates:
-        existing = by_package.get(package.package_id)
-        if existing and existing.evidence_fingerprint == package.evidence_fingerprint and Path(existing.video_path).is_file():
-            current_checksum = hashlib.sha256(Path(existing.video_path).read_bytes()).hexdigest()
-            if current_checksum != existing.video_checksum:
-                by_package[package.package_id] = existing.model_copy(update={"video_checksum": current_checksum})
+    # Never adopt a changed MP4 checksum without a successful render/QA result.
     for item in by_package.values():
         if item.status == "queued":
             family_counts[package_family(item.package_id)] = family_counts.get(package_family(item.package_id), 0) + 1
@@ -124,15 +124,27 @@ def prepare_short_handoff(
         if len([item for item in by_package.values() if item.status == "queued"]) >= limit:
             break
         existing = by_package.get(package.package_id)
+        prior = publication_state.find(package.source_inventory_item_id)
+        if prior is not None:
+            if existing and prior.status == "uploaded":
+                by_package[package.package_id] = existing.model_copy(update={"status": "uploaded"})
+            continue
+        if existing and existing.status == "uploaded":
+            continue
+        previous = blocked.get(package.package_id, {})
+        if previous.get("evidence_fingerprint") == package.evidence_fingerprint and previous.get("attempts", 0) >= 3:
+            continue
         if existing and existing.evidence_fingerprint == package.evidence_fingerprint and Path(existing.video_path).is_file() and _stored_render_creative_ready(existing):
             continue
         if packages is None and (creative_blockers := creative_preflight(package)):
             # Do not spend narration credits or create a publishable-looking
             # asset when the creative director has not approved the package.
+            blocked[package.package_id] = {"state": "BLOCKED_PACKAGE", "reason": "; ".join(creative_blockers), "evidence_fingerprint": package.evidence_fingerprint, "attempts": 3}
             continue
         result = render(package, settings=settings, root=render_root)
         blockers = validate_render(result)
         if result.status != RENDER_READY or blockers:
+            blocked[package.package_id] = {"state": "BLOCKED_NARRATION" if "NARRATION" in (result.reason or "") else "BLOCKED_RENDER", "reason": result.reason or "; ".join(blockers), "evidence_fingerprint": package.evidence_fingerprint, "attempts": previous.get("attempts", 0) + 1, "updated_at": datetime.now(UTC).isoformat()}
             continue
         if result.narration_path is None or result.video_path is None or result.caption_path is None:
             continue
@@ -141,6 +153,7 @@ def prepare_short_handoff(
         if result.voice_id is None or result.model_id is None:
             continue
         video_checksum = hashlib.sha256(Path(result.video_path).read_bytes()).hexdigest()
+        blocked.pop(package.package_id, None)
         by_package[package.package_id] = ShortHandoffItem(
             package_id=package.package_id,
             content_id=package.source_inventory_item_id,
@@ -162,7 +175,7 @@ def prepare_short_handoff(
         )
         family_counts[package.content_family] = family_counts.get(package.content_family, 0) + 1
         opportunity_counts[package.opportunity_id or "gamcryp"] = opportunity_counts.get(package.opportunity_id or "gamcryp", 0) + 1
-    queue = ShortHandoffQueue(buffer_target=min(current.buffer_target, DEFAULT_BUFFER_TARGET), items=tuple(sorted(by_package.values(), key=lambda item: item.package_id)))
+    queue = ShortHandoffQueue(buffer_target=min(current.buffer_target, DEFAULT_BUFFER_TARGET), items=tuple(sorted(by_package.values(), key=lambda item: item.package_id)), blocked=blocked)
     write_handoff(queue_path, queue)
     return queue
 
@@ -208,12 +221,13 @@ def publish_next(
             if not cap.available:
                 return {"status": "daily_cap", "content_id": item.content_id, "detail": "one successful autonomous public YouTube publication already recorded for the local calendar day"}
             operation = publisher.upload_video(manifest)
-            if operation.status == "uploaded":
-                _save_cap(cap_path, DailyCap(cap.date, cap.successful_publications + 1))
+            if operation.status in {"uploaded", "skipped_duplicate"}:
+                if operation.status == "uploaded":
+                    _save_cap(cap_path, DailyCap(cap.date, cap.successful_publications + 1))
                 _replace_item(queue_path, queue, item.model_copy(update={"status": "uploaded"}))
     else:
         operation = publisher.dry_run_upload(manifest)
-    return {"status": operation.status if live else "dry_run", "content_id": item.content_id, "video_id": operation.video_id}
+    return {"status": operation.status if live else "dry_run", "validation_status": operation.status, "content_id": item.content_id, "video_id": operation.video_id}
 
 
 def report(queue_path: Path = DEFAULT_QUEUE, cap_path: Path = DEFAULT_CAP_STATE, *, now: datetime | None = None) -> dict[str, Any]:
@@ -223,9 +237,24 @@ def report(queue_path: Path = DEFAULT_QUEUE, cap_path: Path = DEFAULT_CAP_STATE,
         "buffer_target": queue.buffer_target,
         "queued_green_shorts": sum(item.status == "queued" and item.readiness == "GREEN" for item in queue.items),
         "uploaded": sum(item.status == "uploaded" for item in queue.items),
+        "ambiguous": sum(item.status == "ambiguous" for item in queue.items),
+        "blocked": queue.blocked,
         "daily_cap_used": cap.successful_publications,
         "daily_cap_available": cap.available,
     }
+
+
+def reconcile_handoff_state(verified_content_ids: set[str], queue_path: Path = DEFAULT_QUEUE) -> int:
+    """Synchronize local handoff claims with the publisher reconciliation result."""
+    queue = load_handoff(queue_path)
+    changed = tuple(
+        item.model_copy(update={"status": "ambiguous"}) if item.status == "uploaded" and item.content_id not in verified_content_ids else item
+        for item in queue.items
+    )
+    count = sum(before.status != after.status for before, after in zip(queue.items, changed, strict=True))
+    if count:
+        write_handoff(queue_path, queue.model_copy(update={"items": changed}))
+    return count
 
 
 def autonomous_youtube_cap_available(path: Path = DEFAULT_CAP_STATE, *, now: datetime | None = None) -> bool:
@@ -290,6 +319,10 @@ def _load_render_quality_metadata(item: ShortHandoffItem) -> dict[str, Any] | No
     for metadata in candidates:
         try:
             payload = json.loads(metadata.read_text(encoding="utf-8"))
+            checksums = payload.get("asset_checksums", {})
+            for label, path in (("video", item.video_path), ("audio", item.narration_path), ("captions", item.caption_path)):
+                if checksums.get(label) != hashlib.sha256(Path(path).read_bytes()).hexdigest():
+                    return None
             quality = payload.get("quality_metadata")
             if isinstance(quality, dict):
                 return quality

@@ -11,6 +11,7 @@ from sqlalchemy.engine import Engine
 from app.discovery.engine import DiscoveryRecord, evaluate_admission, normalize_entity, to_json
 from app.storage.models.discovery import DiscoveryRecordModel, DynamicCatalogEntryModel
 from app.strategies.catalog import OpportunityCatalogEntry, OpportunityGuidance, RoiUnavailableExplanation, SourceReference
+from app.strategies.taxonomy import canonical_type
 
 
 class DiscoveryRepository:
@@ -53,7 +54,7 @@ class DiscoveryRepository:
     def _admit(self, connection, record: DiscoveryRecord, mode: str) -> None:
         opportunity_id = "discovered-" + normalize_entity(record.canonical_name).replace(" ", "-")
         payload = {
-            "opportunity_id": opportunity_id, "opportunity_type": record.category.upper(), "name": record.canonical_name,
+            "opportunity_id": opportunity_id, "opportunity_type": canonical_type(record.category), "name": record.canonical_name,
             "status": "active", "platforms": [], "chains": [], "economy_types": ["discovery"],
             "reward_asset_or_points_type": [], "value_realization_status": "unknown", "official_url": record.official_url,
             "source_references": [{"label": e.source_role, "url": e.source_url} for e in record.evidence if e.verified],

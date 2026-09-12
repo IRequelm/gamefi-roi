@@ -25,6 +25,7 @@ def main(argv: list[str] | None = None) -> int:
     subcommands = parser.add_subparsers(dest="command", required=True)
 
     subcommands.add_parser("status", help="Check OAuth configuration and token state without mutating YouTube.")
+    subcommands.add_parser("reconcile-state", help="Reconcile local upload state against the authenticated channel.")
     subcommands.add_parser("authorize", help="Run first-time Google OAuth and store a local refreshable token.")
     subcommands.add_parser("queue", help="Show the current YouTube publication queue.")
     subcommands.add_parser("rebuild-queue", help="Rebuild the YouTube queue from canonical Content Packs.")
@@ -77,7 +78,14 @@ def main(argv: list[str] | None = None) -> int:
         publisher = _publisher()
         distribution = _distribution_publisher(publisher)
         if args.command == "status":
-            _print_json(publisher.validate_auth_state().to_safe_dict())
+            capability = publisher.check_capabilities()
+            _print_json(capability)
+            return 0 if capability["upload_scope_verified"] else 1
+        if args.command == "reconcile-state":
+            reconciliation = publisher.reconcile_local_state()
+            from app.publishing.short_youtube_handoff import reconcile_handoff_state
+            reconciliation["handoff_marked_ambiguous"] = reconcile_handoff_state(set(reconciliation["verified"]))
+            _print_json(reconciliation)
             return 0
         if args.command == "authorize":
             _print_json(publisher.authorize_interactive().to_safe_dict())

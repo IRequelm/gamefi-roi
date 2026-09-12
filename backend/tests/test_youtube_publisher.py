@@ -345,6 +345,21 @@ def test_api_errors_are_structured_and_redacted(tmp_path) -> None:
     assert service.videos_resource.next_insert.called == 1
 
 
+def test_reconcile_marks_missing_uploaded_video_ambiguous_and_blocks_retry(tmp_path) -> None:
+    service = FakeYouTubeService()
+    service.videos_resource.next_list = FakeExecute({"items": []})
+    publisher = _publisher(tmp_path, service=service)
+    store = PublishStateStore(tmp_path / "state.json")
+    store.record_uploaded(content_id="gamcryp-test-short-001", video_checksum_sha256="a" * 64, manifest_hash="b" * 64, video_id="missingVIDEO")
+
+    result = publisher.reconcile_local_state()
+
+    assert result["ambiguous"] == ["gamcryp-test-short-001"]
+    assert store.find("gamcryp-test-short-001").status == "ambiguous"
+    with pytest.raises(DuplicateUploadError, match="unresolved upload attempt"):
+        publisher.upload_video(_manifest(tmp_path))
+
+
 def test_safe_log_redaction_and_response_sanitization() -> None:
     redacted = redact_sensitive_text("client_secret=abc refresh_token:def Authorization: Bearer xyz")
     safe = sanitize_mapping({"id": "abc123VIDEO", "access_token": "secret", "nested": {"clientSecret": "secret"}})

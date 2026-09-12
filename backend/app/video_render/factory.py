@@ -13,7 +13,7 @@ import os
 import re
 import subprocess
 import textwrap
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, replace
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Callable
@@ -100,7 +100,8 @@ def render_package(
     now: datetime | None = None,
     narration_provider_factory: Callable[[ElevenLabsConfig], ElevenLabsNarrationProvider] | None = None,
     command_runner: Callable[..., subprocess.CompletedProcess[str]] | None = None,
-    reuse_local_narration: bool = False,
+    reuse_local_narration: bool = True,
+    allow_narration_generation: bool = False,
 ) -> RenderResult:
     try:
         job = build_render_job(package)
@@ -127,11 +128,13 @@ def render_package(
     next_index = _load_rotation_index(state_path)
     base_config = ElevenLabsConfig.from_settings(settings)
     if reuse_local_narration:
-        narration = reuse_existing_narration(package.source_inventory_item_id, narration_dir)
+        narration = reuse_existing_narration(package.source_inventory_item_id, narration_dir, script=job.script)
         if narration is not None:
             voice_id = narration.metadata.voice_id
             voice_name = next((voice for voice, identifier in APPROVED_VOICES if identifier == voice_id), None)
-    for offset in range(len(APPROVED_VOICES)) if narration is None else ():
+    if narration is None and not allow_narration_generation:
+        return _failed(package, "BLOCKED_NARRATION: no verified narration matches the spoken script; paid generation requires explicit operator action", evidence=job.evidence_fingerprint, width=job.width, height=job.height)
+    for offset in range(1) if narration is None else ():
         index = (next_index + offset) % len(APPROVED_VOICES)
         name, candidate_id = APPROVED_VOICES[index]
         try:
@@ -172,7 +175,7 @@ def render_package(
     if quality_metadata is not None:
         quality_metadata["narration_reused"] = bool(narration and narration.reused)
         quality_metadata["narration_script_matches_package"] = bool(
-            narration is None or narration.metadata.source_script.strip() == job.script.strip()
+            narration is None or " ".join(narration.metadata.source_script.split()) == " ".join(job.script.split())
         )
     product_visual_path = Path(quality_metadata["asset_plan"]["product_visual_paths"][0]) if quality_metadata and quality_metadata["asset_plan"]["product_visual_paths"] else None
     scene_text_paths = _write_scene_text_files(metadata_dir, package, quality_metadata)
@@ -246,7 +249,7 @@ def render_package(
     result = RenderResult(package.source_inventory_item_id, package.package_id, job.format, RENDER_READY, None, str(video_path), str(caption_path), str(audio), duration, job.width, job.height, voice_name, voice_id, narration.metadata.model_id if narration else None, job.evidence_fingerprint, str(metadata_dir / f"{package.package_id}.json"), (now or datetime.now(UTC)).isoformat(), quality_metadata, audio_mode)
     blockers = validate_render(result)
     if blockers:
-        return _failed(package, "; ".join(blockers), evidence=job.evidence_fingerprint, width=job.width, height=job.height)
+        result = replace(result, status=NOT_READY, reason="BLOCKED_VISUAL_QA: " + "; ".join(blockers))
     Path(result.metadata_path).write_text(json.dumps({**asdict(result), "asset_checksums": {"video": _sha256(video_path), "audio": _sha256(audio), "captions": _sha256(caption_path)}}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return result
 
@@ -495,7 +498,7 @@ def short_quality_blockers(quality: dict[str, Any]) -> list[str]:
         blockers.append("short-form lacks a meaningful visual storytelling system")
     if not quality.get("brand_sting_present"):
         blockers.append("brand opening/closing sting is missing")
-    if quality.get("narration_script_matches_package") is False and not quality.get("narration_reused"):
+    if quality.get("narration_script_matches_package") is False:
         blockers.append("reused narration does not match the current package script")
     return blockers
 

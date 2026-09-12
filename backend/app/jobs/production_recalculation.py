@@ -172,7 +172,7 @@ def run_recalculation_tasks(
         score_count = _persist_scores(bind=lock.bind, snapshots=run.snapshots, scored_at=run.calculated_at)
         _log_run_result(run, score_count=score_count)
         return ProductionRecalculationSummary(
-            status="ok" if run.snapshots else "failed",
+            status="failed" if run.failures else "ok",
             calculated_at=run.calculated_at,
             intended_window=run.intended_window,
             snapshot_ids=tuple(snapshot.snapshot_id for snapshot in run.snapshots),
@@ -311,7 +311,7 @@ def _normalize_utc(value: datetime) -> datetime:
 def main() -> int:
     summary = run_production_recalculation()
     print(json.dumps(_summary_payload(summary), indent=2, sort_keys=True))
-    return 0 if summary.snapshot_ids or summary.status == "skipped_lock_busy" else 1
+    return 1 if summary.failure_ids or summary.status == "failed" else 0
 
 
 if __name__ == "__main__":

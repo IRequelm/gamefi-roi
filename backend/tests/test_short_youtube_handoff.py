@@ -14,12 +14,13 @@ from app.publishing.short_youtube_handoff import (
     load_handoff,
     prepare_short_handoff,
     publish_next,
+    reconcile_handoff_state,
 )
 from app.video_render.factory import RENDER_READY, RenderResult
 
 
 def _settings() -> Settings:
-    return Settings(environment="test", database_url="sqlite:///unused", allow_sqlite_for_tests=True, public_base_url="https://gamcryp.com", elevenlabs_api_key="test-key", elevenlabs_model_id="eleven_multilingual_v2", elevenlabs_voice_id="voice")
+    return Settings(environment="test", database_url="sqlite:///unused", allow_sqlite_for_tests=True, public_base_url="https://gamcryp.com", elevenlabs_api_key="test-key", elevenlabs_model_id="eleven_multilingual_v2", elevenlabs_voice_id="voice", youtube_publish_state_file="data/local/nonexistent-test-publication-state.json")
 
 
 def _package():
@@ -130,3 +131,16 @@ def test_non_green_handoff_never_publishes(tmp_path: Path) -> None:
 
     result = publish_next(publisher=Publisher(), queue_path=queue_path, cap_path=tmp_path / "cap.json", live=True)
     assert result["status"] == "idle"
+
+
+def test_reconciliation_preserves_missing_upload_as_ambiguous(tmp_path: Path) -> None:
+    package = _package()
+    item = _render(tmp_path, package=package)
+    queue_path = tmp_path / "handoff.json"
+    render = lambda package, **kwargs: item
+    prepare_short_handoff(settings=_settings(), queue_path=queue_path, packages=[package], render=render)
+    queue = load_handoff(queue_path)
+    from app.publishing.short_youtube_handoff import write_handoff
+    write_handoff(queue_path, queue.model_copy(update={"items": (queue.items[0].model_copy(update={"status": "uploaded"}),)}))
+    assert reconcile_handoff_state(set(), queue_path) == 1
+    assert load_handoff(queue_path).items[0].status == "ambiguous"

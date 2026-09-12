@@ -196,6 +196,20 @@ The local ignored publish state is keyed by `content_id` and video checksum:
 
 If an upload outcome is uncertain, inspect the channel and local state before issuing another upload. Never blindly retry by changing `content_id`.
 
+Run reconciliation after an interrupted upload or recovery:
+
+```powershell
+python -m app.publishing.youtube_cli reconcile-state
+```
+
+The command reads the authenticated channel. A local `uploaded` record whose video is absent/inaccessible, or a Short-handoff `uploaded` item without a verified local publication record, becomes `ambiguous`. It is retained and blocked from retry; it is never silently re-uploaded or deleted.
+
+## Narration reuse and recovery
+
+Visual-only rebuilds search approved local narration metadata by content id, exact normalized spoken script, approved voice/model, and SHA-256 audio checksum. A matching asset is reused by default; the normal worker never asks ElevenLabs to generate missing narration. Changed spoken text or invalid metadata produces `BLOCKED_NARRATION`, preserving the existing asset and requiring an explicit operator generation decision.
+
+`python -m app.video_render.recovery_cli` performs an Akash legacy-audio recovery render without publishing or paid narration. Current creative and frame QA still apply; an old generic spoken hook may correctly remain `BLOCKED_VISUAL_QA`.
+
 ## Safe Disable
 
 To temporarily stop autonomous publishing, update the ignored local `.env` and disable the scheduled task:

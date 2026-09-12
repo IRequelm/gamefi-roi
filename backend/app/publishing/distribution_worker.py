@@ -101,6 +101,8 @@ class WorkerState:
                 logger.warning("worker_state_unreadable path=%s", path)
 
     def blocked(self, key: str, *, now: datetime) -> bool:
+        if self.records.get(key, {}).get("dead_letter"):
+            return True
         value = self.records.get(key, {}).get("retry_after")
         if not value:
             return False
@@ -110,7 +112,10 @@ class WorkerState:
             return False
 
     def record_failure(self, key: str, *, error_category: str, now: datetime, cooldown_seconds: int) -> None:
+        attempts = int(self.records.get(key, {}).get("attempts", 0)) + 1
         self.records[key] = {
+            "attempts": attempts,
+            "dead_letter": attempts >= 3,
             "error_category": error_category,
             "last_attempt_at": now.isoformat(),
             "retry_after": (now + timedelta(seconds=cooldown_seconds)).isoformat(),
@@ -175,7 +180,8 @@ class DistributionWorker:
         # which carries the current render, narration, and creative QA proof.
         results.append({"platform": "YouTubeLegacyQueue", "status": "disabled_for_autonomous_worker"})
         results.append(self._process_short_handoff(now))
-        self._write_heartbeat(status="ok", now=self.now(), results=results)
+        degraded = any(item.get("status") in {"failed", "refill_failed", "not_ready", "blocked", "dead_letter"} for item in results)
+        self._write_heartbeat(status="degraded" if degraded else "ok", now=self.now(), results=results)
         return results
 
     def run_forever(self, *, interval_seconds: int = 1800) -> None:
@@ -357,6 +363,9 @@ class DistributionWorker:
         return results
 
     def _process_short_handoff(self, now: datetime) -> dict[str, Any]:
+        key = "YouTubeShortHandoff"
+        if self.state.blocked(key, now=now):
+            return {"platform": key, "status": "dead_letter" if self.state.records[key].get("dead_letter") else "cooldown"}
         try:
             queue = load_handoff(self.config.short_handoff_file)
             queued = sum(item.status == "queued" and item.readiness == "GREEN" for item in queue.items)
@@ -375,8 +384,13 @@ class DistributionWorker:
                 now=now,
                 live=self.config.live,
             )
+            if result.get("status") == "not_ready":
+                self.state.record_failure(key, error_category="BLOCKED_VISUAL_QA", now=now, cooldown_seconds=self.config.failure_cooldown_seconds)
+            else:
+                self.state.record_success(key)
             return {"platform": "YouTubeShortHandoff", **result}
         except Exception as exc:
+            self.state.record_failure(key, error_category=type(exc).__name__, now=now, cooldown_seconds=self.config.failure_cooldown_seconds)
             logger.error("short_youtube_handoff_failed category=%s", type(exc).__name__)
             return {"platform": "YouTubeShortHandoff", "status": "failed", "error_category": type(exc).__name__}
 
@@ -420,7 +434,7 @@ def main(argv: list[str] | None = None) -> int:
     # Task Scheduler launches without a shell profile; load the existing local
     # .env convention before reading worker flags. Explicit process variables
     # still take precedence.
-    load_dotenv(override=False)
+    load_dotenv(override=False, encoding="utf-8-sig")
     parser = argparse.ArgumentParser(description="Run the fail-closed GamCryp distribution worker.")
     parser.add_argument("--once", action="store_true", help="Process one interval and exit.")
     parser.add_argument("--interval-seconds", type=int, default=1800)
