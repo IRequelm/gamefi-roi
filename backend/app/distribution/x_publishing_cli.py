@@ -8,6 +8,8 @@ import os
 from pathlib import Path
 from typing import Any
 
+from dotenv import load_dotenv
+
 from app.distribution.x_publisher import (
     XPublisherConfig,
     XPublisherError,
@@ -27,6 +29,10 @@ DEFAULT_APPROVAL_REPORT = Path("distribution/publish_queue/x_yellow_approval_rep
 
 
 def main(argv: list[str] | None = None) -> int:
+    # This CLI is also invoked directly by local operators, not only by the
+    # long-running worker.  Load the ignored local environment explicitly so
+    # OAuth configuration is identical in both entry paths.
+    load_dotenv(dotenv_path=Path(".env"), encoding="utf-8-sig")
     parser = argparse.ArgumentParser(description="Operate the fail-closed GamCryp X publishing layer.")
     subcommands = parser.add_subparsers(dest="command", required=True)
 
