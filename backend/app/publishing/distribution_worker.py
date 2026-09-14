@@ -299,6 +299,7 @@ class DistributionWorker:
         if self.config.live and not self.x_daily_cap.available("posts", self.config.x_daily_post_cap, now=now):
             return {"platform": "X", "status": "daily_cap", "detail": "daily X post cap reached"}
         saw_cooldown = False
+        manual_blockers: list[str] = []
         for raw_content_id in candidates:
             content_id = str(raw_content_id)
             key = f"X:{content_id}"
@@ -307,6 +308,9 @@ class DistributionWorker:
                 preview = self.x_service.preview(content_id)
                 key = f"X:{content_id}:{preview.content_checksum}"
                 if self.config.x_publishing_mode == "manual":
+                    if not preview.would_publish:
+                        manual_blockers.extend(f"{content_id}: {blocker}" for blocker in preview.blockers)
+                        continue
                     record = manual_ready_record(
                         content_id=content_id,
                         post_text=preview.exact_final_copy,
@@ -367,6 +371,8 @@ class DistributionWorker:
                 return {"platform": "X", "content_id": content_id, "status": "failed", "error_category": type(exc).__name__}
         if saw_cooldown:
             return {"platform": "X", "status": "cooldown"}
+        if manual_blockers:
+            return {"platform": "X", "status": "blocked", "detail": "; ".join(dict.fromkeys(manual_blockers))}
         return {"platform": "X", "status": "idle", "detail": "no unblocked GREEN queue item"}
 
     def _process_x_amplification(self, now: datetime) -> dict[str, Any]:

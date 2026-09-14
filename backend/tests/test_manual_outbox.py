@@ -42,3 +42,4 @@ def test_manual_outbox_clear_marks_explicit_confirmation(tmp_path):
     outbox.clear(content_id="first", checksum="checksum-1")
 
     assert outbox.current().published is True
+    assert outbox.pending() is None

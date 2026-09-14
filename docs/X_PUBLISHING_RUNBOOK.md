@@ -98,13 +98,15 @@ GAMEFI_X_DAILY_RETWEET_CAP=2
 GAMEFI_X_AMPLIFICATION_EMAIL_STATE_FILE=data/local/distribution/x_amplification_email_state.json
 ```
 
-With `GAMEFI_X_PUBLISHING_MODE=manual`, the distribution worker never calls X. It writes one current GREEN manual-ready item to `distribution/manual_outbox/x_manual_ready.json`. The record contains the exact validated post text, source URL, prepared timestamp, content checksum, and `published: false`; YELLOW and RED items are excluded. Repeated worker cycles retain the current pending record. After the operator publishes that exact text manually, confirm it explicitly with:
+With `GAMEFI_X_PUBLISHING_MODE=manual`, the distribution worker never calls X. It writes one current GREEN/YELLOW manual-ready item to `distribution/manual_outbox/x_manual_ready.json`. The record contains the exact validated post text, source URL, prepared timestamp, content checksum, and `published: false`; RED items are excluded. Repeated worker cycles retain the current pending record. After the operator publishes that exact text manually, confirm it explicitly with:
 
 ```powershell
 distribution-worker x-manual-confirm CONTENT_ID
 ```
 
 The confirmation records the checksum as manually published for duplicate protection and marks the outbox item published. It does not claim that the X API published the post and never infers publication without the command.
+
+Confirmed or duplicate content is never prepared again. A stale/blocked item is skipped so the worker can consider the next eligible X item; the daily brief reads only records whose `published` field is `false`.
 
 If phone access is important, the same manual-ready item can optionally be delivered by SMTP email. Set `GAMEFI_X_MANUAL_EMAIL_ENABLED=true` and configure the recipient, sender, SMTP host, username, and app password in the ignored local `.env`. Gmail uses `smtp.gmail.com:587` with STARTTLS; use a mailbox app password, not the normal mailbox password. The worker records the last emailed checksum in `data/local/distribution/x_email_state.json`, so unchanged worker cycles do not send duplicates. Email failure is isolated from YouTube.
 

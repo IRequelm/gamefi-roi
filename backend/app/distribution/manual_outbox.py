@@ -39,6 +39,11 @@ class XManualOutbox:
         item = payload.get("item")
         return XManualReadyRecord.model_validate(item) if isinstance(item, dict) else None
 
+    def pending(self) -> XManualReadyRecord | None:
+        """Return only an unpublished item; confirmed records stay auditable."""
+        record = self.current()
+        return record if record is not None and not record.published else None
+
     def prepare(self, record: XManualReadyRecord) -> str:
         current = self.current()
         if current and not current.published and current.checksum != record.checksum:
