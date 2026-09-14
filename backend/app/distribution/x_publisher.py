@@ -469,6 +469,66 @@ class XApiClient:
             raise XAmbiguousApiError("X create-post response omitted the post id; reconcile in X before retrying")
         return post_id
 
+    def authenticated_user(self) -> dict[str, Any]:
+        """Return the user-context identity without exposing the access token."""
+        return self._get_json(
+            "/2/users/me",
+            params={"user.fields": "username,verified,public_metrics"},
+        )
+
+    def search_recent(self, query: str, *, max_results: int = 25) -> dict[str, Any]:
+        """Search recent public posts using the authenticated X API context."""
+        return self._get_json(
+            "/2/tweets/search/recent",
+            params={
+                "query": query,
+                "max_results": str(max(10, min(max_results, 100))),
+                "tweet.fields": "created_at,public_metrics,author_id,entities",
+                "expansions": "author_id",
+                "user.fields": "username,verified,public_metrics",
+            },
+        )
+
+    def create_retweet(self, user_id: str, tweet_id: str) -> str:
+        """Retweet one post for the authenticated user through the official API."""
+        token = self.oauth.access_token()
+        try:
+            response = self.client.post(
+                f"/2/users/{user_id}/retweets",
+                headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+                json={"tweet_id": tweet_id},
+            )
+        except (httpx.TimeoutException, httpx.NetworkError) as exc:
+            raise XAmbiguousApiError(
+                "X retweet result is ambiguous after a network failure; reconcile in X before retrying"
+            ) from exc
+        except httpx.HTTPError as exc:
+            raise XApiError(f"X retweet request failed: {safe_error(exc)}") from exc
+        if response.status_code >= 500:
+            raise XAmbiguousApiError(
+                f"X retweet returned status {response.status_code}; reconcile in X before retrying"
+            )
+        if response.status_code >= 400:
+            raise XApiError(f"X retweet failed with status {response.status_code}: {safe_response(response)}")
+        payload = response.json()
+        retweeted = (payload.get("data") or {}).get("retweeted")
+        if retweeted is False:
+            raise XApiError("X retweet response reported that the post was not retweeted")
+        return tweet_id
+
+    def _get_json(self, endpoint: str, *, params: dict[str, str]) -> dict[str, Any]:
+        token = self.oauth.access_token()
+        try:
+            response = self.client.get(endpoint, params=params, headers={"Authorization": f"Bearer {token}"})
+        except httpx.HTTPError as exc:
+            raise XApiError(f"X read request failed: {safe_error(exc)}") from exc
+        if response.status_code >= 400:
+            raise XApiError(f"X read request failed with status {response.status_code}: {safe_response(response)}")
+        payload = response.json()
+        if not isinstance(payload, dict):
+            raise XApiError("X read response was not a JSON object")
+        return payload
+
 
 class XPublishingService:
     def __init__(

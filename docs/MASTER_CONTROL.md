@@ -67,7 +67,7 @@ Render application logs showed repeated `/api/v1/ops/status` 200 responses and p
 
 ## 5. Referral and official destinations
 
-Official destinations and reviewed outbound redirects remain allowlisted and separate from model inputs. Referral metadata is commercial-only. The X manual outbox contains GREEN-only handoff data and no secrets; automatic X posting remains disabled.
+Official destinations and reviewed outbound redirects remain allowlisted and separate from model inputs. Referral metadata is commercial-only. X now has a local official-API user-context path; automatic posting is enabled only in the ignored local `.env`, while repository defaults remain fail-closed.
 
 ## 6. Distribution state
 
@@ -87,7 +87,7 @@ Official destinations and reviewed outbound redirects remain allowlisted and sep
 
 ## 8. X
 
-X API access remains unavailable. `GAMEFI_X_PUBLISHING_MODE=manual` now lets the local worker prepare one exact GREEN post in `distribution/manual_outbox/x_manual_ready.json` without calling X; the operator pastes it into the normal X website and confirms the checksum. Non-API browser automation is intentionally not implemented because X rules prohibit it. Visible GamCryp links use an occasional deterministic cadence; source URLs remain in metadata. Own posts now carry bounded hashtags, explicitly verified handles when configured, and local media metadata with a verified-facts fallback card. The manual amplification radar is fail-closed and writes only actionable, deduplicated candidates to `distribution/manual_outbox/x_amplification_ready.json`; it never calls X. `GAMEFI_X_AMPLIFICATION_AUTO_REPOST=false` remains required.
+X OAuth user context is verified as `@GamCryp` with `tweet.write`, `users.read`, and refresh-token capability. The local `.env` is set to `GAMEFI_X_PUBLISHING_MODE=live` and `GAMEFI_X_AMPLIFICATION_AUTO_REPOST=true`; no post or retweet succeeded because the Developer Console returned `402 Payment Required / credits depleted`. The worker records that state as degraded/cooldown and does not use fixtures or stale feeds. Live X discovery and engagement ranking are implemented in `app.distribution.x_intelligence`; retweets remain restricted to fresh, catalog-relevant, explicitly whitelisted official accounts with a minimum engagement threshold. Non-API browser automation is intentionally not implemented. No YouTube or other-channel behavior was changed in this X-only pass.
 
 ## 8a. Operations commands
 

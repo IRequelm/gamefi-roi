@@ -1,7 +1,7 @@
 # GamCryp X Publishing Runbook
 
-Updated: 2026-09-08
-Status: local manual-ready workflow; official X API unavailable; no browser automation
+Updated: 2026-09-15
+Status: official X API user-context path enabled locally; no browser automation
 
 ## Purpose
 
@@ -9,7 +9,7 @@ GamCryp prepares posts for `@GamCryp` through an operator-controlled local workf
 
 `validated content pack -> X enrichment -> X queue -> safety validation -> approval -> explicit publish command`
 
-The publisher consumes existing Content Pack Lite facts. It does not calculate ROI, alter rankings, refresh snapshots, or change risk/confidence. X's rules prohibit non-API browser automation, so the safe no-SaaS path is a local manual-ready outbox: the worker prepares one exact GREEN post, the operator pastes it into the normal X website, then confirms the exact checksum locally.
+The publisher consumes existing Content Pack Lite facts. It does not calculate ROI, alter rankings, refresh snapshots, or change risk/confidence. X's rules prohibit non-API browser automation; all automated X actions use the official API and remain fail-closed.
 
 Links are intentionally occasional: methodology/source posts and every third ordered post retain the tracked GamCryp URL; other posts keep the source URL in queue/outbox metadata without repeating it in visible copy. Enrichment adds only deterministic, bounded hashtags and an explicitly verified official handle. An absent handle is normal and never inferred.
 
@@ -20,13 +20,15 @@ Links are intentionally occasional: methodology/source posts and every third ord
 - X previews and manual-ready records carry media metadata. Selection is local-only: catalog official logo, approved local product asset under `data/local/video_assets`, then a deterministic GamCryp SVG card containing only content-pack facts. Missing external media never blocks a valid post and no arbitrary hotlink/screenshot is used.
 - The verified handle remains metadata even when the source copy has no room under X's weighted 280-character limit; claims and the canonical source URL are not silently removed to make room.
 
-## Manual amplification radar
+## Live X discovery and amplification
 
-The API-blocked amplification path is deliberately manual and fail-closed. An operator or future approved feed may place normalized source posts in `distribution/inbox/x_signal_feed.json`. Only accounts in `config/distribution/x_source_whitelist.json` with explicit verification, stable status URLs, fresh timestamps, direct catalog relevance, and no unsafe/promotional language can become `REPOST_NOW`. Other relevant signals become `MANUAL_REVIEW`; invalid, stale, untrusted, or irrelevant signals are ignored.
+`app.distribution.x_intelligence` queries the official recent-search endpoint for GameFi, DePIN, node-reward, points, and crypto-reward signals. It stores timestamps, source account, post URL, public metrics, and a transparent engagement score. Search failures (including depleted credits) are recorded as `BLOCKED`; the previous feed is not treated as live and cannot be retweeted.
 
-Actionable candidates are written to `distribution/manual_outbox/x_amplification_ready.json`, deduplicated by source account + source post ID + URL, with history in `distribution/manual_outbox/x_amplification_history.json`. If the existing SMTP handoff is enabled, a bounded digest with subject `GamCryp X Amplification` is sent once per digest. The worker never calls X for amplification and never uses browser automation.
+Only accounts in `config/distribution/x_source_whitelist.json` with explicit verification, stable status URLs, fresh timestamps, direct catalog relevance, high engagement, and no unsafe/promotional language can become `REPOST_NOW`. Other relevant signals become `MANUAL_REVIEW`; invalid, stale, untrusted, or irrelevant signals are ignored.
 
-The future provider boundary is intentionally inactive: `GAMEFI_X_AMPLIFICATION_AUTO_REPOST=false` is the required default. An eventual official API adapter must consume only `REPOST_NOW`, preserve source/repost IDs and fingerprints in an audit log, and keep quote posts human-reviewed first. X failures remain isolated from YouTube.
+Actionable candidates are written to `distribution/manual_outbox/x_amplification_ready.json`, deduplicated by source account + source post ID + URL, with history in `distribution/manual_outbox/x_amplification_history.json`. In live mode and only when `GAMEFI_X_AMPLIFICATION_AUTO_REPOST=true`, the worker retweets `REPOST_NOW` candidates through `POST /2/users/:id/retweets` and records the source fingerprint and returned post id. Re-running the worker cannot retweet the same fingerprint twice. If the existing SMTP handoff is enabled, a bounded digest with subject `GamCryp X Amplification` is sent once per digest. Browser automation is never used.
+
+`GAMEFI_X_AMPLIFICATION_AUTO_REPOST=false` remains the safe repository default. The local operator environment may enable it after X billing and whitelist review. Quote-post generation is not automated; X failures remain isolated from YouTube.
 
 ## Current official X API model
 
@@ -84,6 +86,11 @@ GAMEFI_X_AMPLIFICATION_FEED_FILE=distribution/inbox/x_signal_feed.json
 GAMEFI_X_AMPLIFICATION_WHITELIST_FILE=config/distribution/x_source_whitelist.json
 GAMEFI_X_AMPLIFICATION_OUTBOX_FILE=distribution/manual_outbox/x_amplification_ready.json
 GAMEFI_X_AMPLIFICATION_HISTORY_FILE=distribution/manual_outbox/x_amplification_history.json
+GAMEFI_X_INTELLIGENCE_STATE_FILE=data/local/x/intelligence_state.json
+GAMEFI_X_DISCOVERY_MAX_RESULTS=25
+GAMEFI_X_DISCOVERY_MAX_FEED_ITEMS=50
+GAMEFI_X_DISCOVERY_FRESHNESS_HOURS=48
+GAMEFI_X_AMPLIFICATION_MIN_ENGAGEMENT=10
 GAMEFI_X_AMPLIFICATION_EMAIL_STATE_FILE=data/local/distribution/x_amplification_email_state.json
 ```
 
@@ -154,7 +161,7 @@ Only after a clean preview and explicit founder instruction:
 x-publisher publish CONTENT_ID --confirm-publish
 ```
 
-There is no active API scheduler. In manual mode, the worker prepares the outbox. `publish-next` remains API-only and explicit. YELLOW is never auto-approved; RED is never publishable.
+In live mode, the distribution worker publishes at most the next eligible GREEN own post per cycle and optionally retweets only whitelisted `REPOST_NOW` candidates from a fresh live X intelligence cycle. `publish-next` remains explicit CLI-only. YELLOW is never auto-approved; RED is never publishable. A depleted X credit balance produces a visible `402` failure and cooldown; it is not converted to a successful publish.
 
 ## Duplicate and failure recovery
 
@@ -169,8 +176,19 @@ There is no active API scheduler. In manual mode, the worker prepares the outbox
 
 Set `GAMEFI_X_PUBLISHING_MODE=disabled` or stop the Windows worker. Do not delete publication history until any ambiguous attempt is reconciled.
 
+## Operator commands
+
+```powershell
+x-intelligence collect --json
+x-intelligence status --json
+distribution-worker --once --interval-seconds 1800
+x-publisher status
+```
+
+`x-intelligence collect` is the only command that refreshes the live X discovery state. It never publishes. The worker performs publication only when `GAMEFI_DISTRIBUTION_LIVE=true` and `GAMEFI_X_PUBLISHING_MODE=live`; set both back to `false`/`disabled` for an emergency stop.
+
 ## Deferred work
 
 - Media upload and long-form video are not part of this text-post MVP.
 - Thread/reply support is parked. Single-Post publishing is sufficient.
-- Automatic scheduling is not active. Browser automation is intentionally not implemented because it would conflict with X rules. A future official API provider may consume GREEN only, must remain duplicate-safe, and must stop on auth or validation failure.
+- Google Trends, YouTube discovery, and other social sources are outside the X-only worker path. X search access remains dependent on current Developer Console credits and whitelisted official accounts.

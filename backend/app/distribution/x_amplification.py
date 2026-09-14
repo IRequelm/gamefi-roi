@@ -42,6 +42,12 @@ class XSourcePost(BaseModel):
     post_id: str
     posted_at: str
     text: str
+    like_count: int = Field(default=0, ge=0)
+    retweet_count: int = Field(default=0, ge=0)
+    reply_count: int = Field(default=0, ge=0)
+    quote_count: int = Field(default=0, ge=0)
+    bookmark_count: int = Field(default=0, ge=0)
+    engagement_score: int = Field(default=0, ge=0)
 
     @field_validator("original_url")
     @classmethod
@@ -77,6 +83,12 @@ class XAmplificationCandidate(BaseModel):
     decision: AmplificationDecision
     fingerprint: str
     created_at: str
+    like_count: int = Field(default=0, ge=0)
+    retweet_count: int = Field(default=0, ge=0)
+    reply_count: int = Field(default=0, ge=0)
+    quote_count: int = Field(default=0, ge=0)
+    bookmark_count: int = Field(default=0, ge=0)
+    engagement_score: int = Field(default=0, ge=0)
 
 
 def _parse(value: str) -> datetime:
@@ -108,10 +120,32 @@ def load_whitelist(path: Path = DEFAULT_WHITELIST) -> dict[str, XSourceWhitelist
         return {}
 
 
-def classify_candidate(post: XSourcePost, whitelist: dict[str, XSourceWhitelistEntry], *, now: datetime, freshness_hours: int = 72) -> XAmplificationCandidate:
+def classify_candidate(
+    post: XSourcePost,
+    whitelist: dict[str, XSourceWhitelistEntry],
+    *,
+    now: datetime,
+    freshness_hours: int = 72,
+    min_engagement_score: int = 0,
+) -> XAmplificationCandidate:
     opportunity_id, project_name = _catalog_match(post.text)
     fingerprint = _fingerprint(post)
-    base = dict(source_account=post.source_account, opportunity_id=opportunity_id, project_name=project_name, original_post_url=post.original_url, post_id=post.post_id, post_timestamp=post.posted_at, fingerprint=fingerprint, created_at=now.astimezone(UTC).isoformat())
+    base = dict(
+        source_account=post.source_account,
+        opportunity_id=opportunity_id,
+        project_name=project_name,
+        original_post_url=post.original_url,
+        post_id=post.post_id,
+        post_timestamp=post.posted_at,
+        fingerprint=fingerprint,
+        created_at=now.astimezone(UTC).isoformat(),
+        like_count=post.like_count,
+        retweet_count=post.retweet_count,
+        reply_count=post.reply_count,
+        quote_count=post.quote_count,
+        bookmark_count=post.bookmark_count,
+        engagement_score=post.engagement_score,
+    )
     source = whitelist.get(post.source_account.casefold())
     try:
         fresh = now.astimezone(UTC) - _parse(post.posted_at) <= timedelta(hours=freshness_hours)
@@ -121,7 +155,17 @@ def classify_candidate(post: XSourcePost, whitelist: dict[str, XSourceWhitelistE
         return XAmplificationCandidate(**base, reason="source, freshness, or catalog relevance could not be verified", recommendation="IGNORE", confidence=0.0, priority="LOW", decision=AmplificationDecision.IGNORE)
     if UNSAFE_RE.search(post.text) or SPAM_RE.search(post.text):
         return XAmplificationCandidate(**base, reason="promotional or unsafe claim requires human review", recommendation="QUOTE", confidence=0.4, priority="LOW", decision=AmplificationDecision.MANUAL_REVIEW, suggested_quote=f"{project_name}: GamCryp tracks the evidence and economics. Review the full breakdown before acting.")
-    return XAmplificationCandidate(**base, reason=f"verified {source.source_type} post directly references {project_name}", recommendation="REPOST", confidence=0.9, priority="HIGH", decision=AmplificationDecision.REPOST_NOW)
+    if post.engagement_score < min_engagement_score:
+        return XAmplificationCandidate(
+            **base,
+            reason=f"verified relevant post is below the minimum engagement threshold ({min_engagement_score})",
+            recommendation="QUOTE",
+            confidence=0.5,
+            priority="LOW",
+            decision=AmplificationDecision.MANUAL_REVIEW,
+            suggested_quote=f"{project_name}: GamCryp tracks the evidence and economics. Review the full breakdown before acting.",
+        )
+    return XAmplificationCandidate(**base, reason=f"verified {source.source_type} post directly references {project_name}; high engagement signal", recommendation="REPOST", confidence=0.9, priority="HIGH", decision=AmplificationDecision.REPOST_NOW)
 
 
 class XAmplificationOutbox:
@@ -142,6 +186,10 @@ class XAmplificationOutbox:
         current = list(self.current()) + usable
         self._write(self.path, {"version": 1, "items": [item.model_dump(mode="json") for item in current[:20]]})
         return "written"
+
+    def is_handled(self, fingerprint: str) -> bool:
+        payload = self._read(self.history_path, {"version": 1, "handled": []})
+        return fingerprint in {str(item) for item in payload.get("handled", [])}
 
     def mark_handled(self, fingerprint: str, *, repost_id: str | None = None, status: str = "manual_handled", now: datetime | None = None) -> None:
         payload = self._read(self.history_path, {"version": 1, "handled": []})

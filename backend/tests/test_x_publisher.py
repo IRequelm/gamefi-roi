@@ -544,6 +544,29 @@ def test_official_api_request_construction_and_success_response(tmp_path: Path) 
     assert requests[0].headers["authorization"] == "Bearer private-token"
 
 
+def test_x_read_and_retweet_endpoints_use_user_context(tmp_path: Path) -> None:
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        if request.url.path == "/2/users/me":
+            return httpx.Response(200, json={"data": {"id": "42", "username": "GamCryp"}})
+        if request.url.path == "/2/tweets/search/recent":
+            return httpx.Response(200, json={"data": [], "meta": {"result_count": 0}})
+        return httpx.Response(200, json={"data": {"retweeted": True}})
+
+    config = _config(tmp_path)
+    oauth = XOAuthManager(config)
+    oauth.access_token = lambda: "private-token"  # type: ignore[method-assign]
+    client = XApiClient(oauth, client=httpx.Client(base_url="https://api.x.com", transport=httpx.MockTransport(handler)))
+
+    assert client.authenticated_user()["data"]["username"] == "GamCryp"
+    assert client.search_recent("GameFi")["meta"]["result_count"] == 0
+    assert client.create_retweet("42", "123") == "123"
+    assert [request.url.path for request in requests] == ["/2/users/me", "/2/tweets/search/recent", "/2/users/42/retweets"]
+    assert json.loads(requests[-1].content) == {"tweet_id": "123"}
+
+
 def test_official_api_5xx_is_ambiguous_and_error_redacts_secrets(tmp_path: Path) -> None:
     config = _config(tmp_path)
     oauth = XOAuthManager(config)

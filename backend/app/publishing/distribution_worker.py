@@ -27,6 +27,7 @@ from app.distribution.x_amplification import (
     load_feed,
     load_whitelist,
 )
+from app.distribution.x_intelligence import XIntelligenceCollector, intelligence_is_live_and_fresh
 from app.distribution.x_publisher import XApiError, XAuthError, XAmbiguousApiError, XPublisherConfig, XPublisherError, XPublishingService
 from app.distribution.refill import DistributionRefillConfig, DistributionRefiller
 from app.publishing.youtube import YouTubePublisher, YouTubePublisherConfig
@@ -62,6 +63,9 @@ class DistributionWorkerConfig:
     x_amplification_whitelist_file: Path = DEFAULT_WHITELIST
     x_amplification_outbox_file: Path = DEFAULT_OUTBOX
     x_amplification_history_file: Path = DEFAULT_HISTORY
+    x_intelligence_state_file: Path = Path("data/local/x/intelligence_state.json")
+    x_amplification_min_engagement_score: int = 10
+    x_amplification_auto_repost: bool = False
 
     @classmethod
     def from_environment(cls) -> "DistributionWorkerConfig":
@@ -83,6 +87,9 @@ class DistributionWorkerConfig:
             x_amplification_whitelist_file=Path(os.getenv("GAMEFI_X_AMPLIFICATION_WHITELIST_FILE", str(DEFAULT_WHITELIST))),
             x_amplification_outbox_file=Path(os.getenv("GAMEFI_X_AMPLIFICATION_OUTBOX_FILE", str(DEFAULT_OUTBOX))),
             x_amplification_history_file=Path(os.getenv("GAMEFI_X_AMPLIFICATION_HISTORY_FILE", str(DEFAULT_HISTORY))),
+            x_intelligence_state_file=Path(os.getenv("GAMEFI_X_INTELLIGENCE_STATE_FILE", "data/local/x/intelligence_state.json")),
+            x_amplification_min_engagement_score=max(0, int(os.getenv("GAMEFI_X_AMPLIFICATION_MIN_ENGAGEMENT", "10"))),
+            x_amplification_auto_repost=os.getenv("GAMEFI_X_AMPLIFICATION_AUTO_REPOST", "false").strip().lower() in {"1", "true", "yes"},
         )
 
 
@@ -148,6 +155,7 @@ class DistributionWorker:
         x_service: XPublishingService | None = None,
         youtube_distribution: YouTubeDistributionPublisher | None = None,
         refiller: DistributionRefiller | None = None,
+        x_intelligence: XIntelligenceCollector | None = None,
         now: Callable[[], datetime] = lambda: datetime.now(UTC),
     ):
         self.config = config or DistributionWorkerConfig.from_environment()
@@ -159,6 +167,7 @@ class DistributionWorker:
         self.manual_outbox = XManualOutbox(Path(os.getenv("GAMEFI_MANUAL_X_OUTBOX_FILE", str(self.config.manual_outbox_file))))
         self.x_email_notifier = XManualEmailNotifier(XEmailConfig.from_environment())
         self.x_amplification_email_notifier = XAmplificationEmailNotifier(XEmailConfig.from_environment())
+        self.x_intelligence = x_intelligence or XIntelligenceCollector(service=self.x_service)
 
     def run_once(self) -> list[dict[str, Any]]:
         now = self.now()
@@ -303,21 +312,60 @@ class DistributionWorker:
         return {"platform": "X", "status": "idle", "detail": "no unblocked GREEN queue item"}
 
     def _process_x_amplification(self, now: datetime) -> dict[str, Any]:
-        """Build a manual-only amplification digest; never calls X."""
+        """Collect X signals and optionally retweet only high-confidence candidates."""
         try:
+            live_x = self.config.live and self.config.x_publishing_mode == "live"
+            if live_x:
+                intelligence = self.x_intelligence.collect(now=now)
+                if intelligence.get("status") != "LIVE" or not intelligence_is_live_and_fresh(
+                    self.config.x_intelligence_state_file,
+                    now=now,
+                    max_age_hours=self.x_intelligence.config.freshness_hours,
+                ):
+                    return {
+                        "platform": "XAmplification",
+                        "status": "blocked",
+                        "detail": intelligence.get("limitation") or "live X intelligence is unavailable",
+                    }
             posts = load_feed(self.config.x_amplification_feed_file)
             if not posts:
                 return {"platform": "XAmplification", "status": "idle", "detail": "no approved signal feed"}
             whitelist = load_whitelist(self.config.x_amplification_whitelist_file)
-            candidates = [classify_candidate(post, whitelist, now=now) for post in posts]
+            candidates = [
+                classify_candidate(
+                    post,
+                    whitelist,
+                    now=now,
+                    min_engagement_score=self.config.x_amplification_min_engagement_score if live_x else 0,
+                )
+                for post in posts
+            ]
             outbox = XAmplificationOutbox(self.config.x_amplification_outbox_file, self.config.x_amplification_history_file)
             status = outbox.write(candidates)
+            reposted = 0
+            if live_x and self.config.x_amplification_auto_repost:
+                user_payload = self.x_service.api_client.authenticated_user()
+                user_id = str((user_payload.get("data") or {}).get("id") or "")
+                if not user_id:
+                    raise XAuthError("X authenticated-user response did not contain a user id")
+                for candidate in candidates:
+                    if candidate.decision.value != "REPOST_NOW":
+                        continue
+                    if outbox.is_handled(candidate.fingerprint):
+                        continue
+                    key = f"XRetweet:{candidate.fingerprint}"
+                    if self.state.blocked(key, now=now):
+                        continue
+                    repost_id = self.x_service.api_client.create_retweet(user_id, candidate.post_id)
+                    outbox.mark_handled(candidate.fingerprint, repost_id=repost_id, status="published", now=now)
+                    self.state.record_success(key)
+                    reposted += 1
             try:
                 email_status = self.x_amplification_email_notifier.notify_if_needed(outbox)
             except XEmailNotificationError as exc:
                 logger.error("x_amplification_email_failed category=%s", type(exc).__name__)
                 email_status = "failed"
-            return {"platform": "XAmplification", "status": status, "actionable": len(outbox.current()), "email": email_status}
+            return {"platform": "XAmplification", "status": "reposted" if reposted else status, "actionable": len(outbox.current()), "reposted": reposted, "email": email_status}
         except Exception as exc:
             logger.error("x_amplification_failed category=%s", type(exc).__name__)
             return {"platform": "XAmplification", "status": "failed", "error_category": type(exc).__name__}

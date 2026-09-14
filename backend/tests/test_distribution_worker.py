@@ -181,3 +181,71 @@ def test_x_auth_failure_exports_one_manual_ready_item_without_blocking_youtube(t
     assert outbox["item"]["published"] is False
     assert second[0]["status"] == "cooldown"
     assert json.loads((tmp_path / "outbox.json").read_text(encoding="utf-8")) == outbox
+
+
+def test_live_x_repost_is_idempotent_and_requires_fresh_intelligence(tmp_path: Path):
+    class FakeApi:
+        def __init__(self):
+            self.retweet_calls = []
+
+        def authenticated_user(self):
+            return {"data": {"id": "42", "username": "GamCryp"}}
+
+        def create_retweet(self, user_id, tweet_id):
+            self.retweet_calls.append((user_id, tweet_id))
+            return tweet_id
+
+    class FakeIntel:
+        class Config:
+            freshness_hours = 48
+
+        def __init__(self, state_file, feed_file):
+            self.config = self.Config()
+            self.state_file = state_file
+            self.feed_file = feed_file
+
+        def collect(self, *, now):
+            self.state_file.write_text(json.dumps({"status": "LIVE", "generated_at": now.isoformat()}), encoding="utf-8")
+            self.feed_file.write_text(json.dumps({"version": 2, "posts": [{
+                "source_account": "OfficialSource", "source_verified": True, "source_type": "x_live_search",
+                "original_url": "https://x.com/OfficialSource/status/12345", "post_id": "12345",
+                "posted_at": (now.replace(hour=now.hour - 1)).isoformat(),
+                "text": "GEODNET network update: new coverage is live.", "engagement_score": 20,
+            }]}), encoding="utf-8")
+            return {"status": "LIVE"}
+
+    class FakeRefill:
+        def run(self, *, now):
+            return {"status": "disabled"}
+
+    api = FakeApi()
+    x = FakeX()
+    x.api_client = api
+    feed = tmp_path / "feed.json"
+    whitelist = tmp_path / "whitelist.json"
+    whitelist.write_text(json.dumps({"sources": [{
+        "source_account": "OfficialSource", "source_type": "project_official", "verified": True,
+        "official_source_url": "https://geodnet.com",
+    }]}), encoding="utf-8")
+    config = DistributionWorkerConfig(
+        live=True,
+        x_publishing_mode="live",
+        x_amplification_auto_repost=True,
+        x_amplification_feed_file=feed,
+        x_amplification_whitelist_file=whitelist,
+        x_amplification_outbox_file=tmp_path / "outbox.json",
+        x_amplification_history_file=tmp_path / "history.json",
+        x_intelligence_state_file=tmp_path / "intelligence.json",
+        state_file=tmp_path / "worker.json",
+        heartbeat_file=tmp_path / "heartbeat.json",
+        short_handoff_file=tmp_path / "short.json",
+        autonomous_cap_file=tmp_path / "cap.json",
+    )
+    intelligence = FakeIntel(config.x_intelligence_state_file, feed)
+    worker_instance = DistributionWorker(config=config, x_service=x, youtube_distribution=FakeYouTube(), refiller=FakeRefill(), x_intelligence=intelligence, now=lambda: NOW)
+
+    first = worker_instance.run_once()
+    second = worker_instance.run_once()
+    assert next(item for item in first if item["platform"] == "XAmplification")["status"] == "reposted"
+    assert next(item for item in second if item["platform"] == "XAmplification")["reposted"] == 0
+    assert api.retweet_calls == [("42", "12345")]
