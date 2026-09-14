@@ -1,25 +1,5 @@
 {
-  "awaiting_human_approval": [
-    {
-      "approval_required": true,
-      "approval_state": "awaiting_human_approval",
-      "attribution_url": "https://gamcryp.com/opportunities/grass?utm_campaign=distribution-mvp&utm_content=x-grass-roi-unavailable-20260831&utm_medium=social&utm_source=x",
-      "attribution_url_required": false,
-      "channel": "X",
-      "content_checksum": "9157bd7ef0f7bbba9d9495a7d4474faf6c6f1b376b0caebbda996724c92abafc",
-      "content_id": "x-grass-roi-unavailable-20260831",
-      "final_copy": "Grass is useful for GamCryp because the honest answer is: ROI unavailable.\n\nThe project has points-based rewards, but GamCryp does not convert points into financial ROI unless there is a reproducible exit route.\n\nThat is the point of the model: no fake zero, no made-up yield.",
-      "generated_at": "2026-08-31T18:00:00Z",
-      "project": "Grass",
-      "recommended_order": 5,
-      "refreshability": null,
-      "risk_caveat": "Grass points are not modeled as financial ROI unless a lawful, reproducible value route exists.",
-      "snapshot_id": null,
-      "snapshot_timestamp": null,
-      "source_pack_version": "content-pack-lite-v1",
-      "status": "YELLOW"
-    }
-  ],
+  "awaiting_human_approval": [],
   "blocked": [],
   "generated_at": "2026-08-31T18:00:00Z",
   "publishable": [
@@ -41,6 +21,25 @@
       "snapshot_timestamp": null,
       "source_pack_version": "content-pack-lite-v1",
       "status": "GREEN"
+    },
+    {
+      "approval_required": false,
+      "approval_state": "not_required",
+      "attribution_url": "https://gamcryp.com/opportunities/grass?utm_campaign=distribution-mvp&utm_content=x-grass-roi-unavailable-20260831&utm_medium=social&utm_source=x",
+      "attribution_url_required": false,
+      "channel": "X",
+      "content_checksum": "9157bd7ef0f7bbba9d9495a7d4474faf6c6f1b376b0caebbda996724c92abafc",
+      "content_id": "x-grass-roi-unavailable-20260831",
+      "final_copy": "Grass is useful for GamCryp because the honest answer is: ROI unavailable.\n\nThe project has points-based rewards, but GamCryp does not convert points into financial ROI unless there is a reproducible exit route.\n\nThat is the point of the model: no fake zero, no made-up yield.",
+      "generated_at": "2026-08-31T18:00:00Z",
+      "project": "Grass",
+      "recommended_order": 5,
+      "refreshability": null,
+      "risk_caveat": "Grass points are not modeled as financial ROI unless a lawful, reproducible value route exists.",
+      "snapshot_id": null,
+      "snapshot_timestamp": null,
+      "source_pack_version": "content-pack-lite-v1",
+      "status": "YELLOW"
     }
   ],
   "queue_version": "x-publish-queue-v1",

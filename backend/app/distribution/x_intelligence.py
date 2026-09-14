@@ -79,7 +79,7 @@ class XIntelligenceConfig:
             state_file=Path(os.getenv("GAMEFI_X_INTELLIGENCE_STATE_FILE", str(DEFAULT_STATE_FILE))),
             feed_file=Path(os.getenv("GAMEFI_X_AMPLIFICATION_FEED_FILE", str(DEFAULT_FEED_FILE))),
             queries=queries,
-            max_results=max(10, min(int(os.getenv("GAMEFI_X_DISCOVERY_MAX_RESULTS", "25")), 100)),
+            max_results=max(10, min(int(os.getenv("GAMEFI_X_DISCOVERY_MAX_RESULTS", "10")), 100)),
             max_feed_items=max(1, min(int(os.getenv("GAMEFI_X_DISCOVERY_MAX_FEED_ITEMS", "50")), 100)),
             freshness_hours=max(1, int(os.getenv("GAMEFI_X_DISCOVERY_FRESHNESS_HOURS", "48"))),
             min_engagement_score=max(0, int(os.getenv("GAMEFI_X_AMPLIFICATION_MIN_ENGAGEMENT", "10"))),

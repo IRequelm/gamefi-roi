@@ -27,7 +27,7 @@ from app.distribution.x_amplification import (
     load_feed,
     load_whitelist,
 )
-from app.distribution.x_intelligence import XIntelligenceCollector, intelligence_is_live_and_fresh
+from app.distribution.x_intelligence import XIntelligenceCollector, intelligence_is_live_and_fresh, load_intelligence_state
 from app.distribution.x_publisher import XApiError, XAuthError, XAmbiguousApiError, XPublisherConfig, XPublisherError, XPublishingService
 from app.distribution.refill import DistributionRefillConfig, DistributionRefiller
 from app.publishing.youtube import YouTubePublisher, YouTubePublisherConfig
@@ -64,8 +64,12 @@ class DistributionWorkerConfig:
     x_amplification_outbox_file: Path = DEFAULT_OUTBOX
     x_amplification_history_file: Path = DEFAULT_HISTORY
     x_intelligence_state_file: Path = Path("data/local/x/intelligence_state.json")
+    x_intelligence_refresh_hours: int = 6
     x_amplification_min_engagement_score: int = 10
     x_amplification_auto_repost: bool = False
+    x_daily_cap_file: Path = Path("data/local/x/daily_cap.json")
+    x_daily_post_cap: int = 1
+    x_daily_retweet_cap: int = 2
 
     @classmethod
     def from_environment(cls) -> "DistributionWorkerConfig":
@@ -88,8 +92,12 @@ class DistributionWorkerConfig:
             x_amplification_outbox_file=Path(os.getenv("GAMEFI_X_AMPLIFICATION_OUTBOX_FILE", str(DEFAULT_OUTBOX))),
             x_amplification_history_file=Path(os.getenv("GAMEFI_X_AMPLIFICATION_HISTORY_FILE", str(DEFAULT_HISTORY))),
             x_intelligence_state_file=Path(os.getenv("GAMEFI_X_INTELLIGENCE_STATE_FILE", "data/local/x/intelligence_state.json")),
+            x_intelligence_refresh_hours=max(1, int(os.getenv("GAMEFI_X_INTELLIGENCE_REFRESH_HOURS", "6"))),
             x_amplification_min_engagement_score=max(0, int(os.getenv("GAMEFI_X_AMPLIFICATION_MIN_ENGAGEMENT", "10"))),
             x_amplification_auto_repost=os.getenv("GAMEFI_X_AMPLIFICATION_AUTO_REPOST", "false").strip().lower() in {"1", "true", "yes"},
+            x_daily_cap_file=Path(os.getenv("GAMEFI_X_DAILY_CAP_FILE", "data/local/x/daily_cap.json")),
+            x_daily_post_cap=max(0, int(os.getenv("GAMEFI_X_DAILY_POST_CAP", "1"))),
+            x_daily_retweet_cap=max(0, int(os.getenv("GAMEFI_X_DAILY_RETWEET_CAP", "2"))),
         )
 
 
@@ -147,6 +155,47 @@ class WorkerState:
                 os.unlink(temp_name)
 
 
+class XDailyCapState:
+    """UTC-day persistent caps for autonomous X writes."""
+
+    def __init__(self, path: Path):
+        self.path = path
+        self.payload = {"date": "", "posts": 0, "retweets": 0}
+        if path.is_file():
+            try:
+                candidate = json.loads(path.read_text(encoding="utf-8"))
+                if isinstance(candidate, dict):
+                    self.payload.update(candidate)
+            except (OSError, json.JSONDecodeError):
+                logger.warning("x_daily_cap_unreadable path=%s", path)
+
+    def _normalize(self, now: datetime) -> None:
+        today = now.astimezone(UTC).date().isoformat()
+        if self.payload.get("date") != today:
+            self.payload = {"date": today, "posts": 0, "retweets": 0}
+
+    def available(self, kind: str, limit: int, *, now: datetime) -> bool:
+        self._normalize(now)
+        return int(self.payload.get(kind, 0)) < limit
+
+    def record(self, kind: str, *, now: datetime) -> None:
+        self._normalize(now)
+        self.payload[kind] = int(self.payload.get(kind, 0)) + 1
+        self._save()
+
+    def _save(self) -> None:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        descriptor, temporary = tempfile.mkstemp(prefix=f".{self.path.name}.", dir=str(self.path.parent), text=True)
+        try:
+            with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+                json.dump(self.payload, handle, indent=2, sort_keys=True)
+                handle.write("\n")
+            os.replace(temporary, self.path)
+        finally:
+            if os.path.exists(temporary):
+                os.unlink(temporary)
+
+
 class DistributionWorker:
     def __init__(
         self,
@@ -164,6 +213,7 @@ class DistributionWorker:
         self.refiller = refiller or DistributionRefiller(DistributionRefillConfig.from_environment())
         self.now = now
         self.state = WorkerState(self.config.state_file)
+        self.x_daily_cap = XDailyCapState(self.config.x_daily_cap_file)
         self.manual_outbox = XManualOutbox(Path(os.getenv("GAMEFI_MANUAL_X_OUTBOX_FILE", str(self.config.manual_outbox_file))))
         self.x_email_notifier = XManualEmailNotifier(XEmailConfig.from_environment())
         self.x_amplification_email_notifier = XAmplificationEmailNotifier(XEmailConfig.from_environment())
@@ -246,6 +296,8 @@ class DistributionWorker:
         candidates = summary.get("publishable", [])
         if not candidates:
             return {"platform": "X", "status": "idle", "detail": "no GREEN queue item"}
+        if self.config.live and not self.x_daily_cap.available("posts", self.config.x_daily_post_cap, now=now):
+            return {"platform": "X", "status": "daily_cap", "detail": "daily X post cap reached"}
         saw_cooldown = False
         for raw_content_id in candidates:
             content_id = str(raw_content_id)
@@ -280,9 +332,15 @@ class DistributionWorker:
                     continue
                 result = self.x_service.publish(content_id, dry_run=not self.config.live, confirm_publish=self.config.live)
                 self.state.record_success(key)
+                if self.config.live:
+                    self.x_daily_cap.record("posts", now=now)
                 return {"platform": "X", "content_id": content_id, "status": "published" if self.config.live else "dry_run", "result": result.model_dump(mode="json")}
             except (XAuthError, XApiError) as exc:
-                if not isinstance(exc, XAmbiguousApiError) and preview is not None and preview.would_publish:
+                # A live worker must report the provider failure/cooldown; it
+                # must not turn a billing/auth outage into a human-review
+                # queue. The manual outbox remains available for explicit
+                # non-live operator mode only.
+                if not self.config.live and not isinstance(exc, XAmbiguousApiError) and preview is not None and preview.would_publish:
                     outbox_status = self.manual_outbox.prepare(
                         manual_ready_record(
                             content_id=content_id,
@@ -316,7 +374,17 @@ class DistributionWorker:
         try:
             live_x = self.config.live and self.config.x_publishing_mode == "live"
             if live_x:
-                intelligence = self.x_intelligence.collect(now=now)
+                cached = load_intelligence_state(self.config.x_intelligence_state_file)
+                if cached and cached.get("status") == "LIVE" and intelligence_is_live_and_fresh(
+                    self.config.x_intelligence_state_file,
+                    now=now,
+                    max_age_hours=self.config.x_intelligence_refresh_hours,
+                ):
+                    intelligence = cached
+                elif cached and cached.get("status") == "BLOCKED" and _state_age_hours(cached, now=now) < self.config.x_intelligence_refresh_hours:
+                    intelligence = cached
+                else:
+                    intelligence = self.x_intelligence.collect(now=now)
                 if intelligence.get("status") != "LIVE" or not intelligence_is_live_and_fresh(
                     self.config.x_intelligence_state_file,
                     now=now,
@@ -344,6 +412,8 @@ class DistributionWorker:
             status = outbox.write(candidates)
             reposted = 0
             if live_x and self.config.x_amplification_auto_repost:
+                if not self.x_daily_cap.available("retweets", self.config.x_daily_retweet_cap, now=now):
+                    return {"platform": "XAmplification", "status": "daily_cap", "detail": "daily X retweet cap reached", "reposted": 0}
                 user_payload = self.x_service.api_client.authenticated_user()
                 user_id = str((user_payload.get("data") or {}).get("id") or "")
                 if not user_id:
@@ -359,7 +429,10 @@ class DistributionWorker:
                     repost_id = self.x_service.api_client.create_retweet(user_id, candidate.post_id)
                     outbox.mark_handled(candidate.fingerprint, repost_id=repost_id, status="published", now=now)
                     self.state.record_success(key)
+                    self.x_daily_cap.record("retweets", now=now)
                     reposted += 1
+                    if not self.x_daily_cap.available("retweets", self.config.x_daily_retweet_cap, now=now):
+                        break
             try:
                 email_status = self.x_amplification_email_notifier.notify_if_needed(outbox)
             except XEmailNotificationError as exc:
@@ -441,6 +514,14 @@ class DistributionWorker:
             self.state.record_failure(key, error_category=type(exc).__name__, now=now, cooldown_seconds=self.config.failure_cooldown_seconds)
             logger.error("short_youtube_handoff_failed category=%s", type(exc).__name__)
             return {"platform": "YouTubeShortHandoff", "status": "failed", "error_category": type(exc).__name__}
+
+
+def _state_age_hours(payload: dict[str, Any], *, now: datetime) -> float:
+    try:
+        generated = datetime.fromisoformat(str(payload["generated_at"]).replace("Z", "+00:00")).astimezone(UTC)
+        return max(0.0, (now.astimezone(UTC) - generated).total_seconds() / 3600)
+    except (KeyError, TypeError, ValueError):
+        return float("inf")
 
 
 def _find_asset(directory: Path | None, content_id: str, extensions: tuple[str, ...]) -> Path | None:

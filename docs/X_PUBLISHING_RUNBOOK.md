@@ -5,9 +5,9 @@ Status: official X API user-context path enabled locally; no browser automation
 
 ## Purpose
 
-GamCryp prepares posts for `@GamCryp` through an operator-controlled local workflow:
+GamCryp prepares and publishes posts for `@GamCryp` through the authenticated local worker:
 
-`validated content pack -> X enrichment -> X queue -> safety validation -> approval -> explicit publish command`
+`validated content pack -> X enrichment -> X queue -> safety validation -> autonomous publish`
 
 The publisher consumes existing Content Pack Lite facts. It does not calculate ROI, alter rankings, refresh snapshots, or change risk/confidence. X's rules prohibit non-API browser automation; all automated X actions use the official API and remain fail-closed.
 
@@ -24,7 +24,7 @@ Links are intentionally occasional: methodology/source posts and every third ord
 
 `app.distribution.x_intelligence` queries the official recent-search endpoint for GameFi, DePIN, node-reward, points, and crypto-reward signals. It stores timestamps, source account, post URL, public metrics, and a transparent engagement score. Search failures (including depleted credits) are recorded as `BLOCKED`; the previous feed is not treated as live and cannot be retweeted.
 
-Only accounts in `config/distribution/x_source_whitelist.json` with explicit verification, stable status URLs, fresh timestamps, direct catalog relevance, high engagement, and no unsafe/promotional language can become `REPOST_NOW`. Other relevant signals become `MANUAL_REVIEW`; invalid, stale, untrusted, or irrelevant signals are ignored.
+Only accounts in `config/distribution/x_source_whitelist.json` with explicit verification, stable status URLs, fresh timestamps, direct catalog relevance, high engagement, and no unsafe/promotional language can become `REPOST_NOW`. Other relevant signals remain non-actionable; invalid, stale, untrusted, or irrelevant signals are ignored. The autonomous X path has no human-approval queue.
 
 Actionable candidates are written to `distribution/manual_outbox/x_amplification_ready.json`, deduplicated by source account + source post ID + URL, with history in `distribution/manual_outbox/x_amplification_history.json`. In live mode and only when `GAMEFI_X_AMPLIFICATION_AUTO_REPOST=true`, the worker retweets `REPOST_NOW` candidates through `POST /2/users/:id/retweets` and records the source fingerprint and returned post id. Re-running the worker cannot retweet the same fingerprint twice. If the existing SMTP handoff is enabled, a bounded digest with subject `GamCryp X Amplification` is sent once per digest. Browser automation is never used.
 
@@ -87,10 +87,14 @@ GAMEFI_X_AMPLIFICATION_WHITELIST_FILE=config/distribution/x_source_whitelist.jso
 GAMEFI_X_AMPLIFICATION_OUTBOX_FILE=distribution/manual_outbox/x_amplification_ready.json
 GAMEFI_X_AMPLIFICATION_HISTORY_FILE=distribution/manual_outbox/x_amplification_history.json
 GAMEFI_X_INTELLIGENCE_STATE_FILE=data/local/x/intelligence_state.json
-GAMEFI_X_DISCOVERY_MAX_RESULTS=25
+GAMEFI_X_INTELLIGENCE_REFRESH_HOURS=6
+GAMEFI_X_DISCOVERY_MAX_RESULTS=10
 GAMEFI_X_DISCOVERY_MAX_FEED_ITEMS=50
 GAMEFI_X_DISCOVERY_FRESHNESS_HOURS=48
 GAMEFI_X_AMPLIFICATION_MIN_ENGAGEMENT=10
+GAMEFI_X_DAILY_CAP_FILE=data/local/x/daily_cap.json
+GAMEFI_X_DAILY_POST_CAP=1
+GAMEFI_X_DAILY_RETWEET_CAP=2
 GAMEFI_X_AMPLIFICATION_EMAIL_STATE_FILE=data/local/distribution/x_amplification_email_state.json
 ```
 
@@ -135,15 +139,15 @@ Dry-run shows exact copy, weighted character count, checksum, snapshot reference
 
 ## GREEN / YELLOW / RED
 
-- `GREEN`: enters the publishable queue, but still requires the explicit `publish ... --confirm-publish` operator action.
-- `YELLOW`: enters `awaiting_human_approval`. It cannot publish until `approve` stores an approval for the exact source and final-copy checksums.
+- `GREEN`: enters the autonomous publishable queue after deterministic validation.
+- `YELLOW`: also enters the autonomous publishable queue. It signals lower confidence, higher risk, or unavailable modeled return; the copy must still pass all provenance, freshness, attribution, length, and safety checks.
 - `RED`: appears only in blocked inventory. Approval and publishing both fail.
 
 Referral availability never changes these states.
 
-## YELLOW approval
+## Legacy approval commands
 
-Review the generated report, then place an edited final Post in a plain UTF-8 file when changes are needed:
+The checksum-bound approval commands remain for explicit operator editing/backwards compatibility, but the autonomous X worker does not wait for them. It publishes GREEN/YELLOW content only after the same deterministic copy, provenance, freshness, attribution, length, and safety checks pass:
 
 ```powershell
 x-publisher approve CONTENT_ID --copy-file C:/private/reviewed-copy.txt
@@ -151,17 +155,17 @@ x-publisher preview CONTENT_ID
 x-publisher revoke CONTENT_ID
 ```
 
-Approval fails when the copy is too long, stale, unsupported, missing attribution, or otherwise invalid. Approval binds to the exact source content checksum and approved-copy checksum. Regeneration or any source/copy/URL/snapshot change invalidates the approval and requires another review.
+If used manually, the commands still reject copy that is too long, stale, unsupported, missing attribution, or otherwise invalid. Regeneration or any source/copy/URL/snapshot change invalidates a legacy approval record.
 
 ## Actual publishing
 
-Only after a clean preview and explicit founder instruction:
+For a manual CLI override, use a clean preview and explicit operator instruction:
 
 ```powershell
 x-publisher publish CONTENT_ID --confirm-publish
 ```
 
-In live mode, the distribution worker publishes at most the next eligible GREEN own post per cycle and optionally retweets only whitelisted `REPOST_NOW` candidates from a fresh live X intelligence cycle. `publish-next` remains explicit CLI-only. YELLOW is never auto-approved; RED is never publishable. A depleted X credit balance produces a visible `402` failure and cooldown; it is not converted to a successful publish.
+In live mode, the distribution worker publishes at most one eligible GREEN/YELLOW own post per UTC day and at most two whitelisted `REPOST_NOW` candidates per UTC day by default. `publish-next` remains explicit CLI-only. YELLOW is not held for human approval; RED is never publishable. A depleted X credit balance produces a visible `402` failure and cooldown; it is not converted to a successful publish. Intelligence refresh is cached for six hours by default so the 30-minute worker cadence does not cause unnecessary paid searches.
 
 ## Duplicate and failure recovery
 

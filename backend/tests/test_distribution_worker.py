@@ -236,6 +236,7 @@ def test_live_x_repost_is_idempotent_and_requires_fresh_intelligence(tmp_path: P
         x_amplification_outbox_file=tmp_path / "outbox.json",
         x_amplification_history_file=tmp_path / "history.json",
         x_intelligence_state_file=tmp_path / "intelligence.json",
+        x_daily_cap_file=tmp_path / "x-daily-cap.json",
         state_file=tmp_path / "worker.json",
         heartbeat_file=tmp_path / "heartbeat.json",
         short_handoff_file=tmp_path / "short.json",

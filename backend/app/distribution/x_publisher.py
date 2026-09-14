@@ -566,8 +566,6 @@ class XPublishingService:
         checksum = x_content_checksum(pack, final_copy)
         blockers = list(self._copy_blockers(item, pack, final_copy))
         blockers.extend(self._publication_blockers(item, checksum))
-        if item.status is ContentReadiness.YELLOW and approval_state != "approved":
-            blockers.append("YELLOW content requires explicit checksum-bound human approval")
         if item.status is ContentReadiness.RED:
             blockers.append("RED content is permanently blocked from X publishing")
         return PublishPreview(
