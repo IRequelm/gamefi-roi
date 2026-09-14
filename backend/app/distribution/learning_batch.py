@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+import hashlib
+import json
 from typing import Any
 
 from app.distribution.content_pack import (
@@ -21,6 +23,7 @@ from app.distribution.content_pack import (
     set_expected_source_hash,
 )
 from app.strategies.refreshability import classify_refreshability
+from app.strategies.taxonomy import canonical_type
 
 LEARNING_BATCH_ID = "distribution-learning-batch-001"
 LEARNING_BATCH_CREATED_AT = "2026-08-31T18:00:00Z"
@@ -32,6 +35,7 @@ def build_learning_batch(
     *,
     base_url: str = "https://gamcryp.com",
     created_at: str = LEARNING_BATCH_CREATED_AT,
+    include_x_guides: bool = False,
 ) -> list[ContentPackLite]:
     """Build 10 draft packs from current GamCryp ranking/catalog data."""
 
@@ -55,8 +59,169 @@ def build_learning_batch(
     packs = [builder(ranking_items[strategy_id], base_url, created_at) for strategy_id, builder in strategy_builders if strategy_id in ranking_items]
     if "grass" in opportunities:
         packs.append(_grass_unavailable_pack(opportunities["grass"], base_url, created_at))
+    if include_x_guides:
+        packs.extend(
+            _guide_only_pack(opportunity, base_url, created_at)
+            for opportunity in _select_guide_opportunities(opportunities.values())
+        )
     packs.append(_methodology_pack(base_url, created_at))
     return [_finalize_readiness(pack) for pack in packs]
+
+
+def _select_guide_opportunities(opportunities: Any) -> tuple[dict[str, Any], ...]:
+    """Select a small, deterministic cross-category guide buffer.
+
+    The content batch is intentionally bounded. Prefer a game guide when the
+    catalog has one, then DePIN and points guides, while keeping at most one
+    opportunity per canonical type. A missing guidance block means we do not
+    invent registration or gameplay instructions.
+    """
+
+    candidates = [
+        item
+        for item in opportunities
+        if isinstance(item, dict)
+        and _is_canonical_opportunity(item)
+        and isinstance(item.get("guidance"), dict)
+        and item["guidance"].get("how_to_start")
+        and item["guidance"].get("what_you_need")
+        and _opportunity_source_refs(item)
+    ]
+    priority = {"GAME": 0, "DEPIN_NODE": 1, "POINTS": 2}
+    candidates.sort(key=lambda item: (priority.get(str(item.get("opportunity_type", "")), 3), str(item.get("opportunity_id", ""))))
+    selected: list[dict[str, Any]] = []
+    seen_types: set[str] = set()
+    for item in candidates:
+        opportunity_type = str(item.get("opportunity_type", ""))
+        if opportunity_type in seen_types:
+            continue
+        selected.append(item)
+        seen_types.add(opportunity_type)
+        if len(selected) == 3:
+            break
+    return tuple(selected)
+
+
+def _is_canonical_opportunity(opportunity: dict[str, Any]) -> bool:
+    try:
+        canonical_type(str(opportunity.get("opportunity_type", "")))
+    except ValueError:
+        return False
+    return True
+
+
+def _opportunity_source_refs(opportunity: dict[str, Any]) -> list[SourceReference]:
+    refs: list[SourceReference] = []
+    raw_refs = opportunity.get("official_source_references") or opportunity.get("source_references") or ()
+    if isinstance(raw_refs, list):
+        for raw in raw_refs:
+            if isinstance(raw, dict) and raw.get("label") and raw.get("url"):
+                refs.append(SourceReference(label=str(raw["label"]), url=str(raw["url"])))
+            elif isinstance(raw, (list, tuple)) and len(raw) >= 2:
+                refs.append(SourceReference(label=str(raw[0]), url=str(raw[1])))
+    primary = opportunity.get("primary_destination") or {}
+    source = primary.get("source_reference") if isinstance(primary, dict) else None
+    if isinstance(source, dict) and source.get("label") and source.get("url"):
+        refs.append(SourceReference(label=str(source["label"]), url=str(source["url"])))
+    unique: dict[str, SourceReference] = {ref.url: ref for ref in refs}
+    return list(unique.values())
+
+
+def _guide_only_pack(opportunity: dict[str, Any], base_url: str, created_at: str) -> ContentPackLite:
+    """Build a non-financial, catalog-backed X guide pack."""
+
+    opportunity_id = str(opportunity["opportunity_id"])
+    name = str(opportunity["name"])
+    guidance = opportunity["guidance"]
+    refs = _opportunity_source_refs(opportunity)
+    canonical_url = f"{base_url}/opportunities/{opportunity_id}"
+    evidence_key = json.dumps(
+        {
+            "opportunity_id": opportunity_id,
+            "guidance": guidance,
+            "refs": [ref.model_dump(mode="json") for ref in refs],
+        },
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    version = hashlib.sha256(evidence_key.encode("utf-8")).hexdigest()[:10]
+    content_id = f"x-{opportunity_id}-how-to-start-{version}"
+    x_utm_url = build_utm_url(canonical_url, source="x", medium="social", content_id=content_id)
+    start = _compact_guide_text(str(guidance["how_to_start"][0]), limit=45)
+    need = _compact_guide_text(str(guidance["what_you_need"][0]), limit=45)
+    earning = _compact_guide_text(
+        str((guidance.get("how_you_earn") or ("Review the documented reward mechanism.",))[0]), limit=45
+    )
+    # The full guidance remains in factual_talking_points. X copy uses a
+    # compact, numbered checklist so it is useful and fits X's hard limit.
+    x_post = (
+        f"{name}: how to start\n\n"
+        f"1) Start: {start}\n"
+        f"2) Need: {need}\n\n"
+        f"3) Earn/claim: {earning}; no fixed ROI is promised.\n"
+        f"\n{x_utm_url}"
+    )
+    return set_expected_source_hash(
+        ContentPackLite(
+            content_id=content_id,
+            source=ContentSource(
+                opportunity_id=opportunity_id,
+                source_snapshot_hash="",
+                official_source_refs=refs,
+            ),
+            facts=ContentFactSet(
+                project_name=name,
+                opportunity_type=str(opportunity["opportunity_type"]),
+                freshness=MetricFact(
+                    value=str(opportunity.get("data_feasibility_status") or "unknown"),
+                    unit=None,
+                    display=str(opportunity.get("data_feasibility_status") or "unknown"),
+                    source_path="opportunity.data_feasibility_status",
+                    status="available",
+                ),
+                reward_source=(
+                    f"{', '.join(str(value) for value in (opportunity.get('economy_types') or ())) or 'Documented project rewards'}; "
+                    f"assets/points: {', '.join(str(value) for value in (opportunity.get('reward_asset_or_points_type') or ())) or 'not specified'}."
+                ),
+                major_catch=str(opportunity.get("feasibility_summary") or "Verify current requirements and the claim route before acting."),
+            ),
+            editorial=EditorialContent(
+                content_angle="how-to start guide",
+                readiness=ContentReadiness.YELLOW,
+                hook=f"Want to start {name}? Check these two things first.",
+                core_message=(
+                    f"This is a catalog-backed starting guide for {name}. It uses the current structured guidance "
+                    "and keeps ROI unavailable when a reproducible financial model is not present."
+                ),
+                x_post=x_post,
+                disclosure="Educational guide. Verify current official terms. Not investment advice; no guaranteed rewards or returns.",
+            ),
+            distribution=DistributionLinks(
+                canonical_site_url=canonical_url,
+                content_id=content_id,
+                x_utm_url=x_utm_url,
+                youtube_utm_url=build_utm_url(canonical_url, source="youtube", medium="short", content_id=content_id),
+            ),
+            created_at=created_at,
+        )
+    )
+
+
+def _compact_guide_text(text: str, *, limit: int) -> str:
+    """Keep a sourced guidance excerpt readable inside X's hard limit."""
+
+    normalized = " ".join(text.split())
+    if len(normalized) <= limit:
+        return normalized
+    words = normalized.split()
+    excerpt = ""
+    for word in words:
+        candidate = f"{excerpt} {word}".strip()
+        if len(candidate) + 1 > limit:
+            break
+        excerpt = candidate
+    return (excerpt or normalized[: limit - 3]).rstrip(" ,;:") + "..."
 
 
 def _geodnet_leader_pack(item: dict[str, Any], base_url: str, created_at: str) -> ContentPackLite:

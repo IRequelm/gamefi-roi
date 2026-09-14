@@ -38,6 +38,7 @@ from app.distribution.x_queue import (
     x_weighted_character_count,
 )
 from app.distribution.x_enrichment import enrich_own_post
+from app.distribution.x_quality import actionable_x_copy_blockers
 
 logger = logging.getLogger(__name__)
 
@@ -733,6 +734,7 @@ class XPublishingService:
         if pack.source.opportunity_id != "gamcryp-methodology" and item.project.lower() not in final_copy.lower():
             blockers.append("project-specific final copy does not name the project")
         blockers.extend(_unsafe_wording_blockers(final_copy))
+        blockers.extend(actionable_x_copy_blockers(pack, final_copy))
         if pack.claims:
             if not item.snapshot_timestamp:
                 blockers.append("numeric content is missing snapshot timestamp")

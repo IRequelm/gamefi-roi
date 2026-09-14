@@ -13,6 +13,8 @@ The publisher consumes existing Content Pack Lite facts. It does not calculate R
 
 Links are intentionally occasional: methodology/source posts and every third ordered post retain the tracked GamCryp URL; other posts keep the source URL in queue/outbox metadata without repeating it in visible copy. Enrichment adds only deterministic, bounded hashtags and an explicitly verified official handle. An absent handle is normal and never inferred.
 
+X guide posts use the X-only batch at `distribution/content_packs/x_learning_batch_001.json`. The guide selector admits only catalog opportunities with structured start and requirements guidance plus an official source reference, and keeps at most one guide per canonical opportunity type. A guide must contain at least two numbered actions and a reward/claim/ROI-status cue. Missing registration, gameplay, wallet, or payout facts remain unknown and are not invented.
+
 ## Enrichment and media
 
 - `config/distribution/x_official_accounts.json` is the allowlist for official project handles. Every entry requires an explicit HTTPS official-source URL and `verified: true`; an empty registry is safe.
@@ -50,9 +52,9 @@ GamCryp's dependency-free local counter follows the documented weighting ranges,
 
 Tracked, reviewable inputs:
 
-- `distribution/content_packs/learning_batch_001.json`: authoritative distribution facts and editorial drafts.
+- `distribution/content_packs/x_learning_batch_001.json`: X-only authoritative guide facts and editorial drafts.
 - `distribution/publish_queue/next_publish_queue.json`: cross-channel editorial handoff.
-- `distribution/publish_queue/x_publish_queue.json`: canonical normalized X execution queue.
+- `distribution/publish_queue/x_publish_queue_autonomous.json`: canonical normalized X execution queue.
 - `distribution/publish_queue/x_yellow_approval_report.json`: compact current YELLOW review report.
 
 Ignored local operator state:
@@ -71,8 +73,8 @@ Token and OAuth files must never be committed, pasted into chat, or printed in l
 GAMEFI_X_CLIENT_ID=
 GAMEFI_X_CLIENT_SECRET=
 GAMEFI_X_REDIRECT_URI=http://127.0.0.1:8765/callback
-GAMEFI_X_CONTENT_PACK_FILE=distribution/content_packs/learning_batch_001.json
-GAMEFI_X_QUEUE_FILE=distribution/publish_queue/x_publish_queue.json
+GAMEFI_X_CONTENT_PACK_FILE=distribution/content_packs/x_learning_batch_001.json
+GAMEFI_X_QUEUE_FILE=distribution/publish_queue/x_publish_queue_autonomous.json
 GAMEFI_X_TOKEN_FILE=data/local/x/token.json
 GAMEFI_X_APPROVAL_FILE=data/local/x/approvals.json
 GAMEFI_X_PUBLICATION_FILE=data/local/x/publications.json
@@ -128,6 +130,12 @@ Authorization does not publish content.
 
 ## Queue and preview
 
+Refresh the X-only batch and queue from the current public GamCryp API. This command is X-only and does not rewrite the YouTube content pack or queue:
+
+```powershell
+python -m app.distribution.x_learning_batch_cli
+```
+
 Regenerate the X queue from the validated content packs:
 
 ```powershell
@@ -142,7 +150,7 @@ Dry-run shows exact copy, weighted character count, checksum, snapshot reference
 ## GREEN / YELLOW / RED
 
 - `GREEN`: enters the autonomous publishable queue after deterministic validation.
-- `YELLOW`: also enters the autonomous publishable queue. It signals lower confidence, higher risk, or unavailable modeled return; the copy must still pass all provenance, freshness, attribution, length, and safety checks.
+- `YELLOW`: signals lower confidence, higher risk, or unavailable modeled return; the copy must still pass all provenance, freshness, attribution, length, and safety checks. Guide-only posts without financial facts can remain GREEN because they make no financial claim.
 - `RED`: appears only in blocked inventory. Approval and publishing both fail.
 
 Referral availability never changes these states.
