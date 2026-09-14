@@ -30,6 +30,7 @@ from app.publishing.youtube import PublishStateStore
 from app.publishing.elevenlabs import _atomic_write_text
 
 HANDOFF_VERSION = "youtube-short-handoff-v1"
+SHORT_CREATIVE_POLICY_VERSION = "no-tts-motion-v4"
 DEFAULT_QUEUE = Path("distribution/publish_queue/youtube_short_handoff.json")
 DEFAULT_CAP_STATE = Path("data/local/youtube/autonomous_daily_cap.json")
 # A small forward buffer avoids unnecessary ElevenLabs/render credit churn while
@@ -110,6 +111,24 @@ def prepare_short_handoff(
     blocked = dict(current.blocked)
     publication_state = PublishStateStore(Path(settings.youtube_publish_state_file))
     candidates = [package for package in (packages or build_content_packages()) if package.format == "SHORT_FORM" and package.generation_status == "READY_FOR_REVIEW" and validate_package(package)]
+    # A publication record is keyed by content package, but viewers experience
+    # the opportunity as the subject.  Once an opportunity has an uploaded or
+    # unresolved/ambiguous attempt, do not silently select another angle for
+    # the same opportunity.  This is especially important after an interrupted
+    # YouTube upload: the next run must reconcile the old attempt, not create a
+    # second Akash/DFK/etc. Short while the first result is unknown.
+    published_or_ambiguous_opportunities = {
+        package.opportunity_id
+        for package in candidates
+        if package.opportunity_id
+        and (prior := publication_state.find(package.source_inventory_item_id)) is not None
+        and prior.status in {"uploaded", "ambiguous"}
+    }
+    published_or_ambiguous_opportunities.update(
+        package_opportunity(item.package_id)
+        for item in by_package.values()
+        if item.status in {"uploaded", "ambiguous"} and package_opportunity(item.package_id) != "unknown"
+    )
     family_counts = {package_family(item.package_id): 0 for item in by_package.values() if item.status == "queued"}
     opportunity_counts = {package_opportunity(item.package_id): 0 for item in by_package.values() if item.status == "queued"}
     # Reconcile checksums for already-queued renders before applying the
@@ -125,6 +144,12 @@ def prepare_short_handoff(
             break
         existing = by_package.get(package.package_id)
         prior = publication_state.find(package.source_inventory_item_id)
+        if (
+            package.opportunity_id
+            and package.opportunity_id in published_or_ambiguous_opportunities
+            and not (existing and existing.status == "queued")
+        ):
+            continue
         if prior is not None:
             if existing and prior.status == "uploaded":
                 by_package[package.package_id] = existing.model_copy(update={"status": "uploaded"})
@@ -132,25 +157,36 @@ def prepare_short_handoff(
         if existing and existing.status == "uploaded":
             continue
         previous = blocked.get(package.package_id, {})
-        if previous.get("evidence_fingerprint") == package.evidence_fingerprint and previous.get("attempts", 0) >= 3:
+        if (
+            previous.get("evidence_fingerprint") == package.evidence_fingerprint
+            and previous.get("policy_version") == SHORT_CREATIVE_POLICY_VERSION
+            and previous.get("attempts", 0) >= 3
+        ):
             continue
         if existing and existing.evidence_fingerprint == package.evidence_fingerprint and Path(existing.video_path).is_file() and _stored_render_creative_ready(existing):
+            expected_source_url = f"{settings.public_base_url.rstrip('/')}{package.canonical_source_url}"
+            expected_description = _description(package)
+            if existing.source_url != expected_source_url or existing.description != expected_description:
+                by_package[package.package_id] = existing.model_copy(update={"source_url": expected_source_url, "description": expected_description})
             continue
         if packages is None and (creative_blockers := creative_preflight(package)):
             # Do not spend narration credits or create a publishable-looking
             # asset when the creative director has not approved the package.
-            blocked[package.package_id] = {"state": "BLOCKED_PACKAGE", "reason": "; ".join(creative_blockers), "evidence_fingerprint": package.evidence_fingerprint, "attempts": 3}
+            blocked[package.package_id] = {"state": "BLOCKED_PACKAGE", "reason": "; ".join(creative_blockers), "evidence_fingerprint": package.evidence_fingerprint, "policy_version": SHORT_CREATIVE_POLICY_VERSION, "attempts": 3}
             continue
         result = render(package, settings=settings, root=render_root)
         blockers = validate_render(result)
         if result.status != RENDER_READY or blockers:
-            blocked[package.package_id] = {"state": "BLOCKED_NARRATION" if "NARRATION" in (result.reason or "") else "BLOCKED_RENDER", "reason": result.reason or "; ".join(blockers), "evidence_fingerprint": package.evidence_fingerprint, "attempts": previous.get("attempts", 0) + 1, "updated_at": datetime.now(UTC).isoformat()}
+            blocked[package.package_id] = {"state": "BLOCKED_NARRATION" if "NARRATION" in (result.reason or "") else "BLOCKED_RENDER", "reason": result.reason or "; ".join(blockers), "evidence_fingerprint": package.evidence_fingerprint, "policy_version": SHORT_CREATIVE_POLICY_VERSION, "attempts": previous.get("attempts", 0) + 1, "updated_at": datetime.now(UTC).isoformat()}
             continue
         if result.narration_path is None or result.video_path is None or result.caption_path is None:
             continue
-        if result.audio_mode != "neural_voice":
+        if result.audio_mode not in {"music_only", "human"}:
+            # TTS/neural audio is deliberately excluded from new autonomous
+            # Shorts.  A failed visual rebuild must not trigger a paid voice
+            # regeneration or sneak an old neural asset into the queue.
             continue
-        if result.voice_id is None or result.model_id is None:
+        if result.audio_mode == "human" and (result.voice_id is None or result.model_id is None):
             continue
         video_checksum = hashlib.sha256(Path(result.video_path).read_bytes()).hexdigest()
         blocked.pop(package.package_id, None)
@@ -165,7 +201,7 @@ def prepare_short_handoff(
             video_path=result.video_path,
             caption_path=result.caption_path,
             narration_path=result.narration_path,
-            narration_provider="elevenlabs",
+            narration_provider="local_music" if result.audio_mode == "music_only" else "human",
             narration_voice_id=result.voice_id or "",
             narration_model_id=result.model_id or "",
             audio_mode=result.audio_mode,
@@ -289,10 +325,16 @@ def _handoff_blockers(item: ShortHandoffItem) -> tuple[str, ...]:
         blockers.append("only SHORT_FORM assets may enter this handoff")
     if item.readiness != "GREEN":
         blockers.append("handoff item is not GREEN")
-    if item.audio_mode != "neural_voice":
-        blockers.append("publishable Shorts require approved ElevenLabs narration; music-only audio is not publishable")
-    elif item.narration_provider != "elevenlabs" or item.narration_voice_id not in {voice_id for _, voice_id in APPROVED_VOICES}:
-        blockers.append("approved ElevenLabs narration metadata is required")
+    if item.audio_mode == "music_only":
+        if item.narration_provider != "local_music":
+            blockers.append("non-TTS music audio provenance is invalid")
+    elif item.audio_mode == "human":
+        if item.narration_provider != "human":
+            blockers.append("human narration provenance is invalid")
+    elif item.audio_mode == "neural_voice":
+        blockers.append("TTS narration is forbidden for autonomous Shorts")
+    else:
+        blockers.append("audio mode is missing or unsupported")
     for label, value in (("video", item.video_path), ("captions", item.caption_path), ("narration", item.narration_path)):
         if not Path(value).is_file():
             blockers.append(f"{label} asset is missing")

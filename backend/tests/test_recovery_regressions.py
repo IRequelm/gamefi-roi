@@ -49,7 +49,7 @@ def test_taxonomy_survives_storage_restart_and_api(tmp_path, category):
     engine.dispose()
 
 
-def test_visual_retry_uses_audio_without_paid_provider(tmp_path, monkeypatch):
+def test_visual_retry_preserves_legacy_neural_audio_without_paid_provider(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     package = _package()
     script = _script_for(package)
@@ -73,8 +73,10 @@ def test_visual_retry_uses_audio_without_paid_provider(tmp_path, monkeypatch):
     (assets / "official-product-ui.png").write_bytes(b"test-fixture" * 100)
     monkeypatch.setenv("GAMEFI_SHORT_ASSET_ROOT", str(tmp_path / "assets"))
     rebuilt = render_package(package, settings=_settings(tmp_path), root=tmp_path / "render", narration_provider_factory=forbidden, command_runner=_runner)
-    assert rebuilt.status == "RENDER_READY", rebuilt.reason
-    assert rebuilt.quality_metadata["narration_reused"]
+    assert rebuilt.status == "NOT_READY"
+    assert "BLOCKED_TTS_NARRATION" in rebuilt.reason
+    assert sha256(audio.read_bytes()).hexdigest() == meta.audio_checksum
+    assert reuse_existing_narration(package.source_inventory_item_id, directory, script=script) is not None
     assert reuse_existing_narration(package.source_inventory_item_id, directory, script=script + " Changed claim.") is None
 
 
@@ -82,7 +84,8 @@ def test_missing_narration_does_not_generate_by_default(tmp_path):
     def forbidden(*a, **kw):
         raise AssertionError("Unexpected paid generation")
     result = render_package(_package(), settings=_settings(tmp_path), root=tmp_path, narration_provider_factory=forbidden)
-    assert "BLOCKED_NARRATION" in result.reason
+    assert result.audio_mode == "music_only"
+    assert "BLOCKED_VISUAL_QA" in result.reason
 
 
 def test_worker_failure_is_bounded_across_restart(tmp_path):

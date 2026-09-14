@@ -32,10 +32,10 @@ def _green_video_pack(*, mode: str, provider: str | None = None, quality: str = 
     ("mode", "provider", "quality", "expected"),
     [
         ("neural_voice", "system", "approved", "forbidden"),
-        ("neural_voice", "elevenlabs", "not_ready", "not approved"),
-        ("neural_voice", "elevenlabs", "approved", None),
-        ("music_only", None, "approved", "publishable Shorts require approved narration"),
-        ("silent", None, "approved", "publishable Shorts require approved narration"),
+        ("neural_voice", "elevenlabs", "not_ready", "TTS narration is forbidden"),
+        ("neural_voice", "elevenlabs", "approved", "TTS narration is forbidden"),
+        ("music_only", None, "approved", None),
+        ("silent", None, "approved", "silent Shorts are blocked"),
         ("unknown", None, "unknown", "unknown"),
     ],
 )

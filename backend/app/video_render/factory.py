@@ -124,7 +124,10 @@ def render_package(
     voice_name: str | None = None
     voice_id: str | None = None
     last_error: str | None = None
-    audio_mode = "neural_voice"
+    # New autonomous Shorts are explicitly non-TTS.  Existing ElevenLabs
+    # assets are still inspected/reused by the bounded recovery code, but a
+    # reused neural narration is not eligible for a new publication.
+    audio_mode = "music_only"
     next_index = _load_rotation_index(state_path)
     base_config = ElevenLabsConfig.from_settings(settings)
     if reuse_local_narration:
@@ -132,9 +135,19 @@ def render_package(
         if narration is not None:
             voice_id = narration.metadata.voice_id
             voice_name = next((voice for voice, identifier in APPROVED_VOICES if identifier == voice_id), None)
-    if narration is None and not allow_narration_generation:
+    if narration is not None and job.format == SHORT_FORM:
+        return _failed(
+            package,
+            "BLOCKED_TTS_NARRATION: existing neural narration is not eligible under the no-TTS Short policy; rebuild with non-TTS audio",
+            evidence=job.evidence_fingerprint,
+            width=job.width,
+            height=job.height,
+        )
+    if narration is None and job.format == LONG_FORM and not allow_narration_generation:
         return _failed(package, "BLOCKED_NARRATION: no verified narration matches the spoken script; paid generation requires explicit operator action", evidence=job.evidence_fingerprint, width=job.width, height=job.height)
-    for offset in range(1) if narration is None else ():
+    # ElevenLabs is never part of the autonomous Short path.  Keep the
+    # explicit long-form operator path for backward compatibility only.
+    for offset in range(1) if narration is None and job.format == LONG_FORM and allow_narration_generation else ():
         index = (next_index + offset) % len(APPROVED_VOICES)
         name, candidate_id = APPROVED_VOICES[index]
         try:
@@ -155,7 +168,11 @@ def render_package(
             last_error = str(exc)
             if isinstance(exc, ElevenLabsProviderError) and exc.account_blocked:
                 break
-    if narration is None:
+    if narration is None and job.format == SHORT_FORM:
+        audio = narration_dir / f"{package.source_inventory_item_id}-music-bed.mp3"
+        if not audio.is_file() and not _generate_music_bed(audio, duration=45, run=run):
+            return _failed(package, "BLOCKED_RENDER: non-TTS music bed could not be created", evidence=job.evidence_fingerprint, width=job.width, height=job.height)
+    elif narration is None:
         return _failed(package, f"approved ElevenLabs narration is required: {last_error or 'provider error'}", evidence=job.evidence_fingerprint, width=job.width, height=job.height)
     else:
         audio = Path(narration.metadata.audio_path)
@@ -177,6 +194,8 @@ def render_package(
         quality_metadata["narration_script_matches_package"] = bool(
             narration is None or " ".join(narration.metadata.source_script.split()) == " ".join(job.script.split())
         )
+        quality_metadata["audio_mode"] = audio_mode if narration is None else "neural_voice"
+        quality_metadata["tts_forbidden"] = True
     product_visual_path = Path(quality_metadata["asset_plan"]["product_visual_paths"][0]) if quality_metadata and quality_metadata["asset_plan"]["product_visual_paths"] else None
     scene_text_paths = _write_scene_text_files(metadata_dir, package, quality_metadata)
     audio_input = 1
@@ -246,7 +265,7 @@ def render_package(
         return _failed(package, "rendered long-form video is shorter than the evidence-backed minimum", evidence=job.evidence_fingerprint, width=job.width, height=job.height)
     if job.format == SHORT_FORM and quality_metadata is not None:
         quality_metadata["frame_qa"] = frame_qa(video_path, root / "qa" / package.package_id, runner=run)
-    result = RenderResult(package.source_inventory_item_id, package.package_id, job.format, RENDER_READY, None, str(video_path), str(caption_path), str(audio), duration, job.width, job.height, voice_name, voice_id, narration.metadata.model_id if narration else None, job.evidence_fingerprint, str(metadata_dir / f"{package.package_id}.json"), (now or datetime.now(UTC)).isoformat(), quality_metadata, audio_mode)
+    result = RenderResult(package.source_inventory_item_id, package.package_id, job.format, RENDER_READY, None, str(video_path), str(caption_path), str(audio), duration, job.width, job.height, voice_name, voice_id, narration.metadata.model_id if narration else None, job.evidence_fingerprint, str(metadata_dir / f"{package.package_id}.json"), (now or datetime.now(UTC)).isoformat(), quality_metadata, audio_mode if narration is None else "neural_voice")
     blockers = validate_render(result)
     if blockers:
         result = replace(result, status=NOT_READY, reason="BLOCKED_VISUAL_QA: " + "; ".join(blockers))
@@ -310,6 +329,8 @@ def _short_quality_metadata(package: ContentPackage, duration: float, logo_path:
         "caption_max_words_per_chunk": 8,
         "duration_seconds": duration,
         "scene_transitions": True,
+        "animated_motion": True,
+        "transition_effects": ["fade_in", "fade_out", "moving_accents"],
         "static_background_only": False,
         "caption_only_visuals": False,
         "brand_opening_present": True,
@@ -319,6 +340,7 @@ def _short_quality_metadata(package: ContentPackage, duration: float, logo_path:
         "hook_qa": {"status": "PASSED" if not hook_errors else "FAILED", "blockers": hook_errors},
         "asset_plan": plan.safe_dict(),
         "product_visual_count": len(plan.product_visual_paths),
+        "product_visual_provenance": "ACTUAL_PRODUCT_VISUAL" if plan.product_visual_paths else "NONE",
         "gamcryp_product_placement": True,
         "chart": {"used": False, "reason": "No verified comparison metric set was available."},
         "primary_visual_elements": [
@@ -402,10 +424,11 @@ def _build_motion_filter(*, package: ContentPackage, duration: float, caption_pa
         enable = f"between(t,{start:.3f},{end:.3f})"
         text_path = _filter_path(scene_text_paths[index])
         scenes.append(f"drawbox=x=0:y=0:w=iw:h=ih:color={scene_colors[index]}:t=fill:enable='{enable}'")
-        scenes.append(f"drawbox=x={x}:y={y}:w={width}:h={height}:color=0x162F55@0.97:t=fill:enable='{enable}'")
-        scenes.append(f"drawbox=x={x}:y={y}:w=18:h={height}:color=0x21D4FD@0.95:t=fill:enable='{enable}'")
-        scenes.append(f"drawbox=x=70:y=130:w={120 + index * 90}:h=10:color=0x21D4FD@0.9:t=fill:enable='{enable}'")
-        scenes.append(f"drawtext=fontfile={font}:textfile={text_path}:fontcolor=white:fontsize={size}:line_spacing=14:x={tx}:y={ty}:text_align=left:enable='{enable}'")
+        motion = f"sin(t*1.35+{index})*12"
+        scenes.append(f"drawbox=x={x}+{motion}:y={y}:w={width}:h={height}:color=0x162F55@0.97:t=fill:enable='{enable}'")
+        scenes.append(f"drawbox=x={x}+{motion}:y={y}:w=18:h={height}:color=0x21D4FD@0.95:t=fill:enable='{enable}'")
+        scenes.append(f"drawbox=x=70+abs(sin(t*1.8+{index})*80):y=130:w={120 + index * 90}:h=10:color=0x21D4FD@0.9:t=fill:enable='{enable}'")
+        scenes.append(f"drawtext=fontfile={font}:textfile={text_path}:fontcolor=white:fontsize={size}:line_spacing=14:x={tx}+{motion}:y={ty}+sin(t*1.1+{index})*5:text_align=left:enable='{enable}'")
         scenes.append(f"drawtext=fontfile={font}:text='0{index + 1}':fontcolor=0x21D4FD:fontsize=34:x=900:y=170:enable='{enable}'")
 
     # Scene-specific structure. Decorative bars are deliberately not treated as
@@ -453,7 +476,8 @@ def _build_motion_filter(*, package: ContentPackage, duration: float, caption_pa
     else:
         graph += ";[product]copy[branded]"
     prefix = f"{overlays_text};" if overlays_text else ""
-    return f"{prefix}{graph};[branded]{captions}[vout]"
+    fade_out_start = max(duration - 0.35, 0.35)
+    return f"{prefix}{graph};[branded]{captions},fade=t=in:st=0:d=0.35,fade=t=out:st={fade_out_start:.3f}:d=0.35[vout]"
 
 
 def short_quality_blockers(quality: dict[str, Any]) -> list[str]:
@@ -478,6 +502,11 @@ def short_quality_blockers(quality: dict[str, Any]) -> list[str]:
         blockers.append("short-form visual text is clipped or overflows")
     if not quality.get("scene_transitions"):
         blockers.append("short-form scene transitions are missing")
+    if not quality.get("animated_motion"):
+        blockers.append("short-form does not prove animated motion")
+    transition_effects = set(quality.get("transition_effects", ()))
+    if not {"fade_in", "fade_out"}.issubset(transition_effects):
+        blockers.append("short-form transition effects are missing")
     if quality.get("static_background_only"):
         blockers.append("short-form uses a static background-only composition")
     if quality.get("caption_only_visuals"):
@@ -500,6 +529,8 @@ def short_quality_blockers(quality: dict[str, Any]) -> list[str]:
         blockers.append("brand opening/closing sting is missing")
     if quality.get("narration_script_matches_package") is False:
         blockers.append("reused narration does not match the current package script")
+    if quality.get("audio_mode") == "neural_voice" or quality.get("tts_forbidden") is False:
+        blockers.append("TTS narration is forbidden for autonomous Shorts")
     return blockers
 
 

@@ -88,7 +88,8 @@ def test_ready_short_renders_with_captions_and_evidence(tmp_path: Path, monkeypa
     assert result.width == 1080 and result.height == 1920
     assert Path(result.video_path).is_file()
     assert Path(result.caption_path).is_file()
-    assert calls == [APPROVED_VOICES[0][1]]
+    assert calls == []
+    assert result.audio_mode == "music_only"
     assert validate_render(result) == ()
     metadata = json.loads(Path(result.metadata_path).read_text(encoding="utf-8"))
     assert metadata["evidence_fingerprint"] == package.evidence_fingerprint
@@ -110,16 +111,16 @@ def test_long_script_uses_distinct_bound_evidence_sections_without_filler() -> N
     assert "Opportunity or method context" not in script
 
 
-def test_all_approved_voice_failures_are_not_ready_without_fallback(tmp_path: Path) -> None:
+def test_short_never_calls_tts_provider_when_narration_is_missing(tmp_path: Path) -> None:
     calls: list[str] = []
     result = render_package(_package(), settings=_settings(tmp_path), root=tmp_path / "render", narration_provider_factory=_provider_factory(tmp_path, calls, fail=True), command_runner=_runner, allow_narration_generation=True)
 
     assert result.status == NOT_READY
-    assert len(calls) == 1
-    assert not list((tmp_path / "render" / "short").glob("*.mp4"))
+    assert calls == []
+    assert "product or app visual is missing" in (result.reason or "")
 
 
-def test_account_level_elevenlabs_failure_does_not_try_other_voices(tmp_path: Path) -> None:
+def test_short_does_not_call_elevenlabs_even_when_provider_would_fail(tmp_path: Path) -> None:
     calls: list[str] = []
 
     def provider_factory(config):
@@ -133,9 +134,8 @@ def test_account_level_elevenlabs_failure_does_not_try_other_voices(tmp_path: Pa
     )
 
     assert result.status == NOT_READY
-    assert "narration is required" in (result.reason or "")
     assert result.voice_id is None
-    assert calls == [APPROVED_VOICES[0][1]]
+    assert calls == []
 
 
 def test_non_ready_package_cannot_become_render_job() -> None:
@@ -170,6 +170,8 @@ def _short_result_with_quality(**overrides):
         "caption_safe_area_validated": True,
         "text_clipping": False,
         "scene_transitions": True,
+        "animated_motion": True,
+        "transition_effects": ["fade_in", "fade_out", "moving_accents"],
         "static_background_only": False,
         "caption_only_visuals": False,
           "brand_opening_present": True,
@@ -182,6 +184,8 @@ def _short_result_with_quality(**overrides):
         "gamcryp_product_placement": True,
         "frame_qa": {"status": "PASSED", "frames": ["a", "b", "c", "d", "e"]},
         "primary_visual_elements": ["identity_card", "setup_diagram", "mechanics_flow", "evidence_metric_card", "branded_cta"],
+        "audio_mode": "music_only",
+        "tts_forbidden": True,
     }
     base.update(overrides)
     return base
@@ -193,7 +197,7 @@ def _quality_result(tmp_path: Path, quality: dict):
     audio = tmp_path / "short.mp3"
     for path in (video, caption, audio):
         path.write_bytes(b"asset")
-    return RenderResult("content", "package", "SHORT_FORM", RENDER_READY, None, str(video), str(caption), str(audio), 30.0, 1080, 1920, "Sarah", APPROVED_VOICES[0][1], "model", "evidence", None, quality_metadata=quality)
+    return RenderResult("content", "package", "SHORT_FORM", RENDER_READY, None, str(video), str(caption), str(audio), 30.0, 1080, 1920, None, None, None, "evidence", None, quality_metadata=quality, audio_mode="music_only")
 
 
 def test_static_text_only_short_is_not_ready(tmp_path: Path) -> None:

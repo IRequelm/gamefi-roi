@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import logging
 import os
@@ -54,11 +55,13 @@ class DistributionWorkerConfig:
     thumbnail_directory: Path | None = None
     state_file: Path = Path("data/local/distribution/worker_state.json")
     heartbeat_file: Path = Path("data/local/distribution/worker_heartbeat.json")
+    lock_file: Path = Path("data/local/distribution/worker.lock")
     failure_cooldown_seconds: int = 1800
     manual_outbox_file: Path = Path("distribution/manual_outbox/x_manual_ready.json")
     short_handoff_file: Path = DEFAULT_QUEUE
     autonomous_cap_file: Path = DEFAULT_CAP_STATE
     short_handoff_refill_enabled: bool = False
+    short_handoff_refill_batch: int = 1
     x_amplification_feed_file: Path = DEFAULT_FEED
     x_amplification_whitelist_file: Path = DEFAULT_WHITELIST
     x_amplification_outbox_file: Path = DEFAULT_OUTBOX
@@ -82,11 +85,13 @@ class DistributionWorkerConfig:
             thumbnail_directory=Path(thumbnail) if thumbnail else None,
             state_file=Path(os.getenv("GAMEFI_DISTRIBUTION_WORKER_STATE_FILE", "data/local/distribution/worker_state.json")),
             heartbeat_file=Path(os.getenv("GAMEFI_DISTRIBUTION_HEARTBEAT_FILE", "data/local/distribution/worker_heartbeat.json")),
+            lock_file=Path(os.getenv("GAMEFI_DISTRIBUTION_LOCK_FILE", "data/local/distribution/worker.lock")),
             failure_cooldown_seconds=int(os.getenv("GAMEFI_DISTRIBUTION_FAILURE_COOLDOWN_SECONDS", "1800")),
             manual_outbox_file=Path(os.getenv("GAMEFI_MANUAL_X_OUTBOX_FILE", "distribution/manual_outbox/x_manual_ready.json")),
             short_handoff_file=Path(os.getenv("GAMEFI_SHORT_YOUTUBE_HANDOFF_FILE", str(DEFAULT_QUEUE))),
             autonomous_cap_file=Path(os.getenv("GAMEFI_YOUTUBE_AUTONOMOUS_CAP_FILE", str(DEFAULT_CAP_STATE))),
             short_handoff_refill_enabled=os.getenv("GAMEFI_SHORT_YOUTUBE_HANDOFF_REFILL_ENABLED", "true" if live else "false").strip().lower() in {"1", "true", "yes"},
+            short_handoff_refill_batch=max(1, min(int(os.getenv("GAMEFI_SHORT_YOUTUBE_REFILL_BATCH", "1")), 5)),
             x_amplification_feed_file=Path(os.getenv("GAMEFI_X_AMPLIFICATION_FEED_FILE", str(DEFAULT_FEED))),
             x_amplification_whitelist_file=Path(os.getenv("GAMEFI_X_AMPLIFICATION_WHITELIST_FILE", str(DEFAULT_WHITELIST))),
             x_amplification_outbox_file=Path(os.getenv("GAMEFI_X_AMPLIFICATION_OUTBOX_FILE", str(DEFAULT_OUTBOX))),
@@ -500,7 +505,11 @@ class DistributionWorker:
                 prepare_short_handoff(
                     settings=get_settings(),
                     queue_path=self.config.short_handoff_file,
-                    limit=queue.buffer_target,
+                    # Rendering is expensive and the daily public cap is one
+                    # Short.  Keep an at-most-one forward refill per cycle by
+                    # default; operators can raise this bounded value when a
+                    # larger pre-render buffer is intentionally desired.
+                    limit=min(queue.buffer_target, self.config.short_handoff_refill_batch),
                 )
             if not self.config.short_handoff_file.is_file():
                 return {"platform": "YouTubeShortHandoff", "status": "idle", "detail": "handoff queue is empty"}
@@ -565,6 +574,53 @@ def _optional_path(name: str) -> Path | None:
     return Path(value) if value else None
 
 
+@contextlib.contextmanager
+def _exclusive_worker_lock(path: Path):
+    """Prevent Task Scheduler restarts from creating competing workers.
+
+    The lock is held by the process for its entire lifetime and is released by
+    the OS when the process exits, including an ungraceful termination.  The
+    lock file itself is intentionally retained as a harmless operational
+    marker; only the OS lock controls ownership.
+    """
+    path.parent.mkdir(parents=True, exist_ok=True)
+    handle = path.open("a+b")
+    try:
+        handle.seek(0)
+        handle.write(b"0")
+        handle.flush()
+        handle.seek(0)
+        if os.name == "nt":
+            import msvcrt
+
+            try:
+                msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+            except OSError as exc:
+                raise RuntimeError("another distribution worker instance is already running") from exc
+        else:
+            import fcntl
+
+            try:
+                fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except OSError as exc:
+                raise RuntimeError("another distribution worker instance is already running") from exc
+        yield
+    finally:
+        try:
+            if os.name == "nt":
+                import msvcrt
+
+                handle.seek(0)
+                msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+            else:
+                import fcntl
+
+                fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+        except OSError:
+            pass
+        handle.close()
+
+
 def main(argv: list[str] | None = None) -> int:
     # Task Scheduler launches without a shell profile; load the existing local
     # .env convention before reading worker flags. Explicit process variables
@@ -607,10 +663,16 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps({"fingerprint": args.fingerprint, "status": "amplification_manual_confirmed", "published": False}))
         return 0
     worker = DistributionWorker()
-    if args.once:
-        print(json.dumps(worker.run_once(), indent=2, sort_keys=True))
-    else:
-        worker.run_forever(interval_seconds=args.interval_seconds)
+    try:
+        with _exclusive_worker_lock(worker.config.lock_file):
+            if args.once:
+                print(json.dumps(worker.run_once(), indent=2, sort_keys=True))
+            else:
+                worker.run_forever(interval_seconds=args.interval_seconds)
+    except RuntimeError as exc:
+        logger.warning("distribution_worker_not_started reason=%s", exc)
+        print(json.dumps({"status": "already_running", "detail": str(exc)}))
+        return 0
     return 0
 
 

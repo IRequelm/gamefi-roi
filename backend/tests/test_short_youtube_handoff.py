@@ -33,7 +33,34 @@ def _render(tmp_path: Path, *, package, **kwargs) -> RenderResult:
     audio = tmp_path / "audio.mp3"
     for path in (video, caption, audio):
         path.write_bytes(b"asset")
-    return RenderResult(package.source_inventory_item_id, package.package_id, "SHORT_FORM", RENDER_READY, None, str(video), str(caption), str(audio), 10.0, 1080, 1920, "Sarah", "EXAVITQu4vr4xnSDxMaL", "eleven_multilingual_v2", package.evidence_fingerprint, None, quality_metadata={"meaningful_scene_count": 6, "scene_diversity": ["hook", "identity", "setup", "evidence", "status", "cta"], "non_caption_visual_element_count": 6, "identity_present": True, "identity_mode": "branded_identity_card", "caption_safe_area": {"left": 96, "right": 96, "bottom": 220}, "caption_safe_area_validated": True, "text_clipping": False, "scene_transitions": True, "static_background_only": False, "caption_only_visuals": False, "brand_opening_present": True, "brand_closing_present": True, "brand_sting_present": True, "narration_script_matches_package": True, "creative_status": "CREATIVE_QA_PASSED", "product_visual_count": 1, "hook_qa": {"status": "PASSED", "blockers": []}, "gamcryp_product_placement": True, "frame_qa": {"status": "PASSED", "frames": ["a", "b", "c", "d", "e"]}, "primary_visual_elements": ["identity_card", "setup_diagram", "mechanics_flow", "evidence_metric_card", "branded_cta"]})
+    quality = {
+        "meaningful_scene_count": 6,
+        "scene_diversity": ["hook", "identity", "setup", "evidence", "status", "cta"],
+        "non_caption_visual_element_count": 6,
+        "identity_present": True,
+        "identity_mode": "branded_identity_card",
+        "caption_safe_area": {"left": 96, "right": 96, "bottom": 220},
+        "caption_safe_area_validated": True,
+        "text_clipping": False,
+        "scene_transitions": True,
+        "animated_motion": True,
+        "transition_effects": ["fade_in", "fade_out", "moving_accents"],
+        "static_background_only": False,
+        "caption_only_visuals": False,
+        "brand_opening_present": True,
+        "brand_closing_present": True,
+        "brand_sting_present": True,
+        "narration_script_matches_package": True,
+        "creative_status": "CREATIVE_QA_PASSED",
+        "product_visual_count": 1,
+        "hook_qa": {"status": "PASSED", "blockers": []},
+        "gamcryp_product_placement": True,
+        "frame_qa": {"status": "PASSED", "frames": ["a", "b", "c", "d", "e"]},
+        "primary_visual_elements": ["identity_card", "setup_diagram", "mechanics_flow", "evidence_metric_card", "branded_cta"],
+        "audio_mode": "music_only",
+        "tts_forbidden": True,
+    }
+    return RenderResult(package.source_inventory_item_id, package.package_id, "SHORT_FORM", RENDER_READY, None, str(video), str(caption), str(audio), 10.0, 1080, 1920, None, None, None, package.evidence_fingerprint, None, quality_metadata=quality, audio_mode="music_only")
 
 
 def test_ready_short_render_enters_handoff_once(tmp_path: Path) -> None:
@@ -50,7 +77,7 @@ def test_ready_short_render_enters_handoff_once(tmp_path: Path) -> None:
     assert all(item.format == "SHORT_FORM" for item in load_handoff(queue_path).items)
 
 
-def test_music_only_short_render_is_blocked_from_handoff(tmp_path: Path) -> None:
+def test_music_only_short_render_enters_handoff(tmp_path: Path) -> None:
     package = _package()
     queue_path = tmp_path / "handoff.json"
     result = _render(tmp_path, package=package)
@@ -59,7 +86,45 @@ def test_music_only_short_render_is_blocked_from_handoff(tmp_path: Path) -> None
         settings=_settings(), queue_path=queue_path, render_root=tmp_path / "render",
         packages=[package], render=lambda package, **kwargs: result,
     )
-    assert queue.items == ()
+    assert len(queue.items) == 1
+    assert queue.items[0].audio_mode == "music_only"
+    assert queue.items[0].narration_provider == "local_music"
+
+
+def test_ambiguous_opportunity_does_not_select_a_second_angle(tmp_path: Path) -> None:
+    package = next(package for package in build_content_packages() if package.format == "SHORT_FORM" and package.opportunity_id == "hivemapper")
+    asset = tmp_path / "asset.bin"
+    asset.write_bytes(b"existing-ambiguous-attempt")
+    checksum = hashlib.sha256(asset.read_bytes()).hexdigest()
+    prior = ShortHandoffItem(
+        package_id="package-short_form-depin_setup-hivemapper",
+        content_id="inventory-depin_setup-hivemapper",
+        title="Hivemapper prior attempt",
+        description="Prior attempt requires reconciliation.",
+        source_url="https://gamcryp.com/opportunities/hivemapper",
+        tags=("GamCryp",),
+        video_path=str(asset),
+        caption_path=str(asset),
+        narration_path=str(asset),
+        narration_provider="elevenlabs",
+        narration_voice_id="legacy",
+        narration_model_id="legacy",
+        audio_mode="neural_voice",
+        evidence_fingerprint="a" * 64,
+        video_checksum=checksum,
+        created_at="2026-09-06T00:00:00+00:00",
+        status="ambiguous",
+    )
+    queue_path = tmp_path / "handoff.json"
+    queue_path.write_text(ShortHandoffQueue(items=(prior,)).model_dump_json(), encoding="utf-8")
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("a second angle must not be rendered before reconciliation")
+
+    queue = prepare_short_handoff(settings=_settings(), queue_path=queue_path, packages=[package], render=forbidden)
+
+    assert [item.package_id for item in queue.items] == [prior.package_id]
+    assert queue.items[0].status == "ambiguous"
 
 
 def test_handoff_buffer_is_bounded_and_deterministic(tmp_path: Path) -> None:
@@ -94,7 +159,7 @@ def test_daily_cap_persists_and_resets_next_local_day(tmp_path: Path) -> None:
     video = tmp_path / "video.mp4"
     video.write_bytes(b"video")
     checksum = hashlib.sha256(video.read_bytes()).hexdigest()
-    item = ShortHandoffItem(package_id="package-short_form-test", content_id="content-test", title="Test", description="Source-backed test.", source_url="https://gamcryp.com/test", tags=("GamCryp",), video_path=str(video), caption_path=str(video), narration_path=str(video), narration_provider="elevenlabs", narration_voice_id="EXAVITQu4vr4xnSDxMaL", narration_model_id="eleven_multilingual_v2", evidence_fingerprint="a" * 64, video_checksum=checksum, created_at="2026-09-06T00:00:00+00:00")
+    item = ShortHandoffItem(package_id="package-short_form-test", content_id="content-test", title="Test", description="Source-backed test.", source_url="https://gamcryp.com/test", tags=("GamCryp",), video_path=str(video), caption_path=str(video), narration_path=str(video), narration_provider="local_music", narration_voice_id="", narration_model_id="", audio_mode="music_only", evidence_fingerprint="a" * 64, video_checksum=checksum, created_at="2026-09-06T00:00:00+00:00")
     item2 = item.model_copy(update={"package_id": "package-short_form-test-2", "content_id": "content-test-2"})
     queue_path = tmp_path / "handoff.json"
     queue_path.write_text(ShortHandoffQueue(items=(item, item2)).model_dump_json(), encoding="utf-8")

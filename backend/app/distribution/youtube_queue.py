@@ -214,14 +214,12 @@ def narration_quality_blockers(item: YouTubeQueueItem) -> tuple[str, ...]:
     mode = item.narration_mode.strip().lower()
     provider = (item.voice_provider or "").strip().lower()
     status = item.narration_quality_status.strip().lower()
-    if mode in {"music_only", "silent"}:
-        return ("publishable Shorts require approved narration; music-only/silent formats are blocked",)
+    if mode == "music_only":
+        return () if status == "approved" else ("non-TTS music quality is not approved",)
+    if mode == "silent":
+        return ("silent Shorts are blocked",)
     if mode == "human":
         return () if status == "approved" else ("human narration quality is not approved",)
     if mode == "neural_voice":
-        if provider in FORBIDDEN_NARRATION_PROVIDERS:
-            return ("forbidden basic/system TTS provider",)
-        if provider not in APPROVED_NEURAL_PROVIDERS:
-            return ("neural voice provider is not approved",)
-        return () if status == "approved" else ("neural narration quality is not approved",)
+        return ("TTS narration is forbidden for autonomous Shorts",)
     return ("narration mode is missing or unknown",)

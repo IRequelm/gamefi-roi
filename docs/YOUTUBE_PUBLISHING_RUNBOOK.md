@@ -1,6 +1,6 @@
 # GamCryp YouTube API Publishing Runbook
 
-Updated: 2026-09-06
+Updated: 2026-09-15
 Status: autonomous YouTube publishing uses the quality-gated Short handoff; live publication remains fail-closed when the cap, assets, narration, or worker health are not valid
 
 ## Purpose
@@ -11,15 +11,15 @@ The operator CLI remains available for review and one-off operations. Browser au
 
 ## Autonomous local distribution
 
-The Windows distribution worker may load the ignored local `.env` and run in live mode after validation. When enabled, it checks both publish queues before each worker cycle and refreshes the canonical learning batch only when either platform has fewer than `GAMEFI_DISTRIBUTION_BUFFER_SIZE` unpublished GREEN items. Refill is bounded by `GAMEFI_DISTRIBUTION_REFILL_COOLDOWN_HOURS` and persists its last source hash in `GAMEFI_DISTRIBUTION_REFILL_STATE_FILE`, so unchanged source facts do not regenerate content endlessly.
+The Windows distribution worker may load the ignored local `.env` and run in live mode after validation. The legacy learning-batch refill is optional and is disabled in the current local production configuration; autonomous YouTube uses only the Short handoff. Short refill is bounded to one render per worker cycle by `GAMEFI_SHORT_YOUTUBE_REFILL_BATCH=1`, while the handoff target remains capped at 14 items. This keeps heavy rendering bounded and prevents a stale-looking heartbeat caused by a burst of concurrent renders.
 
 Refill uses the existing snapshot/opportunity API facts and `build_learning_batch` policy. Stale, invalid, unsupported, or non-refreshable financial facts remain RED; points-only or high-risk content remains YELLOW under the existing rules. A GREEN YouTube package without a matching rendered asset is held in the queue's `pending_asset` collection and is not publishable. X queue generation may continue while X publication remains fail-closed when credentials are unavailable.
 
-The runner explicitly changes to the repository root before loading the worker, so relative state paths remain stable under Task Scheduler. The worker's append-only transcript is `data/local/distribution/worker.log`; cooldown, refill, and heartbeat state are under `data/local/distribution/`. The atomic liveness record is `data/local/distribution/worker_heartbeat.json`; its `updated_at` must be recent and its status must be `ok` before treating unattended distribution as healthy. Set `GAMEFI_DISTRIBUTION_LIVE=false` and disable the scheduled task before stopping autonomous publishing.
+The runner explicitly changes to the repository root before loading the worker, so relative state paths remain stable under Task Scheduler. The worker's append-only transcript is `data/local/distribution/worker.log`; cooldown, refill, lock, and heartbeat state are under `data/local/distribution/`. `data/local/distribution/worker.lock` is held for the worker lifetime, so a Task Scheduler restart cannot create competing workers. The atomic liveness record is `data/local/distribution/worker_heartbeat.json`; its `updated_at` must be recent and its status must be `ok` before treating unattended distribution as healthy. Set `GAMEFI_DISTRIBUTION_LIVE=false` and disable the scheduled task before stopping autonomous publishing.
 
 Run `powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\check_distribution_worker.ps1` from the repository root to fail closed when the heartbeat is missing, failed, invalid, or older than 45 minutes. Monitoring may treat any non-zero exit code as an alert.
 
-The short-form handoff forward buffer is intentionally bounded at 14 queued GREEN renders (normally 7–14 in steady state) to avoid unnecessary ElevenLabs/render credit churn. The one successful public Short per local calendar day cap is unchanged.
+The short-form handoff forward buffer is intentionally bounded at 14 queued GREEN renders (normally 7–14 in steady state) to avoid unnecessary render churn. New autonomous Shorts use an explicit no-TTS policy; the one successful public Short per local calendar day cap is unchanged.
 
 ## Architecture
 
@@ -44,11 +44,11 @@ canonical Content Pack
 
 ## Short-form visual quality gate
 
-Short-form renders use the `short-motion-card-v2` visual contract. A GREEN/`RENDER_READY` Short must contain at least five meaningful scenes; the factory currently emits six: hook, identity, setup/mechanics, evidence, status, and CTA. Scene diversity and transitions are recorded in render metadata, and changing subtitle text alone cannot satisfy the gate.
+Short-form renders use the `short-motion-card-v3` visual contract and the `no-tts-motion-v4` autonomous policy. A GREEN/`RENDER_READY` Short must contain at least five meaningful scenes; the factory currently emits six: hook, identity, setup/mechanics, evidence, status, and CTA. Scene diversity and transitions are recorded in render metadata, and changing subtitle text alone cannot satisfy the gate.
 
 Each Short must also contain a non-caption visual element in every planned beat, an early opportunity identity, and a mobile-safe caption area. Official local logos are used when catalog metadata points to a present asset. Missing logos use a branded GamCryp identity card; fabricated logos, hotlinked images, and gameplay screenshots are not allowed. GUIDE_ONLY and ROI-unavailable content remains subject to the existing evidence restrictions.
 
-The render metadata records the quality version, scene count/diversity, non-caption visual-element count, identity mode, caption safe area, evidence-point count, and ElevenLabs voice/model. Any missing or invalid quality metadata makes the Short `NOT_READY` and prevents queue eligibility.
+The render metadata records the quality version, scene count/diversity, non-caption visual-element count, identity mode, caption safe area, evidence-point count, product-visual provenance, animated-motion proof, transition effects, and audio provenance. Any missing or invalid quality metadata makes the Short `NOT_READY` and prevents queue eligibility. A slide-deck/static composition or TTS narration is not eligible for autonomous publication.
 
 Direct free-form manifests are not an operator CLI input. This prevents a manually authored manifest from bypassing current distribution readiness.
 
@@ -84,9 +84,9 @@ GAMEFI_YOUTUBE_CHANNEL_HANDLE=@GamCryp
 GAMEFI_YOUTUBE_MAX_RETRIES=2
 ```
 
-## ElevenLabs narration
+## Audio policy
 
-Narration generation is a separate manual production step. Configure the local ignored `.env` with `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID`, `ELEVENLABS_MODEL_ID`, and optionally `ELEVENLABS_OUTPUT_DIRECTORY` (default `data/local/youtube/narration`). The model and voice must be selected explicitly; no paid account or plan is configured by the repository.
+ElevenLabs generation remains a separate legacy/manual production capability, but it is not used by the autonomous Short path. Configure the local ignored `.env` only when an operator explicitly needs that legacy command; the no-TTS policy prevents the resulting neural audio from entering a new autonomous upload.
 
 Generate or validate one narration asset without publishing anything:
 
@@ -97,7 +97,7 @@ video-narration generate CONTENT_ID
 
 Assets use `CONTENT_ID` plus a script fingerprint and are stored beside checksum-bound JSON metadata. Matching audio is reused. Changing the script, voice, or model produces a new asset. The metadata records `narration_mode=neural_voice`, `voice_provider=elevenlabs`, voice/model identifiers, the exact spoken text, timestamp, checksum, and quality status.
 
-GREEN video publication still requires the validated package, approved audio metadata, and a valid rendered video. A provider error never falls back to Windows/system voices, pyttsx, generic TTS, or another neural provider. When ElevenLabs returns an account-level quota/auth failure, short-form rendering may create a local diagnostic/music-only artifact, but it is never eligible for the handoff or publication. Long-form and narration-dependent packages remain `NOT_READY`. Every publishable Short requires approved ElevenLabs narration with provider, voice, model, and script-match metadata.
+GREEN video publication still requires the validated package, approved product-specific visual evidence, a valid rendered video, meaningful motion, and post-render frame QA. A provider error never falls back to Windows/system voices, pyttsx, generic TTS, or another neural provider. Short-form rendering uses a local instrumental bed when no approved non-TTS audio exists; captions remain on-screen guidance rather than pretending that text was spoken. Existing ElevenLabs assets are retained for audit/recovery, but a new autonomous Short with `neural_voice` is blocked by `TTS narration is forbidden for autonomous Shorts`.
 
 Never paste or commit the OAuth client JSON, access token, refresh token, browser cookies, or authorization headers. Do not place secrets in Content Packs or queue files.
 
@@ -206,7 +206,7 @@ The command reads the authenticated channel. A local `uploaded` record whose vid
 
 ## Narration reuse and recovery
 
-Visual-only rebuilds search approved local narration metadata by content id, exact normalized spoken script, approved voice/model, and SHA-256 audio checksum. A matching asset is reused by default; the normal worker never asks ElevenLabs to generate missing narration. Changed spoken text or invalid metadata produces `BLOCKED_NARRATION`, preserving the existing asset and requiring an explicit operator generation decision.
+Visual-only rebuilds search approved local narration metadata by content id, exact normalized spoken script, approved voice/model, and SHA-256 audio checksum. A matching asset is never regenerated automatically. Under the current no-TTS publication policy, an existing neural asset is retained for audit but the rebuilt Short must use the non-TTS path before it can enter the autonomous handoff. Changed spoken text or invalid metadata produces `BLOCKED_NARRATION`, preserving the existing asset and requiring an explicit operator decision.
 
 `python -m app.video_render.recovery_cli` performs an Akash legacy-audio recovery render without publishing or paid narration. Current creative and frame QA still apply; an old generic spoken hook may correctly remain `BLOCKED_VISUAL_QA`.
 
