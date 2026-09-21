@@ -79,6 +79,7 @@ Render web database pool:
 - `GAMEFI_DATABASE_POOL_SIZE=2`
 - `GAMEFI_DATABASE_MAX_OVERFLOW=1`
 - `GAMEFI_DATABASE_POOL_TIMEOUT_SECONDS=30`
+- `GAMEFI_DATABASE_CONNECT_TIMEOUT_SECONDS=10`
 - `GAMEFI_DATABASE_POOL_RECYCLE_SECONDS=1800`
 
 Security:
@@ -132,6 +133,7 @@ GitHub Actions beta scheduler non-secret env:
 
 - defined in `.github/workflows/render-beta-recalculation.yml`,
 - `GAMEFI_PUBLIC_BASE_URL` defaults to `https://gamefi-roi-web.onrender.com` and may be overridden with the GitHub repository variable `GAMEFI_PUBLIC_BASE_URL` when a custom domain becomes canonical,
+- `GAMEFI_BETA_DATABASE_ENABLED` is a fail-closed repository variable and must be exactly `true` before the scheduler job can run; keep it unset/false while the external database is suspended or unverified,
 - pool size is `1`, max overflow is `0`,
   - cadence is `5` minutes, matching the five-minute market freshness window.
 
@@ -147,8 +149,9 @@ GitHub Actions beta scheduler non-secret env:
    - no `preDeployCommand`, because Render Free Web Services do not support pre-deploy commands
 6. After the database exists, copy the database's external URL into the GitHub repository secret `GAMEFI_BETA_DATABASE_URL`.
 7. Add GitHub repository secrets for `GAMEFI_COINGECKO_API_KEY` and `GAMEFI_DFK_CHAIN_RPC_URL`.
-8. Run the GitHub Actions workflow `Render Beta Recalculation` manually once.
-9. Confirm the workflow writes a new snapshot and persisted risk/confidence score.
+8. After the database connection succeeds, set the GitHub repository variable `GAMEFI_BETA_DATABASE_ENABLED=true` and enable the `Render Beta Recalculation` workflow.
+9. Run the GitHub Actions workflow `Render Beta Recalculation` manually once.
+10. Confirm the workflow writes a new snapshot and persisted risk/confidence score; if it fails, disable the workflow again before investigating.
 
 Do not paste provider keys, database URLs, GitHub tokens, or Render secrets into chat or commit them to Git.
 
@@ -423,9 +426,11 @@ Provider outage:
 Database issue:
 
 1. Check Render Postgres metrics/logs.
-2. Run `python -m app.doctor` from a one-off shell if available, or from a trusted local machine using the same env values.
-3. Restore to a new database if corruption or bad migration is confirmed.
-4. Point services to the verified restore instance.
+2. Disable the GitHub Actions `Render Beta Recalculation` workflow and leave `GAMEFI_BETA_DATABASE_ENABLED` unset/false so scheduled retries cannot create failure mail.
+3. Run `python -m app.doctor` from a one-off shell if available, or from a trusted local machine using the same env values.
+4. If the Render Free Postgres trial has expired, upgrade it within the grace period or migrate to a new funded database before attempting a restore.
+5. Restore to a new database if corruption or bad migration is confirmed.
+6. Point services to the verified restore instance, then re-enable the scheduler only after a successful read/write check.
 
 Bad deploy:
 
@@ -460,7 +465,13 @@ Database rollback:
 
 Public URL: `https://gamefi-roi-web.onrender.com`.
 
-G13 public beta is complete with accepted free-tier limitations:
+Current incident state (2026-09-21):
+
+- `gamefi-roi-db` Free Render Postgres is suspended because its trial period expired.
+- The GitHub Actions `Render Beta Recalculation` workflow is intentionally disabled and additionally gated by `GAMEFI_BETA_DATABASE_ENABLED`.
+- Do not re-enable the workflow or claim live recalculation health until a funded database connection and a successful manual run are verified.
+
+The original G13 public beta accepted these free-tier limitations:
 
 - Render Free Web Service may cold start after inactivity.
 - Free Render Postgres expires after 30 days and has no production-grade backup/PITR.
