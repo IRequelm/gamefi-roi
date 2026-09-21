@@ -12,6 +12,10 @@ concurrency:
 jobs:
   recalculate:
     name: Recalculate beta snapshots
+    # The beta database is currently suspended when the free Render trial
+    # expires. Keep scheduled runs harmless until the operator restores a
+    # funded database and explicitly sets GAMEFI_BETA_DATABASE_ENABLED=true.
+    if: ${{ vars.GAMEFI_BETA_DATABASE_ENABLED == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
