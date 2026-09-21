@@ -20,17 +20,18 @@ from typing import Any, Callable
 from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel, ConfigDict
+from sqlalchemy.engine import Engine
 
 from app.config.settings import Settings
 from app.content_package.generator import ContentPackage, build_content_packages, validate_package
 from app.video_render.factory import APPROVED_VOICES, RENDER_READY, RenderResult, render_package, short_quality_blockers, validate_render
-from app.video_render.creative_qa import creative_preflight, frame_qa
+from app.video_render.creative_qa import asset_plan, creative_preflight, frame_qa
 from app.publishing.youtube import YouTubeOperationResult, YouTubePublishManifest, YouTubePublisher
 from app.publishing.youtube import PublishStateStore
 from app.publishing.elevenlabs import _atomic_write_text
 
 HANDOFF_VERSION = "youtube-short-handoff-v1"
-SHORT_CREATIVE_POLICY_VERSION = "no-tts-motion-v4"
+SHORT_CREATIVE_POLICY_VERSION = "approved-reuse-tts-motion-v8"
 DEFAULT_QUEUE = Path("distribution/publish_queue/youtube_short_handoff.json")
 DEFAULT_CAP_STATE = Path("data/local/youtube/autonomous_daily_cap.json")
 # A small forward buffer avoids unnecessary ElevenLabs/render credit churn while
@@ -59,9 +60,15 @@ class ShortHandoffItem(BaseModel):
     narration_voice_id: str = ""
     narration_model_id: str = ""
     audio_mode: str = "neural_voice"
+    narration_reused: bool = False
     evidence_fingerprint: str
     video_checksum: str
     created_at: str
+    creative_approval_state: str = "pending_review"
+    creative_approval_video_checksum: str | None = None
+    creative_approved_at: str | None = None
+    creative_reviewed_by: str | None = None
+    creative_review_note: str | None = None
 
 
 class ShortHandoffQueue(BaseModel):
@@ -95,6 +102,41 @@ def write_handoff(path: Path, queue: ShortHandoffQueue) -> None:
     _atomic_write_text(path, queue.model_dump_json(indent=2) + "\n")
 
 
+@contextmanager
+def _handoff_prepare_lock(queue_path: Path):
+    """Serialize CLI and scheduled-worker render preparation per queue.
+
+    A render writes MP4, metadata, captions, and QA frames across several
+    paths.  Atomic queue JSON alone cannot protect those related artifacts
+    from a second prepare process.  The OS releases this lock if a process
+    exits unexpectedly; the marker file itself is harmless and retained.
+    """
+    lock_path = Path(f"{queue_path}.lock")
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    with lock_path.open("a+b") as handle:
+        handle.seek(0)
+        handle.write(b"0")
+        handle.flush()
+        handle.seek(0)
+        if os.name == "nt":
+            import msvcrt
+
+            msvcrt.locking(handle.fileno(), msvcrt.LK_LOCK, 1)
+            try:
+                yield
+            finally:
+                handle.seek(0)
+                msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+        else:
+            import fcntl
+
+            fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
+            try:
+                yield
+            finally:
+                fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+
+
 def prepare_short_handoff(
     *,
     settings: Settings,
@@ -103,6 +145,32 @@ def prepare_short_handoff(
     limit: int = 13,
     packages: list[ContentPackage] | None = None,
     render: Callable[..., RenderResult] = render_package,
+    engine: Engine | None = None,
+    force_rerender: bool = False,
+) -> ShortHandoffQueue:
+    with _handoff_prepare_lock(queue_path):
+        return _prepare_short_handoff(
+            settings=settings,
+            queue_path=queue_path,
+            render_root=render_root,
+            limit=limit,
+            packages=packages,
+            render=render,
+            engine=engine,
+            force_rerender=force_rerender,
+        )
+
+
+def _prepare_short_handoff(
+    *,
+    settings: Settings,
+    queue_path: Path = DEFAULT_QUEUE,
+    render_root: Path = Path("data/local/video_render"),
+    limit: int = 13,
+    packages: list[ContentPackage] | None = None,
+    render: Callable[..., RenderResult] = render_package,
+    engine: Engine | None = None,
+    force_rerender: bool = False,
 ) -> ShortHandoffQueue:
     if limit < 1:
         raise ValueError("handoff preparation limit must be positive")
@@ -110,7 +178,7 @@ def prepare_short_handoff(
     by_package = {item.package_id: item for item in current.items}
     blocked = dict(current.blocked)
     publication_state = PublishStateStore(Path(settings.youtube_publish_state_file))
-    candidates = [package for package in (packages or build_content_packages()) if package.format == "SHORT_FORM" and package.generation_status == "READY_FOR_REVIEW" and validate_package(package)]
+    candidates = [package for package in (packages or build_content_packages(engine=engine)) if package.format == "SHORT_FORM" and package.generation_status == "READY_FOR_REVIEW" and validate_package(package)]
     # A publication record is keyed by content package, but viewers experience
     # the opportunity as the subject.  Once an opportunity has an uploaded or
     # unresolved/ambiguous attempt, do not silently select another angle for
@@ -140,8 +208,6 @@ def prepare_short_handoff(
             family_counts[package_family(item.package_id)] = family_counts.get(package_family(item.package_id), 0) + 1
             opportunity_counts[package_opportunity(item.package_id)] = opportunity_counts.get(package_opportunity(item.package_id), 0) + 1
     for package in sorted(candidates, key=lambda item: (family_counts.get(item.content_family, 0), opportunity_counts.get(item.opportunity_id or "gamcryp", 0), item.package_id)):
-        if len([item for item in by_package.values() if item.status == "queued"]) >= limit:
-            break
         existing = by_package.get(package.package_id)
         prior = publication_state.find(package.source_inventory_item_id)
         if (
@@ -157,19 +223,30 @@ def prepare_short_handoff(
         if existing and existing.status == "uploaded":
             continue
         previous = blocked.get(package.package_id, {})
+        # A package may have been dead-lettered because an approved product
+        # visual was missing. Re-check current creative blockers before
+        # honoring retry suppression: adding the asset must permit a fresh,
+        # review-only render.
+        creative_blockers = creative_preflight(package) if packages is None else ()
         if (
             previous.get("evidence_fingerprint") == package.evidence_fingerprint
             and previous.get("policy_version") == SHORT_CREATIVE_POLICY_VERSION
             and previous.get("attempts", 0) >= 3
+            and creative_blockers
         ):
             continue
-        if existing and existing.evidence_fingerprint == package.evidence_fingerprint and Path(existing.video_path).is_file() and _stored_render_creative_ready(existing):
+        if (not force_rerender and existing and existing.evidence_fingerprint == package.evidence_fingerprint and Path(existing.video_path).is_file() and _stored_render_creative_ready(existing, package)):
             expected_source_url = f"{settings.public_base_url.rstrip('/')}{package.canonical_source_url}"
             expected_description = _description(package)
             if existing.source_url != expected_source_url or existing.description != expected_description:
                 by_package[package.package_id] = existing.model_copy(update={"source_url": expected_source_url, "description": expected_description})
             continue
-        if packages is None and (creative_blockers := creative_preflight(package)):
+        # Reconcile/rebuild an existing queued render even when the bounded
+        # buffer is full. The limit applies to new queue additions, not to a
+        # newly available official product visual or other quality rebuild.
+        if len([item for item in by_package.values() if item.status == "queued"]) >= limit and not (existing and existing.status == "queued"):
+            continue
+        if packages is None and creative_blockers:
             # Do not spend narration credits or create a publishable-looking
             # asset when the creative director has not approved the package.
             blocked[package.package_id] = {"state": "BLOCKED_PACKAGE", "reason": "; ".join(creative_blockers), "evidence_fingerprint": package.evidence_fingerprint, "policy_version": SHORT_CREATIVE_POLICY_VERSION, "attempts": 3}
@@ -181,12 +258,14 @@ def prepare_short_handoff(
             continue
         if result.narration_path is None or result.video_path is None or result.caption_path is None:
             continue
-        if result.audio_mode not in {"music_only", "human"}:
-            # TTS/neural audio is deliberately excluded from new autonomous
-            # Shorts.  A failed visual rebuild must not trigger a paid voice
-            # regeneration or sneak an old neural asset into the queue.
+        if result.audio_mode == "neural_voice" and not (result.quality_metadata or {}).get("narration_reused"):
+            # Newly generated neural audio is never admitted to the
+            # autonomous queue. Reused audio is admitted only after the
+            # renderer verified its exact script/checksum and quality status.
             continue
-        if result.audio_mode == "human" and (result.voice_id is None or result.model_id is None):
+        if result.audio_mode not in {"music_only", "human", "neural_voice"}:
+            continue
+        if result.audio_mode in {"human", "neural_voice"} and (result.voice_id is None or result.model_id is None):
             continue
         video_checksum = hashlib.sha256(Path(result.video_path).read_bytes()).hexdigest()
         blocked.pop(package.package_id, None)
@@ -201,13 +280,19 @@ def prepare_short_handoff(
             video_path=result.video_path,
             caption_path=result.caption_path,
             narration_path=result.narration_path,
-            narration_provider="local_music" if result.audio_mode == "music_only" else "human",
+            narration_provider=(
+                "local_music" if result.audio_mode == "music_only"
+                else "elevenlabs" if result.audio_mode == "neural_voice"
+                else "human"
+            ),
             narration_voice_id=result.voice_id or "",
             narration_model_id=result.model_id or "",
             audio_mode=result.audio_mode,
+            narration_reused=bool((result.quality_metadata or {}).get("narration_reused")),
             evidence_fingerprint=package.evidence_fingerprint,
             video_checksum=video_checksum,
             created_at=datetime.now(UTC).isoformat(),
+            creative_approval_state="pending_review",
         )
         family_counts[package.content_family] = family_counts.get(package.content_family, 0) + 1
         opportunity_counts[package.opportunity_id or "gamcryp"] = opportunity_counts.get(package.opportunity_id or "gamcryp", 0) + 1
@@ -223,13 +308,18 @@ def publish_next(
     cap_path: Path = DEFAULT_CAP_STATE,
     now: datetime | None = None,
     live: bool = False,
+    engine: Engine | None = None,
 ) -> dict[str, Any]:
     queue = load_handoff(queue_path)
     item = next((candidate for candidate in queue.items if candidate.status == "queued" and candidate.readiness == "GREEN"), None)
     if item is None:
         return {"status": "idle", "detail": "no queued GREEN short"}
-    blockers = _handoff_blockers(item)
-    package = next((candidate for candidate in build_content_packages() if candidate.package_id == item.package_id), None)
+    blockers = _handoff_blockers(item, engine=engine)
+    if item.creative_approval_state != "approved":
+        blockers = (*blockers, "human creative quality approval is required before YouTube use")
+    elif item.creative_approval_video_checksum != item.video_checksum:
+        blockers = (*blockers, "creative approval does not match the current video checksum")
+    package = next((candidate for candidate in build_content_packages(engine=engine) if candidate.package_id == item.package_id), None)
     if package is not None:
         blockers = (*blockers, *creative_preflight(package))
     if blockers:
@@ -269,14 +359,54 @@ def publish_next(
 def report(queue_path: Path = DEFAULT_QUEUE, cap_path: Path = DEFAULT_CAP_STATE, *, now: datetime | None = None) -> dict[str, Any]:
     queue = load_handoff(queue_path)
     cap = _load_cap(cap_path, now or datetime.now(UTC))
+    audit = audit_handoff(queue_path)
     return {
         "buffer_target": queue.buffer_target,
         "queued_green_shorts": sum(item.status == "queued" and item.readiness == "GREEN" for item in queue.items),
         "uploaded": sum(item.status == "uploaded" for item in queue.items),
         "ambiguous": sum(item.status == "ambiguous" for item in queue.items),
         "blocked": queue.blocked,
+        "quality_review_required": len(audit["items"]),
         "daily_cap_used": cap.successful_publications,
         "daily_cap_available": cap.available,
+    }
+
+
+def audit_handoff(queue_path: Path = DEFAULT_QUEUE) -> dict[str, Any]:
+    """Report historical handoff records that cannot be treated as approved now.
+
+    This is read-only. It intentionally does not change upload state: an old
+    local record may correspond to a real external publication and must be
+    reconciled against YouTube before being relabelled.
+    """
+    queue = load_handoff(queue_path)
+    findings: list[dict[str, Any]] = []
+    for item in queue.items:
+        blockers: list[str] = []
+        if item.status in {"uploaded", "ambiguous"} and item.creative_approval_state != "approved":
+            blockers.append("historical item has no current checksum-bound creative approval")
+        if item.source_url.startswith("http://localhost") or item.source_url.startswith("http://127.0.0.1"):
+            blockers.append("source URL points to a local development host")
+        if item.audio_mode == "neural_voice" and not item.narration_reused:
+            blockers.append("historical neural narration has no verified reuse provenance")
+        if item.audio_mode == "music_only":
+            blockers.append("music-only audio is not narration and requires explicit creative review")
+        if item.status == "queued" and item.creative_approval_state != "approved":
+            blockers.append("queued item is not approved for YouTube use")
+        if blockers:
+            findings.append({
+                "package_id": item.package_id,
+                "content_id": item.content_id,
+                "status": item.status,
+                "creative_approval_state": item.creative_approval_state,
+                "audio_mode": item.audio_mode,
+                "source_url": item.source_url,
+                "blockers": tuple(dict.fromkeys(blockers)),
+            })
+    return {
+        "audit_status": "review_required" if findings else "clean",
+        "item_count": len(queue.items),
+        "items": findings,
     }
 
 
@@ -291,6 +421,47 @@ def reconcile_handoff_state(verified_content_ids: set[str], queue_path: Path = D
     if count:
         write_handoff(queue_path, queue.model_copy(update={"items": changed}))
     return count
+
+
+def approve_handoff_item(
+    package_id: str,
+    queue_path: Path = DEFAULT_QUEUE,
+    *,
+    now: datetime | None = None,
+    engine: Engine | None = None,
+    confirm_reviewed: bool = False,
+    reviewed_by: str | None = None,
+    review_note: str | None = None,
+) -> ShortHandoffItem:
+    """Approve exactly one rendered Short after the operator reviews its frames."""
+    if not confirm_reviewed:
+        raise ValueError("creative approval requires explicit confirm_reviewed acknowledgement")
+    queue = load_handoff(queue_path)
+    item = next((candidate for candidate in queue.items if candidate.package_id == package_id), None)
+    if item is None:
+        raise KeyError(package_id)
+    blockers = _handoff_blockers(item, engine=engine)
+    if blockers:
+        raise ValueError("creative approval blocked: " + "; ".join(blockers))
+    approved = item.model_copy(update={
+        "creative_approval_state": "approved",
+        "creative_approval_video_checksum": item.video_checksum,
+        "creative_approved_at": (now or datetime.now(UTC)).isoformat(),
+        "creative_reviewed_by": (reviewed_by or "operator").strip() or "operator",
+        "creative_review_note": (review_note or "Human creative review confirmed.").strip(),
+    })
+    write_handoff(queue_path, queue.model_copy(update={"items": tuple(approved if candidate.package_id == package_id else candidate for candidate in queue.items)}))
+    return approved
+
+
+def revoke_handoff_approval(package_id: str, queue_path: Path = DEFAULT_QUEUE) -> ShortHandoffItem:
+    queue = load_handoff(queue_path)
+    item = next((candidate for candidate in queue.items if candidate.package_id == package_id), None)
+    if item is None:
+        raise KeyError(package_id)
+    revoked = item.model_copy(update={"creative_approval_state": "pending_review", "creative_approval_video_checksum": None, "creative_approved_at": None})
+    write_handoff(queue_path, queue.model_copy(update={"items": tuple(revoked if candidate.package_id == package_id else candidate for candidate in queue.items)}))
+    return revoked
 
 
 def autonomous_youtube_cap_available(path: Path = DEFAULT_CAP_STATE, *, now: datetime | None = None) -> bool:
@@ -319,7 +490,7 @@ def package_opportunity(package_id: str) -> str:
     return parts[3] if len(parts) > 3 else package_id
 
 
-def _handoff_blockers(item: ShortHandoffItem) -> tuple[str, ...]:
+def _handoff_blockers(item: ShortHandoffItem, *, engine: Engine | None = None) -> tuple[str, ...]:
     blockers: list[str] = []
     if item.format != "SHORT_FORM":
         blockers.append("only SHORT_FORM assets may enter this handoff")
@@ -332,7 +503,10 @@ def _handoff_blockers(item: ShortHandoffItem) -> tuple[str, ...]:
         if item.narration_provider != "human":
             blockers.append("human narration provenance is invalid")
     elif item.audio_mode == "neural_voice":
-        blockers.append("TTS narration is forbidden for autonomous Shorts")
+        if item.narration_provider != "elevenlabs":
+            blockers.append("reused neural narration provenance is invalid")
+        if not item.narration_reused:
+            blockers.append("new TTS narration is forbidden for autonomous Shorts")
     else:
         blockers.append("audio mode is missing or unsupported")
     for label, value in (("video", item.video_path), ("captions", item.caption_path), ("narration", item.narration_path)):
@@ -340,7 +514,7 @@ def _handoff_blockers(item: ShortHandoffItem) -> tuple[str, ...]:
             blockers.append(f"{label} asset is missing")
     if Path(item.video_path).is_file() and hashlib.sha256(Path(item.video_path).read_bytes()).hexdigest() != item.video_checksum:
         blockers.append("video checksum does not match handoff metadata")
-    if Path(item.video_path).is_file() and any(candidate.package_id == item.package_id for candidate in build_content_packages()):
+    if Path(item.video_path).is_file() and any(candidate.package_id == item.package_id for candidate in build_content_packages(engine=engine)):
         qa = frame_qa(Path(item.video_path), Path("data/local/video_render/qa") / item.package_id)
         if qa.get("status") != "PASSED":
             blockers.append("BLOCKED_VISUAL_QA: representative frame extraction failed")
@@ -373,7 +547,7 @@ def _load_render_quality_metadata(item: ShortHandoffItem) -> dict[str, Any] | No
     return None
 
 
-def _stored_render_creative_ready(item: ShortHandoffItem) -> bool:
+def _stored_render_creative_ready(item: ShortHandoffItem, package: ContentPackage | None = None) -> bool:
     """Require new editorial metadata before reusing an old MP4."""
     video = Path(item.video_path)
     metadata = video.parent.parent / "metadata" / f"{item.package_id}.json"
@@ -382,12 +556,18 @@ def _stored_render_creative_ready(item: ShortHandoffItem) -> bool:
         quality = payload.get("quality_metadata") or {}
     except (OSError, ValueError, TypeError):
         return False
+    if package is not None:
+        stored_product_paths = tuple((quality.get("asset_plan") or {}).get("product_visual_paths") or ())
+        current_product_paths = tuple(asset_plan(package).product_visual_paths)
+        if stored_product_paths != current_product_paths:
+            return False
     return (
         quality.get("creative_status") == "CREATIVE_QA_PASSED"
         and quality.get("hook_qa", {}).get("status") == "PASSED"
         and int(quality.get("product_visual_count", 0)) >= 1
         and quality.get("gamcryp_product_placement") is True
         and quality.get("brand_closing_present") is True
+        and quality.get("product_visual_motion") == "ken_burns_crop_and_scanline"
     )
 
 

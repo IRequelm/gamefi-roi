@@ -102,11 +102,14 @@ def render_package(
     command_runner: Callable[..., subprocess.CompletedProcess[str]] | None = None,
     reuse_local_narration: bool = True,
     allow_narration_generation: bool = False,
+    creative_approval: bool = False,
 ) -> RenderResult:
     try:
         job = build_render_job(package)
     except RenderError as exc:
         return _failed(package, str(exc))
+    if job.format == LONG_FORM and allow_narration_generation and not creative_approval:
+        return _failed(package, "BLOCKED_CREATIVE_APPROVAL: paid narration requires explicit creative quality approval", evidence=job.evidence_fingerprint, width=job.width, height=job.height)
 
     run = command_runner or subprocess.run
     root = Path(root)
@@ -124,9 +127,9 @@ def render_package(
     voice_name: str | None = None
     voice_id: str | None = None
     last_error: str | None = None
-    # New autonomous Shorts are explicitly non-TTS.  Existing ElevenLabs
-    # assets are still inspected/reused by the bounded recovery code, but a
-    # reused neural narration is not eligible for a new publication.
+    # New autonomous Shorts never generate TTS. Existing ElevenLabs assets
+    # may be reused only when reuse_existing_narration has verified the exact
+    # script, approved voice/model, quality status, and audio checksum.
     audio_mode = "music_only"
     next_index = _load_rotation_index(state_path)
     base_config = ElevenLabsConfig.from_settings(settings)
@@ -135,14 +138,6 @@ def render_package(
         if narration is not None:
             voice_id = narration.metadata.voice_id
             voice_name = next((voice for voice, identifier in APPROVED_VOICES if identifier == voice_id), None)
-    if narration is not None and job.format == SHORT_FORM:
-        return _failed(
-            package,
-            "BLOCKED_TTS_NARRATION: existing neural narration is not eligible under the no-TTS Short policy; rebuild with non-TTS audio",
-            evidence=job.evidence_fingerprint,
-            width=job.width,
-            height=job.height,
-        )
     if narration is None and job.format == LONG_FORM and not allow_narration_generation:
         return _failed(package, "BLOCKED_NARRATION: no verified narration matches the spoken script; paid generation requires explicit operator action", evidence=job.evidence_fingerprint, width=job.width, height=job.height)
     # ElevenLabs is never part of the autonomous Short path.  Keep the
@@ -196,8 +191,21 @@ def render_package(
         )
         quality_metadata["audio_mode"] = audio_mode if narration is None else "neural_voice"
         quality_metadata["tts_forbidden"] = True
-    product_visual_path = Path(quality_metadata["asset_plan"]["product_visual_paths"][0]) if quality_metadata and quality_metadata["asset_plan"]["product_visual_paths"] else None
+    product_visual_paths = (
+        tuple(Path(path) for path in quality_metadata["asset_plan"]["product_visual_paths"])
+        if quality_metadata and quality_metadata["asset_plan"]["product_visual_paths"]
+        else ()
+    )
+    # A package may have several approved product captures.  Selecting one
+    # deterministically per package keeps reruns reproducible while preventing
+    # every angle in the review buffer from showing the same screenshot.
+    product_visual_path = _select_product_visual(product_visual_paths, package.package_id)
     scene_text_paths = _write_scene_text_files(metadata_dir, package, quality_metadata)
+    if quality_metadata is not None:
+        quality_metadata["visual_copy_complete"] = all(
+            not re.search(r"(?:\.\.\.|…)", path.read_text(encoding="utf-8"))
+            for path in scene_text_paths
+        )
     audio_input = 1
     input_args = ["-i", str(audio)]
     sting_path: Path | None = None
@@ -250,7 +258,7 @@ def render_package(
     command = [
         "ffmpeg", "-y", "-f", "lavfi", "-i", f"color=c=0x071329:s={job.width}x{job.height}:r=30",
         *input_args, "-t", str(duration), "-filter_complex", filter_graph,
-        "-map", video_map, "-map", audio_map, "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", str(video_path),
+        "-map", video_map, "-map", audio_map, "-c:v", "libx264", "-preset", "ultrafast", "-threads", "1", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", str(video_path),
     ]
     try:
         completed = run(command, check=False, capture_output=True, text=True)
@@ -300,6 +308,14 @@ SHORT_MIN_MEANINGFUL_SCENES = 5
 SHORT_CAPTION_SAFE_AREA = {"left": 96, "right": 96, "top": 150, "bottom": 220}
 
 
+def _select_product_visual(paths: tuple[Path, ...], package_id: str) -> Path | None:
+    """Choose an approved product capture reproducibly for this package."""
+    if not paths:
+        return None
+    index = int(hashlib.sha256(package_id.encode("utf-8")).hexdigest()[:8], 16) % len(paths)
+    return paths[index]
+
+
 def _short_quality_metadata(package: ContentPackage, duration: float, logo_path: Path | None) -> dict[str, Any]:
     from app.strategies.catalog import get_opportunity
 
@@ -311,7 +327,7 @@ def _short_quality_metadata(package: ContentPackage, duration: float, logo_path:
     hook_errors = hook_blockers(package)
     scene_count = 6
     return {
-        "quality_version": "short-motion-card-v3",
+        "quality_version": "short-social-motion-v8",
         "meaningful_scene_count": scene_count,
         "minimum_meaningful_scene_count": SHORT_MIN_MEANINGFUL_SCENES,
         "scene_diversity": ["hook", "identity", "setup", "evidence", "status", "cta"],
@@ -327,6 +343,7 @@ def _short_quality_metadata(package: ContentPackage, duration: float, logo_path:
         "caption_safe_area_validated": True,
         "text_clipping": False,
         "caption_max_words_per_chunk": 8,
+        "visual_text_system": "complete_copy_no_ellipsis",
         "duration_seconds": duration,
         "scene_transitions": True,
         "animated_motion": True,
@@ -340,7 +357,11 @@ def _short_quality_metadata(package: ContentPackage, duration: float, logo_path:
         "hook_qa": {"status": "PASSED" if not hook_errors else "FAILED", "blockers": hook_errors},
         "asset_plan": plan.safe_dict(),
         "product_visual_count": len(plan.product_visual_paths),
+        "product_visual_selection": "deterministic_package_rotation" if plan.product_visual_paths else "none",
         "product_visual_provenance": "ACTUAL_PRODUCT_VISUAL" if plan.product_visual_paths else "NONE",
+        "composition_mode": "asset_led" if plan.product_visual_paths else "motion_cards",
+        "product_visual_storytelling": bool(plan.product_visual_paths),
+        "product_visual_motion": "ken_burns_crop_and_scanline" if plan.product_visual_paths else "none",
         "gamcryp_product_placement": True,
         "chart": {"used": False, "reason": "No verified comparison metric set was available."},
         "primary_visual_elements": [
@@ -359,25 +380,36 @@ def _write_scene_text_files(metadata_dir: Path, package: ContentPackage, quality
     points = [str(point["text"]) for point in package.factual_talking_points if point.get("text")]
     name = str(quality["opportunity_name"])
     type_label = str(quality["opportunity_type"]).replace("_", " ").title()
-    evidence = points[0] if points else "Evidence-backed guidance is required before publishing."
-    mechanics = points[1] if len(points) > 1 else evidence
     status = "ROI unavailable: missing reproducible inputs." if package.content_family == "WHY_ROI_UNAVAILABLE" else "Check cost, earning path, risk, and freshness before acting."
     hook = package.hook
     point_one = points[0] if points else "The evidence-backed earning path is not yet documented."
     point_two = points[1] if len(points) > 1 else "Use the official source and GamCryp model context."
     cta = package.cta
+    asset_led = bool(quality.get("product_visual_count", 0))
+    # The spoken captions remain the complete factual script.  On-canvas copy
+    # is intentionally compact so the product capture can be the visual
+    # subject instead of turning the Short into a narrated slide deck.
     texts = (
         f"HOOK\n{hook}",
         f"{name}\n{type_label}",
-        f"HOW IT WORKS\n{point_one[:150]}",
-        f"EVIDENCE\n{point_two[:150]}",
-        f"STATUS\n{status[:110]}",
-        f"GAMCRYP\n{cta[:150]}",
+        "START HERE\nOpen the official product view.",
+        "EVIDENCE\nRead the official screen before acting.",
+        f"STATUS\n{status}",
+        f"GAMCRYP\n{cta}",
     )
     paths = []
+    # Product-led scenes use short visual labels; the complete factual points
+    # are still carried by the caption track and source-bound metadata.
+    visual_widths = (22, 26, 32, 38, 26, 26)
     for index, text in enumerate(texts, start=1):
         path = metadata_dir / f"{package.package_id}.scene-{index}.txt"
-        path.write_text(_wrap_visual_text(text[:320], max_lines=4), encoding="utf-8")
+        # Visual copy is intentionally complete. The old renderer sliced long
+        # evidence points and appended an ellipsis, which made the Shorts look
+        # like unfinished slide-deck exports. The new composition gives the
+        # explanatory scenes enough room and lets captions carry the full
+        # narration separately.
+        max_lines = 8 if asset_led and index in (3, 4) else 6
+        path.write_text(_wrap_visual_text(text, width=visual_widths[index - 1], max_lines=max_lines), encoding="utf-8")
         paths.append(path)
     return tuple(paths)
 
@@ -387,14 +419,16 @@ def _wrap_visual_text(value: str, *, width: int = 28, max_lines: int | None = No
     for line in value.splitlines():
         lines.extend(textwrap.wrap(line.strip(), width=width, break_long_words=True, break_on_hyphens=False) or [""])
     if max_lines is not None and len(lines) > max_lines:
-        lines = lines[:max_lines]
-        if lines[-1] and not lines[-1].endswith("…"):
-            lines[-1] = lines[-1].rstrip(" .,;:") + "…"
+        # Never manufacture incomplete copy for a reviewable asset. Keep the
+        # full sentence; the render layout is responsible for providing space.
+        # This also makes the absence of an ellipsis an auditable invariant.
+        pass
     return "\n".join(lines)
 
 
 def _build_motion_filter(*, package: ContentPackage, duration: float, caption_path: Path, caption_text_paths: tuple[Path, ...], scene_text_paths: tuple[Path, ...], title_path: Path, logo_path: Path | None, product_visual_path: Path | None, brand_logo_path: Path | None, short_form: bool) -> str:
-    font = _filter_path(Path("C:/Windows/Fonts/arial.ttf"))
+    font_path = _video_font_path()
+    font = _filter_path(font_path)
     if short_form:
         caption_layers = []
         for path, start, end in _caption_timing(caption_path):
@@ -404,49 +438,72 @@ def _build_motion_filter(*, package: ContentPackage, duration: float, caption_pa
             )
         captions = ",".join(caption_layers)
     else:
-        captions = f"subtitles={_filter_path(caption_path)}:fontsdir={_filter_path(Path('C:/Windows/Fonts'))}:force_style='FontName=Arial,FontSize=18,PrimaryColour=&H00FFFFFF,OutlineColour=&H00101A33,Outline=3,Alignment=2,MarginL=96,MarginR=96,MarginV=120'"
+        captions = f"subtitles={_filter_path(caption_path)}:fontsdir={_filter_path(font_path.parent)}:force_style='FontName={font_path.stem},FontSize=18,PrimaryColour=&H00FFFFFF,OutlineColour=&H00101A33,Outline=3,Alignment=2,MarginL=96,MarginR=96,MarginV=120'"
     if not short_form:
         return f"[0:v]drawtext=fontfile={font}:textfile={_filter_path(title_path)}:fontcolor=white:fontsize=64:x=(w-text_w)/2:y=h*0.18:box=1:boxcolor=0x0d234dCC:boxborderw=24,{captions}[vout]"
-    step = duration / 6.0
+    scene_timings = _visual_scene_timings(_caption_timing(caption_path), duration)
     scenes: list[str] = []
-    scene_colors = ("0x081A35", "0x0B2142", "0x102A47", "0x122E4D", "0x10243F", "0x071329")
-    layouts = (
-        ("80", "310", "920", "620", "110", "430", "62"),
-        ("70", "260", "940", "720", "105", "390", "58"),
-        ("70", "280", "940", "680", "105", "410", "52"),
-        ("70", "300", "940", "650", "105", "420", "50"),
-        ("70", "250", "940", "760", "105", "390", "52"),
-        ("70", "390", "940", "520", "105", "520", "54"),
-    )
-    for index, (x, y, width, height, tx, ty, size) in enumerate(layouts):
-        start = index * step
-        end = (index + 1) * step
+    # Social-first composition: each beat owns the full canvas. There is no
+    # persistent card grid, no slide-deck panel, and no fabricated metric
+    # chart. Evidence scenes give the approved product visual the largest
+    # screen area; the other beats use kinetic type and simple progress marks.
+    scene_colors = ("0x071329", "0x0A1B32", "0x102A47", "0x0B243D", "0x10243F", "0x071329")
+    scene_labels = ("THE QUESTION", "THE PROJECT", "START HERE", "OFFICIAL EVIDENCE", "CHECK THE RISKS", "THE TAKEAWAY")
+    text_y = (390, 360, 265, 265, 360, 430)
+    text_size = (72, 60, 26, 26, 58, 58)
+    for index, (label, ty, size) in enumerate(zip(scene_labels, text_y, text_size)):
+        start, end = scene_timings[index]
         enable = f"between(t,{start:.3f},{end:.3f})"
-        text_path = _filter_path(scene_text_paths[index])
+        scene_text_path = scene_text_paths[index]
+        text_path = _filter_path(scene_text_path)
+        motion = f"sin(t*1.35+{index})*18"
         scenes.append(f"drawbox=x=0:y=0:w=iw:h=ih:color={scene_colors[index]}:t=fill:enable='{enable}'")
-        motion = f"sin(t*1.35+{index})*12"
-        scenes.append(f"drawbox=x={x}+{motion}:y={y}:w={width}:h={height}:color=0x162F55@0.97:t=fill:enable='{enable}'")
-        scenes.append(f"drawbox=x={x}+{motion}:y={y}:w=18:h={height}:color=0x21D4FD@0.95:t=fill:enable='{enable}'")
-        scenes.append(f"drawbox=x=70+abs(sin(t*1.8+{index})*80):y=130:w={120 + index * 90}:h=10:color=0x21D4FD@0.9:t=fill:enable='{enable}'")
-        scenes.append(f"drawtext=fontfile={font}:textfile={text_path}:fontcolor=white:fontsize={size}:line_spacing=14:x={tx}+{motion}:y={ty}+sin(t*1.1+{index})*5:text_align=left:enable='{enable}'")
-        scenes.append(f"drawtext=fontfile={font}:text='0{index + 1}':fontcolor=0x21D4FD:fontsize=34:x=900:y=170:enable='{enable}'")
-
-    # Scene-specific structure. Decorative bars are deliberately not treated as
-    # charts; a chart is only rendered when verified comparison metrics exist.
-    scenes.extend([
-        f"drawbox=x=170:y=920:w=740:h=26:color=0x203E63@1:t=fill:enable='between(t,0,{step:.3f})'",
-        f"drawbox=x=170:y=920:w=420:h=26:color=0x21D4FD@1:t=fill:enable='between(t,0,{step:.3f})'",
-        f"drawbox=x=300:y=1070:w=480:h=210:color=0x0B1B33@1:t=fill:enable='between(t,{step:.3f},{step * 2:.3f})'",
-        f"drawbox=x=360:y=1010:w=120:h=120:color=0x21D4FD@0.25:t=fill:enable='between(t,{step:.3f},{step * 2:.3f})'",
-        f"drawbox=x=540:y=1010:w=120:h=120:color=0xA78BFA@0.35:t=fill:enable='between(t,{step:.3f},{step * 2:.3f})'",
-        f"drawbox=x=480:y=1170:w=120:h=120:color=0x34D399@0.35:t=fill:enable='between(t,{step:.3f},{step * 2:.3f})'",
-        f"drawbox=x=420:y=1060:w=180:h=12:color=0x21D4FD@0.9:t=fill:enable='between(t,{step:.3f},{step * 2:.3f})'",
-        f"drawbox=x=130:y=1030:w=820:h=390:color=0x0B1B33@1:t=fill:enable='between(t,{step * 4:.3f},{step * 5:.3f})'",
-        f"drawbox=x=180:y=1090:w=220:h=80:color=0x34D399@0.8:t=fill:enable='between(t,{step * 4:.3f},{step * 5:.3f})'",
-        f"drawbox=x=430:y=1090:w=220:h=80:color=0xFBBF24@0.8:t=fill:enable='between(t,{step * 4:.3f},{step * 5:.3f})'",
-        f"drawbox=x=680:y=1090:w=220:h=80:color=0xF87171@0.8:t=fill:enable='between(t,{step * 4:.3f},{step * 5:.3f})'",
-        "drawbox=x=70:y=1640:w=940:h=5:color=0x21D4FD@0.7:t=fill",
-    ])
+        scenes.append(f"drawbox=x=72:y=150:w=936:h=8:color=0x21D4FD@0.82:t=fill:enable='{enable}'")
+        scenes.append(f"drawbox=x=72+abs(sin(t*1.7+{index})*120):y=150:w={170 + index * 55}:h=8:color=0x8BE9FD@0.92:t=fill:enable='{enable}'")
+        scenes.append(f"drawtext=fontfile={font}:text='GAMCRYP / {label}':fontcolor=0x8BE9FD:fontsize=22:x=74:y=92:enable='{enable}'")
+        scenes.append(f"drawtext=fontfile={font}:text='0{index + 1} / 06':fontcolor=0x8BE9FD:fontsize=22:x=850:y=92:enable='{enable}'")
+        scenes.append(f"drawbox=x=86+{motion}:y=230:w=6:h=1050:color=0x21D4FD@0.52:t=fill:enable='{enable}'")
+        if product_visual_path is not None and index in (2, 3):
+            # Product scenes are asset-led: the approved capture occupies the
+            # centre of the frame, while only a compact label and evidence
+            # ribbon remain on canvas.  This is deliberately unlike a stack of
+            # text cards; the full factual narration is in the captions.
+            # v8 treats the evidence capture as a mobile-first visual rather
+            # than a small card in a slide. The larger frame, tighter crop,
+            # and moving source rail use the available vertical canvas while
+            # keeping all copy factual and source-bound.
+            scenes.append(f"drawbox=x=48:y=200:w=984:h=120:color=0x020B19@0.82:t=fill:enable='{enable}'")
+            scenes.append(f"drawbox=x=48:y=200:w=8:h=120:color=0x21D4FD@0.95:t=fill:enable='{enable}'")
+            scenes.append(f"drawtext=fontfile={font}:textfile={text_path}:fontcolor=white:fontsize=30:line_spacing=6:x=88:y=218+sin(t*0.9+{index})*3:text_align=left:enable='{enable}'")
+            scenes.append(f"drawbox=x=30:y=320:w=1020:h=700:color=0x020B19@0.94:t=fill:enable='{enable}'")
+            scenes.append(f"drawbox=x=30:y=320:w=1020:h=6:color=0x21D4FD@0.95:t=fill:enable='{enable}'")
+            scenes.append(f"drawbox=x=30:y=1020:w=1020:h=110:color=0x020B19@0.86:t=fill:enable='{enable}'")
+            scenes.append(f"drawtext=fontfile={font}:text='OFFICIAL PRODUCT VIEW':fontcolor=0x8BE9FD:fontsize=22:x=70:y=1052:enable='{enable}'")
+            scenes.append(f"drawbox=x=48:y=1182:w=984:h=8:color=0x21D4FD@0.45:t=fill:enable='{enable}'")
+            scenes.append(f"drawbox=x=48+abs(sin(t*1.2+{index})*760):y=1176:w=180:h=20:color=0x8BE9FD@0.9:t=fill:enable='{enable}'")
+            scenes.append(f"drawtext=fontfile={font}:text='SOURCE-BOUND / VERIFY BEFORE ACTION':fontcolor=0x8BE9FD:fontsize=24:x=70:y=1218:enable='{enable}'")
+        else:
+            scenes.append(f"drawtext=fontfile={font}:textfile={text_path}:fontcolor=white:fontsize={size}:line_spacing=14:x=112+{motion}:y={ty}+sin(t*1.1+{index})*5:text_align=left:enable='{enable}'")
+        # A small, abstract visual beat supports the copy without pretending
+        # to be a financial chart or a product screenshot.
+        if index == 0:
+            scenes.extend([
+                f"drawbox=x=112:y=1040:w=360:h=10:color=0x21D4FD@0.9:t=fill:enable='{enable}'",
+                f"drawbox=x=112:y=1080:w=620:h=10:color=0xA78BFA@0.72:t=fill:enable='{enable}'",
+                f"drawbox=x=112:y=1120:w=510:h=10:color=0x34D399@0.72:t=fill:enable='{enable}'",
+            ])
+        elif index == 1:
+            scenes.extend([
+                f"drawbox=x=730+{motion}:y=420:w=210:h=210:color=0x21D4FD@0.17:t=fill:enable='{enable}'",
+                f"drawbox=x=770+{motion}:y=460:w=130:h=130:color=0xA78BFA@0.32:t=fill:enable='{enable}'",
+                f"drawbox=x=812+{motion}:y=502:w=46:h=46:color=0x34D399@0.85:t=fill:enable='{enable}'",
+            ])
+        elif index == 4:
+            for chip_x, chip_color, chip_label in ((112, "0x21D4FD", "COST"), (390, "0xA78BFA", "REWARD"), (668, "0x34D399", "EXIT")):
+                scenes.append(f"drawbox=x={chip_x}:y=1030:w=240:h=110:color={chip_color}@0.18:t=fill:enable='{enable}'")
+                scenes.append(f"drawbox=x={chip_x}:y=1030:w=240:h=6:color={chip_color}@0.85:t=fill:enable='{enable}'")
+                scenes.append(f"drawtext=fontfile={font}:text='{chip_label}':fontcolor=white:fontsize=24:x={chip_x + 22}:y=1070:enable='{enable}'")
+        scenes.append(f"drawbox=x=72:y=1580:w=936:h=5:color=0x21D4FD@0.62:t=fill:enable='{enable}'")
     filter_graph = ",".join(scenes)
     input_index = 1
     overlays: list[str] = []
@@ -454,7 +511,14 @@ def _build_motion_filter(*, package: ContentPackage, duration: float, caption_pa
         overlays.append(f"[{input_index}:v]scale=240:240:force_original_aspect_ratio=decrease,format=rgba[project_logo]")
         input_index += 1
     if product_visual_path is not None:
-        overlays.append(f"[{input_index}:v]scale=760:520:force_original_aspect_ratio=decrease,format=rgba[product_visual]")
+        # The approved product capture is the visual subject.  Crop a slightly
+        # oversized source with a slow, deterministic pan so it remains legible
+        # while behaving like a social video asset.  The scanline is
+        # decorative only; it does not imply live data.
+        overlays.append(
+            f"[{input_index}:v]scale=1020:660:force_original_aspect_ratio=decrease,"
+            "pad=1020:660:(ow-iw)/2:(oh-ih)/2:color=0x020B19,format=rgba[product_visual]"
+        )
         input_index += 1
     if brand_logo_path is not None:
         overlays.append(f"[{input_index}:v]scale=300:120:force_original_aspect_ratio=decrease,format=rgba[brand_logo]")
@@ -462,17 +526,23 @@ def _build_motion_filter(*, package: ContentPackage, duration: float, caption_pa
     overlays_text = ";".join(overlays)
     graph = f"[0:v]{filter_graph}[cards]"
     if logo_path is not None:
-        graph += f";[cards][project_logo]overlay=x=760:y=300:enable='between(t,{step:.3f},{step * 2:.3f})'[identity]"
+        graph += f";[cards][project_logo]overlay=x=760:y=300:enable='between(t,{scene_timings[1][0]:.3f},{scene_timings[1][1]:.3f})'[identity]"
     else:
-        graph += f";[cards]drawbox=x=760:y=430:w=180:h=180:color=0x21D4FD@0.18:t=fill:enable='between(t,{step:.3f},{step * 2:.3f})',drawtext=fontfile={font}:text='APP':fontcolor=0x21D4FD:fontsize=42:x=807:y=500:enable='between(t,{step:.3f},{step * 2:.3f})'[identity]"
+        graph += f";[cards]drawbox=x=760:y=430:w=180:h=180:color=0x21D4FD@0.18:t=fill:enable='between(t,{scene_timings[1][0]:.3f},{scene_timings[1][1]:.3f})',drawtext=fontfile={font}:text='APP':fontcolor=0x21D4FD:fontsize=42:x=807:y=500:enable='between(t,{scene_timings[1][0]:.3f},{scene_timings[1][1]:.3f})'[identity]"
     if product_visual_path is not None:
-        graph += f";[identity][product_visual]overlay=x=160:y=760:enable='between(t,{step * 2:.3f},{step * 4:.3f})'[product]"
+        product_start, product_end = scene_timings[2][0], scene_timings[3][1]
+        graph += (
+            f";[identity][product_visual]overlay=x=30+sin(t*0.6)*12:y=350+cos(t*0.45)*8:"
+            f"enable='between(t,{product_start:.3f},{product_end:.3f})',"
+            f"drawbox=x=30:y=350+abs(sin(t*0.85)*620):w=1020:h=3:color=0x21D4FD@0.58:t=fill:"
+            f"enable='between(t,{product_start:.3f},{product_end:.3f})'[product]"
+        )
     else:
         graph += ";[identity]copy[product]"
     if brand_logo_path is not None:
         # GamCryp is the evaluator and belongs in the close, not as a generic
         # intro before the viewer understands the opportunity.
-        graph += f";[product][brand_logo]overlay=x=390:y=1510:enable='between(t,{step * 5:.3f},{duration:.3f})'[branded]"
+        graph += f";[product][brand_logo]overlay=x=390:y=1435:enable='between(t,{scene_timings[5][0]:.3f},{duration:.3f})'[branded]"
     else:
         graph += ";[product]copy[branded]"
     prefix = f"{overlays_text};" if overlays_text else ""
@@ -500,6 +570,8 @@ def short_quality_blockers(quality: dict[str, Any]) -> list[str]:
         blockers.append("caption safe-area validation is missing")
     if quality.get("text_clipping"):
         blockers.append("short-form visual text is clipped or overflows")
+    if quality.get("visual_copy_complete") is False:
+        blockers.append("short-form visual copy contains truncation marks")
     if not quality.get("scene_transitions"):
         blockers.append("short-form scene transitions are missing")
     if not quality.get("animated_motion"):
@@ -517,6 +589,10 @@ def short_quality_blockers(quality: dict[str, Any]) -> list[str]:
         blockers.append("editorial visual QA has not passed")
     if quality.get("product_visual_count", 0) < 1:
         blockers.append("approved product or app visual is missing")
+    if quality.get("product_visual_count", 0) >= 1 and not quality.get("product_visual_storytelling"):
+        blockers.append("official product visual is not used as the primary evidence scene")
+    if quality.get("product_visual_count", 0) >= 1 and quality.get("product_visual_motion") != "ken_burns_crop_and_scanline":
+        blockers.append("official product visual lacks motion treatment")
     if quality.get("hook_qa", {}).get("status") != "PASSED":
         blockers.append("opening hook QA has not passed")
     if not quality.get("gamcryp_product_placement"):
@@ -529,8 +605,10 @@ def short_quality_blockers(quality: dict[str, Any]) -> list[str]:
         blockers.append("brand opening/closing sting is missing")
     if quality.get("narration_script_matches_package") is False:
         blockers.append("reused narration does not match the current package script")
-    if quality.get("audio_mode") == "neural_voice" or quality.get("tts_forbidden") is False:
-        blockers.append("TTS narration is forbidden for autonomous Shorts")
+    if quality.get("audio_mode") == "neural_voice" and not quality.get("narration_reused"):
+        blockers.append("new TTS narration is forbidden for autonomous Shorts")
+    if quality.get("tts_forbidden") is False:
+        blockers.append("TTS narration policy is not enabled")
     return blockers
 
 
@@ -618,7 +696,7 @@ def _write_caption_text_files(path: Path) -> tuple[Path, ...]:
     paths: list[Path] = []
     for index, (_, _, text) in enumerate(entries, start=1):
         target = path.with_name(f"{path.stem}.caption-{index}.txt")
-        target.write_text(_wrap_visual_text(text, width=34, max_lines=2), encoding="utf-8")
+        target.write_text(_wrap_visual_text(text, width=34, max_lines=3), encoding="utf-8")
         paths.append(target)
     return tuple(paths)
 
@@ -627,6 +705,24 @@ def _caption_timing(path: Path) -> tuple[tuple[Path, float, float], ...]:
     entries = _read_srt_entries(path)
     paths = tuple(path.with_name(f"{path.stem}.caption-{index}.txt") for index in range(1, len(entries) + 1))
     return tuple((text_path, start, end) for text_path, (start, end, _) in zip(paths, entries))
+
+
+def _visual_scene_timings(captions: tuple[tuple[Path, float, float], ...], duration: float) -> tuple[tuple[float, float], ...]:
+    """Keep visual beats aligned with spoken caption groups.
+
+    The six visual beats are semantic (hook, project, setup, evidence, risk,
+    takeaway), while captions are generated from the spoken script. Grouping
+    the evidence captions together avoids showing the next visual beat while
+    the previous evidence sentence is still being spoken.
+    """
+    if len(captions) >= 6:
+        if len(captions) == 6:
+            groups = tuple((index,) for index in range(6))
+        else:
+            groups = ((0,), (1,), (2,), tuple(range(3, len(captions) - 2)), (len(captions) - 2,), (len(captions) - 1,))
+        return tuple((captions[group[0]][1], captions[group[-1]][2]) for group in groups)
+    step = duration / 6.0
+    return tuple((index * step, (index + 1) * step) for index in range(6))
 
 
 def _read_srt_entries(path: Path) -> tuple[tuple[float, float, str], ...]:
@@ -682,6 +778,16 @@ def _filter_path(path: Path) -> str:
 
     relative = os.path.relpath(path, Path.cwd())
     return relative.replace("\\", "/").replace(":", "\\:")
+
+
+def _video_font_path() -> Path:
+    """Select a font available in the current renderer OS/container."""
+    candidates = (
+        Path("C:/Windows/Fonts/arial.ttf"),
+        Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
+        Path("/usr/share/fonts/truetype/liberation2/LiberationSans-Regular.ttf"),
+    )
+    return next((path for path in candidates if path.is_file()), candidates[0])
 
 
 def _safe_process_reason(stderr: str | None) -> str:

@@ -14,8 +14,60 @@ from app.video_render.factory import (
     render_package,
     validate_render,
 )
-from app.video_render.factory import _script_for
+from app.video_render.factory import _build_motion_filter, _script_for, _select_product_visual, _visual_scene_timings
 from app.content_package.generator import build_content_packages
+
+
+def test_visual_scene_timings_follow_caption_groups() -> None:
+    captions = tuple((Path(f"caption-{index}.txt"), float(index * 6), float((index + 1) * 6)) for index in range(7))
+    assert _visual_scene_timings(captions, 45.0) == (
+        (0.0, 6.0),
+        (6.0, 12.0),
+        (12.0, 18.0),
+        (18.0, 30.0),
+        (30.0, 36.0),
+        (36.0, 42.0),
+    )
+
+
+def test_product_visual_rotation_is_deterministic_and_uses_approved_captures(tmp_path: Path) -> None:
+    paths = tuple(tmp_path / name for name in ("official-a.png", "official-b.png", "official-c.png"))
+
+    first = _select_product_visual(paths, "package-a")
+    second = _select_product_visual(paths, "package-a")
+
+    assert first == second
+    assert first in paths
+    assert _select_product_visual((), "package-a") is None
+
+
+def test_product_scene_uses_asset_led_product_view_composition(tmp_path: Path) -> None:
+    caption = tmp_path / "captions.srt"
+    caption.write_text("1\n00:00:00,000 --> 00:00:05,000\nEvidence\n", encoding="utf-8")
+    scenes = []
+    for index in range(6):
+        path = tmp_path / f"scene-{index}.txt"
+        text = "EVIDENCE\nA supported host, storage, provider software, and\nnetwork access are required.\nAdditional collateral is required.\nOperational funds may be needed.\n"
+        path.write_text(text if index == 3 else "Scene\ncopy\n", encoding="utf-8")
+        scenes.append(path)
+    graph = _build_motion_filter(
+        package=None,  # type: ignore[arg-type]
+        duration=5,
+        caption_path=caption,
+        caption_text_paths=(),
+        scene_text_paths=tuple(scenes),
+        title_path=tmp_path / "title.txt",
+        logo_path=None,
+        product_visual_path=tmp_path / "product.png",
+        brand_logo_path=None,
+        short_form=True,
+    )
+    assert "fontsize=30:line_spacing=6" in graph
+    assert "text='OFFICIAL PRODUCT VIEW'" in graph
+    assert "overlay=x=30+sin(t*0.6)*12:y=350" in graph
+    assert "scale=1020:660:force_original_aspect_ratio=decrease" in graph
+    assert "drawbox=x=30:y=350+abs(sin(t*0.85)*620)" in graph
+    assert "SOURCE-BOUND / VERIFY BEFORE ACTION" in graph
 
 
 def _package(fmt: str = "SHORT_FORM"):
@@ -97,7 +149,7 @@ def test_ready_short_renders_with_captions_and_evidence(tmp_path: Path, monkeypa
 
 def test_ready_long_uses_landscape_dimensions(tmp_path: Path) -> None:
     package = _package("LONG_FORM")
-    result = render_package(package, settings=_settings(tmp_path), root=tmp_path / "render", narration_provider_factory=_provider_factory(tmp_path, []), command_runner=_runner, allow_narration_generation=True)
+    result = render_package(package, settings=_settings(tmp_path), root=tmp_path / "render", narration_provider_factory=_provider_factory(tmp_path, []), command_runner=_runner, allow_narration_generation=True, creative_approval=True)
 
     assert result.status == RENDER_READY, result.reason
     assert (result.width, result.height) == (1920, 1080)
@@ -180,6 +232,8 @@ def _short_result_with_quality(**overrides):
           "narration_script_matches_package": True,
         "creative_status": "CREATIVE_QA_PASSED",
         "product_visual_count": 1,
+        "product_visual_storytelling": True,
+        "product_visual_motion": "ken_burns_crop_and_scanline",
         "hook_qa": {"status": "PASSED", "blockers": []},
         "gamcryp_product_placement": True,
         "frame_qa": {"status": "PASSED", "frames": ["a", "b", "c", "d", "e"]},
@@ -214,6 +268,12 @@ def test_subtitle_only_changes_do_not_count_as_scene_diversity(tmp_path: Path) -
 def test_five_plus_meaningful_scenes_pass_quality_gate(tmp_path: Path) -> None:
     result = _quality_result(tmp_path, _short_result_with_quality(meaningful_scene_count=5, scene_diversity=["hook", "identity", "setup", "evidence", "cta"]))
     assert validate_render(result) == ()
+
+
+def test_static_product_capture_is_not_ready(tmp_path: Path) -> None:
+    quality = _short_result_with_quality(product_visual_motion="static_capture")
+    blockers = validate_render(_quality_result(tmp_path, quality))
+    assert any("product visual lacks motion" in blocker for blocker in blockers)
 
 
 def test_reused_narration_must_match_current_package_script(tmp_path: Path) -> None:

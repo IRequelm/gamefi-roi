@@ -11,11 +11,11 @@ The operator CLI remains available for review and one-off operations. Browser au
 
 ## Autonomous local distribution
 
-The Windows distribution worker may load the ignored local `.env` and run in live mode after validation. The legacy learning-batch refill is optional and is disabled in the current local production configuration; autonomous YouTube uses only the Short handoff. Short refill is bounded to one render per worker cycle by `GAMEFI_SHORT_YOUTUBE_REFILL_BATCH=1`, while the handoff target remains capped at 14 items. This keeps heavy rendering bounded and prevents a stale-looking heartbeat caused by a burst of concurrent renders.
+The Windows distribution worker may load the ignored local `.env` and run in live mode after validation. The legacy learning-batch refill is enabled in the current local production configuration and prefers the remote API; when that API is unavailable it falls back to the local PostgreSQL-backed catalog and snapshots without inventing claims. Refill only prepares local queues; X/YouTube publication remains subject to its separate platform and creative gates. Autonomous YouTube uses the Short handoff, whose refill is bounded to one render per worker cycle by `GAMEFI_SHORT_YOUTUBE_REFILL_BATCH=1`, while the handoff target remains capped at 14 items. This keeps heavy rendering bounded and prevents a stale-looking heartbeat caused by a burst of concurrent renders.
 
 Refill uses the existing snapshot/opportunity API facts and `build_learning_batch` policy. Stale, invalid, unsupported, or non-refreshable financial facts remain RED; points-only or high-risk content remains YELLOW under the existing rules. A GREEN YouTube package without a matching rendered asset is held in the queue's `pending_asset` collection and is not publishable. X queue generation may continue while X publication remains fail-closed when credentials are unavailable.
 
-The runner explicitly changes to the repository root before loading the worker, so relative state paths remain stable under Task Scheduler. The worker's append-only transcript is `data/local/distribution/worker.log`; cooldown, refill, lock, and heartbeat state are under `data/local/distribution/`. `data/local/distribution/worker.lock` is held for the worker lifetime, so a Task Scheduler restart cannot create competing workers. The atomic liveness record is `data/local/distribution/worker_heartbeat.json`; its `updated_at` must be recent and its status must be `ok` before treating unattended distribution as healthy. Set `GAMEFI_DISTRIBUTION_LIVE=false` and disable the scheduled task before stopping autonomous publishing.
+The runner explicitly changes to the repository root before loading the worker, so relative state paths remain stable under Task Scheduler. The worker's append-only transcript is `data/local/distribution/worker.log`; cooldown, refill, lock, and heartbeat state are under `data/local/distribution/`. `data/local/distribution/worker.lock` is held for the worker lifetime, so a Task Scheduler restart cannot create competing workers. The atomic liveness record is `data/local/distribution/worker_heartbeat.json`; its `updated_at` must be recent and its status must be `ok` before treating unattended distribution as healthy. If the database-backed dynamic catalog cannot be reached, the worker now reports `degraded` even when it can safely inspect the static queue; newly approved candidates must not be treated as production-ready in that state. Set `GAMEFI_DISTRIBUTION_LIVE=false` and disable the scheduled task before stopping autonomous publishing.
 
 Run `powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\check_distribution_worker.ps1` from the repository root to fail closed when the heartbeat is missing, failed, invalid, or older than 45 minutes. Monitoring may treat any non-zero exit code as an alert.
 
@@ -44,11 +44,11 @@ canonical Content Pack
 
 ## Short-form visual quality gate
 
-Short-form renders use the `short-motion-card-v3` visual contract and the `no-tts-motion-v4` autonomous policy. A GREEN/`RENDER_READY` Short must contain at least five meaningful scenes; the factory currently emits six: hook, identity, setup/mechanics, evidence, status, and CTA. Scene diversity and transitions are recorded in render metadata, and changing subtitle text alone cannot satisfy the gate.
+Short-form renders use the `short-social-motion-v8` visual contract and the `approved-reuse-tts-motion-v8` autonomous policy. A GREEN/`RENDER_READY` Short must contain at least five meaningful scenes; the factory currently emits six: hook, identity, setup/mechanics, evidence, status, and CTA. Scene diversity and transitions are recorded in render metadata, and changing subtitle text alone cannot satisfy the gate.
 
 Each Short must also contain a non-caption visual element in every planned beat, an early opportunity identity, and a mobile-safe caption area. Official local logos are used when catalog metadata points to a present asset. Missing logos use a branded GamCryp identity card; fabricated logos, hotlinked images, and gameplay screenshots are not allowed. GUIDE_ONLY and ROI-unavailable content remains subject to the existing evidence restrictions.
 
-The render metadata records the quality version, scene count/diversity, non-caption visual-element count, identity mode, caption safe area, evidence-point count, product-visual provenance, animated-motion proof, transition effects, and audio provenance. Any missing or invalid quality metadata makes the Short `NOT_READY` and prevents queue eligibility. A slide-deck/static composition or TTS narration is not eligible for autonomous publication.
+The render metadata records the quality version, scene count/diversity, non-caption visual-element count, identity mode, caption safe area, evidence-point count, product-visual provenance, asset-led composition mode, animated-motion proof, transition effects, and audio provenance. When an approved product visual exists, it must be the primary evidence scene rather than being buried beneath a generic text card; the v8 renderer gives the capture a larger mobile-first frame, a readable two-line evidence header, deterministic crop/pan, and a non-claiming source-bound motion rail. The publish gate rejects a static capture. Any missing or invalid quality metadata makes the Short `NOT_READY` and prevents queue eligibility. A slide-deck/static composition or TTS narration is not eligible for autonomous publication. A human must also review the representative frames and approve the exact video checksum before any Short can be used on YouTube.
 
 Direct free-form manifests are not an operator CLI input. This prevents a manually authored manifest from bypassing current distribution readiness.
 
@@ -92,18 +92,18 @@ Generate or validate one narration asset without publishing anything:
 
 ```powershell
 video-narration generate CONTENT_ID --dry-run
-video-narration generate CONTENT_ID
+video-narration generate CONTENT_ID --confirm-quality-approved
 ```
 
 Assets use `CONTENT_ID` plus a script fingerprint and are stored beside checksum-bound JSON metadata. Matching audio is reused. Changing the script, voice, or model produces a new asset. The metadata records `narration_mode=neural_voice`, `voice_provider=elevenlabs`, voice/model identifiers, the exact spoken text, timestamp, checksum, and quality status.
 
-GREEN video publication still requires the validated package, approved product-specific visual evidence, a valid rendered video, meaningful motion, and post-render frame QA. A provider error never falls back to Windows/system voices, pyttsx, generic TTS, or another neural provider. Short-form rendering uses a local instrumental bed when no approved non-TTS audio exists; captions remain on-screen guidance rather than pretending that text was spoken. Existing ElevenLabs assets are retained for audit/recovery, but a new autonomous Short with `neural_voice` is blocked by `TTS narration is forbidden for autonomous Shorts`.
+GREEN video publication still requires the validated package, approved product-specific visual evidence, a valid rendered video, meaningful motion, post-render frame QA, and explicit human creative approval. A provider error never falls back to Windows/system voices, pyttsx, generic TTS, or another neural provider. Short-form rendering uses a local instrumental bed when no approved non-TTS audio exists; captions remain on-screen guidance rather than pretending that text was spoken. New autonomous ElevenLabs generation remains blocked. An existing ElevenLabs asset may be reused only when its metadata proves an approved voice/model, approved narration quality, exact current-script match, and audio checksum match. Reuse does not consume a new ElevenLabs credit, but it still requires current visual QA, an exact video checksum, and explicit human creative approval before YouTube use.
 
 Never paste or commit the OAuth client JSON, access token, refresh token, browser cookies, or authorization headers. Do not place secrets in Content Packs or queue files.
 
 ## Queue Policy
 
-- `GREEN`: may proceed when its rendered video exists and all package/asset validation passes.
+- `GREEN` and `YELLOW`: remain pending until a human approves the exact rendered video checksum.
 - `YELLOW`: requires explicit human creative approval bound to the exact package checksum, video checksum, and optional thumbnail checksum.
 - `RED`: cannot be approved or uploaded.
 
@@ -133,7 +133,18 @@ youtube-publisher approve CONTENT_ID --video C:\private\short.mp4 --thumbnail C:
 youtube-publisher revoke CONTENT_ID
 ```
 
-RED approval fails. GREEN does not use a YELLOW approval record.
+RED approval fails. All GREEN/YELLOW YouTube paths require exact creative approval. For the autonomous Short handoff, review the five extracted representative frames and then approve/revoke the exact handoff item:
+
+```powershell
+python -m app.publishing.short_youtube_handoff_cli report
+python -m app.publishing.short_youtube_handoff_cli audit
+python -m app.publishing.short_youtube_handoff_cli approve PACKAGE_ID
+python -m app.publishing.short_youtube_handoff_cli revoke PACKAGE_ID
+```
+
+The worker refuses YouTube use when this approval is missing or when the video checksum changes. The paid ElevenLabs path is also operator-gated; an unapproved creative package must not consume paid narration credits.
+
+`short_youtube_handoff_cli audit` is read-only and lists historical `uploaded` or `ambiguous` records that lack current creative approval, still reference a local development host, or use legacy neural/music-only audio. These records require reconciliation and must not be treated as current quality-approved content.
 
 ## One-Time Google Setup
 
@@ -206,7 +217,7 @@ The command reads the authenticated channel. A local `uploaded` record whose vid
 
 ## Narration reuse and recovery
 
-Visual-only rebuilds search approved local narration metadata by content id, exact normalized spoken script, approved voice/model, and SHA-256 audio checksum. A matching asset is never regenerated automatically. Under the current no-TTS publication policy, an existing neural asset is retained for audit but the rebuilt Short must use the non-TTS path before it can enter the autonomous handoff. Changed spoken text or invalid metadata produces `BLOCKED_NARRATION`, preserving the existing asset and requiring an explicit operator decision.
+Visual-only rebuilds search approved local narration metadata by content id, exact normalized spoken script, approved voice/model, and SHA-256 audio checksum. A matching asset is never regenerated automatically and may be reused without a new ElevenLabs call. Changed spoken text or invalid metadata produces `BLOCKED_NARRATION`, preserving the existing asset and requiring an explicit operator decision. Even verified reuse remains pending until the rendered video's exact checksum receives human creative approval.
 
 `python -m app.video_render.recovery_cli` performs an Akash legacy-audio recovery render without publishing or paid narration. Current creative and frame QA still apply; an old generic spoken hook may correctly remain `BLOCKED_VISUAL_QA`.
 
