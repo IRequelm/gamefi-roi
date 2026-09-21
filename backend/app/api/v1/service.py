@@ -419,7 +419,15 @@ def ops_status_payload(*, engine: Engine, settings: Settings) -> OpsStatusPayloa
             )
         )
 
-    eligible = {s.strategy_id for s in list_strategies() if classify_refreshability(s.strategy_id).refreshability == Refreshability.AUTO_REFRESHABLE}
+    eligible = {
+        s.strategy_id
+        for s in list_strategies()
+        if classify_refreshability(
+            s.strategy_id,
+            dfk_jeweler_refresh_enabled=settings.dfk_jeweler_refresh_enabled,
+        ).refreshability
+        == Refreshability.AUTO_REFRESHABLE
+    }
     stale_eligible = [s.strategy_id for s in strategies if s.strategy_id in eligible and s.freshness_status != "fresh"]
     unresolved = [f for f in failures if f.strategy_id in eligible and (f.strategy_id not in latest_snapshots or f.failed_at > latest_snapshots[f.strategy_id].calculated_at)]
     last_attempt = max([f.failed_at for f in failures] + [s.calculated_at for s in latest_snapshots.values()], default=None)

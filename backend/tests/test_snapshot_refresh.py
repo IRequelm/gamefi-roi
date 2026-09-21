@@ -64,6 +64,23 @@ def test_dry_run_classifies_existing_production_tasks_without_provider_calls(mon
     assert sum(entry.refreshability == Refreshability.NOT_REFRESHABLE for entry in result.refreshability) == 1
 
 
+def test_dry_run_can_quarantine_unavailable_dfk_jeweler_refresh() -> None:
+    settings = _test_settings()
+    tasks = tuple(snapshot_refresh.build_production_tasks(settings))
+
+    result = run_snapshot_refresh(
+        settings=settings.model_copy(update={"dfk_jeweler_refresh_enabled": False}),
+        dry_run=True,
+    )
+
+    assert result.eligible_count == 7
+    assert result.skipped_count == 8
+    assert result.not_refreshable_skipped == 4
+    by_id = {entry.strategy_id: entry for entry in result.refreshability}
+    assert by_id["dfk-crystalvale-jeweler-cjewel-max-lock"].refreshability is Refreshability.NOT_REFRESHABLE
+    assert "positive current cJEWEL balance" in by_id["dfk-crystalvale-jeweler-cjewel-max-lock"].reason
+
+
 def test_config_observations_keep_stable_source_identity_across_recalculation_times() -> None:
     first = load_fixture_observations(
         CONFIG_EVIDENCE_ESTABLISHED_AT,

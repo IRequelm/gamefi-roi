@@ -44,5 +44,6 @@ def test_beta_scheduler_workflow_uses_policy_aware_snapshot_refresh_with_overlap
     assert "https://gamcryp.com" in workflow
     assert "GAMEFI_COINGECKO_API_KEY" in workflow
     assert "GAMEFI_DFK_CHAIN_RPC_URL" in workflow
+    assert "GAMEFI_DFK_JEWELER_REFRESH_ENABLED" in workflow
     assert "python -m app.jobs.snapshot_refresh" in workflow
     assert "python -m app.jobs.production_recalculation" not in workflow

@@ -42,6 +42,9 @@ jobs:
       GAMEFI_WAX_MARKET_OBSERVATION_FRESHNESS_SECONDS: "300"
       GAMEFI_DFK_CHAIN_RPC_URL: ${{ secrets.GAMEFI_DFK_CHAIN_RPC_URL }}
       GAMEFI_DFK_CHAIN_OBSERVATION_FRESHNESS_SECONDS: "300"
+      # The current DFK chain source returns no positive current cJEWEL balance.
+      # Keep those strategies stale/visible instead of producing repeated job failures.
+      GAMEFI_DFK_JEWELER_REFRESH_ENABLED: "false"
       GAMEFI_SPLINTERLANDS_BASE_URL: https://api.splinterlands.com
       GAMEFI_SPLINTERLANDS_OBSERVATION_FRESHNESS_SECONDS: "300"
     steps:

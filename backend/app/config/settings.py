@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     database_pool_size: int = Field(default=5, ge=1, le=20)
     database_max_overflow: int = Field(default=2, ge=0, le=20)
     database_pool_timeout_seconds: int = Field(default=30, gt=0, le=120)
+    database_connect_timeout_seconds: int = Field(default=10, gt=0, le=120)
     database_pool_recycle_seconds: int = Field(default=1800, ge=300, le=86_400)
     allowed_cors_origins: str = ""
     security_headers_enabled: bool = True
@@ -87,6 +88,7 @@ class Settings(BaseSettings):
     wax_market_observation_freshness_seconds: int = Field(default=300, gt=0, le=86_400)
     dfk_chain_rpc_url: str = Field(default=DEFAULT_PUBLIC_DFK_CHAIN_RPC_URL, min_length=1)
     dfk_chain_observation_freshness_seconds: int = Field(default=300, gt=0, le=86_400)
+    dfk_jeweler_refresh_enabled: bool = True
     splinterlands_base_url: str = Field(
         default="https://api.splinterlands.com",
         min_length=1,

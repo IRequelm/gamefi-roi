@@ -47,7 +47,11 @@ class RefreshCommandResult:
     eligible_count: int = 0
 
 
-def build_refresh_plan(tasks: tuple[StrategyCalculationTask, ...]) -> tuple[RefreshPlanEntry, ...]:
+def build_refresh_plan(
+    tasks: tuple[StrategyCalculationTask, ...],
+    *,
+    dfk_jeweler_refresh_enabled: bool = True,
+) -> tuple[RefreshPlanEntry, ...]:
     """Classify current production tasks without calling providers.
 
     This is intentionally an explicit strategy registry. Adapter module identity
@@ -56,7 +60,10 @@ def build_refresh_plan(tasks: tuple[StrategyCalculationTask, ...]) -> tuple[Refr
 
     plan = []
     for task in tasks:
-        decision = classify_refreshability(task.strategy_id)
+        decision = classify_refreshability(
+            task.strategy_id,
+            dfk_jeweler_refresh_enabled=dfk_jeweler_refresh_enabled,
+        )
         plan.append(
             RefreshPlanEntry(
                 strategy_id=task.strategy_id,
@@ -81,7 +88,7 @@ def run_snapshot_refresh(
 ) -> RefreshCommandResult:
     active_settings = settings or get_settings()
     tasks = build_production_tasks(active_settings)
-    plan = build_refresh_plan(tasks)
+    plan = build_refresh_plan(tasks, dfk_jeweler_refresh_enabled=active_settings.dfk_jeweler_refresh_enabled)
     eligible_tasks = tuple(
         task
         for task, entry in zip(tasks, plan, strict=True)

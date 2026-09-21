@@ -45,9 +45,24 @@ _NOT_REFRESHABLE_STRATEGY_IDS = frozenset(
         "storj-existing-hardware-storage-node",
     }
 )
+_DFK_JEWELER_STRATEGY_IDS = frozenset(
+    {
+        "dfk-crystalvale-jeweler-cjewel-max-lock",
+        "dfk-crystalvale-jeweler-cjewel-100-max-lock",
+        "dfk-crystalvale-jeweler-cjewel-5000-max-lock",
+    }
+)
 
 
-def classify_refreshability(strategy_id: str) -> RefreshabilityDecision:
+def classify_refreshability(strategy_id: str, *, dfk_jeweler_refresh_enabled: bool = True) -> RefreshabilityDecision:
+    if strategy_id in _DFK_JEWELER_STRATEGY_IDS and not dfk_jeweler_refresh_enabled:
+        return RefreshabilityDecision(
+            refreshability=Refreshability.NOT_REFRESHABLE,
+            reason=(
+                "DFK Jeweler refresh is temporarily quarantined because the live chain source is not returning "
+                "a positive current cJEWEL balance; stale stored snapshots remain visible until the flag is restored."
+            ),
+        )
     if strategy_id in _AUTO_STRATEGY_IDS:
         return RefreshabilityDecision(
             refreshability=Refreshability.AUTO_REFRESHABLE,

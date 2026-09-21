@@ -86,6 +86,8 @@ services:
         sync: false
       - key: GAMEFI_DFK_CHAIN_OBSERVATION_FRESHNESS_SECONDS
         value: "300"
+      - key: GAMEFI_DFK_JEWELER_REFRESH_ENABLED
+        value: "false"
       - key: GAMEFI_SPLINTERLANDS_BASE_URL
         value: https://api.splinterlands.com
       - key: GAMEFI_SPLINTERLANDS_OBSERVATION_FRESHNESS_SECONDS

@@ -206,15 +206,15 @@ The optional `--regenerate-distribution` flag writes the file-based learning bat
 
 At the freshness audit on 2026-08-31, the distribution candidates' latest snapshots were calculated around `15:16 UTC` and had five-minute source deadlines around `15:21 UTC`. They were stale because no later successful recalculation had replaced them, not because the documented thresholds were loosened or because persisted source-status counts were changed.
 
-Refreshability is explicit per strategy. The current registry has 10 `AUTO_REFRESHABLE` strategies: the three DFK Jeweler, three Farmers World, and four Splinterlands strategies. GEODNET, WeatherXM, DIMO, and Mysterium Network Node are `PARTIAL_REFRESH_ONLY`: market price can refresh, but required economic inputs remain CONFIG/static and are skipped for publication freshness. Storj Storage Node is `NOT_REFRESHABLE` because no approved live economic-source loader exists. The command records provider failures and never assigns guessed refreshability to unsupported tasks.
+Refreshability is explicit per strategy. The registry has 10 `AUTO_REFRESHABLE` strategies: the three DFK Jeweler, three Farmers World, and four Splinterlands strategies. The beta/low-cost deployment currently sets `GAMEFI_DFK_JEWELER_REFRESH_ENABLED=false` because the live DFK chain source is not returning a positive current cJEWEL balance; those three strategies remain visible from stored snapshots but are skipped as `NOT_REFRESHABLE` until the source is verified again. GEODNET, WeatherXM, DIMO, and Mysterium Network Node are `PARTIAL_REFRESH_ONLY`: market price can refresh, but required economic inputs remain CONFIG/static and are skipped for publication freshness. Storj Storage Node is `NOT_REFRESHABLE` because no approved live economic-source loader exists. The command records provider failures and never assigns guessed refreshability to unsupported tasks.
 
 The complete current matrix is:
 
 | Strategy | Refreshability | Live source/provider | Static/config dependency | Blocker |
 |---|---|---|---|---|
-| `dfk-crystalvale-jeweler-cjewel-max-lock` | `AUTO_REFRESHABLE` | DFK Chain RPC | verified strategy configuration | none when RPC credentials/config are available |
-| `dfk-crystalvale-jeweler-cjewel-100-max-lock` | `AUTO_REFRESHABLE` | DFK Chain RPC | verified strategy configuration | none when RPC credentials/config are available |
-| `dfk-crystalvale-jeweler-cjewel-5000-max-lock` | `AUTO_REFRESHABLE` | DFK Chain RPC | verified strategy configuration | none when RPC credentials/config are available |
+| `dfk-crystalvale-jeweler-cjewel-max-lock` | `AUTO_REFRESHABLE` when enabled; otherwise `NOT_REFRESHABLE` | DFK Chain RPC | verified strategy configuration | beta flag is currently disabled until positive current cJEWEL balance is verified |
+| `dfk-crystalvale-jeweler-cjewel-100-max-lock` | `AUTO_REFRESHABLE` when enabled; otherwise `NOT_REFRESHABLE` | DFK Chain RPC | verified strategy configuration | beta flag is currently disabled until positive current cJEWEL balance is verified |
+| `dfk-crystalvale-jeweler-cjewel-5000-max-lock` | `AUTO_REFRESHABLE` when enabled; otherwise `NOT_REFRESHABLE` | DFK Chain RPC | verified strategy configuration | beta flag is currently disabled until positive current cJEWEL balance is verified |
 | `farmers-world-axe-wood-production` | `AUTO_REFRESHABLE` | Alcor, AtomicAssets, CoinGecko | verified production constants | none when provider configuration is available |
 | `farmers-world-axe-wood-production-3x` | `AUTO_REFRESHABLE` | Alcor, AtomicAssets, CoinGecko | verified production constants | none when provider configuration is available |
 | `farmers-world-axe-wood-production-10x` | `AUTO_REFRESHABLE` | Alcor, AtomicAssets, CoinGecko | verified production constants | none when provider configuration is available |
