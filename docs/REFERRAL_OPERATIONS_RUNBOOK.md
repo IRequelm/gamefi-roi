@@ -1,6 +1,6 @@
 # GamCryp Referral Operations Runbook
 
-Updated: 2026-08-23
+Updated: 2026-09-21
 Gate: G17 - Referral Operations + Operator Console
 
 ## Scope
@@ -140,6 +140,29 @@ Use `EXPIRED` when the link/program is past its valid date.
 Use `PAUSED` when the link should not be used even though the program may exist.
 
 In all non-active states, public outbound routing uses official URL fallback.
+
+## Current Research Baseline
+
+The local operator database currently records six official-program leads as
+`APPLICATION_REQUIRED`: Acurast, DIMO, EarnApp, Grass, Honeygain, and
+Splinterlands. These records contain official evidence only; none contains a
+GamCryp referral code or active monetized link. The operator must apply or
+obtain an account-specific code, verify the current terms and disclosure, and
+then activate the link separately. Until that happens, `/go` continues to use
+the reviewed official destination.
+
+The corresponding official evidence pages are:
+
+- Acurast: `https://acurast.com/ambassador-program/`
+- DIMO: `https://support.drivedimo.com/en-US/sharing-your-referral-code-287684`
+- EarnApp: `https://earnapp.com/referrals`
+- Grass: `https://www.grass.io/learn/i-just-got-a-referral-to-grass-what-does-it-mean/`
+- Honeygain: `https://www.honeygain.com/refer-a-friend/`
+- Splinterlands: `https://support.splinterlands.com/hc/en-us/articles/8626548249748-Ambassador-Program-FAQ`
+
+Do not copy a referral code from an invitation URL, infer a parameter, or
+describe a program as active before the operator has verified the account-
+specific link.
 
 ## Revenue Entry
 

@@ -34,6 +34,7 @@ from app.distribution.refill import DistributionRefillConfig, DistributionRefill
 from app.publishing.youtube import YouTubePublisher, YouTubePublisherConfig
 from app.publishing.youtube_distribution import YouTubeDistributionConfig, YouTubeDistributionPublisher
 from app.config.settings import get_settings
+from app.storage.database import check_connectivity, create_database_engine
 from app.publishing.short_youtube_handoff import (
     DEFAULT_CAP_STATE,
     DEFAULT_QUEUE,
@@ -58,6 +59,7 @@ class DistributionWorkerConfig:
     lock_file: Path = Path("data/local/distribution/worker.lock")
     failure_cooldown_seconds: int = 1800
     manual_outbox_file: Path = Path("distribution/manual_outbox/x_manual_ready.json")
+    manual_outbox_stale_hours: int = 24
     short_handoff_file: Path = DEFAULT_QUEUE
     autonomous_cap_file: Path = DEFAULT_CAP_STATE
     short_handoff_refill_enabled: bool = False
@@ -71,7 +73,7 @@ class DistributionWorkerConfig:
     x_amplification_min_engagement_score: int = 10
     x_amplification_auto_repost: bool = False
     x_daily_cap_file: Path = Path("data/local/x/daily_cap.json")
-    x_daily_post_cap: int = 1
+    x_daily_post_cap: int = 2
     x_daily_retweet_cap: int = 2
 
     @classmethod
@@ -88,6 +90,7 @@ class DistributionWorkerConfig:
             lock_file=Path(os.getenv("GAMEFI_DISTRIBUTION_LOCK_FILE", "data/local/distribution/worker.lock")),
             failure_cooldown_seconds=int(os.getenv("GAMEFI_DISTRIBUTION_FAILURE_COOLDOWN_SECONDS", "1800")),
             manual_outbox_file=Path(os.getenv("GAMEFI_MANUAL_X_OUTBOX_FILE", "distribution/manual_outbox/x_manual_ready.json")),
+            manual_outbox_stale_hours=max(1, int(os.getenv("GAMEFI_X_MANUAL_OUTBOX_STALE_HOURS", "24"))),
             short_handoff_file=Path(os.getenv("GAMEFI_SHORT_YOUTUBE_HANDOFF_FILE", str(DEFAULT_QUEUE))),
             autonomous_cap_file=Path(os.getenv("GAMEFI_YOUTUBE_AUTONOMOUS_CAP_FILE", str(DEFAULT_CAP_STATE))),
             short_handoff_refill_enabled=os.getenv("GAMEFI_SHORT_YOUTUBE_HANDOFF_REFILL_ENABLED", "true" if live else "false").strip().lower() in {"1", "true", "yes"},
@@ -101,7 +104,7 @@ class DistributionWorkerConfig:
             x_amplification_min_engagement_score=max(0, int(os.getenv("GAMEFI_X_AMPLIFICATION_MIN_ENGAGEMENT", "10"))),
             x_amplification_auto_repost=os.getenv("GAMEFI_X_AMPLIFICATION_AUTO_REPOST", "false").strip().lower() in {"1", "true", "yes"},
             x_daily_cap_file=Path(os.getenv("GAMEFI_X_DAILY_CAP_FILE", "data/local/x/daily_cap.json")),
-            x_daily_post_cap=max(0, int(os.getenv("GAMEFI_X_DAILY_POST_CAP", "1"))),
+            x_daily_post_cap=max(0, int(os.getenv("GAMEFI_X_DAILY_POST_CAP", "2"))),
             x_daily_retweet_cap=max(0, int(os.getenv("GAMEFI_X_DAILY_RETWEET_CAP", "2"))),
         )
 
@@ -244,7 +247,11 @@ class DistributionWorker:
         # which carries the current render, narration, and creative QA proof.
         results.append({"platform": "YouTubeLegacyQueue", "status": "disabled_for_autonomous_worker"})
         results.append(self._process_short_handoff(now))
-        degraded = any(item.get("status") in {"failed", "refill_failed", "not_ready", "blocked", "dead_letter"} for item in results)
+        degraded = any(
+            item.get("status") in {"failed", "refill_failed", "not_ready", "blocked", "dead_letter"}
+            or item.get("catalog_status") == "unavailable"
+            for item in results
+        )
         self._write_heartbeat(status="degraded" if degraded else "ok", now=self.now(), results=results)
         return results
 
@@ -305,6 +312,7 @@ class DistributionWorker:
             return {"platform": "X", "status": "daily_cap", "detail": "daily X post cap reached"}
         saw_cooldown = False
         manual_blockers: list[str] = []
+        published_results: list[dict[str, Any]] = []
         for raw_content_id in candidates:
             content_id = str(raw_content_id)
             key = f"X:{content_id}"
@@ -329,13 +337,10 @@ class DistributionWorker:
                         media_source=getattr(preview, "media_source", None),
                         enrichment_fingerprint=getattr(preview, "enrichment_fingerprint", None),
                     )
-                    outbox_status = self.manual_outbox.prepare(record)
-                    try:
-                        email_status = self.x_email_notifier.notify_if_needed(self.manual_outbox.current())
-                    except XEmailNotificationError as exc:
-                        logger.error("manual_x_email_failed category=%s", type(exc).__name__)
-                        email_status = "failed"
-                    return {"platform": "X", "content_id": content_id, "status": "manual_ready", "outbox": outbox_status, "email": email_status}
+                    published_results.append(record)
+                    if len(published_results) >= min(2, max(1, self.config.x_daily_post_cap)):
+                        break
+                    continue
                 if self.state.blocked(key, now=now) or self.state.blocked(f"X:{content_id}", now=now):
                     saw_cooldown = True
                     continue
@@ -343,7 +348,11 @@ class DistributionWorker:
                 self.state.record_success(key)
                 if self.config.live:
                     self.x_daily_cap.record("posts", now=now)
-                return {"platform": "X", "content_id": content_id, "status": "published" if self.config.live else "dry_run", "result": result.model_dump(mode="json")}
+                    published_results.append({"content_id": content_id, "result": result.model_dump(mode="json")})
+                    if not self.x_daily_cap.available("posts", self.config.x_daily_post_cap, now=now):
+                        break
+                    continue
+                return {"platform": "X", "content_id": content_id, "status": "dry_run", "result": result.model_dump(mode="json")}
             except (XAuthError, XApiError) as exc:
                 # A live worker must report the provider failure/cooldown; it
                 # must not turn a billing/auth outage into a human-review
@@ -363,7 +372,9 @@ class DistributionWorker:
                             media_kind=getattr(preview, "media_kind", None),
                             media_source=getattr(preview, "media_source", None),
                             enrichment_fingerprint=getattr(preview, "enrichment_fingerprint", None),
-                        )
+                        ),
+                        now=now,
+                        stale_after_hours=self.config.manual_outbox_stale_hours,
                     )
                 else:
                     outbox_status = None
@@ -374,10 +385,31 @@ class DistributionWorker:
                 self._record_x_failure(key, content_id, type(exc).__name__, now)
                 logger.error("distribution_publish_failed platform=X content_id=%s category=%s", content_id, type(exc).__name__)
                 return {"platform": "X", "content_id": content_id, "status": "failed", "error_category": type(exc).__name__}
+        if published_results and self.config.x_publishing_mode == "manual":
+            outbox_status = self.manual_outbox.prepare_many(
+                published_results,
+                now=now,
+                stale_after_hours=self.config.manual_outbox_stale_hours,
+            )
+            try:
+                email_status = self.x_email_notifier.notify_if_needed(self.manual_outbox.current())
+            except XEmailNotificationError as exc:
+                logger.error("manual_x_email_failed category=%s", type(exc).__name__)
+                email_status = "failed"
+            return {
+                "platform": "X",
+                "content_id": published_results[0].content_id,
+                "content_ids": [record.content_id for record in published_results],
+                "status": "manual_ready",
+                "outbox": outbox_status,
+                "email": email_status,
+            }
         if saw_cooldown:
             return {"platform": "X", "status": "cooldown"}
         if manual_blockers:
             return {"platform": "X", "status": "blocked", "detail": "; ".join(dict.fromkeys(manual_blockers))}
+        if published_results:
+            return {"platform": "X", "status": "published", "published_count": len(published_results), "results": published_results}
         return {"platform": "X", "status": "idle", "detail": "no unblocked GREEN queue item"}
 
     def _process_x_amplification(self, now: datetime) -> dict[str, Any]:
@@ -497,8 +529,34 @@ class DistributionWorker:
     def _process_short_handoff(self, now: datetime) -> dict[str, Any]:
         key = "YouTubeShortHandoff"
         if self.state.blocked(key, now=now):
-            return {"platform": key, "status": "dead_letter" if self.state.records[key].get("dead_letter") else "cooldown"}
+            # A visual-QA dead letter is a retry guard, not a permanent ban.
+            # Human approval is the explicit state transition that makes a
+            # newly reviewed checksum eligible again. Without this recovery,
+            # an item approved after a prior review failure would remain stuck
+            # forever even though publish_next() would now pass its gates.
+            previous = self.state.records.get(key, {})
+            review_state_changed = (
+                previous.get("error_category") == "BLOCKED_VISUAL_QA"
+                and (_approved_short_waiting(self.config.short_handoff_file) or _pending_review_short_waiting(self.config.short_handoff_file))
+            )
+            if review_state_changed:
+                self.state.record_success(key)
+            else:
+                return {"platform": key, "status": "dead_letter" if self.state.records[key].get("dead_letter") else "cooldown"}
+        if not self.config.short_handoff_file.is_file() and not self.config.short_handoff_refill_enabled:
+            return {"platform": "YouTubeShortHandoff", "status": "idle", "detail": "handoff queue is empty"}
+        engine = None
+        catalog_status = "available"
         try:
+            try:
+                engine = create_database_engine(get_settings())
+                check_connectivity(engine)
+            except Exception as exc:
+                if engine is not None:
+                    engine.dispose()
+                engine = None
+                catalog_status = "unavailable"
+                logger.warning("dynamic_content_catalog_unavailable category=%s; using static catalog", type(exc).__name__)
             queue = load_handoff(self.config.short_handoff_file)
             queued = sum(item.status == "queued" and item.readiness == "GREEN" for item in queue.items)
             if self.config.short_handoff_refill_enabled and queued < queue.buffer_target:
@@ -510,25 +568,44 @@ class DistributionWorker:
                     # default; operators can raise this bounded value when a
                     # larger pre-render buffer is intentionally desired.
                     limit=min(queue.buffer_target, self.config.short_handoff_refill_batch),
+                    engine=engine,
                 )
             if not self.config.short_handoff_file.is_file():
-                return {"platform": "YouTubeShortHandoff", "status": "idle", "detail": "handoff queue is empty"}
+                return {
+                    "platform": "YouTubeShortHandoff",
+                    "status": "idle",
+                    "detail": "handoff queue is empty",
+                    "catalog_status": catalog_status,
+                }
             result = publish_next_short_handoff(
                 publisher=self.youtube_distribution.publisher,
                 queue_path=self.config.short_handoff_file,
                 cap_path=self.config.autonomous_cap_file,
                 now=now,
                 live=self.config.live,
+                engine=engine,
             )
             if result.get("status") == "not_ready":
-                self.state.record_failure(key, error_category="BLOCKED_VISUAL_QA", now=now, cooldown_seconds=self.config.failure_cooldown_seconds)
+                if _human_review_required(result.get("detail")):
+                    self.state.record_success(key)
+                    result = {**result, "status": "awaiting_human_approval"}
+                else:
+                    self.state.record_failure(key, error_category="BLOCKED_VISUAL_QA", now=now, cooldown_seconds=self.config.failure_cooldown_seconds)
             else:
                 self.state.record_success(key)
-            return {"platform": "YouTubeShortHandoff", **result}
+            return {"platform": "YouTubeShortHandoff", **result, "catalog_status": catalog_status}
         except Exception as exc:
             self.state.record_failure(key, error_category=type(exc).__name__, now=now, cooldown_seconds=self.config.failure_cooldown_seconds)
             logger.error("short_youtube_handoff_failed category=%s", type(exc).__name__)
-            return {"platform": "YouTubeShortHandoff", "status": "failed", "error_category": type(exc).__name__}
+            return {
+                "platform": "YouTubeShortHandoff",
+                "status": "failed",
+                "error_category": type(exc).__name__,
+                "catalog_status": catalog_status,
+            }
+        finally:
+            if engine is not None:
+                engine.dispose()
 
 
 def _state_age_hours(payload: dict[str, Any], *, now: datetime) -> float:
@@ -537,6 +614,41 @@ def _state_age_hours(payload: dict[str, Any], *, now: datetime) -> float:
         return max(0.0, (now.astimezone(UTC) - generated).total_seconds() / 3600)
     except (KeyError, TypeError, ValueError):
         return float("inf")
+
+
+def _approved_short_waiting(path: Path) -> bool:
+    if not path.is_file():
+        return False
+    try:
+        queue = load_handoff(path)
+    except (OSError, ValueError, TypeError):
+        return False
+    return any(
+        item.status == "queued"
+        and item.readiness == "GREEN"
+        and item.creative_approval_state == "approved"
+        and item.creative_approval_video_checksum == item.video_checksum
+        for item in queue.items
+    )
+
+
+def _pending_review_short_waiting(path: Path) -> bool:
+    if not path.is_file():
+        return False
+    try:
+        queue = load_handoff(path)
+    except (OSError, ValueError, TypeError):
+        return False
+    return any(
+        item.status == "queued"
+        and item.readiness == "GREEN"
+        and item.creative_approval_state == "pending_review"
+        for item in queue.items
+    )
+
+
+def _human_review_required(detail: Any) -> bool:
+    return "human creative quality approval is required" in str(detail or "")
 
 
 def _find_asset(directory: Path | None, content_id: str, extensions: tuple[str, ...]) -> Path | None:

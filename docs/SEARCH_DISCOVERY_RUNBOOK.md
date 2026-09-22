@@ -143,6 +143,11 @@ Inbound acquisition tracking is privacy-minimal:
 - timestamp,
 - optional coarse session id if already supplied.
 
+Direct page views without UTM, referrer, or session data are still counted as
+`direct` visits. The event contains no IP address, cookie, fingerprint, or
+user-level identifier, so acquisition volume is measurable without introducing
+cross-site tracking.
+
 No cookies, fingerprinting, raw IP storage, wallet identifiers, or user-level tracking are introduced in G16.
 
 Normalized channels:

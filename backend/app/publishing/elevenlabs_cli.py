@@ -19,6 +19,7 @@ def main(argv: list[str] | None = None) -> int:
     generate = commands.add_parser("generate", help="Generate or reuse one validated narration asset.")
     generate.add_argument("content_id")
     generate.add_argument("--dry-run", action="store_true", help="Validate configuration and script without an API request.")
+    generate.add_argument("--confirm-quality-approved", action="store_true", help="Confirm that the exact creative has passed human quality review before spending credits.")
     args = parser.parse_args(argv)
     try:
         settings = get_settings()
@@ -31,6 +32,8 @@ def main(argv: list[str] | None = None) -> int:
             raise ElevenLabsError("Narration source validation failed: " + "; ".join(blockers))
         if item.status.value == "RED":
             raise ElevenLabsError("RED content cannot generate a publishable narration asset")
+        if not args.dry_run and not args.confirm_quality_approved:
+            raise ElevenLabsError("Paid narration is blocked until human creative quality approval is explicitly confirmed")
         config = ElevenLabsConfig.from_settings(settings)
         if args.dry_run:
             config.require_complete()

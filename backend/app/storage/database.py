@@ -16,6 +16,11 @@ def create_database_engine(settings: Settings | None = None) -> Engine:
     if active_settings.database_backend == "postgresql":
         kwargs.update(
             {
+                # psycopg otherwise permits a connection attempt to wait far
+                # longer than the worker heartbeat interval when Postgres is
+                # down. Fail fast so schedulers can record a truthful
+                # degraded state and retry on the next cycle.
+                "connect_args": {"connect_timeout": active_settings.database_connect_timeout_seconds},
                 "pool_size": active_settings.database_pool_size,
                 "max_overflow": active_settings.database_max_overflow,
                 "pool_timeout": active_settings.database_pool_timeout_seconds,

@@ -32,7 +32,7 @@ def test_doctor_reports_pending_migration(monkeypatch, tmp_path) -> None:
     migrations = next(result for result in results if result.name == "migrations")
 
     assert migrations.ok is False
-    assert "expected 20260910_0009" in migrations.detail
+    assert "expected 20260921_0011" in migrations.detail
 
 
 def test_doctor_includes_market_source_config(monkeypatch, tmp_path) -> None:

@@ -10,6 +10,7 @@ import os
 import re
 import secrets
 import tempfile
+import time
 from collections.abc import Callable, Mapping
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -444,13 +445,68 @@ class XApiClient:
         self.oauth = oauth
         self.client = client or httpx.Client(base_url=X_API_BASE_URL, timeout=oauth.config.timeout_seconds)
 
-    def create_post(self, text: str) -> str:
+    def upload_media(self, media_path: Path) -> str:
+        """Upload one local video and wait for X processing to finish."""
+        if not media_path.is_file():
+            raise XValidationError(f"X media file is missing: {media_path}")
+        if media_path.suffix.lower() not in {".mp4", ".mov", ".m4v", ".webm"}:
+            raise XValidationError("X video media must be MP4, MOV, M4V, or WebM")
         token = self.oauth.access_token()
+        try:
+            response = self.client.post(
+                "/2/media/upload",
+                headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+                json={
+                    "media": base64.b64encode(media_path.read_bytes()).decode("ascii"),
+                    "media_category": "tweet_video",
+                },
+            )
+        except (httpx.TimeoutException, httpx.NetworkError) as exc:
+            raise XAmbiguousApiError("X media upload result is ambiguous after a network failure") from exc
+        except httpx.HTTPError as exc:
+            raise XApiError(f"X media upload request failed: {safe_error(exc)}") from exc
+        if response.status_code >= 500:
+            raise XAmbiguousApiError(f"X media upload returned status {response.status_code}; reconcile before retrying")
+        if response.status_code >= 400:
+            raise XApiError(f"X media upload failed with status {response.status_code}: {safe_response(response)}")
+        data = (response.json().get("data") or {})
+        media_id = str(data.get("id") or "").strip()
+        if not media_id:
+            raise XApiError("X media upload response omitted the media id")
+        processing = data.get("processing_info") or {}
+        state = str(processing.get("state") or "succeeded")
+        for _ in range(10):
+            if state == "succeeded":
+                return media_id
+            if state == "failed":
+                raise XApiError("X media processing failed")
+            delay = max(1, min(int(processing.get("check_after_secs") or 2), 15))
+            time.sleep(delay)
+            try:
+                status_response = self.client.get(
+                    "/2/media/upload",
+                    params={"media_id": media_id, "command": "STATUS"},
+                    headers={"Authorization": f"Bearer {self.oauth.access_token()}"},
+                )
+            except httpx.HTTPError as exc:
+                raise XApiError(f"X media status request failed: {safe_error(exc)}") from exc
+            if status_response.status_code >= 400:
+                raise XApiError(f"X media status failed with status {status_response.status_code}: {safe_response(status_response)}")
+            data = (status_response.json().get("data") or {})
+            processing = data.get("processing_info") or {}
+            state = str(processing.get("state") or "succeeded")
+        raise XApiError("X media processing did not finish within the bounded wait")
+
+    def create_post(self, text: str, *, media_id: str | None = None) -> str:
+        token = self.oauth.access_token()
+        payload: dict[str, object] = {"text": text}
+        if media_id:
+            payload["media"] = {"media_ids": [media_id]}
         try:
             response = self.client.post(
                 X_POST_ENDPOINT,
                 headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
-                json={"text": text},
+                json=payload,
             )
         except (httpx.TimeoutException, httpx.NetworkError) as exc:
             raise XAmbiguousApiError(
@@ -567,6 +623,8 @@ class XPublishingService:
         checksum = x_content_checksum(pack, final_copy)
         blockers = list(self._copy_blockers(item, pack, final_copy))
         blockers.extend(self._publication_blockers(item, checksum))
+        if item.approval_required and approval_state != "approved":
+            blockers.append("explicit checksum-bound human approval is required")
         if item.status is ContentReadiness.RED:
             blockers.append("RED content is permanently blocked from X publishing")
         return PublishPreview(

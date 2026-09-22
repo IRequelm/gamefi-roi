@@ -5,16 +5,18 @@ YouTube use, and the review process never generates ElevenLabs audio.
 
 ## Quick visual comparison
 
-[Open the v8 Golem evidence frame](/C:/Projects/gamefi-roi/data/local/video_render/qa/v8-golem-evidence.png) · [Open the v8 Filecoin evidence frame](/C:/Projects/gamefi-roi/data/local/video_render/qa/v8-filecoin-evidence.png)
+[Open the current Golem hook frame](/C:/Projects/gamefi-roi/data/local/video_render/qa/package-short_form-depin_setup-golem-provider/frame-01.png) · [Open the current Filecoin hook frame](/C:/Projects/gamefi-roi/data/local/video_render/qa/package-short_form-depin_setup-filecoin-storage-provider/frame-01.png)
 
 Review each full render after the contact sheet. Confirm that the product
 visual is legible, the hook is understandable without audio, captions are not
 clipped, and the claim matches the cited source. A green queue state is not a
 human creative approval.
 
-The renderer rotates among approved raster product captures deterministically
-per package so different editorial angles do not all reuse the same screenshot.
-The current v8 renderer makes the approved product capture the centre visual,
+The renderer prefers an official local video when one exists. If no official
+video is available, it uses an approved raster product/game/site capture and
+keeps the source attribution visible.
+The current source-led renderer makes the approved official source capture or
+video the centre visual,
 uses compact on-canvas labels, and adds deterministic crop/pan plus a
 non-claiming scanline treatment. Static product captures fail the creative
 gate.
@@ -27,8 +29,8 @@ All twelve items below are `queued`, `music_only`, and `creative_approval_state=
 
 ## Current visual decision — 2026-09-21
 
-The v7 contact sheet passed the automated render/frame contract, but was not
-approved for publication. The v8 revision has now been rendered for all twelve
+The previous card-style render passed the automated render/frame contract, but
+was not approved for publication. The source-led revision has now been rendered for all twelve
 queued Shorts and remains **PENDING_HUMAN_REVIEW**:
 
 - the product capture is larger and cropped for mobile readability;
@@ -36,7 +38,7 @@ queued Shorts and remains **PENDING_HUMAN_REVIEW**:
 - the source-bound motion rail makes the evidence treatment explicit without
   inventing a live metric or earnings claim.
 
-Required before approval: review each full v8 render and its representative
+Required before approval: review each full source-led render and its representative
 frames for hook clarity, caption timing, claim/source alignment, and remaining
 unused space. Keep all items pending review until a human records a
 checksum-bound approval. Do not call ElevenLabs or upload to YouTube as part

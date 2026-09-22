@@ -485,8 +485,6 @@ def record_landing_visit(request: Request, repository: MonetizationRepository, *
     utm_medium = request.query_params.get("utm_medium")
     utm_campaign = request.query_params.get("utm_campaign")
     coarse_session_id = request.headers.get("x-gamcryp-session")
-    if not any((referrer_domain, utm_source, utm_medium, utm_campaign, coarse_session_id)):
-        return
     repository.record_landing_visit(
         landing_path=path,
         referrer_domain=referrer_domain,
@@ -858,6 +856,11 @@ def _render_official_guide_links(sources: list[SourceReferencePayload]) -> str:
     links = [source for source in sources if source.url and source.label]
     if not links:
         return ""
+    heading = (
+        "Official guides and references"
+        if all(source.source_role in {"OFFICIAL_PROJECT", "OFFICIAL_CHAIN", "EXECUTABLE_MARKET"} for source in links)
+        else "Guides and public references"
+    )
     cards = []
     for source in links:
         value = f"{source.label} {source.url}".lower()
@@ -873,7 +876,7 @@ def _render_official_guide_links(sources: list[SourceReferencePayload]) -> str:
             f'<a class="guide-resource" href="{escape(source.url)}" rel="noopener noreferrer" target="_blank">'
             f'<span>{escape(kind)}</span><strong>{escape(source.label)}</strong></a>'
         )
-    return f'<div class="guide-resources"><h3>Official guides and references</h3><div class="guide-resource-grid">{"".join(cards)}</div></div>'
+    return f'<div class="guide-resources"><h3>{escape(heading)}</h3><div class="guide-resource-grid">{"".join(cards)}</div></div>'
 
 
 def _render_strategy_human_summary(strategy: StrategySummary, snapshot: StrategySnapshotPayload | None) -> str:
@@ -1483,6 +1486,8 @@ def opportunity_type_label(value: str) -> str:
         return "DePIN / Nodes"
     if normalized == "POINTS":
         return "Points programs"
+    if normalized == "RESEARCH":
+        return "Research candidates"
     return labelize(value or "Opportunity")
 
 
@@ -1494,6 +1499,8 @@ def opportunity_type_description(value: str) -> str:
         return "Earn rewards by running software or providing network, compute, storage, bandwidth, or similar resources."
     if normalized == "POINTS":
         return "Earn points now; cash or token value may not exist yet."
+    if normalized == "RESEARCH":
+        return "A trend-sourced research lead awaiting official identity and earning-evidence verification."
     return "A reviewed Web3 earning opportunity."
 
 

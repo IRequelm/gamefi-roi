@@ -8,6 +8,7 @@ import pytest
 from sqlalchemy import create_engine
 
 from app.jobs import snapshot_refresh
+from app.discovery.approval import DiscoveryApprovalEmailConfig
 from app.discovery.engine import evaluate_admission
 from app.storage.discovery import DiscoveryRepository
 from app.storage.metadata import Base
@@ -41,12 +42,26 @@ def test_taxonomy_survives_storage_restart_and_api(tmp_path, category):
     Base.metadata.create_all(engine)
     record = _record("identity", "participation", "reward_mechanism")
     record.category = category
-    DiscoveryRepository(engine).upsert(record)
+    mailer = _ApprovalMailer()
+    repository = DiscoveryRepository(engine, approval_mailer=mailer)
+    repository.upsert(record)
+    assert mailer.token is not None
+    assert repository.decide_token(mailer.token, approve=True)["status"] == "approved"
     engine.dispose()
     engine = create_engine(f"sqlite:///{tmp_path / 'discovery.db'}")
     page, _ = ApiDataService(engine).opportunities_page(limit=100, offset=0)
     assert next(x for x in page if x.name == record.canonical_name).opportunity_type == category
     engine.dispose()
+
+
+class _ApprovalMailer:
+    config = DiscoveryApprovalEmailConfig(enabled=True)
+
+    def __init__(self):
+        self.token = None
+
+    def send(self, record, decision, token):
+        self.token = token
 
 
 def test_visual_retry_preserves_legacy_neural_audio_without_paid_provider(tmp_path, monkeypatch):
@@ -73,8 +88,9 @@ def test_visual_retry_preserves_legacy_neural_audio_without_paid_provider(tmp_pa
     (assets / "official-product-ui.png").write_bytes(b"test-fixture" * 100)
     monkeypatch.setenv("GAMEFI_SHORT_ASSET_ROOT", str(tmp_path / "assets"))
     rebuilt = render_package(package, settings=_settings(tmp_path), root=tmp_path / "render", narration_provider_factory=forbidden, command_runner=_runner)
-    assert rebuilt.status == "NOT_READY"
-    assert "BLOCKED_TTS_NARRATION" in rebuilt.reason
+    assert rebuilt.status == "RENDER_READY"
+    assert rebuilt.audio_mode == "neural_voice"
+    assert rebuilt.quality_metadata["narration_reused"] is True
     assert sha256(audio.read_bytes()).hexdigest() == meta.audio_checksum
     assert reuse_existing_narration(package.source_inventory_item_id, directory, script=script) is not None
     assert reuse_existing_narration(package.source_inventory_item_id, directory, script=script + " Changed claim.") is None

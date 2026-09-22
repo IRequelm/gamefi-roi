@@ -2,6 +2,7 @@
 
 from app.storage.models.monetization import (
     InboundLandingEventRecord,
+    ContentPerformanceRecordModel,
     OutboundClickEventRecord,
     ReferralProgramRecord,
     ReferralTaskRecord,
@@ -16,6 +17,7 @@ from app.storage.models.discovery import DiscoveryRecordModel, DynamicCatalogEnt
 __all__ = [
     "ObservationRecord",
     "InboundLandingEventRecord",
+    "ContentPerformanceRecordModel",
     "OutboundClickEventRecord",
     "ReferralProgramRecord",
     "ReferralTaskRecord",

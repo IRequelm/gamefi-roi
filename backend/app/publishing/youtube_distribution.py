@@ -175,8 +175,8 @@ class YouTubeDistributionPublisher:
             if video_checksum
             else None
         )
-        approval_state = "not_required" if item.status is ContentReadiness.GREEN else "blocked"
-        if item.status is ContentReadiness.YELLOW:
+        approval_state = "blocked"
+        if item.status in {ContentReadiness.GREEN, ContentReadiness.YELLOW}:
             approval_state = "awaiting_human_approval"
             approval = self.approvals.latest(content_id)
             if approval and approval.state == "approved" and creative_checksum:
@@ -190,7 +190,7 @@ class YouTubeDistributionPublisher:
                 else:
                     approval_state = "approval_invalidated_by_content_or_asset_change"
             if approval_state != "approved":
-                blockers.append("YELLOW package requires checksum-bound human creative approval")
+                blockers.append("GREEN/YELLOW package requires checksum-bound human creative approval")
         if item.status is ContentReadiness.RED:
             blockers.append("RED package is permanently blocked from YouTube publishing")
         upload_state = "not_uploaded"
@@ -234,8 +234,8 @@ class YouTubeDistributionPublisher:
         pack = _find_pack(packs, content_id)
         if item.status is ContentReadiness.RED:
             raise YouTubeDistributionError("RED package cannot be approved")
-        if item.status is not ContentReadiness.YELLOW:
-            raise YouTubeDistributionError("GREEN package does not require a YELLOW approval record")
+        if item.status not in {ContentReadiness.GREEN, ContentReadiness.YELLOW}:
+            raise YouTubeDistributionError("RED package cannot be approved")
         blockers = list(self._package_blockers(item, pack))
         video_checksum, thumbnail_checksum, asset_blockers = _asset_checksums(video_path, thumbnail_path)
         blockers.extend(asset_blockers)

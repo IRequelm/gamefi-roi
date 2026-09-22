@@ -11,6 +11,7 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import subprocess
 import textwrap
 from dataclasses import dataclass, asdict, replace
@@ -127,9 +128,10 @@ def render_package(
     voice_name: str | None = None
     voice_id: str | None = None
     last_error: str | None = None
-    # New autonomous Shorts never generate TTS. Existing ElevenLabs assets
-    # may be reused only when reuse_existing_narration has verified the exact
-    # script, approved voice/model, quality status, and audio checksum.
+    # New autonomous Shorts never generate TTS. An operator can explicitly
+    # opt into paid narration after the exact creative has passed human review;
+    # existing ElevenLabs assets may also be reused when the exact script,
+    # approved voice/model, quality status, and audio checksum match.
     audio_mode = "music_only"
     next_index = _load_rotation_index(state_path)
     base_config = ElevenLabsConfig.from_settings(settings)
@@ -140,9 +142,13 @@ def render_package(
             voice_name = next((voice for voice, identifier in APPROVED_VOICES if identifier == voice_id), None)
     if narration is None and job.format == LONG_FORM and not allow_narration_generation:
         return _failed(package, "BLOCKED_NARRATION: no verified narration matches the spoken script; paid generation requires explicit operator action", evidence=job.evidence_fingerprint, width=job.width, height=job.height)
-    # ElevenLabs is never part of the autonomous Short path.  Keep the
-    # explicit long-form operator path for backward compatibility only.
-    for offset in range(1) if narration is None and job.format == LONG_FORM and allow_narration_generation else ():
+    # Paid narration is available only on the explicit operator path. Shorts
+    # additionally require creative_approval so an accidental batch render
+    # cannot spend credits merely because narration generation was enabled.
+    paid_narration_allowed = allow_narration_generation and (
+        job.format == LONG_FORM or (job.format == SHORT_FORM and creative_approval)
+    )
+    for offset in range(1) if narration is None and paid_narration_allowed else ():
         index = (next_index + offset) % len(APPROVED_VOICES)
         name, candidate_id = APPROVED_VOICES[index]
         try:
@@ -163,6 +169,14 @@ def render_package(
             last_error = str(exc)
             if isinstance(exc, ElevenLabsProviderError) and exc.account_blocked:
                 break
+    if narration is None and job.format == SHORT_FORM and paid_narration_allowed:
+        return _failed(
+            package,
+            f"BLOCKED_NARRATION: approved ElevenLabs narration could not be generated: {last_error or 'provider error'}",
+            evidence=job.evidence_fingerprint,
+            width=job.width,
+            height=job.height,
+        )
     if narration is None and job.format == SHORT_FORM:
         audio = narration_dir / f"{package.source_inventory_item_id}-music-bed.mp3"
         if not audio.is_file() and not _generate_music_bed(audio, duration=45, run=run):
@@ -191,6 +205,9 @@ def render_package(
         )
         quality_metadata["audio_mode"] = audio_mode if narration is None else "neural_voice"
         quality_metadata["tts_forbidden"] = True
+        quality_metadata["narration_generation_approved"] = bool(
+            narration is not None and audio_mode == "neural_voice" and creative_approval
+        )
     product_visual_paths = (
         tuple(Path(path) for path in quality_metadata["asset_plan"]["product_visual_paths"])
         if quality_metadata and quality_metadata["asset_plan"]["product_visual_paths"]
@@ -199,12 +216,36 @@ def render_package(
     # A package may have several approved product captures.  Selecting one
     # deterministically per package keeps reruns reproducible while preventing
     # every angle in the review buffer from showing the same screenshot.
-    product_visual_path = _select_product_visual(product_visual_paths, package.package_id)
+    source_media_paths = (
+        tuple(Path(path) for path in quality_metadata["asset_plan"].get("source_media_paths", ()))
+        if quality_metadata
+        else ()
+    )
+    source_media_path = _select_source_media(source_media_paths, package.package_id)
+    product_visual_path = source_media_path if source_media_path and source_media_path.suffix.lower() in {".png", ".jpg", ".jpeg", ".webp", ".ico"} else _select_product_visual(product_visual_paths, package.package_id)
     scene_text_paths = _write_scene_text_files(metadata_dir, package, quality_metadata)
     if quality_metadata is not None:
         quality_metadata["visual_copy_complete"] = all(
             not re.search(r"(?:\.\.\.|…)", path.read_text(encoding="utf-8"))
             for path in scene_text_paths
+        )
+    if job.format == SHORT_FORM and source_media_path is not None and _remotion_short_enabled(command_runner):
+        return _render_remotion_short(
+            package=package,
+            job=job,
+            root=root,
+            metadata_dir=metadata_dir,
+            caption_path=caption_path,
+            audio=audio,
+            video_path=video_path,
+            quality_metadata=quality_metadata or {},
+            voice_name=voice_name,
+            voice_id=voice_id,
+            narration=narration,
+            audio_mode=audio_mode if narration is None else "neural_voice",
+            source_media_path=source_media_path,
+            run=run,
+            now=now,
         )
     audio_input = 1
     input_args = ["-i", str(audio)]
@@ -316,6 +357,18 @@ def _select_product_visual(paths: tuple[Path, ...], package_id: str) -> Path | N
     return paths[index]
 
 
+def _select_source_media(paths: tuple[Path, ...], package_id: str) -> Path | None:
+    """Choose one approved official source deterministically for a package."""
+    if not paths:
+        return None
+    # Videos outrank stills: the source itself should be the movement whenever
+    # an official product/game clip has been supplied.
+    videos = tuple(path for path in paths if path.suffix.lower() in {".mp4", ".webm", ".mov", ".m4v"})
+    candidates = videos or paths
+    index = int(hashlib.sha256(package_id.encode("utf-8")).hexdigest()[:8], 16) % len(candidates)
+    return candidates[index]
+
+
 def _short_quality_metadata(package: ContentPackage, duration: float, logo_path: Path | None) -> dict[str, Any]:
     from app.strategies.catalog import get_opportunity
 
@@ -357,11 +410,14 @@ def _short_quality_metadata(package: ContentPackage, duration: float, logo_path:
         "hook_qa": {"status": "PASSED" if not hook_errors else "FAILED", "blockers": hook_errors},
         "asset_plan": plan.safe_dict(),
         "product_visual_count": len(plan.product_visual_paths),
+        "source_media_count": len(plan.source_media_paths),
+        "official_video_count": sum(Path(path).suffix.lower() in {".mp4", ".webm", ".mov", ".m4v"} for path in plan.source_media_paths),
+        "source_media_selection": "official_video_preferred" if plan.source_media_paths else "none",
         "product_visual_selection": "deterministic_package_rotation" if plan.product_visual_paths else "none",
-        "product_visual_provenance": "ACTUAL_PRODUCT_VISUAL" if plan.product_visual_paths else "NONE",
-        "composition_mode": "asset_led" if plan.product_visual_paths else "motion_cards",
-        "product_visual_storytelling": bool(plan.product_visual_paths),
-        "product_visual_motion": "ken_burns_crop_and_scanline" if plan.product_visual_paths else "none",
+        "product_visual_provenance": "OFFICIAL_SOURCE_MEDIA" if plan.source_media_paths else "NONE",
+        "composition_mode": "official_source_led" if plan.source_media_paths else "motion_cards",
+        "product_visual_storytelling": bool(plan.source_media_paths),
+        "product_visual_motion": "official_video_or_ken_burns_capture" if plan.source_media_paths else "none",
         "gamcryp_product_placement": True,
         "chart": {"used": False, "reason": "No verified comparison metric set was available."},
         "primary_visual_elements": [
@@ -587,12 +643,15 @@ def short_quality_blockers(quality: dict[str, Any]) -> list[str]:
         blockers.append("GamCryp closing is missing")
     if quality.get("creative_status") != "CREATIVE_QA_PASSED":
         blockers.append("editorial visual QA has not passed")
-    if quality.get("product_visual_count", 0) < 1:
-        blockers.append("approved product or app visual is missing")
-    if quality.get("product_visual_count", 0) >= 1 and not quality.get("product_visual_storytelling"):
-        blockers.append("official product visual is not used as the primary evidence scene")
-    if quality.get("product_visual_count", 0) >= 1 and quality.get("product_visual_motion") != "ken_burns_crop_and_scanline":
-        blockers.append("official product visual lacks motion treatment")
+    source_media_count = int(quality.get("source_media_count", 0))
+    product_visual_count = int(quality.get("product_visual_count", 0))
+    if max(source_media_count, product_visual_count) < 1:
+        blockers.append("approved official product/app source media is missing (product or app visual is missing)")
+    if max(source_media_count, product_visual_count) >= 1 and not quality.get("product_visual_storytelling"):
+        blockers.append("official source media is not used as the primary evidence scene")
+    allowed_motion = {"ken_burns_crop_and_scanline", "official_video_or_ken_burns_capture", "official_video_or_animated_source_capture"}
+    if max(source_media_count, product_visual_count) >= 1 and quality.get("product_visual_motion") not in allowed_motion:
+        blockers.append("official source media lacks motion treatment (product visual lacks motion treatment)")
     if quality.get("hook_qa", {}).get("status") != "PASSED":
         blockers.append("opening hook QA has not passed")
     if not quality.get("gamcryp_product_placement"):
@@ -605,8 +664,8 @@ def short_quality_blockers(quality: dict[str, Any]) -> list[str]:
         blockers.append("brand opening/closing sting is missing")
     if quality.get("narration_script_matches_package") is False:
         blockers.append("reused narration does not match the current package script")
-    if quality.get("audio_mode") == "neural_voice" and not quality.get("narration_reused"):
-        blockers.append("new TTS narration is forbidden for autonomous Shorts")
+    if quality.get("audio_mode") == "neural_voice" and not quality.get("narration_reused") and not quality.get("narration_generation_approved"):
+        blockers.append("new TTS narration requires explicit creative approval")
     if quality.get("tts_forbidden") is False:
         blockers.append("TTS narration policy is not enabled")
     return blockers
@@ -788,6 +847,112 @@ def _video_font_path() -> Path:
         Path("/usr/share/fonts/truetype/liberation2/LiberationSans-Regular.ttf"),
     )
     return next((path for path in candidates if path.is_file()), candidates[0])
+
+
+def _remotion_short_enabled(command_runner: Callable[..., subprocess.CompletedProcess[str]] | None) -> bool:
+    """Use the real motion renderer in production, while keeping unit-test FFmpeg fakes deterministic."""
+    if command_runner is not None:
+        return False
+    return os.getenv("GAMEFI_VIDEO_RENDER_ENGINE", "remotion").strip().lower() in {"remotion", "react"}
+
+
+def _render_remotion_short(
+    *,
+    package: ContentPackage,
+    job: RenderJob,
+    root: Path,
+    metadata_dir: Path,
+    caption_path: Path,
+    audio: Path,
+    video_path: Path,
+    quality_metadata: dict[str, Any],
+    voice_name: str | None,
+    voice_id: str | None,
+    narration: ElevenLabsGenerationResult | None,
+    audio_mode: str,
+    source_media_path: Path,
+    run: Callable[..., subprocess.CompletedProcess[str]],
+    now: datetime | None,
+) -> RenderResult:
+    """Render an evidence-led Short with the Remotion motion-design composition."""
+    remotion_root = Path("video/remotion")
+    if not (remotion_root / "package.json").is_file():
+        return _failed(package, "BLOCKED_RENDER: Remotion project is missing", evidence=job.evidence_fingerprint, width=job.width, height=job.height)
+
+    public_root = remotion_root / "public"
+    source_name = f"source/{package.package_id}{source_media_path.suffix.lower()}"
+    audio_name = f"audio/{package.package_id}.{'mp3' if audio.suffix.lower() != '.wav' else 'wav'}"
+    source_target = public_root / source_name
+    audio_target = public_root / audio_name
+    source_target.parent.mkdir(parents=True, exist_ok=True)
+    audio_target.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        shutil.copy2(source_media_path, source_target)
+        shutil.copy2(audio, audio_target)
+    except OSError as exc:
+        return _failed(package, f"BLOCKED_RENDER: Remotion asset staging failed: {exc}", evidence=job.evidence_fingerprint, width=job.width, height=job.height)
+
+    sting_path = _ensure_brand_sting(root, run)
+    sting_name: str | None = None
+    if sting_path is not None:
+        sting_name = "audio/gamcryp-brand-sting.wav"
+        try:
+            shutil.copy2(sting_path, public_root / sting_name)
+        except OSError:
+            sting_name = None
+
+    points = [str(point.get("text", "")).strip() for point in package.factual_talking_points if point.get("text")]
+    source = package.required_source_references[0]["url"] if package.required_source_references else package.canonical_source_url
+    source = re.sub(r"^https?://", "", source).rstrip("/")
+    props = {
+        "title": package.title_candidates[0] if package.title_candidates else package.content_family.replace("_", " "),
+        "eyebrow": package.content_family.replace("_", " / "),
+        "hook": package.hook,
+        "cta": package.cta,
+        "source": source,
+        "sourceMedia": source_name,
+        "sourceMediaKind": "video" if source_media_path.suffix.lower() in {".mp4", ".webm", ".mov", ".m4v"} else "image",
+        "productImage": source_name,
+        "audioSrc": audio_name,
+        "brandStingSrc": sting_name,
+        "accent": "#4de1ff",
+        "accent2": "#a78bfa",
+        "steps": ["Read the official guide", "Check required infrastructure", "Verify costs and exit paths"],
+        "facts": points[:3] or ["Read the official source", "Check operational requirements", "Verify the current status"],
+        "captions": [{"start": start, "end": end, "text": text} for start, end, text in _read_srt_entries(caption_path)],
+    }
+    props_path = metadata_dir / f"{package.package_id}.remotion-props.json"
+    props_path.write_text(json.dumps(props, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    npx = "npx.cmd" if os.name == "nt" else "npx"
+    command = [npx, "remotion", "render", "GamcrypMotionShort", str(video_path.resolve()), f"--props={props_path.resolve()}"]
+    try:
+        completed = run(command, check=False, capture_output=True, text=True, cwd=str(remotion_root.resolve()))
+    except OSError:
+        return _failed(package, "Remotion is unavailable", evidence=job.evidence_fingerprint, width=job.width, height=job.height)
+    if completed.returncode != 0 or not video_path.is_file():
+        return _failed(package, f"Remotion render failed: {_safe_process_reason(completed.stderr)}", evidence=job.evidence_fingerprint, width=job.width, height=job.height)
+
+    duration = _probe_video(video_path, run)
+    if duration is None:
+        return _failed(package, "Remotion output is not decodable", evidence=job.evidence_fingerprint, width=job.width, height=job.height)
+    quality = dict(quality_metadata)
+    quality.update({
+        "quality_version": "short-social-remotion-v2-source-led",
+        "composition_mode": "remotion_official_source_led",
+        "product_visual_motion": "official_video_or_animated_source_capture",
+        "render_motion_treatment": "source_media_first_with_animated_overlays",
+        "animated_motion": True,
+        "transition_effects": ["fade_in", "fade_out", "spring_scene_reveal", "cross_scene_fade", "moving_orbit", "browser_scan"],
+        "brand_sting_present": sting_name is not None,
+        "render_engine": "remotion",
+    })
+    quality["frame_qa"] = frame_qa(video_path, root / "qa" / package.package_id, runner=run)
+    result = RenderResult(package.source_inventory_item_id, package.package_id, job.format, RENDER_READY, None, str(video_path), str(caption_path), str(audio), duration, job.width, job.height, voice_name, voice_id, narration.metadata.model_id if narration else None, job.evidence_fingerprint, str(metadata_dir / f"{package.package_id}.json"), (now or datetime.now(UTC)).isoformat(), quality, audio_mode)
+    blockers = validate_render(result)
+    if blockers:
+        result = replace(result, status=NOT_READY, reason="BLOCKED_VISUAL_QA: " + "; ".join(blockers))
+    Path(result.metadata_path).write_text(json.dumps({**asdict(result), "asset_checksums": {"video": _sha256(video_path), "audio": _sha256(audio), "captions": _sha256(caption_path)}}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return result
 
 
 def _safe_process_reason(stderr: str | None) -> str:

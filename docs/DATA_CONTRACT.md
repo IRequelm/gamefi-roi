@@ -729,6 +729,12 @@ G15 commercial metrics:
 
 Unavailable denominators or unverified partner data remain unavailable; they must not be presented as zero.
 
+### Distribution performance data contract
+
+`content_performance_records` stores operator-imported platform dashboard or export metrics for a specific X or YouTube content id and reporting period. A record requires a source URL or evidence reference and rejects negative counts, reversed periods, unsupported platforms, and retention percentages outside 0–100.
+
+These records may report impressions, views, engagements, link clicks, profile visits, followers gained, subscribers gained, and average retention. They are content-performance evidence only: they do not imply human reach, conversion, affiliate revenue, or ROI, and they must not alter rankings, risk, confidence, snapshots, or strategy calculations. Verified partner revenue remains a separate `revenue_attributions` record.
+
 `SponsoredPlacement` records contain placement id, opportunity id, optional strategy id, surface, status, label, disclosure text, campaign/sponsor metadata, active window, and audit trail. API/web responses must distinguish sponsored placement collections from organic ranking results.
 
 ### G17 referral operations data contract

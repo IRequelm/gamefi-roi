@@ -35,6 +35,16 @@ def test_category_hook_requires_a_real_product_asset(tmp_path: Path, monkeypatch
     assert not any(BLOCKED_MISSING_ASSETS in blocker for blocker in creative_preflight(package))
 
 
+def test_svg_capture_is_not_admitted_as_a_video_input(tmp_path: Path, monkeypatch):
+    package = _package()
+    monkeypatch.setenv("GAMEFI_SHORT_ASSET_ROOT", str(tmp_path))
+    asset_dir = tmp_path / (package.opportunity_id or "gamcryp")
+    asset_dir.mkdir()
+    (asset_dir / "official-provider-status.svg").write_text("<svg></svg>", encoding="utf-8")
+
+    assert asset_plan(package).status != ASSETS_READY
+
+
 def test_frame_qa_requires_five_distinct_extractable_frames(tmp_path: Path):
     video = tmp_path / "proof.mp4"
     video.write_bytes(b"video")
@@ -50,3 +60,4 @@ def test_frame_qa_requires_five_distinct_extractable_frames(tmp_path: Path):
     result = frame_qa(video, tmp_path / "frames", runner=runner)
     assert result["status"] == "PASSED"
     assert len(result["frames"]) == 5
+    assert calls[1][calls[1].index("-ss") + 1] == "0.4"

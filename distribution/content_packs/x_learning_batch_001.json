@@ -1,13 +1,13 @@
 {
   "batch_id": "distribution-learning-batch-001-x",
   "content_pack_version": "content-pack-lite-v1",
-  "generated_at": "2026-09-14T22:35:21Z",
+  "generated_at": "2026-09-20T22:54:03Z",
   "packs": [
     {
       "claims": [],
       "content_id": "x-acurast-compute-provider-how-to-start-c17efd21b9",
       "content_pack_version": "content-pack-lite-v1",
-      "created_at": "2026-09-14T22:35:21Z",
+      "created_at": "2026-09-20T22:54:03Z",
       "distribution": {
         "canonical_site_url": "https://gamcryp.com/opportunities/acurast-compute-provider",
         "content_id": "x-acurast-compute-provider-how-to-start-c17efd21b9",
@@ -23,7 +23,7 @@
         "narration_quality_status": "unknown",
         "readiness": "GREEN",
         "visual_plan": [],
-        "x_post": "Acurast Compute Provider: how to start\n\n1) Start: Review Acurast's official compatible-device...\n2) Need: A compatible Android or iOS device, wallet...\n\n3) Earn/claim: Providers receive ACU benchmark, staking...; no fixed ROI is promised.\n\nhttps://gamcryp.com/opportunities/acurast-compute-provider?utm_campaign=distribution-mvp&utm_content=x-acurast-compute-provider-how-to-start-c17efd21b9&utm_medium=social&utm_source=x"
+        "x_post": "Acurast Compute Provider: how to start\n\n1) Start: Review Acurast Compute Provider's official setup guide.\n2) Need: staked compute has additional token requirements.\n\n3) Earn/claim: Follow the documented reward or claim route. No fixed ROI is promised.\n\nhttps://gamcryp.com/opportunities/acurast-compute-provider?utm_campaign=distribution-mvp&utm_content=x-acurast-compute-provider-how-to-start-c17efd21b9&utm_medium=social&utm_source=x"
       },
       "facts": {
         "freshness": {
@@ -52,7 +52,7 @@
       "claims": [],
       "content_id": "x-defi-kingdoms-how-to-start-46912aa548",
       "content_pack_version": "content-pack-lite-v1",
-      "created_at": "2026-09-14T22:35:21Z",
+      "created_at": "2026-09-20T22:54:03Z",
       "distribution": {
         "canonical_site_url": "https://gamcryp.com/opportunities/defi-kingdoms",
         "content_id": "x-defi-kingdoms-how-to-start-46912aa548",
@@ -68,7 +68,7 @@
         "narration_quality_status": "unknown",
         "readiness": "GREEN",
         "visual_plan": [],
-        "x_post": "DeFi Kingdoms: how to start\n\n1) Start: Open DeFi Kingdoms on DFK Chain.\n2) Need: The modeled Jeweler strategy uses a...\n\n3) Earn/claim: Jeweler rewards are modeled from locked...; no fixed ROI is promised.\n\nhttps://gamcryp.com/opportunities/defi-kingdoms?utm_campaign=distribution-mvp&utm_content=x-defi-kingdoms-how-to-start-46912aa548&utm_medium=social&utm_source=x"
+        "x_post": "DeFi Kingdoms: how to start\n\n1) Start: Open DeFi Kingdoms on DFK Chain.\n2) Need: The modeled Jeweler strategy uses a JEWEL/cJEWEL position.\n\n3) Earn/claim: Follow the documented reward or claim route. No fixed ROI is promised.\n\nhttps://gamcryp.com/opportunities/defi-kingdoms?utm_campaign=distribution-mvp&utm_content=x-defi-kingdoms-how-to-start-46912aa548&utm_medium=social&utm_source=x"
       },
       "facts": {
         "freshness": {
@@ -97,7 +97,7 @@
       "claims": [],
       "content_id": "x-gamcryp-methodology-not-recommendation-20260831",
       "content_pack_version": "content-pack-lite-v1",
-      "created_at": "2026-09-14T22:35:21Z",
+      "created_at": "2026-09-20T22:54:03Z",
       "distribution": {
         "canonical_site_url": "https://gamcryp.com/methodology",
         "content_id": "x-gamcryp-methodology-not-recommendation-20260831",
@@ -142,7 +142,7 @@
       "claims": [],
       "content_id": "x-grass-roi-unavailable-20260831",
       "content_pack_version": "content-pack-lite-v1",
-      "created_at": "2026-09-14T22:35:21Z",
+      "created_at": "2026-09-20T22:54:03Z",
       "distribution": {
         "canonical_site_url": "https://gamcryp.com/opportunities/grass",
         "content_id": "x-grass-roi-unavailable-20260831",

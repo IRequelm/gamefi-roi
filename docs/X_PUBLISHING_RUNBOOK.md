@@ -22,6 +22,25 @@ X guide posts use the X-only batch at `distribution/content_packs/x_learning_bat
 - X previews and manual-ready records carry media metadata. Selection is local-only: catalog official logo, approved local product asset under `data/local/video_assets`, then a deterministic GamCryp SVG card containing only content-pack facts. Missing external media never blocks a valid post and no arbitrary hotlink/screenshot is used.
 - The verified handle remains metadata even when the source copy has no room under X's weighted 280-character limit; claims and the canonical source URL are not silently removed to make room.
 
+## Video-matched Short posts
+
+`scripts/x_video_posts.py` prepares one X post for each current source-led
+Short. The record binds the exact `package_id`, rendered MP4 path, SHA-256
+video checksum, source URL, and final post copy in
+`distribution/manual_outbox/x_video_posts.json`. The default command is a
+review-only dry run:
+
+```powershell
+.\.venv\Scripts\python.exe scripts/x_video_posts.py
+```
+
+Publishing requires both `--publish` and `--confirm-publish`, uploads the
+matching MP4 through X's official media API, and attaches the returned media id
+to the post. It is capped per run and waits for approved neural narration; a
+music-only render is not published as a voiceover post. It does not follow,
+like, DM, or reply to users. Growth actions remain limited to useful original
+posts and curated, whitelisted reposts.
+
 ## Live X discovery and amplification
 
 `app.distribution.x_intelligence` queries the official recent-search endpoint for GameFi, DePIN, node-reward, points, and crypto-reward signals. It stores timestamps, source account, post URL, public metrics, and a transparent engagement score. Search failures (including depleted credits) are recorded as `BLOCKED`; the previous feed is not treated as live and cannot be retweeted.
@@ -95,12 +114,12 @@ GAMEFI_X_DISCOVERY_MAX_FEED_ITEMS=50
 GAMEFI_X_DISCOVERY_FRESHNESS_HOURS=48
 GAMEFI_X_AMPLIFICATION_MIN_ENGAGEMENT=10
 GAMEFI_X_DAILY_CAP_FILE=data/local/x/daily_cap.json
-GAMEFI_X_DAILY_POST_CAP=1
+GAMEFI_X_DAILY_POST_CAP=2
 GAMEFI_X_DAILY_RETWEET_CAP=2
 GAMEFI_X_AMPLIFICATION_EMAIL_STATE_FILE=data/local/distribution/x_amplification_email_state.json
 ```
 
-With `GAMEFI_X_PUBLISHING_MODE=manual`, the distribution worker never calls X. It writes one current GREEN/YELLOW manual-ready item to `distribution/manual_outbox/x_manual_ready.json`. The record contains the exact validated post text, source URL, prepared timestamp, content checksum, and `published: false`; RED items are excluded. Repeated worker cycles retain the current pending record. After the operator publishes that exact text manually, confirm it explicitly with:
+With `GAMEFI_X_PUBLISHING_MODE=manual`, the distribution worker never calls X. It writes up to the daily post cap of current GREEN manual-ready items to `distribution/manual_outbox/x_manual_ready.json`; `item` is the next item to publish and `items` is the ordered batch. Each record contains the exact validated post text, source URL, prepared timestamp, content checksum, and `published: false`; RED items are excluded. Repeated worker cycles retain pending records. A pending record older than `GAMEFI_X_MANUAL_OUTBOX_STALE_HOURS` (default 24 hours) is archived line-by-line in `distribution/manual_outbox/x_manual_ready_archive.jsonl` before the next eligible item replaces it. After the operator publishes the current exact text manually, confirm it explicitly with:
 
 ```powershell
 distribution-worker x-manual-confirm CONTENT_ID
@@ -109,6 +128,8 @@ distribution-worker x-manual-confirm CONTENT_ID
 The confirmation records the checksum as manually published for duplicate protection and marks the outbox item published. It does not claim that the X API published the post and never infers publication without the command.
 
 Confirmed or duplicate content is never prepared again. A stale/blocked item is skipped so the worker can consider the next eligible X item; the daily brief reads only records whose `published` field is `false`.
+
+If the same content id receives a new checksum before manual publication (for example after a copy-quality or source refresh), the previous pending copy is archived immediately and the new exact copy becomes current; the operator must not publish the archived text.
 
 If phone access is important, the same manual-ready item can optionally be delivered by SMTP email. Set `GAMEFI_X_MANUAL_EMAIL_ENABLED=true` and configure the recipient, sender, SMTP host, username, and app password in the ignored local `.env`. Gmail uses `smtp.gmail.com:587` with STARTTLS; use a mailbox app password, not the normal mailbox password. The worker records the last emailed checksum in `data/local/distribution/x_email_state.json`, so unchanged worker cycles do not send duplicates. Email failure is isolated from YouTube.
 
@@ -175,7 +196,7 @@ For a manual CLI override, use a clean preview and explicit operator instruction
 x-publisher publish CONTENT_ID --confirm-publish
 ```
 
-In live mode, the distribution worker publishes at most one eligible GREEN/YELLOW own post per UTC day and at most two whitelisted `REPOST_NOW` candidates per UTC day by default. `publish-next` remains explicit CLI-only. YELLOW is not held for human approval; RED is never publishable. A depleted X credit balance produces a visible `402` failure and cooldown; it is not converted to a successful publish. Intelligence refresh is cached for six hours by default so the 30-minute worker cadence does not cause unnecessary paid searches.
+In live mode, the distribution worker publishes at most two eligible GREEN/YELLOW own posts per UTC day and at most two whitelisted `REPOST_NOW` candidates per UTC day by default. `publish-next` remains explicit CLI-only. YELLOW is not held for human approval; RED is never publishable. A depleted X credit balance produces a visible `402` failure and cooldown; it is not converted to a successful publish. Intelligence refresh is cached for six hours by default so the 30-minute worker cadence does not cause unnecessary paid searches.
 
 ## Duplicate and failure recovery
 

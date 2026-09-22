@@ -8,7 +8,8 @@ from urllib.parse import urlsplit
 import httpx
 import pytest
 
-from app.distribution.content_pack import ContentPackValidationError, ContentReadiness, ContentPackLite, serialize_batch, set_expected_source_hash
+from app.distribution.content_pack import ContentClaim, ContentPackValidationError, ContentReadiness, ContentPackLite, MetricFact, ScoreFact, serialize_batch, set_expected_source_hash
+from app.strategies.refreshability import Refreshability
 from app.distribution.manual_outbox import XManualOutbox, manual_ready_record
 from app.distribution.x_publisher import (
     ApprovalRecord,
@@ -67,10 +68,96 @@ def _config(tmp_path: Path) -> XPublisherConfig:
     content_path = tmp_path / "learning_batch.json"
     queue_path = tmp_path / "x_queue.json"
     payload = json.loads(SOURCE_BATCH.read_text(encoding="utf-8"))
-    test_yellow = {DFK_ID, FARMERS_ID, SPLINTERLANDS_ID}
-    packs: list[ContentPackLite] = []
+    test_yellow = {DFK_ID, FARMERS_ID, GRASS_ID, SPLINTERLANDS_ID}
+    test_red = {DIMO_ID, "x-geodnet-red-fixture-20260831", "x-mysterium-red-fixture-20260831", "x-storj-red-fixture-20260831", "x-weatherxm-red-fixture-20260831"}
+    current = [ContentPackLite.model_validate(raw) for raw in payload["packs"]]
+    by_id = {pack.content_id: pack for pack in current}
+    base = by_id[GRASS_ID]
+
+    def fixture_pack(content_id: str, *, readiness: ContentReadiness, project_name: str) -> ContentPackLite:
+        slug = content_id.removeprefix("x-").removesuffix("-20260831")
+        canonical = f"https://gamcryp.com/test/{slug}"
+        source_update = {
+            "opportunity_id": slug,
+            "strategy_id": "fixture-strategy" if readiness is ContentReadiness.RED else None,
+            "snapshot_id": "fixture-snapshot" if readiness is ContentReadiness.RED else None,
+            "snapshot_timestamp": SNAPSHOT_TIME.isoformat() if readiness is ContentReadiness.RED else None,
+            "refreshability": Refreshability.NOT_REFRESHABLE if readiness is ContentReadiness.RED else None,
+        }
+        facts_update = {
+            "project_name": project_name,
+            "freshness": base.facts.freshness.model_copy(update={"display": "fresh", "value": "fresh"}),
+        }
+        if readiness is ContentReadiness.RED:
+            facts_update["capital"] = MetricFact(display="$1", source_path="facts.capital.value", value="1", unit="USD")
+        return base.model_copy(
+            update={
+                "content_id": content_id,
+                "claims": [],
+                "distribution": base.distribution.model_copy(
+                    update={
+                        "content_id": content_id,
+                        "canonical_site_url": canonical,
+                        "x_utm_url": f"{canonical}?utm_campaign=distribution-mvp&utm_content={content_id}&utm_medium=social&utm_source=x",
+                        "youtube_utm_url": f"{canonical}?utm_campaign=distribution-mvp&utm_content={content_id}&utm_medium=short&utm_source=youtube",
+                    }
+                ),
+                "editorial": base.editorial.model_copy(
+                    update={
+                        "readiness": readiness,
+                        "content_angle": "test fixture economics",
+                        "hook": f"{project_name} test fixture",
+                        "core_message": f"{project_name} is a test-only distribution fixture.",
+                        "x_post": f"{project_name} test fixture.\n\n{canonical}?utm_campaign=distribution-mvp&utm_content={content_id}&utm_medium=social&utm_source=x",
+                    }
+                ),
+                "facts": base.facts.model_copy(update=facts_update),
+                "source": base.source.model_copy(update=source_update),
+            }
+        )
+
+    for content_id, readiness, project in (
+        (DFK_ID, ContentReadiness.YELLOW, "DeFi Kingdoms"),
+        (FARMERS_ID, ContentReadiness.YELLOW, "Farmers World"),
+        (SPLINTERLANDS_ID, ContentReadiness.YELLOW, "Splinterlands"),
+    ):
+        by_id.setdefault(content_id, fixture_pack(content_id, readiness=readiness, project_name=project))
+    for content_id in test_red:
+        by_id.setdefault(content_id, fixture_pack(content_id, readiness=ContentReadiness.RED, project_name=content_id))
+
+    # Keep one numeric yellow fixture so approval freshness and claim-integrity
+    # tests exercise the real publisher rules without restoring old live packs.
+    dfk = by_id[DFK_ID]
+    dfk = dfk.model_copy(
+        update={
+            "facts": dfk.facts.model_copy(
+                update={
+                    "capital": MetricFact(display="$40.64", source_path="facts.capital.value", value="40.64045550630489442100105938", unit="USD"),
+                    "net_earnings": MetricFact(display="$0.0136/day", source_path="facts.net_earnings.value", value="0.01361299918132749601471545559", unit="USD/day"),
+                    "modeled_return": MetricFact(display="1%", source_path="facts.modeled_return.value", value="0.01004885330029009938953579240", unit="ratio"),
+                    "confidence": ScoreFact(display="MODERATE 50/100", label="MODERATE", score=50, source_path="facts.confidence.score"),
+                    "project_name": "DeFi Kingdoms",
+                }
+            ),
+            "claims": [
+                ContentClaim(claim_id="capital", display_value="$40.64", source_path="facts.capital.value", source_value="40.64045550630489442100105938", text="Modeled capital is $40.64."),
+                ContentClaim(claim_id="net_day", display_value="$0.0136/day", source_path="facts.net_earnings.value", source_value="0.01361299918132749601471545559", text="Modeled net earnings are $0.0136/day."),
+                ContentClaim(claim_id="roi_30d", display_value="1.00%", source_path="facts.modeled_return.value", source_value="0.01004885330029009938953579240", text="Modeled 30D ROI is 1.00%."),
+            ],
+            "editorial": dfk.editorial.model_copy(update={"x_post": "DeFi Kingdoms models $40.64 capital, $0.0136/day net, and 1.00% 30D ROI.\n\nhttps://gamcryp.com/test/dfk-lock-risk-20260831?utm_campaign=distribution-mvp&utm_content=x-dfk-lock-risk-20260831&utm_medium=social&utm_source=x"}),
+            "source": dfk.source.model_copy(update={"strategy_id": "dfk-crystalvale-jeweler-cjewel-5000-max-lock", "snapshot_id": "fixture-snapshot", "snapshot_timestamp": SNAPSHOT_TIME.isoformat(), "refreshability": Refreshability.AUTO_REFRESHABLE}),
+        }
+    )
+    by_id[DFK_ID] = set_expected_source_hash(dfk)
+
+    packs = []
     for raw in payload["packs"]:
-        pack = ContentPackLite.model_validate(raw)
+        packs.append(ContentPackLite.model_validate(raw))
+    for content_id, pack in by_id.items():
+        if content_id not in {item.content_id for item in packs}:
+            packs.append(pack)
+    normalized: list[ContentPackLite] = []
+    for pack in packs:
         if pack.content_id in test_yellow:
             pack = pack.model_copy(
                 update={
@@ -80,7 +167,10 @@ def _config(tmp_path: Path) -> XPublisherConfig:
                 }
             )
             pack = set_expected_source_hash(pack)
-        packs.append(pack)
+        elif pack.content_id in test_red:
+            pack = set_expected_source_hash(pack)
+        normalized.append(pack)
+    packs = normalized
     batch = serialize_batch(packs, batch_id=payload["batch_id"], generated_at=payload["generated_at"], source_dataset=payload["source_dataset"])
     content_bytes = (json.dumps(batch, ensure_ascii=False, indent=2, sort_keys=True) + "\n").encode("utf-8")
     content_path.write_bytes(content_bytes)
@@ -117,8 +207,7 @@ def _service(
 def _valid_dfk_copy(service: XPublishingService) -> str:
     url = service.preview(DFK_ID).attribution_url
     return (
-        "DeFi Kingdoms model: $40.64 capital, $0.0136/day net, 1% 30D ROI. "
-        "Confidence is HIGH; risk is VERY HIGH due to lock and exit terms. "
+        "DeFi Kingdoms test fixture: review the source and risk context before publishing. "
         f"Analytical comparison, not a recommendation.\n\n{url}"
     )
 
@@ -433,7 +522,7 @@ def test_linkless_posts_keep_source_metadata_without_repeating_the_url(tmp_path:
 
 def test_unsupported_numeric_claim_in_edited_copy_is_rejected(tmp_path: Path) -> None:
     service, _ = _service(tmp_path)
-    copy = _valid_dfk_copy(service).replace("1% 30D ROI", "99% 30D ROI")
+    copy = _valid_dfk_copy(service).replace("test fixture", "test fixture with 99% ROI")
 
     with pytest.raises(XApprovalError, match="unsupported numeric"):
         service.approve(DFK_ID, edited_copy=copy)
@@ -542,6 +631,30 @@ def test_official_api_request_construction_and_success_response(tmp_path: Path) 
     assert requests[0].url.path == "/2/tweets"
     assert json.loads(requests[0].content) == {"text": "GamCryp test body"}
     assert requests[0].headers["authorization"] == "Bearer private-token"
+
+
+def test_video_upload_is_attached_to_the_matching_post(tmp_path: Path) -> None:
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        if request.url.path == "/2/media/upload":
+            return httpx.Response(200, json={"data": {"id": "123456789"}})
+        return httpx.Response(201, json={"data": {"id": "1999999999999999998"}})
+
+    video = tmp_path / "official-short.mp4"
+    video.write_bytes(b"video-bytes")
+    config = _config(tmp_path)
+    oauth = XOAuthManager(config)
+    oauth.access_token = lambda: "private-token"  # type: ignore[method-assign]
+    client = XApiClient(oauth, client=httpx.Client(base_url="https://api.x.com", transport=httpx.MockTransport(handler)))
+
+    media_id = client.upload_media(video)
+    post_id = client.create_post("GamCryp video post", media_id=media_id)
+
+    assert media_id == "123456789"
+    assert post_id == "1999999999999999998"
+    assert json.loads(requests[1].content) == {"text": "GamCryp video post", "media": {"media_ids": ["123456789"]}}
 
 
 def test_x_read_and_retweet_endpoints_use_user_context(tmp_path: Path) -> None:

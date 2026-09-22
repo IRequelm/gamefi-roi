@@ -213,7 +213,11 @@ def _strategy_items(strategy: StrategyCatalogEntry, opportunities: tuple[Opportu
 def _opportunity_context(opportunity: OpportunityCatalogEntry) -> tuple[str, str, str]:
     freshness_status = "CATALOG_REVIEWED" if CATALOG_REVIEWED_AT is not None else "MISSING"
     destination = get_outbound_destination(opportunity.outbound_destination_slugs[0]) if opportunity.outbound_destination_slugs else None
-    destination_status = "VALIDATED" if destination is not None and CATALOG_REVIEWED_AT is not None and destination.is_active(now=CATALOG_REVIEWED_AT) else "MISSING"
+    dynamic_official = opportunity.opportunity_id.startswith("discovered-") and any(reference.url.startswith("https://") for reference in opportunity.official_source_references)
+    destination_status = "VALIDATED" if (
+        (destination is not None and CATALOG_REVIEWED_AT is not None and destination.is_active(now=CATALOG_REVIEWED_AT))
+        or dynamic_official
+    ) else "MISSING"
     publication_status = "CANONICAL_CATALOG_ROUTE"
     return freshness_status, destination_status, publication_status
 
@@ -232,10 +236,10 @@ def _context_missing(freshness_status: str, destination_status: str, publication
 def _long_form_material(opportunity: OpportunityCatalogEntry, guidance: Any) -> tuple[int, int]:
     sections = [
         ("context", (opportunity.name, opportunity.feasibility_summary)),
-        ("start", getattr(guidance, "how_to_start", ()) if guidance else ()),
-        ("requirements", getattr(guidance, "what_you_need", ()) if guidance else ()),
-        ("earning", getattr(guidance, "how_you_earn", ()) if guidance else ()),
-        ("claim_exit", getattr(guidance, "how_to_exit_or_claim", ()) if guidance else ()),
+        ("start", (getattr(guidance, "how_to_start", ()) or ()) if guidance else ()),
+        ("requirements", (getattr(guidance, "what_you_need", ()) or ()) if guidance else ()),
+        ("earning", (getattr(guidance, "how_you_earn", ()) or ()) if guidance else ()),
+        ("claim_exit", (getattr(guidance, "how_to_exit_or_claim", ()) or ()) if guidance else ()),
     ]
     if opportunity.strategy_ids:
         sections.append(("strategies", tuple(strategy_id for strategy_id in opportunity.strategy_ids)))

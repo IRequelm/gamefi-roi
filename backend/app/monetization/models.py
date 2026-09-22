@@ -74,6 +74,11 @@ class SponsoredPlacementStatus(str, Enum):
     EXPIRED = "EXPIRED"
 
 
+class ContentPerformancePlatform(str, Enum):
+    X = "X"
+    YOUTUBE = "YOUTUBE"
+
+
 @dataclass(frozen=True)
 class OutboundClickEvent:
     event_id: str
@@ -210,4 +215,32 @@ class InboundLandingEvent:
     channel: str
     coarse_session_id: str | None
     occurred_at: datetime
+    created_at: datetime
+
+
+@dataclass(frozen=True)
+class ContentPerformanceRecord:
+    """Source-backed platform metrics for one content item and period.
+
+    These are distribution metrics only. They never become ROI inputs or
+    verified revenue without a separate partner attribution record.
+    """
+
+    performance_id: str
+    platform: ContentPerformancePlatform
+    content_id: str
+    period_start: datetime
+    period_end: datetime
+    impressions: int | None
+    views: int | None
+    engagements: int | None
+    link_clicks: int | None
+    profile_visits: int | None
+    followers_gained: int | None
+    subscribers_gained: int | None
+    average_retention_percent: Decimal | None
+    evidence_url: str | None
+    evidence_reference: str | None
+    notes: str | None
+    imported_at: datetime
     created_at: datetime

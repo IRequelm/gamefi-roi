@@ -134,3 +134,26 @@ class InboundLandingEventRecord(Base):
     coarse_session_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
     occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class ContentPerformanceRecordModel(Base):
+    __tablename__ = "content_performance_records"
+
+    performance_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    platform: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
+    content_id: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    period_start: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+    period_end: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    impressions: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    views: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    engagements: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    link_clicks: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    profile_visits: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    followers_gained: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    subscribers_gained: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    average_retention_percent: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    evidence_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    evidence_reference: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    notes: Mapped[str | None] = mapped_column(String(4096), nullable=True)
+    imported_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)

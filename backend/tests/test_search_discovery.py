@@ -44,7 +44,7 @@ def test_strategy_page_contains_meaningful_server_rendered_content(monkeypatch, 
     assert "Estimated gross earnings/day" in html
     assert "Required time/effort" in html
     assert "Major assumptions" in html
-    assert f'<link rel="canonical" href="http://localhost:8000/strategies/{DFK_CJEWEL_MAX_LOCK_V1.strategy_id}">' in html
+    assert f'<link rel="canonical" href="https://gamcryp.com/strategies/{DFK_CJEWEL_MAX_LOCK_V1.strategy_id}">' in html
     assert '<a class="button cta" href="/go/defi-kingdoms-play" target="_blank" rel="noopener noreferrer"' in html
     assert ">Open project" in html
     assert 'data-analytics-link="outbound"' in html
@@ -134,7 +134,7 @@ def test_query_permutations_are_noindex_and_canonicalized(monkeypatch, tmp_path)
 
     assert response.status_code == 200
     assert '<meta name="robots" content="noindex,follow">' in response.text
-    assert '<link rel="canonical" href="http://localhost:8000/rankings">' in response.text
+    assert '<link rel="canonical" href="https://gamcryp.com/rankings">' in response.text
 
 
 def test_curated_landing_page_is_indexable(monkeypatch, tmp_path) -> None:
@@ -206,7 +206,7 @@ def test_itemlist_json_ld_matches_visible_ranking_order(monkeypatch, tmp_path) -
     assert itemlist["numberOfItems"] == len(visible_strategy_ids)
     assert [element["position"] for element in elements] == list(range(1, len(elements) + 1))
     assert [element["url"] for element in elements] == [
-        f"http://localhost:8000/strategies/{strategy_id}" for strategy_id in visible_strategy_ids
+        f"https://gamcryp.com/strategies/{strategy_id}" for strategy_id in visible_strategy_ids
     ]
     visible_entries = json.dumps(itemlist["itemListElement"])
     assert "250.00" not in visible_entries
@@ -248,7 +248,7 @@ def test_robots_disallows_api_go_and_query_traps_without_blocking_ai_search_bots
     assert "Disallow: /api/" in body
     assert "Disallow: /go/" in body
     assert "Disallow: /*?*" in body
-    assert "Sitemap: http://localhost:8000/sitemap.xml" in body
+    assert "Sitemap: https://gamcryp.com/sitemap.xml" in body
     assert "User-agent: OAI-SearchBot\nDisallow: /" not in body
     assert "User-agent: PerplexityBot\nDisallow: /" not in body
     assert "User-agent: Googlebot\nDisallow: /" not in body
@@ -264,10 +264,10 @@ def test_sitemap_contains_only_absolute_canonical_public_urls(monkeypatch, tmp_p
     root = ElementTree.fromstring(response.text)
     namespace = {"sm": "http://www.sitemaps.org/schemas/sitemap/0.9"}
     locs = [item.text for item in root.findall(".//sm:loc", namespace)]
-    assert "http://localhost:8000/" in locs
-    assert "http://localhost:8000/rankings" in locs
-    assert f"http://localhost:8000/strategies/{DFK_CJEWEL_MAX_LOCK_V1.strategy_id}" in locs
-    assert all(url is not None and url.startswith("http://localhost:8000/") for url in locs)
+    assert "https://gamcryp.com/" in locs
+    assert "https://gamcryp.com/rankings" in locs
+    assert f"https://gamcryp.com/strategies/{DFK_CJEWEL_MAX_LOCK_V1.strategy_id}" in locs
+    assert all(url is not None and url.startswith("https://gamcryp.com/") for url in locs)
     assert all("/api/" not in url and "/go/" not in url and "?" not in url for url in locs if url is not None)
     lastmods = [item.text for item in root.findall(".//sm:lastmod", namespace)]
     assert "2026-08-16" in lastmods
@@ -285,7 +285,7 @@ def test_json_ld_payloads_are_parseable_and_truthful(monkeypatch, tmp_path) -> N
     assert "Review" not in types
     assert "Dataset" not in types
     assert "ItemList" not in types
-    assert any(payload.get("url") == "http://localhost:8000" for payload in payloads)
+    assert any(payload.get("url") == "https://gamcryp.com" for payload in payloads)
 
 
 def test_public_links_are_crawlable_anchors_for_all_opportunities(monkeypatch, tmp_path) -> None:
@@ -330,6 +330,20 @@ def test_inbound_acquisition_attribution_is_privacy_minimal(monkeypatch, tmp_pat
     assert visits[0].utm_campaign == "g16"
     assert visits[0].referrer_domain == "chatgpt.com"
     assert visits[0].coarse_session_id == "coarse-1"
+
+
+def test_direct_landing_visit_is_recorded_without_user_tracking(monkeypatch, tmp_path) -> None:
+    client, engine = _seeded_client(monkeypatch, tmp_path, "seo-direct-attribution.db")
+
+    response = client.get("/")
+
+    assert response.status_code == 200
+    visits = MonetizationRepository(engine).landing_visits(landing_path="/")
+    assert len(visits) == 1
+    assert visits[0].channel == "direct"
+    assert visits[0].utm_source is None
+    assert visits[0].referrer_domain is None
+    assert visits[0].coarse_session_id is None
 
 
 def test_inbound_events_do_not_change_organic_ranking_or_scores(monkeypatch, tmp_path) -> None:

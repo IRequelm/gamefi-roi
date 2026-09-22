@@ -37,6 +37,7 @@ class AssetPlan:
     required_kinds: tuple[str, ...]
     logo_path: str | None
     product_visual_paths: tuple[str, ...]
+    source_media_paths: tuple[str, ...] = ()
     source_card_required: bool = True
 
     def safe_dict(self) -> dict[str, Any]:
@@ -44,14 +45,21 @@ class AssetPlan:
 
 
 def asset_plan(package: ContentPackage) -> AssetPlan:
-    """Find only explicitly approved local assets; never invent a screenshot."""
+    """Find approved local source media; never invent a screenshot or gameplay clip.
+
+    Source media is intentionally broader than the historical ``product_visual``
+    field.  A real official MP4/WebM/MOV is the strongest input, followed by an
+    official product/game/site capture.  The renderer decides how to animate the
+    source, but it must never replace the source with a fabricated UI.
+    """
     opportunity_id = package.opportunity_id or "gamcryp"
     logo = _find_logo(package)
     root = Path(os.getenv("GAMEFI_SHORT_ASSET_ROOT", "data/local/video_assets")) / opportunity_id
     required = ("gameplay_or_ui",) if _is_game(package) else ("product_ui_or_device",)
-    product = tuple(str(path) for path in sorted(root.glob("*")) if path.is_file() and _is_product_visual(path))
-    status = ASSETS_READY if product else ASSETS_REQUIRED
-    return AssetPlan(status, required, str(logo) if logo else None, product)
+    source_media = tuple(str(path) for path in sorted(root.glob("*")) if path.is_file() and _is_source_media(path))
+    product = tuple(path for path in source_media if Path(path).suffix.lower() in {".png", ".jpg", ".jpeg", ".webp", ".ico"})
+    status = ASSETS_READY if source_media else ASSETS_REQUIRED
+    return AssetPlan(status, required, str(logo) if logo else None, product, source_media)
 
 
 def creative_preflight(package: ContentPackage) -> tuple[str, ...]:
@@ -61,7 +69,7 @@ def creative_preflight(package: ContentPackage) -> tuple[str, ...]:
         blockers.append(f"{BLOCKED_SCRIPT_QA}: CTA does not position GamCryp as the evaluator")
     plan = asset_plan(package)
     if plan.status != ASSETS_READY:
-        blockers.append(f"{BLOCKED_MISSING_ASSETS}: approved product visual is missing ({', '.join(plan.required_kinds)})")
+        blockers.append(f"{BLOCKED_MISSING_ASSETS}: approved official source media is missing ({', '.join(plan.required_kinds)})")
     return tuple(blockers)
 
 
@@ -92,7 +100,11 @@ def frame_qa(
     duration = _probe_duration(video_path, runner)
     if duration is None or duration <= 0:
         return {"status": "FAILED", "checkpoints": (), "frames": [], "reason": "video duration probe failed"}
-    checkpoints = tuple(round(duration * fraction, 3) for fraction in (0.0, 0.2, 0.45, 0.7, 0.95))
+    # A frame at t=0 is commonly still inside the renderer's fade-in and can
+    # be completely black. Review frames must represent visible content, not
+    # just prove that an MP4 decoder opened.
+    first_checkpoint = min(max(duration * 0.04, 0.4), max(duration - 0.5, 0.4))
+    checkpoints = (first_checkpoint, *(round(duration * fraction, 3) for fraction in (0.22, 0.47, 0.72, 0.95)))
     output_dir.mkdir(parents=True, exist_ok=True)
     frames: list[str] = []
     for index, checkpoint in enumerate(checkpoints, start=1):
@@ -144,7 +156,11 @@ def _is_game(package: ContentPackage) -> bool:
 
 
 def _is_product_visual(path: Path) -> bool:
-    if path.suffix.lower() not in {".png", ".jpg", ".jpeg", ".webp", ".svg", ".ico"}:
+    # ffmpeg receives these files as looping image inputs.  SVG support varies
+    # by build and can fail inside the multi-input filter graph; prefer an
+    # approved raster capture when one exists and never let a vector asset
+    # enter a publish handoff unnoticed.
+    if path.suffix.lower() not in {".png", ".jpg", ".jpeg", ".webp", ".ico"}:
         return False
     try:
         if path.stat().st_size < 100:
@@ -153,3 +169,25 @@ def _is_product_visual(path: Path) -> bool:
         return False
     name = path.stem.lower()
     return any(token in name for token in ("gameplay", "game-ui", "ui", "dashboard", "device", "hardware", "product", "site", "official"))
+
+
+def _is_source_media(path: Path) -> bool:
+    """Admit only local, explicitly named official source media.
+
+    SVG remains excluded from the renderer input because it may be an
+    illustration rather than a capture and is not consistently decoded by all
+    render paths.  It can remain beside a raster renderer input for provenance.
+    """
+    if path.suffix.lower() in {".mp4", ".webm", ".mov", ".m4v"}:
+        return _has_source_name(path)
+    return _is_product_visual(path)
+
+
+def _has_source_name(path: Path) -> bool:
+    try:
+        if path.stat().st_size < 100:
+            return False
+    except OSError:
+        return False
+    name = path.stem.lower()
+    return any(token in name for token in ("official", "gameplay", "product", "capture", "demo", "portal", "dashboard"))

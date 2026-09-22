@@ -254,6 +254,7 @@ G15 commercial storage uses four separate tables:
 - `referral_programs`: referral lifecycle metadata with explicit statuses `NONE`, `DISCOVERED`, `APPLICATION_REQUIRED`, `PENDING`, `VERIFIED`, `ACTIVE`, `PAUSED`, `REJECTED`, and `EXPIRED`.
 - `revenue_attributions`: verified/manual partner attribution imports. Pending or rejected imports are retained for audit but do not contribute to EPC or conversion-rate metrics.
 - `sponsored_placements`: labeled commercial placement metadata with campaign status, placement surface, disclosure text, and audit trail.
+- `content_performance_records`: source-backed X/YouTube per-content performance snapshots (views, impressions, engagements, clicks, audience changes, and retention). These are distribution analytics only and never become ROI or verified-revenue inputs.
 
 `/api/v1/rankings` continues to return organic ranking `items` from snapshots/scores only. Sponsored placements, when present, are exposed in a separate `sponsored_placements` collection and must not be merged into the organic list.
 

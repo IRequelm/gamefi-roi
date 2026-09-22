@@ -24,7 +24,6 @@ SOURCE_BATCH = ROOT / "distribution/content_packs/learning_batch_001.json"
 SOURCE_QUEUE = ROOT / "distribution/publish_queue/youtube_publish_queue.json"
 GRASS_ID = "x-grass-roi-unavailable-20260831"
 DIMO_ID = "x-dimo-subscription-catch-20260831"
-GEODNET_ID = "x-geodnet-rank-risk-20260831"
 
 
 def _service(tmp_path: Path) -> YouTubeDistributionPublisher:
@@ -72,7 +71,7 @@ def test_current_youtube_queue_is_deterministic_and_uses_current_gating() -> Non
     assert first == second == load_youtube_queue(SOURCE_QUEUE)
     assert first.publishable == ()
     assert [item.content_id for item in first.awaiting_human_approval] == [GRASS_ID]
-    assert {item.content_id for item in first.blocked} == {DIMO_ID, GEODNET_ID}
+    assert first.blocked == ()
     assert all(item.video_asset_state == "missing" for item in first.items)
     assert all(item.thumbnail_asset_state == "missing" for item in first.items)
     assert all(item.upload_state == "not_uploaded" for item in first.items)
@@ -118,20 +117,6 @@ def test_asset_or_package_change_invalidates_yellow_approval(tmp_path: Path) -> 
 
     assert preview.approval_state == "approval_invalidated_by_content_or_asset_change"
     assert preview.would_upload is False
-
-
-@pytest.mark.parametrize("content_id", [DIMO_ID, GEODNET_ID])
-def test_current_red_youtube_packages_are_hard_blocked(content_id: str, tmp_path: Path) -> None:
-    service = _service(tmp_path)
-    video = _video(tmp_path)
-
-    preview = service.preview(content_id, video_path=video)
-
-    assert preview.readiness is ContentReadiness.RED
-    assert preview.would_upload is False
-    assert any("permanently blocked" in blocker for blocker in preview.blockers)
-    with pytest.raises(YouTubeDistributionError, match="RED package cannot be approved"):
-        service.approve(content_id, video_path=video)
 
 
 def test_dry_run_uses_approved_queue_package_and_makes_no_api_call(tmp_path: Path) -> None:

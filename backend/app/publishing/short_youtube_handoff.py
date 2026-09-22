@@ -559,15 +559,19 @@ def _stored_render_creative_ready(item: ShortHandoffItem, package: ContentPackag
     if package is not None:
         stored_product_paths = tuple((quality.get("asset_plan") or {}).get("product_visual_paths") or ())
         current_product_paths = tuple(asset_plan(package).product_visual_paths)
-        if stored_product_paths != current_product_paths:
+        stored_source_paths = tuple((quality.get("asset_plan") or {}).get("source_media_paths") or ())
+        current_source_paths = tuple(asset_plan(package).source_media_paths)
+        if stored_product_paths != current_product_paths or stored_source_paths != current_source_paths:
             return False
+    source_count = int(quality.get("source_media_count", 0))
+    product_count = int(quality.get("product_visual_count", 0))
     return (
         quality.get("creative_status") == "CREATIVE_QA_PASSED"
         and quality.get("hook_qa", {}).get("status") == "PASSED"
-        and int(quality.get("product_visual_count", 0)) >= 1
+        and max(source_count, product_count) >= 1
         and quality.get("gamcryp_product_placement") is True
         and quality.get("brand_closing_present") is True
-        and quality.get("product_visual_motion") == "ken_burns_crop_and_scanline"
+        and quality.get("product_visual_motion") in {"ken_burns_crop_and_scanline", "official_video_or_ken_burns_capture", "official_video_or_animated_source_capture"}
     )
 
 

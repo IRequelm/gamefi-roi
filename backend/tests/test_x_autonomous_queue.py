@@ -11,15 +11,15 @@ QUEUE = ROOT / "distribution/publish_queue/x_publish_queue.json"
 GRASS_ID = "x-grass-roi-unavailable-20260831"
 
 
-def test_x_yellow_content_is_autonomous_publishable_without_human_waiting() -> None:
+def test_x_yellow_content_is_approval_gated_before_publication() -> None:
     queue = load_x_queue(QUEUE)
     item = queue.find(GRASS_ID)
 
     assert item.status is ContentReadiness.YELLOW
-    assert item.approval_required is False
-    assert item.approval_state.value == "not_required"
-    assert item in queue.publishable
-    assert queue.awaiting_human_approval == ()
+    assert item.approval_required is True
+    assert item.approval_state.value == "awaiting_human_approval"
+    assert item not in queue.publishable
+    assert item in queue.awaiting_human_approval
 
 
 def test_x_daily_caps_persist_across_worker_restarts(tmp_path: Path) -> None:

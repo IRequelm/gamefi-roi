@@ -33,6 +33,7 @@ class EvidenceRecord:
     verified: bool
     observed_at: datetime
     notes: str = ""
+    fact_kind: str = ""
 
 
 @dataclass
@@ -55,10 +56,11 @@ class DiscoveryRecord:
     discovery_score: float = 0.0
     research_priority: str = "LOW"
     why_discovered: str = ""
+    persisted_discovery_id: str | None = field(default=None, repr=False, compare=False)
 
     @property
     def discovery_id(self) -> str:
-        return "discovery-" + sha256(normalize_entity(self.canonical_name).encode()).hexdigest()[:24]
+        return self.persisted_discovery_id or "discovery-" + sha256(normalize_entity(self.canonical_name).encode()).hexdigest()[:24]
 
 
 @dataclass(frozen=True)
@@ -101,7 +103,7 @@ def evaluate_admission(record: DiscoveryRecord) -> AdmissionDecision:
         return AdmissionDecision("QUARANTINE", "Invalid canonical opportunity type; research is required.", ("canonical opportunity_type",))
     parsed = urlparse(record.official_url or "")
     identity = bool(record.canonical_name.strip() and parsed.scheme == "https" and parsed.netloc)
-    verified_facts = {e.fact for e in record.evidence if e.verified}
+    verified_facts = {e.fact_kind or e.fact for e in record.evidence if e.verified}
     if record.risk_flags or not identity:
         return AdmissionDecision("QUARANTINE", "Identity, URL, or risk conflict requires human review.", tuple(record.risk_flags or ["verified HTTPS official URL"]))
     required = {"identity", "participation", "reward_mechanism"}
@@ -114,4 +116,6 @@ def evaluate_admission(record: DiscoveryRecord) -> AdmissionDecision:
 
 
 def to_json(record: DiscoveryRecord) -> dict[str, object]:
-    return json.loads(json.dumps(asdict(record), default=lambda value: value.isoformat() if isinstance(value, datetime) else str(value))) | {"discovery_id": record.discovery_id}
+    payload = json.loads(json.dumps(asdict(record), default=lambda value: value.isoformat() if isinstance(value, datetime) else str(value)))
+    payload.pop("persisted_discovery_id", None)
+    return payload | {"discovery_id": record.discovery_id}

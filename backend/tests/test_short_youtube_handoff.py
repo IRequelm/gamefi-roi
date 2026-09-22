@@ -2,19 +2,26 @@ from __future__ import annotations
 
 from pathlib import Path
 import hashlib
+import json
 from dataclasses import replace
 from types import SimpleNamespace
+
+import pytest
 
 from app.config.settings import Settings
 from app.content_package.generator import build_content_packages
 from app.publishing.short_youtube_handoff import (
     ShortHandoffItem,
     ShortHandoffQueue,
+    _stored_render_creative_ready,
+    audit_handoff,
+    approve_handoff_item,
     autonomous_youtube_cap_available,
     load_handoff,
     prepare_short_handoff,
     publish_next,
     reconcile_handoff_state,
+    write_handoff,
 )
 from app.video_render.factory import RENDER_READY, RenderResult
 
@@ -53,6 +60,8 @@ def _render(tmp_path: Path, *, package, **kwargs) -> RenderResult:
         "narration_script_matches_package": True,
         "creative_status": "CREATIVE_QA_PASSED",
         "product_visual_count": 1,
+        "product_visual_storytelling": True,
+        "product_visual_motion": "ken_burns_crop_and_scanline",
         "hook_qa": {"status": "PASSED", "blockers": []},
         "gamcryp_product_placement": True,
         "frame_qa": {"status": "PASSED", "frames": ["a", "b", "c", "d", "e"]},
@@ -89,6 +98,70 @@ def test_music_only_short_render_enters_handoff(tmp_path: Path) -> None:
     assert len(queue.items) == 1
     assert queue.items[0].audio_mode == "music_only"
     assert queue.items[0].narration_provider == "local_music"
+
+
+def test_creative_approval_requires_explicit_human_review_acknowledgement(tmp_path: Path) -> None:
+    video = tmp_path / "video.mp4"
+    video.write_bytes(b"reviewable-video")
+    checksum = hashlib.sha256(video.read_bytes()).hexdigest()
+    item = ShortHandoffItem(
+        package_id="package-short_form-review-gate",
+        content_id="content-review-gate",
+        title="Review gate",
+        description="Source-backed description.",
+        source_url="https://gamcryp.com/test",
+        tags=("GamCryp",),
+        video_path=str(video),
+        caption_path=str(video),
+        narration_path=str(video),
+        narration_provider="local_music",
+        audio_mode="music_only",
+        evidence_fingerprint="a" * 64,
+        video_checksum=checksum,
+        created_at="2026-09-21T00:00:00+00:00",
+    )
+    queue_path = tmp_path / "handoff.json"
+    write_handoff(queue_path, ShortHandoffQueue(items=(item,)))
+
+    with pytest.raises(ValueError, match="confirm_reviewed"):
+        approve_handoff_item(item.package_id, queue_path)
+
+    approved = approve_handoff_item(
+        item.package_id,
+        queue_path,
+        confirm_reviewed=True,
+        reviewed_by="qa-operator",
+        review_note="Frames and source claim checked.",
+    )
+
+    assert approved.creative_approval_state == "approved"
+    assert approved.creative_approval_video_checksum == checksum
+    assert approved.creative_reviewed_by == "qa-operator"
+    assert approved.creative_review_note == "Frames and source claim checked."
+
+
+def test_verified_reused_neural_render_enters_handoff_but_stays_pending(tmp_path: Path) -> None:
+    package = _package()
+    queue_path = tmp_path / "handoff.json"
+    result = _render(tmp_path, package=package)
+    quality = dict(result.quality_metadata or {})
+    quality.update({"audio_mode": "neural_voice", "narration_reused": True})
+    result = replace(
+        result,
+        voice_name="Sarah",
+        voice_id="EXAVITQu4vr4xnSDxMaL",
+        model_id="eleven_multilingual_v2",
+        audio_mode="neural_voice",
+        quality_metadata=quality,
+    )
+    queue = prepare_short_handoff(
+        settings=_settings(), queue_path=queue_path, render_root=tmp_path / "render",
+        packages=[package], render=lambda package, **kwargs: result,
+    )
+    assert len(queue.items) == 1
+    assert queue.items[0].narration_reused is True
+    assert queue.items[0].narration_provider == "elevenlabs"
+    assert queue.items[0].creative_approval_state == "pending_review"
 
 
 def test_ambiguous_opportunity_does_not_select_a_second_angle(tmp_path: Path) -> None:
@@ -153,13 +226,78 @@ def test_failed_render_does_not_enter_handoff(tmp_path: Path) -> None:
     assert queue.items == ()
 
 
+def test_newly_available_asset_retries_a_dead_lettered_package(tmp_path: Path) -> None:
+    package = _package()
+    queue_path = tmp_path / "handoff.json"
+    blocked = {
+        package.package_id: {
+            "state": "BLOCKED_PACKAGE",
+            "reason": "BLOCKED_MISSING_ASSETS: approved product visual is missing",
+            "evidence_fingerprint": package.evidence_fingerprint,
+            "policy_version": "approved-reuse-tts-motion-v5",
+            "attempts": 3,
+        }
+    }
+    queue_path.write_text(ShortHandoffQueue(blocked=blocked).model_dump_json(), encoding="utf-8")
+
+    queue = prepare_short_handoff(
+        settings=_settings(),
+        queue_path=queue_path,
+        packages=[package],
+        render=lambda package, **kwargs: _render(tmp_path, package=package),
+    )
+
+    assert len(queue.items) == 1
+    assert package.package_id not in queue.blocked
+
+
+def test_stored_render_rejects_changed_product_visual(tmp_path: Path) -> None:
+    package = _package()
+    video = tmp_path / "render" / "short" / "video.mp4"
+    video.parent.mkdir(parents=True)
+    video.write_bytes(b"video")
+    metadata_dir = video.parent.parent / "metadata"
+    metadata_dir.mkdir(parents=True)
+    (metadata_dir / f"{package.package_id}.json").write_text(
+        json.dumps(
+            {
+                "quality_metadata": {
+                    "creative_status": "CREATIVE_QA_PASSED",
+                    "hook_qa": {"status": "PASSED"},
+                    "product_visual_count": 1,
+                    "gamcryp_product_placement": True,
+                    "brand_closing_present": True,
+                    "asset_plan": {"product_visual_paths": ["old-product.png"]},
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    item = ShortHandoffItem(
+        package_id=package.package_id,
+        content_id=package.source_inventory_item_id,
+        title=package.title_candidates[0],
+        description="Source-backed description.",
+        source_url="https://gamcryp.com",
+        tags=("GamCryp",),
+        video_path=str(video),
+        caption_path=str(video),
+        narration_path=str(video),
+        evidence_fingerprint=package.evidence_fingerprint,
+        video_checksum=hashlib.sha256(video.read_bytes()).hexdigest(),
+        created_at="2026-09-21T00:00:00+00:00",
+    )
+
+    assert _stored_render_creative_ready(item, package) is False
+
+
 def test_daily_cap_persists_and_resets_next_local_day(tmp_path: Path) -> None:
     from datetime import UTC, datetime
 
     video = tmp_path / "video.mp4"
     video.write_bytes(b"video")
     checksum = hashlib.sha256(video.read_bytes()).hexdigest()
-    item = ShortHandoffItem(package_id="package-short_form-test", content_id="content-test", title="Test", description="Source-backed test.", source_url="https://gamcryp.com/test", tags=("GamCryp",), video_path=str(video), caption_path=str(video), narration_path=str(video), narration_provider="local_music", narration_voice_id="", narration_model_id="", audio_mode="music_only", evidence_fingerprint="a" * 64, video_checksum=checksum, created_at="2026-09-06T00:00:00+00:00")
+    item = ShortHandoffItem(package_id="package-short_form-test", content_id="content-test", title="Test", description="Source-backed test.", source_url="https://gamcryp.com/test", tags=("GamCryp",), video_path=str(video), caption_path=str(video), narration_path=str(video), narration_provider="local_music", narration_voice_id="", narration_model_id="", audio_mode="music_only", evidence_fingerprint="a" * 64, video_checksum=checksum, created_at="2026-09-06T00:00:00+00:00", creative_approval_state="approved", creative_approval_video_checksum=checksum)
     item2 = item.model_copy(update={"package_id": "package-short_form-test-2", "content_id": "content-test-2"})
     queue_path = tmp_path / "handoff.json"
     queue_path.write_text(ShortHandoffQueue(items=(item, item2)).model_dump_json(), encoding="utf-8")
@@ -209,3 +347,37 @@ def test_reconciliation_preserves_missing_upload_as_ambiguous(tmp_path: Path) ->
     write_handoff(queue_path, queue.model_copy(update={"items": (queue.items[0].model_copy(update={"status": "uploaded"}),)}))
     assert reconcile_handoff_state(set(), queue_path) == 1
     assert load_handoff(queue_path).items[0].status == "ambiguous"
+
+
+def test_audit_flags_legacy_upload_without_current_quality_approval(tmp_path: Path) -> None:
+    video = tmp_path / "video.mp4"
+    video.write_bytes(b"video")
+    checksum = hashlib.sha256(video.read_bytes()).hexdigest()
+    item = ShortHandoffItem(
+        package_id="package-short_form-legacy",
+        content_id="content-legacy",
+        title="Legacy",
+        description="Legacy source.",
+        source_url="http://localhost:8000/opportunities/legacy",
+        tags=("GamCryp",),
+        video_path=str(video),
+        caption_path=str(video),
+        narration_path=str(video),
+        narration_provider="elevenlabs",
+        narration_voice_id="legacy",
+        narration_model_id="legacy",
+        audio_mode="neural_voice",
+        evidence_fingerprint="a" * 64,
+        video_checksum=checksum,
+        created_at="2026-09-06T00:00:00+00:00",
+        status="uploaded",
+    )
+    queue_path = tmp_path / "handoff.json"
+    queue_path.write_text(ShortHandoffQueue(items=(item,)).model_dump_json(), encoding="utf-8")
+
+    audit = audit_handoff(queue_path)
+
+    assert audit["audit_status"] == "review_required"
+    assert audit["items"][0]["content_id"] == "content-legacy"
+    assert any("local development host" in blocker for blocker in audit["items"][0]["blockers"])
+    assert any("checksum-bound creative approval" in blocker for blocker in audit["items"][0]["blockers"])

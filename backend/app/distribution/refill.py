@@ -81,25 +81,79 @@ class DistributionRefiller:
         last_attempt = _parse_time(state.get("last_attempt_at"))
         if last_attempt and current < last_attempt + timedelta(hours=self.config.cooldown_hours):
             return {"platform": "distribution", "status": "cooldown", "youtube": youtube_buffer, "x": x_buffer}
-        rankings = self.fetch_json(self.config.rankings_url)
-        opportunities = self.fetch_json(self.config.opportunities_url)
-        packs = self.build_packs(rankings, opportunities, base_url=self.config.base_url)
+        source_mode = "remote_api"
+        reuse_existing_batch = False
+        try:
+            rankings = self.fetch_json(self.config.rankings_url)
+            opportunities = self.fetch_json(self.config.opportunities_url)
+            packs = self.build_packs(rankings, opportunities, base_url=self.config.base_url)
+        except Exception as remote_error:
+            # Keep content preparation alive when the public site/API is down,
+            # but use only the same local PostgreSQL-backed catalog and
+            # snapshots exposed by the API service. No claims are fabricated.
+            rankings, opportunities = _local_catalog_payloads()
+            # In a local checkout the committed batch is the reviewed
+            # editorial baseline. If the local catalog has no ranking rows,
+            # retain that baseline instead of rewriting tracked artifacts on
+            # every remote outage. A populated local catalog still produces a
+            # fresh, source-backed batch.
+            if not rankings.get("items") and self.config.content_pack_file.is_file():
+                _, packs = load_content_pack_batch(self.config.content_pack_file)
+                source_mode = "local_existing_batch"
+                reuse_existing_batch = True
+            else:
+                packs = build_learning_batch(
+                    rankings,
+                    opportunities,
+                    base_url=self.config.base_url,
+                    created_at=current.isoformat(),
+                    include_x_guides=True,
+                )
+                source_mode = "local_database_fallback"
         source_bytes = _canonical_pack_bytes(packs)
         prior_hash = state.get("source_batch_hash")
         batch_hash = hashlib.sha256(source_bytes).hexdigest()
         _write_state(self.config.state_file, {"state_version": "distribution-refill-v1", "last_attempt_at": current.isoformat(), "source_batch_hash": batch_hash})
-        if prior_hash == batch_hash and self.config.content_pack_file.is_file():
-            return {"platform": "distribution", "status": "unchanged", "youtube": youtube_buffer, "x": x_buffer}
-        write_batch(self.config.content_pack_file, packs, batch_id=LEARNING_BATCH_ID, generated_at=LEARNING_BATCH_CREATED_AT, source_dataset=f"{self.config.rankings_url} + {self.config.opportunities_url}")
+        if (prior_hash == batch_hash or reuse_existing_batch) and self.config.content_pack_file.is_file():
+            return {"platform": "distribution", "status": "unchanged", "source": source_mode, "youtube": youtube_buffer, "x": x_buffer}
+        generated_at = current.isoformat() if source_mode == "local_database_fallback" else LEARNING_BATCH_CREATED_AT
+        source_dataset = (
+            "local_database_catalog_and_snapshots"
+            if source_mode == "local_database_fallback"
+            else f"{self.config.rankings_url} + {self.config.opportunities_url}"
+        )
+        write_batch(self.config.content_pack_file, packs, batch_id=LEARNING_BATCH_ID, generated_at=generated_at, source_dataset=source_dataset)
         payload, loaded_packs = load_content_pack_batch(self.config.content_pack_file)
         write_youtube_queue(self.config.youtube_queue_file, build_youtube_publish_queue(batch_payload=payload, packs=loaded_packs, source_batch_bytes=self.config.content_pack_file.read_bytes(), video_directory=self.config.video_directory))
         write_x_queue(self.config.x_queue_file, build_x_publish_queue(batch_payload=payload, packs=loaded_packs, source_batch_bytes=self.config.content_pack_file.read_bytes(), editorial_order=editorial_order_from_handoff(self.config.handoff_file)))
-        return {"platform": "distribution", "status": "refilled", "youtube": youtube_buffer, "x": x_buffer}
+        return {"platform": "distribution", "status": "refilled", "source": source_mode, "youtube": youtube_buffer, "x": x_buffer}
 
 
 def _fetch_json(url: str) -> dict[str, Any]:
     with urlopen(url, timeout=30) as response:
         return json.loads(response.read().decode("utf-8"))
+
+
+def _local_catalog_payloads() -> tuple[dict[str, Any], dict[str, Any]]:
+    """Serialize the local API service's current catalog/snapshots for refill."""
+    from app.api.v1.service import ApiDataService
+    from app.config.settings import get_settings
+    from app.storage.database import check_connectivity, create_database_engine
+
+    engine = create_database_engine(get_settings())
+    try:
+        check_connectivity(engine)
+        service = ApiDataService(engine)
+        rankings = service.rankings_page(limit=100, offset=0).model_dump(mode="json")
+        summaries, _ = service.opportunities_page(limit=100, offset=0)
+        details = []
+        for summary in summaries:
+            detail = service.opportunity_detail(summary.opportunity_id)
+            if detail is not None:
+                details.append(detail.model_dump(mode="json"))
+        return rankings, {"items": details, "page": {"limit": 100, "offset": 0, "total": len(details)}}
+    finally:
+        engine.dispose()
 
 
 def _canonical_pack_bytes(packs: list[Any]) -> bytes:

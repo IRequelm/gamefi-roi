@@ -6,7 +6,8 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from app.distribution.x_publisher import XAuthError
-from app.publishing.distribution_worker import DistributionWorker, DistributionWorkerConfig
+from app.publishing.distribution_worker import DistributionWorker, DistributionWorkerConfig, _approved_short_waiting
+from app.publishing.short_youtube_handoff import ShortHandoffItem, ShortHandoffQueue, write_handoff
 
 
 NOW = datetime(2026, 9, 5, 12, 0, tzinfo=UTC)
@@ -82,12 +83,29 @@ def test_manual_x_mode_exports_exact_green_post_without_network(tmp_path):
     config = DistributionWorkerConfig(
         x_publishing_mode="manual", video_directory=tmp_path / "videos", state_file=tmp_path / "worker.json",
         manual_outbox_file=tmp_path / "outbox.json", short_handoff_file=tmp_path / "short-handoff.json",
-        autonomous_cap_file=tmp_path / "cap.json",
+        autonomous_cap_file=tmp_path / "cap.json", heartbeat_file=tmp_path / "heartbeat.json",
     )
     result = DistributionWorker(config=config, x_service=x, youtube_distribution=FakeYouTube(), now=lambda: NOW).run_once()
     assert result[0]["status"] == "manual_ready"
     assert x.calls == []
     assert json.loads((tmp_path / "outbox.json").read_text(encoding="utf-8"))["item"]["post_text"] == "Post for green-x"
+
+
+def test_manual_x_mode_batches_two_green_posts_without_network(tmp_path):
+    x = FakeX(publishable=["green-1", "green-2", "green-3"])
+    config = DistributionWorkerConfig(
+        x_publishing_mode="manual", video_directory=tmp_path / "videos", state_file=tmp_path / "worker.json",
+        manual_outbox_file=tmp_path / "outbox.json", short_handoff_file=tmp_path / "short-handoff.json",
+        autonomous_cap_file=tmp_path / "cap.json", heartbeat_file=tmp_path / "heartbeat.json",
+    )
+
+    result = DistributionWorker(config=config, x_service=x, youtube_distribution=FakeYouTube(), now=lambda: NOW).run_once()
+
+    assert result[0]["status"] == "manual_ready"
+    assert result[0]["content_ids"] == ["green-1", "green-2"]
+    payload = json.loads((tmp_path / "outbox.json").read_text(encoding="utf-8"))
+    assert [item["content_id"] for item in payload["items"]] == ["green-1", "green-2"]
+    assert x.calls == []
 
 
 def test_worker_writes_success_heartbeat_after_cycle(tmp_path):
@@ -99,12 +117,49 @@ def test_worker_writes_success_heartbeat_after_cycle(tmp_path):
     assert any(item["platform"] == "YouTubeLegacyQueue" for item in heartbeat["platform_statuses"])
 
 
+def test_dynamic_catalog_unavailability_marks_worker_degraded(tmp_path, monkeypatch):
+    short_queue = tmp_path / "short-handoff.json"
+    short_queue.write_text(json.dumps({"version": "youtube-short-handoff-v1", "items": [], "blocked": {}}), encoding="utf-8")
+
+    def unavailable(_settings):
+        raise RuntimeError("database unavailable")
+
+    monkeypatch.setattr("app.publishing.distribution_worker.create_database_engine", unavailable)
+    instance = worker(tmp_path)
+    result = instance.run_once()
+
+    assert result[2]["catalog_status"] == "unavailable"
+    heartbeat = json.loads((tmp_path / "heartbeat.json").read_text(encoding="utf-8"))
+    assert heartbeat["status"] == "degraded"
+
+
 def test_green_x_is_dry_run_by_default_and_persists_no_publication(tmp_path):
     x = FakeX(publishable=["green-x"])
     result = worker(tmp_path, x=x).run_once()
     assert result[0]["status"] == "dry_run"
     assert x.calls == [("green-x", True, False)]
     assert not (tmp_path / "worker.json").exists()
+
+
+def test_live_x_publishes_two_eligible_posts_per_day(tmp_path):
+    x = FakeX(publishable=["green-x-1", "green-x-2", "green-x-3"])
+    config = DistributionWorkerConfig(
+        live=True,
+        x_publishing_mode="live",
+        x_daily_post_cap=2,
+        x_daily_cap_file=tmp_path / "x-cap.json",
+        state_file=tmp_path / "worker.json",
+        heartbeat_file=tmp_path / "heartbeat.json",
+        short_handoff_file=tmp_path / "short.json",
+        autonomous_cap_file=tmp_path / "youtube-cap.json",
+    )
+    instance = DistributionWorker(config=config, x_service=x, youtube_distribution=FakeYouTube(), now=lambda: NOW)
+
+    result = instance._process_x(NOW)
+
+    assert result["status"] == "published"
+    assert result["published_count"] == 2
+    assert [item[0] for item in x.calls] == ["green-x-1", "green-x-2"]
 
 
 def test_yellow_and_red_items_are_not_auto_processed(tmp_path):
@@ -151,6 +206,83 @@ def test_youtube_queue_continues_after_one_item_failure(tmp_path):
     assert result[1]["status"] == "disabled_for_autonomous_worker"
     assert result[2]["status"] == "idle"
     assert youtube.calls == []
+
+
+def test_short_handoff_approval_reactivates_a_prior_dead_letter(tmp_path: Path, monkeypatch):
+    video = tmp_path / "reviewed.mp4"
+    video.write_bytes(b"reviewed-video")
+    import hashlib
+
+    checksum = hashlib.sha256(video.read_bytes()).hexdigest()
+    item = ShortHandoffItem(
+        package_id="package-short_form-reviewed",
+        content_id="content-reviewed",
+        title="Reviewed Short",
+        description="Source-backed description.",
+        source_url="https://gamcryp.com/test",
+        tags=("GamCryp",),
+        video_path=str(video),
+        caption_path=str(video),
+        narration_path=str(video),
+        narration_provider="local_music",
+        audio_mode="music_only",
+        evidence_fingerprint="a" * 64,
+        video_checksum=checksum,
+        created_at="2026-09-21T00:00:00+00:00",
+        creative_approval_state="approved",
+        creative_approval_video_checksum=checksum,
+    )
+    queue_path = tmp_path / "short-handoff.json"
+    write_handoff(queue_path, ShortHandoffQueue(items=(item,)))
+    assert _approved_short_waiting(queue_path) is True
+
+    monkeypatch.setattr(
+        "app.publishing.distribution_worker.publish_next_short_handoff",
+        lambda **kwargs: {"status": "dry_run", "content_id": "content-reviewed"},
+    )
+    instance = worker(tmp_path, youtube=SimpleNamespace(publisher=object()))
+    instance.state.records["YouTubeShortHandoff"] = {"attempts": 3, "dead_letter": True, "error_category": "BLOCKED_VISUAL_QA"}
+    result = instance._process_short_handoff(NOW)
+
+    assert result["status"] in {"idle", "not_ready", "dry_run"}
+    assert "YouTubeShortHandoff" not in instance.state.records
+
+
+def test_pending_creative_review_is_not_recorded_as_worker_failure(tmp_path: Path, monkeypatch):
+    monkeypatch.setattr(
+        "app.publishing.distribution_worker.publish_next_short_handoff",
+        lambda **kwargs: {
+            "status": "not_ready",
+            "detail": "human creative quality approval is required before YouTube use",
+        },
+    )
+    video = tmp_path / "pending.mp4"
+    video.write_bytes(b"pending-video")
+    import hashlib
+
+    item = ShortHandoffItem(
+        package_id="package-short_form-pending",
+        content_id="content-pending",
+        title="Pending Short",
+        description="Source-backed description.",
+        source_url="https://gamcryp.com/test",
+        tags=("GamCryp",),
+        video_path=str(video),
+        caption_path=str(video),
+        narration_path=str(video),
+        narration_provider="local_music",
+        audio_mode="music_only",
+        evidence_fingerprint="b" * 64,
+        video_checksum=hashlib.sha256(video.read_bytes()).hexdigest(),
+        created_at="2026-09-21T00:00:00+00:00",
+    )
+    write_handoff(tmp_path / "short-handoff.json", ShortHandoffQueue(items=(item,)))
+    instance = worker(tmp_path, youtube=SimpleNamespace(publisher=object()))
+
+    result = instance._process_short_handoff(NOW)
+
+    assert result["status"] == "awaiting_human_approval"
+    assert "YouTubeShortHandoff" not in instance.state.records
 
 
 def test_x_auth_failure_does_not_block_youtube_queue_processing(tmp_path):

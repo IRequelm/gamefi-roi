@@ -7,10 +7,11 @@ import json
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
+from sqlalchemy.engine import Engine
 
 from app.content_inventory.inventory import ContentInventoryItem, READY, build_content_inventory
 from app.content_inventory.inventory import LONG_FORM_MIN_SECTIONS, LONG_FORM_MIN_SECONDS, LONG_FORM_MIN_WORDS, LONG_FORM_WORDS_PER_MINUTE
-from app.strategies.catalog import OpportunityCatalogEntry, StrategyCatalogEntry, get_opportunity, get_strategy
+from app.strategies.catalog import OpportunityCatalogEntry, StrategyCatalogEntry, get_opportunity, get_strategy, list_opportunities
 
 PACKAGE_SCHEMA_VERSION = "content-package-v1"
 
@@ -40,14 +41,18 @@ class ContentPackage:
     evidence_fingerprint: str
 
 
-def build_content_packages(*, ready_only: bool = True) -> list[ContentPackage]:
-    inventory = build_content_inventory()
+def build_content_packages(*, ready_only: bool = True, engine: Engine | None = None) -> list[ContentPackage]:
+    inventory = build_content_inventory(engine=engine)
+    opportunities = {item.opportunity_id: item for item in list_opportunities()}
+    if engine is not None:
+        from app.storage.discovery import DiscoveryRepository
+        opportunities.update({item.opportunity_id: item for item in DiscoveryRepository(engine).dynamic_opportunities()})
     packages: list[ContentPackage] = []
     for item in inventory:
         if ready_only and item.evidence_status != READY:
             continue
         for output_format in _eligible_formats(item):
-            package = _build_package(item, output_format)
+            package = _build_package(item, output_format, opportunities=opportunities)
             packages.append(package if validate_package(package) else _not_ready(package))
     return sorted(packages, key=lambda package: package.package_id)
 
@@ -113,8 +118,10 @@ def _eligible_formats(item: ContentInventoryItem) -> tuple[str, ...]:
     return tuple(formats)
 
 
-def _build_package(item: ContentInventoryItem, output_format: str) -> ContentPackage:
-    opportunity = get_opportunity(item.opportunity_id) if item.opportunity_id else None
+def _build_package(item: ContentInventoryItem, output_format: str, *, opportunities: dict[str, OpportunityCatalogEntry] | None = None) -> ContentPackage:
+    opportunity = (opportunities or {}).get(item.opportunity_id) if item.opportunity_id else None
+    if opportunity is None and item.opportunity_id:
+        opportunity = get_opportunity(item.opportunity_id)
     strategies = tuple(get_strategy(strategy_id) for strategy_id in item.strategy_ids if get_strategy(strategy_id) is not None)
     references = _references(opportunity, item)
     points = _talking_points(item, opportunity, strategies)

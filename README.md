@@ -6,7 +6,8 @@ Working repository for the GameFi ROI data/analytics platform.
 
 1. Read `docs/STATUS.md`.
 2. Read `AGENTS.md`.
-3. Follow the ACTIVE gate only.
+3. Read `docs/GROWTH_OPERATING_PLAN.md` for the discovery, content, distribution, and revenue operating loop.
+4. Follow the ACTIVE gate only.
 
 ## Runtime
 

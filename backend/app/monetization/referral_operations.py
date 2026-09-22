@@ -128,8 +128,16 @@ class ReferralOperationsService:
             task = self._task_for_row(row, at=moment)
             if task is not None:
                 tasks.append(task)
-            if row.coverage_state is ReferralCoverageState.REFERRAL_ACTIVE:
-                self._resolve_gap_tasks(row.opportunity.opportunity_id)
+            # Once an operator has stored a referral program, the old
+            # discovery/application gap is no longer the right action.  This
+            # remains true when an otherwise active program is stale and needs
+            # re-verification: keep the reverify task, but do not leave the
+            # original FIND_REFERRAL_PROGRAM task open.
+            if row.program is not None and row.program.referral_status is not ReferralLifecycleStatus.NO_PROGRAM_FOUND:
+                self._resolve_gap_tasks(
+                    row.opportunity.opportunity_id,
+                    except_task_type=task.task_type if task is not None else None,
+                )
         return ReferralHealthResult(rows=rows, tasks=tuple(tasks))
 
     def save_program(
@@ -363,7 +371,12 @@ class ReferralOperationsService:
             )
         return None
 
-    def _resolve_gap_tasks(self, opportunity_id: str) -> None:
+    def _resolve_gap_tasks(
+        self,
+        opportunity_id: str,
+        *,
+        except_task_type: ReferralTaskType | None = None,
+    ) -> None:
         for task_type in (
             ReferralTaskType.FIND_REFERRAL_PROGRAM,
             ReferralTaskType.APPLY_TO_PROGRAM,
@@ -372,6 +385,8 @@ class ReferralOperationsService:
             ReferralTaskType.REVERIFY_PROGRAM,
             ReferralTaskType.REPLACE_EXPIRED_LINK,
         ):
+            if task_type is except_task_type:
+                continue
             self.repository.resolve_referral_task(opportunity_id=opportunity_id, task_type=task_type)
 
 

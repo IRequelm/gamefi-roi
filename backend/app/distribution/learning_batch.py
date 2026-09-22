@@ -5,6 +5,7 @@ from __future__ import annotations
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 import hashlib
 import json
+import re
 from typing import Any
 
 from app.distribution.content_pack import (
@@ -148,10 +149,20 @@ def _guide_only_pack(opportunity: dict[str, Any], base_url: str, created_at: str
     version = hashlib.sha256(evidence_key.encode("utf-8")).hexdigest()[:10]
     content_id = f"x-{opportunity_id}-how-to-start-{version}"
     x_utm_url = build_utm_url(canonical_url, source="x", medium="social", content_id=content_id)
-    start = _compact_guide_text(str(guidance["how_to_start"][0]), limit=45)
-    need = _compact_guide_text(str(guidance["what_you_need"][0]), limit=45)
+    start = _compact_guide_text(
+        str(guidance["how_to_start"][0]),
+        limit=60,
+        fallback=f"Review {name}'s official setup guide.",
+    )
+    need = _compact_guide_text(
+        str(guidance["what_you_need"][0]),
+        limit=60,
+        fallback=f"Prepare the requirements listed by {name}.",
+    )
     earning = _compact_guide_text(
-        str((guidance.get("how_you_earn") or ("Review the documented reward mechanism.",))[0]), limit=45
+        str((guidance.get("how_you_earn") or ("Review the documented reward mechanism.",))[0]),
+        limit=60,
+        fallback="Follow the documented reward or claim route.",
     )
     # The full guidance remains in factual_talking_points. X copy uses a
     # compact, numbered checklist so it is useful and fits X's hard limit.
@@ -159,7 +170,7 @@ def _guide_only_pack(opportunity: dict[str, Any], base_url: str, created_at: str
         f"{name}: how to start\n\n"
         f"1) Start: {start}\n"
         f"2) Need: {need}\n\n"
-        f"3) Earn/claim: {earning}; no fixed ROI is promised.\n"
+        f"3) Earn/claim: {earning} No fixed ROI is promised.\n"
         f"\n{x_utm_url}"
     )
     return set_expected_source_hash(
@@ -208,20 +219,21 @@ def _guide_only_pack(opportunity: dict[str, Any], base_url: str, created_at: str
     )
 
 
-def _compact_guide_text(text: str, *, limit: int) -> str:
-    """Keep a sourced guidance excerpt readable inside X's hard limit."""
+def _compact_guide_text(text: str, *, limit: int, fallback: str) -> str:
+    """Keep sourced guidance grammatical inside X's hard limit.
+
+    An incomplete ellipsis is worse than a short, truthful fallback: it can
+    make a reader believe a truncated requirement or reward claim is complete.
+    """
 
     normalized = " ".join(text.split())
     if len(normalized) <= limit:
         return normalized
-    words = normalized.split()
-    excerpt = ""
-    for word in words:
-        candidate = f"{excerpt} {word}".strip()
-        if len(candidate) + 1 > limit:
-            break
-        excerpt = candidate
-    return (excerpt or normalized[: limit - 3]).rstrip(" ,;:") + "..."
+    for sentence in re.split(r"(?<=[.!?;])\s+", normalized):
+        candidate = sentence.strip()
+        if candidate and len(candidate) <= limit:
+            return candidate
+    return " ".join(fallback.split())[:limit].rstrip(" ,;:")
 
 
 def _geodnet_leader_pack(item: dict[str, Any], base_url: str, created_at: str) -> ContentPackLite:

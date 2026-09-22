@@ -6,6 +6,7 @@ class OpportunityType(StrEnum):
     GAME = "GAME"
     DEPIN_NODE = "DEPIN_NODE"
     POINTS = "POINTS"
+    RESEARCH = "RESEARCH"
 
 
 def canonical_type(value: str) -> str:

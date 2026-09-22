@@ -1,0 +1,137 @@
+{
+  "generated_at": "2026-09-22T21:10:24.096010+00:00",
+  "items": [
+    {
+      "package_id": "package-short_form-depin_setup-filecoin-storage-provider",
+      "post_text": "Filecoin Storage Provider: Depin Setup\n\nCan your PC earn while you are away?\n\nReview Filecoin's current storage-provider and PDP onboarding documentation before selecting an architecture.\n\nSource: https://www.filecoin.io/provide-storage\n\n#GamCryp #DePIN",
+      "prepared_at": "2026-09-22T21:10:23.906286+00:00",
+      "source_url": "https://www.filecoin.io/provide-storage",
+      "status": "blocked",
+      "status_reason": "paired X publishing waits for approved ElevenLabs narration",
+      "video_checksum": "52f1ec6b3d1e20c8d2291970fb5202af73cc9a28db2c7f0c9297659853f26252",
+      "video_path": "data\\local\\video_render\\short\\package-short_form-depin_setup-filecoin-storage-provider.mp4",
+      "weighted_character_count": 237
+    },
+    {
+      "package_id": "package-short_form-depin_setup-golem-provider",
+      "post_text": "Golem Provider: Depin Setup\n\nCan your PC earn while you are away?\n\nInstall the Golem provider using the official provider guide and select a production payment network.\n\nSource: https://docs.golem.network/docs/golem/overview\n\n#GamCryp #DePIN",
+      "prepared_at": "2026-09-22T21:10:23.922295+00:00",
+      "source_url": "https://docs.golem.network/docs/golem/overview",
+      "status": "blocked",
+      "status_reason": "paired X publishing waits for approved ElevenLabs narration",
+      "video_checksum": "66886c918a6e6c3cd5dc3c938208fdcaeede900cb7e6946e2701cb122f0a67d9",
+      "video_path": "data\\local\\video_render\\short\\package-short_form-depin_setup-golem-provider.mp4",
+      "weighted_character_count": 218
+    },
+    {
+      "package_id": "package-short_form-how_to_claim_or_exit-filecoin-storage-provider",
+      "post_text": "Filecoin Storage Provider: How To Claim Or Exit\n\nCan your PC earn while you are away?\n\nUse the official provider tooling and wallet procedures to manage collateral, deal proceeds, and FIL withdrawals.\n\nSource: https://www.filecoin.io/provide-storage\n\n#GamCryp #DePIN",
+      "prepared_at": "2026-09-22T21:10:23.942809+00:00",
+      "source_url": "https://www.filecoin.io/provide-storage",
+      "status": "blocked",
+      "status_reason": "paired X publishing waits for approved ElevenLabs narration",
+      "video_checksum": "8a3309e021e625a3072f32af1e716760074af616e325b8a4ffa9500168ad49d0",
+      "video_path": "data\\local\\video_render\\short\\package-short_form-how_to_claim_or_exit-filecoin-storage-provider.mp4",
+      "weighted_character_count": 250
+    },
+    {
+      "package_id": "package-short_form-how_to_claim_or_exit-golem-provider",
+      "post_text": "Golem Provider: How To Claim Or Exit\n\nCan your PC earn while you are away?\n\nGLM is paid to the configured provider wallet on the selected payment network; confirm wallet and network settings before shutdown.\n\nSource: https://docs.golem.network/docs/golem/overview\n\n#GamCryp #DePIN",
+      "prepared_at": "2026-09-22T21:10:23.956313+00:00",
+      "source_url": "https://docs.golem.network/docs/golem/overview",
+      "status": "blocked",
+      "status_reason": "paired X publishing waits for approved ElevenLabs narration",
+      "video_checksum": "554d5348826f00ce2eb532e6f781bff0ef4e80461b9cae924286040893e321f8",
+      "video_path": "data\\local\\video_render\\short\\package-short_form-how_to_claim_or_exit-golem-provider.mp4",
+      "weighted_character_count": 257
+    },
+    {
+      "package_id": "package-short_form-how_to_start-filecoin-storage-provider",
+      "post_text": "Filecoin Storage Provider: How To Start\n\nCan your PC earn while you are away?\n\nReview Filecoin's current storage-provider and PDP onboarding documentation before selecting an architecture.\n\nSource: https://www.filecoin.io/provide-storage\n\n#GamCryp #DePIN",
+      "prepared_at": "2026-09-22T21:10:23.973883+00:00",
+      "source_url": "https://www.filecoin.io/provide-storage",
+      "status": "blocked",
+      "status_reason": "paired X publishing waits for approved ElevenLabs narration",
+      "video_checksum": "260b86fdb88984498b5eafdfd6023035b6c799ace37c54bad9ba319251225a44",
+      "video_path": "data\\local\\video_render\\short\\package-short_form-how_to_start-filecoin-storage-provider.mp4",
+      "weighted_character_count": 238
+    },
+    {
+      "package_id": "package-short_form-how_to_start-golem-provider",
+      "post_text": "Golem Provider: How To Start\n\nCan your PC earn while you are away?\n\nInstall the Golem provider using the official provider guide and select a production payment network.\n\nSource: https://docs.golem.network/docs/golem/overview\n\n#GamCryp #DePIN",
+      "prepared_at": "2026-09-22T21:10:23.987882+00:00",
+      "source_url": "https://docs.golem.network/docs/golem/overview",
+      "status": "blocked",
+      "status_reason": "paired X publishing waits for approved ElevenLabs narration",
+      "video_checksum": "bccf7bd94e6ce3eef556c0718d4c377f4bd2c2e3ea1cb5ff792dda6d81ca27ee",
+      "video_path": "data\\local\\video_render\\short\\package-short_form-how_to_start-golem-provider.mp4",
+      "weighted_character_count": 219
+    },
+    {
+      "package_id": "package-short_form-how_you_earn-filecoin-storage-provider",
+      "post_text": "Filecoin Storage Provider: How You Earn\n\nCan your PC earn while you are away?\n\nStorage providers earn through eligible storage services, storage deals, and protocol mechanisms subject to proof and penalty rules.\n\nSource: https://www.filecoin.io/provide-storage\n\n#GamCryp #DePIN",
+      "prepared_at": "2026-09-22T21:10:24.005883+00:00",
+      "source_url": "https://www.filecoin.io/provide-storage",
+      "status": "blocked",
+      "status_reason": "paired X publishing waits for approved ElevenLabs narration",
+      "video_checksum": "de726b15df95cf9bc9752f502637f321a9127fe78596fe61579753a98206177a",
+      "video_path": "data\\local\\video_render\\short\\package-short_form-how_you_earn-filecoin-storage-provider.mp4",
+      "weighted_character_count": 261
+    },
+    {
+      "package_id": "package-short_form-how_you_earn-golem-provider",
+      "post_text": "Golem Provider: How You Earn\n\nCan your PC earn while you are away?\n\nProviders share unused compute resources and bill requestors in GLM according to configured prices and actual usage.\n\nSource: https://docs.golem.network/docs/golem/overview\n\n#GamCryp #DePIN",
+      "prepared_at": "2026-09-22T21:10:24.023891+00:00",
+      "source_url": "https://docs.golem.network/docs/golem/overview",
+      "status": "blocked",
+      "status_reason": "paired X publishing waits for approved ElevenLabs narration",
+      "video_checksum": "e23cf431382110718f9e96bca31416ad806c3b6a65bbf4361ed68c89f354200e",
+      "video_path": "data\\local\\video_render\\short\\package-short_form-how_you_earn-golem-provider.mp4",
+      "weighted_character_count": 234
+    },
+    {
+      "package_id": "package-short_form-what_you_need-filecoin-storage-provider",
+      "post_text": "Filecoin Storage Provider: What You Need\n\nCan your PC earn while you are away?\n\nReliable storage infrastructure, compute, network capacity, provider software, and any required collateral or operational funds are needed.\n\nSource: https://www.filecoin.io/provide-storage\n\n#GamCryp #DePIN",
+      "prepared_at": "2026-09-22T21:10:24.042397+00:00",
+      "source_url": "https://www.filecoin.io/provide-storage",
+      "status": "blocked",
+      "status_reason": "paired X publishing waits for approved ElevenLabs narration",
+      "video_checksum": "4ee0a2b444933059a2c1fe3e3e7ffc9b396c8e522efc7b3973003ea26b117994",
+      "video_path": "data\\local\\video_render\\short\\package-short_form-what_you_need-filecoin-storage-provider.mp4",
+      "weighted_character_count": 269
+    },
+    {
+      "package_id": "package-short_form-what_you_need-golem-provider",
+      "post_text": "Golem Provider: What You Need\n\nCan your PC earn while you are away?\n\nA supported x86-64 Linux host, Docker or the direct provider installation, storage, and network access are required.\n\nSource: https://docs.golem.network/docs/golem/overview\n\n#GamCryp #DePIN",
+      "prepared_at": "2026-09-22T21:10:24.061399+00:00",
+      "source_url": "https://docs.golem.network/docs/golem/overview",
+      "status": "blocked",
+      "status_reason": "paired X publishing waits for approved ElevenLabs narration",
+      "video_checksum": "2d2c53e1f51bdbaccd1538ae4716afac9b7984572e37afacbfecca64ac218b8f",
+      "video_path": "data\\local\\video_render\\short\\package-short_form-what_you_need-golem-provider.mp4",
+      "weighted_character_count": 235
+    },
+    {
+      "package_id": "package-short_form-why_roi_unavailable-filecoin-storage-provider",
+      "post_text": "Filecoin Storage Provider: Why Roi Unavailable\n\nCan this actually make money? We cannot verify it yet.\n\nSource: https://www.filecoin.io/provide-storage\n\n#GamCryp #DePIN",
+      "prepared_at": "2026-09-22T21:10:24.080401+00:00",
+      "source_url": "https://www.filecoin.io/provide-storage",
+      "status": "blocked",
+      "status_reason": "paired X publishing waits for approved ElevenLabs narration",
+      "video_checksum": "6981a3f20491f0994744750c4b96e3f5458cbab2cf5f9d2283fb861ea51d1585",
+      "video_path": "data\\local\\video_render\\short\\package-short_form-why_roi_unavailable-filecoin-storage-provider.mp4",
+      "weighted_character_count": 152
+    },
+    {
+      "package_id": "package-short_form-why_roi_unavailable-golem-provider",
+      "post_text": "Golem Provider: Why Roi Unavailable\n\nCan this actually make money? We cannot verify it yet.\n\nSource: https://docs.golem.network/docs/golem/overview\n\n#GamCryp #DePIN",
+      "prepared_at": "2026-09-22T21:10:24.096010+00:00",
+      "source_url": "https://docs.golem.network/docs/golem/overview",
+      "status": "blocked",
+      "status_reason": "paired X publishing waits for approved ElevenLabs narration",
+      "video_checksum": "de7bbf20b64e939e7be9f60820845c3157ad24f53e530b8ad50e81b945c956c2",
+      "video_path": "data\\local\\video_render\\short\\package-short_form-why_roi_unavailable-golem-provider.mp4",
+      "weighted_character_count": 141
+    }
+  ]
+}

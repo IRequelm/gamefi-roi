@@ -129,16 +129,21 @@ def build_x_publish_queue(
         source_batch_id=str(batch_payload["batch_id"]),
         source_batch_hash=hashlib.sha256(source_batch_bytes).hexdigest(),
         generated_at=str(batch_payload["generated_at"]),
-        # X is an autonomous, evidence-bound channel. YELLOW means the copy
-        # needs stronger caveats/lower confidence, not a human click. The
-        # publisher still runs deterministic validation and keeps RED blocked.
+        # Public distribution is approval-gated by default. GREEN content is
+        # publishable once deterministic validation passes; YELLOW content is
+        # held for task-scoped human approval; RED content stays blocked.
         publishable=tuple(
             sorted(
-                (item for item in items if item.status in {ContentReadiness.GREEN, ContentReadiness.YELLOW}),
+                (item for item in items if item.status is ContentReadiness.GREEN),
                 key=_order_key,
             )
         ),
-        awaiting_human_approval=(),
+        awaiting_human_approval=tuple(
+            sorted(
+                (item for item in items if item.status is ContentReadiness.YELLOW),
+                key=_order_key,
+            )
+        ),
         blocked=tuple(sorted((item for item in items if item.status is ContentReadiness.RED), key=_order_key)),
     )
 
@@ -194,8 +199,13 @@ def contains_unsupported_idn_hostname(text: str) -> bool:
 
 
 def _queue_item(pack: ContentPackLite, recommended_order: int, generated_at: str) -> XQueueItem:
-    approval_required = False
-    approval_state = QueueApprovalState.BLOCKED if pack.editorial.readiness is ContentReadiness.RED else QueueApprovalState.NOT_REQUIRED
+    approval_required = pack.editorial.readiness is ContentReadiness.YELLOW
+    if pack.editorial.readiness is ContentReadiness.RED:
+        approval_state = QueueApprovalState.BLOCKED
+    elif pack.editorial.readiness is ContentReadiness.YELLOW:
+        approval_state = QueueApprovalState.AWAITING_HUMAN_APPROVAL
+    else:
+        approval_state = QueueApprovalState.NOT_REQUIRED
     link_required = _link_required(pack, recommended_order)
     final_copy = _final_copy(pack, link_required=link_required)
     return XQueueItem(

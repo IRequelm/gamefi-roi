@@ -106,6 +106,30 @@ def test_refill_is_bounded_and_restart_safe(tmp_path: Path) -> None:
     assert calls == ["fetch", "fetch"]
 
 
+def test_refill_uses_local_catalog_fallback_when_remote_api_is_unavailable(tmp_path: Path, monkeypatch) -> None:
+    config = _config(tmp_path, buffer_size=1)
+    _queue(config.youtube_queue_file)
+    config.x_queue_file.write_text(json.dumps({"publishable": []}), encoding="utf-8")
+    _, packs = load_content_pack_batch(SOURCE_PACK)
+
+    def unavailable(_: str) -> dict:
+        raise OSError("remote API unavailable")
+
+    monkeypatch.setattr(
+        "app.distribution.refill._local_catalog_payloads",
+        lambda: ({"items": []}, {"items": []}),
+    )
+    monkeypatch.setattr(
+        "app.distribution.refill.build_learning_batch",
+        lambda *_args, **_kwargs: list(packs),
+    )
+    result = DistributionRefiller(config, fetch_json=unavailable).run(now=NOW)
+
+    assert result["status"] == "refilled"
+    assert result["source"] == "local_database_fallback"
+    assert config.content_pack_file.is_file()
+
+
 def test_stale_nonfinancial_source_is_explicitly_warned() -> None:
     _, packs = load_content_pack_batch(SOURCE_PACK)
     base = next(pack for pack in packs if pack.source.opportunity_id == "gamcryp-methodology")

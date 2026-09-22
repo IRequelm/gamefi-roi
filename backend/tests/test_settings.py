@@ -26,6 +26,17 @@ def test_postgresql_database_url_is_accepted(monkeypatch) -> None:
     settings = get_settings()
 
     assert settings.database_backend == "postgresql"
+    assert settings.database_connect_timeout_seconds == 10
+
+
+def test_database_connect_timeout_is_bounded(monkeypatch) -> None:
+    monkeypatch.setenv("GAMEFI_ENVIRONMENT", "local")
+    monkeypatch.setenv("GAMEFI_DATABASE_URL", "postgresql+psycopg://user:pass@host:5432/gamefi")
+    monkeypatch.setenv("GAMEFI_DATABASE_CONNECT_TIMEOUT_SECONDS", "7")
+
+    settings = get_settings()
+
+    assert settings.database_connect_timeout_seconds == 7
 
 
 def test_sqlite_is_only_allowed_for_deterministic_tests(monkeypatch) -> None:

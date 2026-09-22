@@ -17,6 +17,8 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.orm import Session
 
 from app.monetization.models import (
+    ContentPerformancePlatform,
+    ContentPerformanceRecord,
     InboundLandingEvent,
     MONETIZATION_METHODOLOGY_VERSION,
     MonetizationMetrics,
@@ -33,6 +35,7 @@ from app.monetization.models import (
     SponsoredPlacementStatus,
 )
 from app.storage.models.monetization import (
+    ContentPerformanceRecordModel,
     InboundLandingEventRecord,
     OutboundClickEventRecord,
     ReferralProgramRecord,
@@ -136,6 +139,118 @@ class MonetizationRepository:
             stmt = stmt.where(InboundLandingEventRecord.landing_path == landing_path)
         with Session(self.engine) as session:
             return [_landing_from_record(record) for record in session.scalars(stmt).all()]
+
+    def save_content_performance(
+        self,
+        *,
+        platform: ContentPerformancePlatform | str,
+        content_id: str,
+        period_start: datetime,
+        period_end: datetime,
+        impressions: int | None = None,
+        views: int | None = None,
+        engagements: int | None = None,
+        link_clicks: int | None = None,
+        profile_visits: int | None = None,
+        followers_gained: int | None = None,
+        subscribers_gained: int | None = None,
+        average_retention_percent: Decimal | str | None = None,
+        evidence_url: str | None = None,
+        evidence_reference: str | None = None,
+        notes: str | None = None,
+        imported_at: datetime | None = None,
+    ) -> ContentPerformanceRecord:
+        selected_platform = _performance_platform(platform)
+        clean_content_id = _clean_optional(content_id, limit=255)
+        if clean_content_id is None:
+            raise MonetizationPersistenceError("content_id is required")
+        start = _normalize_utc(period_start)
+        end = _normalize_utc(period_end)
+        if end < start:
+            raise MonetizationPersistenceError("period_end must be greater than or equal to period_start")
+        counts = {
+            "impressions": impressions,
+            "views": views,
+            "engagements": engagements,
+            "link_clicks": link_clicks,
+            "profile_visits": profile_visits,
+            "followers_gained": followers_gained,
+            "subscribers_gained": subscribers_gained,
+        }
+        if not any(value is not None for value in counts.values()) and average_retention_percent is None:
+            raise MonetizationPersistenceError("At least one platform metric is required")
+        for name, value in counts.items():
+            if value is not None and (not isinstance(value, int) or value < 0):
+                raise MonetizationPersistenceError(f"{name} must be a non-negative integer")
+        retention = Decimal(str(average_retention_percent)) if average_retention_percent is not None else None
+        if retention is not None and (retention < 0 or retention > 100):
+            raise MonetizationPersistenceError("average_retention_percent must be between 0 and 100")
+        clean_evidence_url = _clean_url_text(evidence_url)
+        if clean_evidence_url is not None and not clean_evidence_url.lower().startswith("https://"):
+            raise MonetizationPersistenceError("evidence_url must use https")
+        clean_evidence_reference = _clean_optional(evidence_reference, limit=2048)
+        if clean_evidence_url is None and clean_evidence_reference is None:
+            raise MonetizationPersistenceError("Content performance requires an evidence URL or reference")
+        performance_id = str(
+            uuid5(
+                NAMESPACE_URL,
+                "gamefi-roi-content-performance|{}|{}|{}|{}".format(
+                    selected_platform.value,
+                    clean_content_id,
+                    start.isoformat(),
+                    end.isoformat(),
+                ),
+            )
+        )
+        now = datetime.now(UTC)
+        with Session(self.engine, expire_on_commit=False) as session:
+            record = session.get(ContentPerformanceRecordModel, performance_id)
+            if record is None:
+                record = ContentPerformanceRecordModel(
+                    performance_id=performance_id,
+                    platform=selected_platform.value,
+                    content_id=clean_content_id,
+                    period_start=start,
+                    period_end=end,
+                    created_at=now,
+                )
+                session.add(record)
+            record.platform = selected_platform.value
+            record.content_id = clean_content_id
+            record.period_start = start
+            record.period_end = end
+            record.impressions = impressions
+            record.views = views
+            record.engagements = engagements
+            record.link_clicks = link_clicks
+            record.profile_visits = profile_visits
+            record.followers_gained = followers_gained
+            record.subscribers_gained = subscribers_gained
+            record.average_retention_percent = str(retention) if retention is not None else None
+            record.evidence_url = clean_evidence_url
+            record.evidence_reference = clean_evidence_reference
+            record.notes = _clean_optional(notes, limit=4096)
+            record.imported_at = _normalize_utc(imported_at or now)
+            session.commit()
+            return _content_performance_from_record(record)
+
+    def content_performance(
+        self,
+        *,
+        platform: ContentPerformancePlatform | str | None = None,
+        content_id: str | None = None,
+    ) -> list[ContentPerformanceRecord]:
+        stmt = select(ContentPerformanceRecordModel).order_by(
+            ContentPerformanceRecordModel.period_start,
+            ContentPerformanceRecordModel.platform,
+            ContentPerformanceRecordModel.content_id,
+        )
+        if platform is not None:
+            stmt = stmt.where(ContentPerformanceRecordModel.platform == _performance_platform(platform).value)
+        if content_id is not None:
+            stmt = stmt.where(ContentPerformanceRecordModel.content_id == _clean_optional(content_id, limit=255))
+        with Session(self.engine) as session:
+            return [_content_performance_from_record(record) for record in session.scalars(stmt).all()]
 
     def save_referral_program(
         self,
@@ -554,6 +669,29 @@ def _landing_from_record(record: InboundLandingEventRecord) -> InboundLandingEve
     )
 
 
+def _content_performance_from_record(record: ContentPerformanceRecordModel) -> ContentPerformanceRecord:
+    return ContentPerformanceRecord(
+        performance_id=record.performance_id,
+        platform=ContentPerformancePlatform(record.platform),
+        content_id=record.content_id,
+        period_start=_normalize_utc(record.period_start),
+        period_end=_normalize_utc(record.period_end),
+        impressions=record.impressions,
+        views=record.views,
+        engagements=record.engagements,
+        link_clicks=record.link_clicks,
+        profile_visits=record.profile_visits,
+        followers_gained=record.followers_gained,
+        subscribers_gained=record.subscribers_gained,
+        average_retention_percent=(Decimal(record.average_retention_percent) if record.average_retention_percent is not None else None),
+        evidence_url=record.evidence_url,
+        evidence_reference=record.evidence_reference,
+        notes=record.notes,
+        imported_at=_normalize_utc(record.imported_at),
+        created_at=_normalize_utc(record.created_at),
+    )
+
+
 def _referral_program_from_record(record: ReferralProgramRecord) -> ReferralProgram:
     return ReferralProgram(
         program_id=record.program_id,
@@ -684,6 +822,13 @@ def _placement_status(value: SponsoredPlacementStatus | str) -> SponsoredPlaceme
         return value if isinstance(value, SponsoredPlacementStatus) else SponsoredPlacementStatus(str(value))
     except ValueError as exc:
         raise MonetizationPersistenceError(f"Unsupported sponsored placement status: {value}") from exc
+
+
+def _performance_platform(value: ContentPerformancePlatform | str) -> ContentPerformancePlatform:
+    try:
+        return value if isinstance(value, ContentPerformancePlatform) else ContentPerformancePlatform(str(value).upper())
+    except ValueError as exc:
+        raise MonetizationPersistenceError(f"Unsupported content performance platform: {value}") from exc
 
 
 def _task_type(value: ReferralTaskType | str) -> ReferralTaskType:
