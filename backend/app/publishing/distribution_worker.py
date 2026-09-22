@@ -44,6 +44,14 @@ from app.publishing.short_youtube_handoff import (
     publish_next as publish_next_short_handoff,
     record_autonomous_youtube_success,
 )
+from app.publishing.paired_social import (
+    DEFAULT_OUTBOX_FILE as DEFAULT_PAIRED_X_OUTBOX_FILE,
+    DEFAULT_STATE_FILE as DEFAULT_PAIRED_SOCIAL_STATE_FILE,
+    PairedSocialStore,
+    pairing_key,
+    write_outbox,
+    youtube_record,
+)
 
 logger = logging.getLogger("gamcryp.distribution_worker")
 
@@ -75,6 +83,10 @@ class DistributionWorkerConfig:
     x_daily_cap_file: Path = Path("data/local/x/daily_cap.json")
     x_daily_post_cap: int = 2
     x_daily_retweet_cap: int = 2
+    paired_social_state_file: Path = DEFAULT_PAIRED_SOCIAL_STATE_FILE
+    paired_x_outbox_file: Path = DEFAULT_PAIRED_X_OUTBOX_FILE
+    paired_x_daily_cap: int = 1
+    paired_x_attach_video: bool = True
 
     @classmethod
     def from_environment(cls) -> "DistributionWorkerConfig":
@@ -106,6 +118,10 @@ class DistributionWorkerConfig:
             x_daily_cap_file=Path(os.getenv("GAMEFI_X_DAILY_CAP_FILE", "data/local/x/daily_cap.json")),
             x_daily_post_cap=max(0, int(os.getenv("GAMEFI_X_DAILY_POST_CAP", "2"))),
             x_daily_retweet_cap=max(0, int(os.getenv("GAMEFI_X_DAILY_RETWEET_CAP", "2"))),
+            paired_social_state_file=Path(os.getenv("GAMEFI_PAIRED_SOCIAL_STATE_FILE", str(DEFAULT_PAIRED_SOCIAL_STATE_FILE))),
+            paired_x_outbox_file=Path(os.getenv("GAMEFI_PAIRED_X_OUTBOX_FILE", str(DEFAULT_PAIRED_X_OUTBOX_FILE))),
+            paired_x_daily_cap=max(0, int(os.getenv("GAMEFI_PAIRED_X_DAILY_CAP", "1"))),
+            paired_x_attach_video=os.getenv("GAMEFI_PAIRED_X_ATTACH_VIDEO", "true").strip().lower() in {"1", "true", "yes"},
         )
 
 
@@ -168,7 +184,7 @@ class XDailyCapState:
 
     def __init__(self, path: Path):
         self.path = path
-        self.payload = {"date": "", "posts": 0, "retweets": 0}
+        self.payload = {"date": "", "posts": 0, "retweets": 0, "paired_posts": 0}
         if path.is_file():
             try:
                 candidate = json.loads(path.read_text(encoding="utf-8"))
@@ -180,7 +196,7 @@ class XDailyCapState:
     def _normalize(self, now: datetime) -> None:
         today = now.astimezone(UTC).date().isoformat()
         if self.payload.get("date") != today:
-            self.payload = {"date": today, "posts": 0, "retweets": 0}
+            self.payload = {"date": today, "posts": 0, "retweets": 0, "paired_posts": 0}
 
     def available(self, kind: str, limit: int, *, now: datetime) -> bool:
         self._normalize(now)
@@ -222,6 +238,7 @@ class DistributionWorker:
         self.now = now
         self.state = WorkerState(self.config.state_file)
         self.x_daily_cap = XDailyCapState(self.config.x_daily_cap_file)
+        self.paired_social = PairedSocialStore(self.config.paired_social_state_file)
         self.manual_outbox = XManualOutbox(Path(os.getenv("GAMEFI_MANUAL_X_OUTBOX_FILE", str(self.config.manual_outbox_file))))
         self.x_email_notifier = XManualEmailNotifier(XEmailConfig.from_environment())
         self.x_amplification_email_notifier = XAmplificationEmailNotifier(XEmailConfig.from_environment())
@@ -247,6 +264,9 @@ class DistributionWorker:
         # which carries the current render, narration, and creative QA proof.
         results.append({"platform": "YouTubeLegacyQueue", "status": "disabled_for_autonomous_worker"})
         results.append(self._process_short_handoff(now))
+        paired_result = self._process_paired_x(now)
+        if paired_result.get("status") != "idle":
+            results.append(paired_result)
         degraded = any(
             item.get("status") in {"failed", "refill_failed", "not_ready", "blocked", "dead_letter"}
             or item.get("catalog_status") == "unavailable"
@@ -320,10 +340,10 @@ class DistributionWorker:
             try:
                 preview = self.x_service.preview(content_id)
                 key = f"X:{content_id}:{preview.content_checksum}"
+                if not preview.would_publish:
+                    manual_blockers.extend(f"{content_id}: {blocker}" for blocker in preview.blockers)
+                    continue
                 if self.config.x_publishing_mode == "manual":
-                    if not preview.would_publish:
-                        manual_blockers.extend(f"{content_id}: {blocker}" for blocker in preview.blockers)
-                        continue
                     record = manual_ready_record(
                         content_id=content_id,
                         post_text=preview.exact_final_copy,
@@ -606,6 +626,64 @@ class DistributionWorker:
         finally:
             if engine is not None:
                 engine.dispose()
+
+    def _process_paired_x(self, now: datetime) -> dict[str, Any]:
+        """Promote only successfully published, human-approved Shorts on X."""
+        try:
+            if not self.config.short_handoff_file.is_file():
+                return {"platform": "XPaired", "status": "idle", "detail": "handoff queue is empty"}
+            queue = load_handoff(self.config.short_handoff_file)
+            publisher = self.youtube_distribution.publisher
+            if not hasattr(publisher, "state_store"):
+                return {"platform": "XPaired", "status": "idle", "detail": "YouTube publisher state is unavailable"}
+            for item in queue.items:
+                if item.status != "uploaded" or item.readiness != "GREEN" or item.creative_approval_state != "approved":
+                    continue
+                record = publisher.state_store.find(item.content_id)
+                if record is None or record.status != "uploaded" or not record.video_id:
+                    continue
+                key = pairing_key(item.content_id, item.video_checksum)
+                if self.paired_social.get(key) is None:
+                    self.paired_social.put(key, youtube_record(item=item, youtube_video_id=record.video_id, now=now))
+
+            records = self.paired_social.all()
+            pending = [record for record in records if record.get("x_status") in {"pending", "failed", "manual_ready"}]
+            if not pending:
+                return {"platform": "XPaired", "status": "idle", "detail": "no approved YouTube publication awaiting X pairing"}
+            write_outbox(self.config.paired_x_outbox_file, pending, now=now)
+            if self.config.x_publishing_mode in {"disabled", "manual"}:
+                return {"platform": "XPaired", "status": "manual_ready", "pending": len(pending), "detail": "set GAMEFI_X_PUBLISHING_MODE=live for official API publishing"}
+            if not self.config.live or self.config.x_publishing_mode != "live":
+                return {"platform": "XPaired", "status": "dry_run", "pending": len(pending)}
+            published = 0
+            for record in pending:
+                key = str(record["key"])
+                worker_key = f"XPaired:{key}"
+                if self.state.blocked(worker_key, now=now):
+                    continue
+                if not self.x_daily_cap.available("paired_posts", self.config.paired_x_daily_cap, now=now):
+                    return {"platform": "XPaired", "status": "daily_cap", "published": published}
+                try:
+                    media_id = None
+                    if self.config.paired_x_attach_video:
+                        media_id = self.x_service.api_client.upload_media(Path(str(record["video_path"])))
+                    post_id = self.x_service.api_client.create_post(str(record["x_text"]), media_id=media_id)
+                    updated = {**record, "x_status": "published", "x_post_id": post_id, "x_media_id": media_id, "last_error": None, "updated_at": now.astimezone(UTC).isoformat()}
+                    self.paired_social.put(key, updated)
+                    self.state.record_success(worker_key)
+                    self.x_daily_cap.record("paired_posts", now=now)
+                    published += 1
+                except XAmbiguousApiError as exc:
+                    self.paired_social.put(key, {**record, "x_status": "ambiguous", "last_error": str(exc)[:500], "updated_at": now.astimezone(UTC).isoformat()})
+                    self.state.record_failure(worker_key, error_category="XAmbiguousApiError", now=now, cooldown_seconds=self.config.failure_cooldown_seconds)
+                except XPublisherError as exc:
+                    self.paired_social.put(key, {**record, "x_status": "failed", "last_error": str(exc)[:500], "updated_at": now.astimezone(UTC).isoformat()})
+                    self.state.record_failure(worker_key, error_category=type(exc).__name__, now=now, cooldown_seconds=self.config.failure_cooldown_seconds)
+            write_outbox(self.config.paired_x_outbox_file, self.paired_social.all(), now=now)
+            return {"platform": "XPaired", "status": "published" if published else "failed", "published": published, "pending": len(pending) - published}
+        except Exception as exc:
+            logger.error("paired_x_failed category=%s", type(exc).__name__)
+            return {"platform": "XPaired", "status": "failed", "error_category": type(exc).__name__}
 
 
 def _state_age_hours(payload: dict[str, Any], *, now: datetime) -> float:

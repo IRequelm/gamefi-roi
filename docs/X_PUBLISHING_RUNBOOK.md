@@ -24,7 +24,10 @@ X guide posts use the X-only batch at `distribution/content_packs/x_learning_bat
 
 ## Video-matched Short posts
 
-`scripts/x_video_posts.py` prepares one X post for each current source-led
+`scripts/x_video_posts.py` is a legacy/manual tool. Autonomous distribution now
+creates the paired X post after a human-approved Short is successfully published
+to YouTube, so the X copy always carries the real YouTube video URL. The script
+still prepares one X post for each current source-led
 Short. The record binds the exact `package_id`, rendered MP4 path, SHA-256
 video checksum, source URL, and final post copy in
 `distribution/manual_outbox/x_video_posts.json`. The default command is a
@@ -116,6 +119,10 @@ GAMEFI_X_AMPLIFICATION_MIN_ENGAGEMENT=10
 GAMEFI_X_DAILY_CAP_FILE=data/local/x/daily_cap.json
 GAMEFI_X_DAILY_POST_CAP=2
 GAMEFI_X_DAILY_RETWEET_CAP=2
+GAMEFI_PAIRED_SOCIAL_STATE_FILE=data/local/distribution/paired_social.json
+GAMEFI_PAIRED_X_OUTBOX_FILE=data/local/distribution/paired_x_outbox.json
+GAMEFI_PAIRED_X_DAILY_CAP=1
+GAMEFI_PAIRED_X_ATTACH_VIDEO=true
 GAMEFI_X_AMPLIFICATION_EMAIL_STATE_FILE=data/local/distribution/x_amplification_email_state.json
 ```
 
