@@ -34,6 +34,7 @@ APPROVED_VOICES = (
     ("Bella", "FGY2WhTYpPnrIDTdsKH5"),
     ("Laura", "hpp4J3VqNfWAUOO0d1Us"),
 )
+MUSIC_BED_SOURCE = Path(__file__).resolve().parents[3] / "video" / "remotion" / "public" / "audio" / "gym-dubstep-bed.mp3"
 
 
 @dataclass(frozen=True)
@@ -970,20 +971,17 @@ def _last_provider_failure_was_account_blocked(error: str | None) -> bool:
 
 
 def _generate_music_bed(path: Path, *, duration: int, run: Callable[..., subprocess.CompletedProcess[str]]) -> bool:
-    """Create a small local, attribution-free instrumental bed.
-
-    This is deliberately not a TTS fallback: it contains no spoken content and
-    is only used for Shorts whose visual/caption package is independently
-    understandable. No external media or recurring service is required.
-    """
+    """Create a local original gym/dubstep bed without spending TTS credits."""
 
     path.parent.mkdir(parents=True, exist_ok=True)
+    if not MUSIC_BED_SOURCE.is_file():
+        return False
     command = [
         "ffmpeg", "-y",
-        "-f", "lavfi", "-i", "sine=frequency=220:sample_rate=44100",
-        "-f", "lavfi", "-i", "sine=frequency=277.18:sample_rate=44100",
-        "-filter_complex", "[0:a]volume=0.035[a0];[1:a]volume=0.025[a1];[a0][a1]amix=inputs=2:duration=longest,afade=t=in:st=0:d=1,afade=t=out:st=" + str(max(duration - 2, 1)) + ":d=2",
-        "-t", str(duration), "-c:a", "libmp3lame", "-b:a", "96k", str(path),
+        "-stream_loop", "-1", "-i", str(MUSIC_BED_SOURCE),
+        "-t", str(duration),
+        "-af", "afade=t=in:st=0:d=0.4,afade=t=out:st=" + str(max(duration - 1, 1)) + ":d=1",
+        "-c:a", "libmp3lame", "-b:a", "160k", str(path),
     ]
     try:
         completed = run(command, check=False, capture_output=True, text=True)
