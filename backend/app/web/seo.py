@@ -1071,7 +1071,7 @@ def _render_opportunity_cards(opportunities: list[OpportunitySummary], *, headin
 
 def _render_catalog_stats(rankings: RankingsPage, opportunities: list[OpportunitySummary]) -> str:
     opportunity_count = len(opportunities)
-    modeled_count = rankings.page.total
+    modeled_count = sum(opportunity.strategy_count for opportunity in opportunities)
     modeled_opportunity_count = sum(1 for opportunity in opportunities if opportunity.strategy_count > 0)
     unavailable_count = sum(1 for opportunity in opportunities if opportunity.strategy_count == 0)
     opportunity_types = ", ".join(
