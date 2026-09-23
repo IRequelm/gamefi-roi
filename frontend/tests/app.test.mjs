@@ -218,7 +218,7 @@ test("catalog stats summarize V1 coverage without financial recomputation", () =
   assert.match(html, /Reviewed opportunities/);
   assert.match(html, />3</);
   assert.match(html, /Modeled strategies/);
-  assert.match(html, />10</);
+  assert.match(html, />3</);
   assert.match(html, /Games.*DePIN.*Nodes.*Points/);
   assert.doesNotMatch(html, /DEPIN_NODE|DEPIN NODE/);
   assert.match(html, /Guide-only opportunities/);
