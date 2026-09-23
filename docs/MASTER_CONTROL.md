@@ -19,6 +19,18 @@ This is the durable operational summary for the GamCryp V2 finish pass. Reposito
 - The explicitly approved Filecoin Storage Provider Short was published through the existing quality-gated handoff as public video `pr7D-6j0RMI`. Local state records the exact approved checksum and upload; the read-only YouTube probe reports `uploadedStatus=uploaded`, `privacyStatus=public`, and `processingStatus=processing`. The one-public-Short daily cap is now used for the local calendar day.
 - Commit `ade0674` makes a prior `YouTubeAuthError` dead-letter self-recover after a read-only authenticated/channel/upload-scope probe succeeds. The worker no longer requires manual state-file editing after a transient OAuth restoration.
 
+## 0d. 2026-09-23 operator recovery checkpoint (19:22 UTC)
+
+- A manual dispatch of `render-beta-recalculation.yml` at 19:16 UTC completed successfully at 19:17 UTC with `score_count=7`, 7 snapshots, and no failure ids. The public API showed 7/7 eligible strategies fresh at 19:18 UTC, and `/api/v1/rankings` returned 7 rows. At 19:22 UTC the observations had passed their five-minute freshness window: public ops returned `degraded`, `fresh_eligible_count=0`, and `stale_strategy_count=15`. The workflow YAML and repository variable are configured, but recent scheduled runs were separated by multi-hour gaps; a manual success does not establish reliable scheduled freshness.
+- Public ops returned database `ok` at 19:22 UTC. This verifies endpoint connectivity only; the current Render database tier, managed backup/PITR state, and a successful restore remain unverified. The repository’s last recorded account observation was Free Postgres.
+- Local `python -m app.doctor` passed against PostgreSQL and migration head `20260921_0011`. This local check is separate from Render plan or backup verification.
+- The Windows tasks `GamCryp Distribution Worker` and `GamCryp Discovery Worker` were both `Ready`. The distribution task’s last result was `3221225786`; its heartbeat at 18:20 UTC was over 60 minutes old. `scripts/growth_metrics_report.py` now marks heartbeats older than 45 minutes stale instead of trusting a stored `status: ok` indefinitely.
+- The growth report can optionally read aggregate first-party event counts from public `/api/v1/ops/status`. At 19:22 UTC production reported 3,550 landing events and 1,431 outbound redirect events. These are aggregate events, not unique human visits, verified partner clicks, conversions, or revenue. The environment-local database report still records zero click/revenue imports; those records are not presumed to describe production.
+- Live GA4 last-28-day data returned 5 active users and 63 sessions. Explicit manual-test labels account for 22 sessions; the remaining 41 are 37 Direct and 4 organic-social sessions (3 `x / social`, 1 `t.co / referral`). Search Console returned 128 impressions and 0 clicks. YouTube last-28-day reporting returned about 203 views and no subscriber gains across eight videos; watch-time measures contain inconsistent values and are not a reliable optimization basis yet.
+- The local referral database summary shows zero active links and no verified revenue imports. The six official leads documented in the Referral Operations Runbook still need account-specific applications/links. No personalized referral destination was invented or activated.
+- The current YouTube handoff has 11 queued items pending human review. One uploaded item carries an `approved` tag while using `music_only` audio and a review note accepting that fallback. This conflicts with the project’s current ElevenLabs narration policy, so the growth report no longer counts it as a policy-qualified queued approval or compliant upload. The existing public upload was not changed.
+- No X post, email, referral application, paid plan, or additional Short was created by this checkpoint. The one-public-Short daily cap is already consumed for 2026-09-23.
+
 ## 0a. Product-hardening pass (deployed and verified)
 
 - The homepage and degraded fallback now use product language rather than the public-beta label.
@@ -87,9 +99,9 @@ Official destinations and reviewed outbound redirects remain allowlisted and sep
 ## 6. Distribution state
 
 - `GAMEFI_DISTRIBUTION_LIVE=true` in the local `.env`, but the current queue is fail-closed by the creative gates and today's one-success cap is already consumed; no additional upload is permitted today.
-- Windows task `GamCryp Distribution Worker` exists, is enabled, runs at login, and was observed in `Running` state without a terminal window.
-- Short handoff buffer target is bounded at 14; the current local handoff contains 0 queued and 3 previously uploaded records. New items are admitted only after the current creative contract, narration, asset, checksum, and frame-QA checks pass.
-- YouTube daily cap remains one successful public Short per local calendar day. The local cap state records one success for 2026-09-09, so no further upload is permitted today. The cap check and successful-upload state update are protected by a process lock.
+- Windows task `GamCryp Distribution Worker` exists and is enabled, but the latest observed state was `Ready`, not `Running`; its heartbeat was stale. See checkpoint 0d.
+- Short handoff buffer target is bounded at 14; the current local handoff contains 11 queued, 3 uploaded, and 2 ambiguous records. Queued items remain subject to current creative, narration, asset, checksum, and frame-QA checks.
+- YouTube daily cap remains one successful public Short per local calendar day. The local cap state records one success for 2026-09-23, so no further upload is permitted today. The cap check and successful-upload state update are protected by a process lock.
 - Failed narration/render never enters the handoff. Music-only or silent media is never publishable: every Short requires approved ElevenLabs narration with provider/voice/model metadata. X failures are isolated from YouTube.
 - The visual gate requires a category-specific hook, six planned beats with at least five meaningful scenes, scene diversity, approved non-caption product visuals, identity representation, transitions, validated safe captions, no clipping, a natural GamCryp evaluation close, a brand sting, matching narration/script metadata, and representative post-render frame QA. GamCryp is not shown as a generic intro.
 
@@ -130,7 +142,7 @@ The LIVE flag is local `.env` state and is currently `true` for the quality-gate
 
 ## 10. Observability
 
-- GA4: repository implementation and consent-gated browser wiring are present; local/production activation is not proven in this pass.
+- GA4: consent-gated browser wiring is present and the connected production property returned live aggregate data in the 2026-09-23 checkpoint. Test-tagged traffic must be excluded for acquisition analysis; Direct sessions remain unattributed.
 - Sentry: repository integration is present; Render logs show initialization, but full production error coverage is not independently verified here.
 - PostHog: repository integration is present and consent-gated with explicit events; production activation is not proven here.
 - First-party inbound/outbound analytics are implemented with privacy-minimal records. Commercial analytics remain separate from model data.
@@ -154,12 +166,12 @@ Operational gaps still requiring explicit monitoring: snapshot refresh age, queu
 
 ## 12. Current limitations
 
-1. Render Postgres remains Free; backups/PITR and expiry protection are not production-grade.
+1. The public database endpoint responds, but the current Render tier and backup/PITR/restore state are not independently verified. The last recorded account observation was Free Postgres, which is not production-grade.
 2. Cloudflare/edge Managed Challenge can return 429 to some non-browser probes; security was not weakened.
 3. ElevenLabs currently reports 0 remaining credits; narrated production is blocked. Music-only and silent Shorts cannot enter the publish queue.
-4. The worker restarted successfully on 2026-09-13 after its legacy refill batch was made tolerant of missing/stale ranking IDs. It is healthy, but it has no queued GREEN Short because no approved visual+narration package currently qualifies.
+4. Current local task state is `Ready`, not running. Its last heartbeat is stale, and the queued Shorts lack a current policy-qualified approval. Do not infer worker health from the old 2026-09-13 restart.
 5. X uses local manual-ready handoff rather than API/browser automation. Email notification is not configured, but the outbox remains Git-visible and remotely readable.
-6. The public homepage still needs deployment reconciliation: live `/api/v1/opportunities` reports 51 catalog entries while server-rendered homepage content shows its older 50-reviewed/8-opportunity slice. The safe homepage/catalog correction is included in the pending production release.
+6. The live homepage now reports 51 reviewed opportunities and 15 modeled strategies across 8 opportunities. Snapshot freshness remains intermittent: the manual recovery produced 7 fresh rankings, which expired after the five-minute input freshness window while scheduled runs remained sparse.
 
 ## 13. Release-closure decision
 

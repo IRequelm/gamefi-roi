@@ -70,6 +70,42 @@ def test_queue_summary_distinguishes_manual_api_and_historical_evidence(tmp_path
     assert summary["youtube"]["current_approved_upload_evidence"] is False
 
 
+def test_queue_summary_does_not_count_music_only_approval_as_publishable(tmp_path, monkeypatch):
+    queue_dir = tmp_path / "distribution/publish_queue"
+    queue_dir.mkdir(parents=True)
+    youtube_dir = tmp_path / "data/local/youtube"
+    youtube_dir.mkdir(parents=True)
+    (queue_dir / "youtube_short_handoff.json").write_text(
+        json.dumps(
+            {
+                "items": [
+                    {
+                        "content_id": "music-only",
+                        "status": "queued",
+                        "creative_approval_state": "approved",
+                        "creative_approved_at": "2026-09-23T00:00:00+00:00",
+                        "creative_reviewed_by": "operator",
+                        "video_checksum": "a" * 64,
+                        "creative_approval_video_checksum": "a" * 64,
+                        "audio_mode": "music_only",
+                        "narration_provider": "local_music",
+                        "narration_reused": False,
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(growth_metrics_report, "ROOT", tmp_path)
+
+    summary = growth_metrics_report._queue_summary()
+
+    assert summary["youtube"]["approved"] == 1
+    assert summary["youtube"]["queued_qualified_approved"] == 0
+    assert summary["youtube"]["policy_disqualified_approved"] == 1
+    assert summary["youtube"]["current_approved_upload_evidence"] is False
+
+
 def test_historical_youtube_upload_does_not_satisfy_current_publication_gate(monkeypatch):
     monkeypatch.setattr(growth_metrics_report, "_load_local_environment", lambda: None)
     monkeypatch.setattr(
@@ -79,6 +115,7 @@ def test_historical_youtube_upload_does_not_satisfy_current_publication_gate(mon
             "x": {"live_api_publication_evidence": False},
             "youtube": {
                 "approved": 0,
+                "queued_qualified_approved": 0,
                 "live_upload_evidence": True,
                 "current_approved_upload_evidence": False,
             },
@@ -134,6 +171,60 @@ def test_distribution_summary_surfaces_degraded_worker_and_dead_letters(tmp_path
     assert summary["status"] == "degraded"
     assert summary["dead_letters"] == ["YouTubeShortHandoff"]
     assert summary["platform_statuses"][0]["status"] == "dead_letter"
+
+
+def test_distribution_summary_marks_expired_ok_heartbeat_stale(tmp_path, monkeypatch):
+    distribution_dir = tmp_path / "data/local/distribution"
+    distribution_dir.mkdir(parents=True)
+    (distribution_dir / "worker_heartbeat.json").write_text(
+        json.dumps(
+            {
+                "status": "ok",
+                "updated_at": "2020-01-01T00:00:00+00:00",
+                "platform_statuses": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(growth_metrics_report, "ROOT", tmp_path)
+
+    summary = growth_metrics_report._distribution_summary()
+
+    assert summary["reported_status"] == "ok"
+    assert summary["status"] == "stale"
+    assert summary["health_reason"] == "heartbeat_expired"
+    assert summary["heartbeat_age_minutes"] > summary["max_heartbeat_age_minutes"]
+
+
+def test_public_runtime_measurement_labels_aggregate_counts(monkeypatch):
+    response = SimpleNamespace(
+        raise_for_status=lambda: None,
+        json=lambda: {
+            "status": "degraded",
+            "generated_at": "2026-09-23T19:00:00Z",
+            "measurement": {
+                "status": "data_available",
+                "first_party": {
+                    "landing_events": 3546,
+                    "outbound_clicks": 1431,
+                    "content_performance_records": 0,
+                },
+            },
+        },
+    )
+    monkeypatch.setattr(growth_metrics_report.httpx, "get", lambda *args, **kwargs: response)
+
+    summary = growth_metrics_report._public_runtime_measurement("https://gamcryp.com")
+
+    assert summary["available"] is True
+    assert summary["aggregate_event_counts"]["landing_events"] == 3546
+    assert "not unique human users" in summary["warning"]
+
+
+def test_public_runtime_measurement_rejects_non_origin_urls():
+    summary = growth_metrics_report._public_runtime_measurement("http://localhost:8000/path")
+
+    assert summary == {"available": False, "reason": "public_status_url_must_be_an_https_origin"}
 
 
 def test_referral_summary_exposes_coverage_and_open_operator_tasks(monkeypatch):

@@ -12,11 +12,16 @@ import argparse
 import json
 import sys
 from collections import Counter
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
+
+import httpx
 
 
 ROOT = Path(__file__).resolve().parents[1]
+WORKER_HEARTBEAT_MAX_AGE_MINUTES = 45
 sys.path.insert(0, str(ROOT / "backend"))
 
 
@@ -72,6 +77,17 @@ def _queue_summary() -> dict[str, Any]:
 
     x_manual_items = x_manual.get("items") or ([] if not x_manual.get("item") else [x_manual["item"]])
     youtube_items = youtube.get("items", [])
+    qualified_approved = [item for item in youtube_items if _has_qualified_creative_approval(item)]
+    queued_qualified_approved = [item for item in qualified_approved if item.get("status") == "queued"]
+    publish_state = _load_json(ROOT / "data/local/youtube/publish_state.json").get("records", {})
+    uploaded_qualified = [
+        item
+        for item in qualified_approved
+        if item.get("status") == "uploaded"
+        and isinstance(publish_state.get(item.get("content_id")), dict)
+        and publish_state[item.get("content_id")].get("status") == "uploaded"
+        and bool(publish_state[item.get("content_id")].get("video_id"))
+    ]
     return {
         "x": {
             "autonomous_green": len(x_autonomous.get("publishable", [])),
@@ -102,14 +118,37 @@ def _queue_summary() -> dict[str, Any]:
                 if item.get("audio_mode") == "neural_voice" and item.get("creative_approval_state") == "pending_review"
             ),
             "approved": sum(1 for item in youtube_items if item.get("creative_approval_state") == "approved"),
+            "qualified_approved": len(qualified_approved),
+            "queued_qualified_approved": len(queued_qualified_approved),
+            "policy_disqualified_approved": sum(
+                1
+                for item in youtube_items
+                if item.get("creative_approval_state") == "approved" and not _has_qualified_creative_approval(item)
+            ),
             "audio_modes": dict(Counter(item.get("audio_mode", "unknown") for item in youtube_items)),
             "live_upload_allowed": False,
             "live_upload_evidence": bool(confirmed_youtube),
             "historical_upload_evidence": bool(confirmed_youtube),
             "confirmed_uploads": len(confirmed_youtube),
-            "current_approved_upload_evidence": False,
+            "current_approved_upload_evidence": bool(uploaded_qualified),
         },
     }
+
+
+def _has_qualified_creative_approval(item: dict[str, Any]) -> bool:
+    checksum = item.get("video_checksum")
+    return bool(
+        item.get("creative_approval_state") == "approved"
+        and item.get("creative_approved_at")
+        and item.get("creative_reviewed_by")
+        and checksum
+        and item.get("creative_approval_video_checksum") == checksum
+        and item.get("audio_mode") == "neural_voice"
+        and item.get("narration_provider") == "elevenlabs"
+        and item.get("narration_reused") is True
+        and item.get("narration_voice_id")
+        and item.get("narration_model_id")
+    )
 
 
 def _discovery_summary() -> dict[str, Any]:
@@ -139,10 +178,40 @@ def _distribution_summary() -> dict[str, Any]:
     heartbeat = _load_json(ROOT / "data/local/distribution/worker_heartbeat.json")
     state = _load_json(ROOT / "data/local/distribution/worker_state.json")
     platform_statuses = heartbeat.get("platform_statuses", [])
+    reported_status = heartbeat.get("status", "unknown")
+    updated_at = heartbeat.get("updated_at")
+    heartbeat_age_minutes = None
+    status = reported_status
+    health_reason = None
+    if not heartbeat:
+        status = "missing"
+        health_reason = "heartbeat_missing"
+    elif not updated_at:
+        status = "stale"
+        health_reason = "heartbeat_timestamp_missing"
+    else:
+        try:
+            parsed_at = datetime.fromisoformat(str(updated_at).replace("Z", "+00:00"))
+            if parsed_at.tzinfo is None:
+                parsed_at = parsed_at.replace(tzinfo=timezone.utc)
+            heartbeat_age_minutes = (datetime.now(timezone.utc) - parsed_at.astimezone(timezone.utc)).total_seconds() / 60
+            if heartbeat_age_minutes < 0:
+                status = "stale"
+                health_reason = "heartbeat_timestamp_in_future"
+            elif heartbeat_age_minutes > WORKER_HEARTBEAT_MAX_AGE_MINUTES and reported_status == "ok":
+                status = "stale"
+                health_reason = "heartbeat_expired"
+        except (TypeError, ValueError, OverflowError):
+            status = "stale"
+            health_reason = "heartbeat_timestamp_invalid"
     return {
         "heartbeat_present": bool(heartbeat),
-        "status": heartbeat.get("status", "unknown"),
-        "updated_at": heartbeat.get("updated_at"),
+        "status": status,
+        "reported_status": reported_status,
+        "health_reason": health_reason,
+        "heartbeat_age_minutes": round(heartbeat_age_minutes, 1) if heartbeat_age_minutes is not None else None,
+        "max_heartbeat_age_minutes": WORKER_HEARTBEAT_MAX_AGE_MINUTES,
+        "updated_at": updated_at,
         "platform_statuses": platform_statuses if isinstance(platform_statuses, list) else [],
         "dead_letters": sorted(
             key
@@ -232,7 +301,42 @@ def _referral_summary(repository: Any, open_task_status: Any) -> dict[str, Any]:
     }
 
 
-def build_report() -> dict[str, Any]:
+def _public_runtime_measurement(public_status_url: str) -> dict[str, Any]:
+    parsed = urlparse(public_status_url)
+    if (
+        parsed.scheme != "https"
+        or not parsed.hostname
+        or parsed.username
+        or parsed.password
+        or parsed.path not in {"", "/"}
+        or parsed.query
+        or parsed.fragment
+    ):
+        return {"available": False, "reason": "public_status_url_must_be_an_https_origin"}
+    try:
+        response = httpx.get(f"{public_status_url.rstrip('/')}/api/v1/ops/status", timeout=10.0)
+        response.raise_for_status()
+        payload = response.json()
+        measurement = payload.get("measurement", {})
+        first_party = measurement.get("first_party", {})
+        return {
+            "available": True,
+            "source": "public_ops_status",
+            "api_status": payload.get("status"),
+            "generated_at": payload.get("generated_at"),
+            "measurement_status": measurement.get("status"),
+            "aggregate_event_counts": {
+                "landing_events": first_party.get("landing_events"),
+                "outbound_redirect_events": first_party.get("outbound_clicks"),
+                "content_performance_records": first_party.get("content_performance_records"),
+            },
+            "warning": "Aggregate application event counts are not unique human users, verified partner clicks, conversions, or revenue.",
+        }
+    except (httpx.HTTPError, ValueError, TypeError) as exc:
+        return {"available": False, "source": "public_ops_status", "error_type": type(exc).__name__}
+
+
+def build_report(*, public_status_url: str | None = None) -> dict[str, Any]:
     _load_local_environment()
     report: dict[str, Any] = {
         "status": "PASS",
@@ -247,6 +351,8 @@ def build_report() -> dict[str, Any]:
     except Exception as exc:  # pragma: no cover - operational failure path
         report["status"] = "DEGRADED"
         report["database"] = {"available": False, "error_type": type(exc).__name__}
+    if report["distribution"].get("status") != "ok":
+        report["status"] = "DEGRADED"
     database = report["database"]
     queues = report["queues"]
     report["business_status"] = "INCOMPLETE"
@@ -255,7 +361,7 @@ def build_report() -> dict[str, Any]:
         "distribution_worker_healthy": report["distribution"]["status"] == "ok",
         "mailbox_candidate_loop_exercised": _candidate_mailbox_was_exercised(report["discovery"]["candidate_email_status"]),
         "approval_mailbox_ready": report["discovery"]["approval_email_status"] == "READY",
-        "human_creative_approval": queues["youtube"]["approved"] > 0,
+        "human_creative_approval": queues["youtube"]["queued_qualified_approved"] > 0,
         "x_live_publication_evidence": queues["x"]["live_api_publication_evidence"],
         # Historical uploads prove only that an old item was uploaded.  The
         # current growth gate must require a checksum-bound creative approval
@@ -269,8 +375,13 @@ def build_report() -> dict[str, Any]:
         "acquisition_data_available": database.get("inbound", {}).get("landing_events", 0) > 0,
         "outbound_click_data_available": database.get("outbound", {}).get("clicks", 0) > 0,
         "verified_revenue_available": database.get("revenue", {}).get("verified_records", 0) > 0,
+        "local_store_scope": "The database queried by this script's current environment; it is not assumed to be production.",
+        "production_runtime": _public_runtime_measurement(public_status_url) if public_status_url else {
+            "available": False,
+            "reason": "not_requested",
+        },
         "revenue_target_reached": False,
-        "note": "No revenue target is credited without verified partner evidence.",
+        "note": "No revenue target is credited without verified partner evidence. Production event counts are aggregate and do not prove unique people or human clicks.",
     }
     return report
 
@@ -283,8 +394,18 @@ def _candidate_mailbox_was_exercised(status: object) -> bool:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, help="Optional JSON output path; report remains read-only.")
+    parser.add_argument(
+        "--public-status-url",
+        help="Optional public HTTPS origin (for example https://gamcryp.com) for aggregate production measurement status.",
+    )
     args = parser.parse_args()
-    payload = json.dumps(build_report(), ensure_ascii=False, indent=2, sort_keys=True, default=str) + "\n"
+    payload = json.dumps(
+        build_report(public_status_url=args.public_status_url),
+        ensure_ascii=False,
+        indent=2,
+        sort_keys=True,
+        default=str,
+    ) + "\n"
     if args.output:
         args.output.write_text(payload, encoding="utf-8")
     print(payload, end="")
