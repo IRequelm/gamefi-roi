@@ -324,7 +324,7 @@ export function renderHomeShell(games = [], rankings = { items: [], page: { tota
 
 export function renderCatalogStats(rankings = { page: { total: 0 } }, opportunities = []) {
   const opportunityCount = opportunities.length;
-  const modeledCount = rankings.page?.total ?? (rankings.items || []).length;
+  const modeledCount = opportunities.reduce((total, opportunity) => total + Number(opportunity.strategy_count || 0), 0);
   const unavailableCount = opportunities.filter((opportunity) => !opportunity.strategy_count).length;
   const types = new Set();
   for (const opportunity of opportunities) {
