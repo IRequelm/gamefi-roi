@@ -6,11 +6,11 @@ This is the durable operational summary for the GamCryp V2 finish pass. Reposito
 
 ## 0b. 2026-09-23 data freshness and measurement recovery
 
-- Repository recovery commit `9200350` (merged with remote documentation as `054185f`) aligns the recalculation policy with the five-minute publication-fresh market observation window. The paid Render blueprint and beta workflow now use `*/5 * * * *`; a 30-minute scheduler left `/api/v1/rankings` empty between successful runs.
+- Repository recovery commit `9200350` aligns the recalculation policy with the five-minute publication-fresh market observation window. The paid Render blueprint and beta workflow now use `*/5 * * * *`; a 30-minute scheduler left `/api/v1/rankings` empty between successful runs.
 - CoinGecko price reads use a bounded 30-second in-process cache keyed by provider/request/transport. This reduces repeated identical calls across strategy variants without extending observation freshness or inventing values. A local production-shaped run refreshed 7 eligible strategies with 0 failures after DFK was policy-skipped.
-- A manual GitHub Actions run on `054185f` completed with 7 fresh snapshots, 7 scores, 0 failure ids, and 8 policy-skipped strategies. Public `/api/v1/rankings` subsequently returned 7 items and public ops status returned `ok`.
+- A manual GitHub Actions run on `2eebe25` (`35880386491`) completed with 7 fresh snapshots, 7 scores, 0 failure ids, and 8 policy-skipped strategies. Public `/api/v1/rankings` subsequently returned 7 items and public ops status returned `ok`.
 - `/api/v1/ops/status` now exposes aggregate first-party measurement truth (`landing_events`, `outbound_clicks`, and content-performance records) separately from ROI/rankings. Empty acquisition data is reported as `instrumented_no_records`; browser capture configuration is not treated as proof of traffic.
-- The public web service was not auto-deployed by the push because the active Render blueprint keeps `autoDeployTrigger: off`. The database refresh is live through the scheduled workflow, but the new API measurement field and cadence env default require the operator’s normal Render deploy/sync step before they can be claimed as live web code.
+- Render web deploy `dep-dapuq32d0e5s73agfdp0` is live from `2eebe25`; the Render environment override `GAMEFI_SCHEDULER_CADENCE_MINUTES` was corrected from `30` to `5`. Public verification now reports cadence `5`, `fresh_eligible_count=7`, `stale_count=0`, `unresolved_failure_count=0`, and the measurement field is live.
 
 ## 0a. Product-hardening pass (deployed and verified)
 
