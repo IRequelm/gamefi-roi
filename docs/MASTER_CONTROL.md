@@ -12,6 +12,13 @@ This is the durable operational summary for the GamCryp V2 finish pass. Reposito
 - `/api/v1/ops/status` now exposes aggregate first-party measurement truth (`landing_events`, `outbound_clicks`, and content-performance records) separately from ROI/rankings. Empty acquisition data is reported as `instrumented_no_records`; browser capture configuration is not treated as proof of traffic.
 - Render web deploy `dep-dapuq32d0e5s73agfdp0` is live from `2eebe25`; the Render environment override `GAMEFI_SCHEDULER_CADENCE_MINUTES` was corrected from `30` to `5`. Public verification now reports cadence `5`, `fresh_eligible_count=7`, `stale_count=0`, `unresolved_failure_count=0`, and the measurement field is live.
 
+## 0c. 2026-09-23 live analytics and YouTube recovery
+
+- Windsor.ai read access is now available for the connected GamCryp GA4 property (`551782569`), Search Console domain (`sc-domain:gamcryp.com`), and YouTube accounts. Last-30-day GA4 data filtered out explicit manual-test source labels and returned 5 active users, 5 new users, 41 sessions, 22 engaged sessions, 108 page views, and 5,173 engagement seconds. These are aggregate analytics values, not a claim of five unique human identities.
+- Search Console returned 0 clicks and low nonzero impressions for the last 28-day window. YouTube read data verified the GamCryp channel with 7 prior videos, 196 prior lifetime views, and 2 subscribers before the new publication. The strongest prior Shorts were Acurast (60 views), GEODNET (39), and DFK/Aethir (31 each); GEODNET remains the next editorial priority but its current render is blocked by missing approved product-specific visual evidence.
+- The explicitly approved Filecoin Storage Provider Short was published through the existing quality-gated handoff as public video `pr7D-6j0RMI`. Local state records the exact approved checksum and upload; the read-only YouTube probe reports `uploadedStatus=uploaded`, `privacyStatus=public`, and `processingStatus=processing`. The one-public-Short daily cap is now used for the local calendar day.
+- Commit `ade0674` makes a prior `YouTubeAuthError` dead-letter self-recover after a read-only authenticated/channel/upload-scope probe succeeds. The worker no longer requires manual state-file editing after a transient OAuth restoration.
+
 ## 0a. Product-hardening pass (deployed and verified)
 
 - The homepage and degraded fallback now use product language rather than the public-beta label.
