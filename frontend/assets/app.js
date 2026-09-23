@@ -95,6 +95,7 @@ const ANALYTICS_ALLOWED_PARAMS = new Set([
   "page_title",
 ]);
 const PRODUCT_ANALYTICS_ALLOWED_EVENTS = new Set([
+  "$pageview",
   "opportunity_view",
   "strategy_view",
   "ranking_view",
@@ -108,6 +109,9 @@ const PRODUCT_ANALYTICS_ALLOWED_EVENTS = new Set([
   "ranking_filter_used",
 ]);
 const PRODUCT_ANALYTICS_ALLOWED_PARAMS = new Set([
+  "$current_url",
+  "$pathname",
+  "$title",
   "opportunity_slug",
   "opportunity_id",
   "opportunity_type",
@@ -2656,7 +2660,13 @@ function trackPageView(path = globalThis.window?.location?.pathname || "", title
     return false;
   }
   lastTrackedPage = key;
-  return trackAnalyticsEvent("page_view", { page_path: path, page_title: title });
+  const trackedGoogleAnalytics = trackAnalyticsEvent("page_view", { page_path: path, page_title: title });
+  const trackedProductAnalytics = trackProductAnalyticsEvent("$pageview", {
+    $current_url: globalThis.window?.location?.href,
+    $pathname: path,
+    $title: title,
+  });
+  return trackedGoogleAnalytics || trackedProductAnalytics;
 }
 
 function trackRouteView(path, routeContext = {}) {

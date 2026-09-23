@@ -835,6 +835,23 @@ test("PostHog product analytics is consent gated, explicit, and privacy safe", (
   assert.equal(sent[0].payload.properties.raw_financial_payload, undefined);
   assert.equal(sent[0].payload.properties.wallet_address, undefined);
   assert.equal(sent[0].payload.properties.$process_person_profile, false);
+
+  assert.equal(
+    trackProductAnalyticsEvent(
+      "$pageview",
+      {
+        $current_url: "https://gamcryp.com/rankings/gamefi-under-50?utm_source=x",
+        $pathname: "/rankings/gamefi-under-50",
+        $title: "GameFi under $50",
+      },
+      context,
+    ),
+    true,
+  );
+  assert.equal(sent.length, 2);
+  assert.equal(sent[1].payload.event, "$pageview");
+  assert.equal(sent[1].payload.properties.$pathname, "/rankings/gamefi-under-50");
+  assert.equal(sent[1].payload.properties.$title, "GameFi under $50");
 });
 
 test("outbound CTAs expose referral versus official fallback metadata without changing /go", () => {
