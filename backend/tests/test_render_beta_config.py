@@ -26,7 +26,7 @@ def test_paid_render_blueprint_preserves_production_cron_and_paid_database() -> 
     assert "type: cron" in blueprint
     assert "name: gamefi-roi-recalculation" in blueprint
     assert "plan: basic-256mb" in blueprint
-    assert "schedule: \"*/30 * * * *\"" in blueprint
+    assert "schedule: \"*/5 * * * *\"" in blueprint
     assert "preDeployCommand" in blueprint
     assert "python -m app.jobs.snapshot_refresh" in blueprint
     assert "python -m app.jobs.production_recalculation" not in blueprint

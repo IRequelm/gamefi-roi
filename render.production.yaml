@@ -58,7 +58,7 @@ services:
       - key: GAMEFI_NVIDIA_MAX_TOKENS
         value: "2048"
       - key: GAMEFI_SCHEDULER_CADENCE_MINUTES
-        value: "30"
+        value: "5"
       - key: GAMEFI_PRODUCTION_HARD_STALE_SECONDS
         value: "1800"
       - key: GAMEFI_MARKET_DATA_HTTP_TIMEOUT_SECONDS
@@ -95,7 +95,9 @@ services:
     region: ohio
     buildCommand: "python -m pip install --upgrade pip && python -m pip install -r requirements.txt"
     startCommand: "python -m app.jobs.snapshot_refresh"
-    schedule: "*/30 * * * *"
+    # Provider observations are publication-fresh for five minutes. A slower
+    # cron makes /rankings correctly go empty between successful runs.
+    schedule: "*/5 * * * *"
     autoDeployTrigger: off
     envVars:
       - key: GAMEFI_ENVIRONMENT
@@ -129,7 +131,7 @@ services:
       - key: GAMEFI_BING_SITE_VERIFICATION
         sync: false
       - key: GAMEFI_SCHEDULER_CADENCE_MINUTES
-        value: "30"
+        value: "5"
       - key: GAMEFI_PRODUCTION_HARD_STALE_SECONDS
         value: "1800"
       - key: GAMEFI_MARKET_DATA_HTTP_TIMEOUT_SECONDS

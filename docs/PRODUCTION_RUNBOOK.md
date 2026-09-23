@@ -11,7 +11,7 @@ Default public beta Blueprint:
 
 - `gamefi-roi-web`: FastAPI modular monolith serving `/api/v1` and the existing Web MVP.
 - `gamefi-roi-db`: Free Render Postgres, PostgreSQL 17.
-- `.github/workflows/render-beta-recalculation.yml`: GitHub Actions scheduled recalculation every 30 minutes.
+- `.github/workflows/render-beta-recalculation.yml`: GitHub Actions scheduled recalculation every 5 minutes when beta database execution is enabled.
 
 The repository contains `render.yaml` for the low-cost public beta shape. Normal API and web requests read persisted snapshots and scores only; they do not call CoinGecko, DFK RPC, Alcor, AtomicAssets, Splinterlands, or scheduled recalculation jobs.
 
@@ -62,7 +62,7 @@ Rate and retry defaults:
 - HTTP timeout: `10` seconds.
 - Max retries: `2`.
 - Shared source HTTP helper logs provider retries and failures without logging secrets.
-- Scheduler cadence: every `30` minutes.
+- Scheduler cadence: every `5` minutes, matching the shortest publication-fresh market observation window.
 
 ## Environment Variables
 
@@ -161,7 +161,7 @@ Upgrade from low-cost beta when real production reliability is required:
 
 1. In Render, upgrade `gamefi-roi-db` from Free to a paid Postgres instance, or create a new paid database and restore/migrate data into it.
 2. Sync a Blueprint using `render.production.yaml` instead of `render.yaml`.
-3. Confirm `gamefi-roi-recalculation` exists as a Render Cron Job with schedule `*/30 * * * *`.
+3. Confirm `gamefi-roi-recalculation` exists as a Render Cron Job with schedule `*/5 * * * *`.
 4. Disable the GitHub Actions `Render Beta Recalculation` workflow to avoid duplicate scheduler runs.
 5. Confirm paid Postgres PITR/logical backup capability.
 6. Perform restore verification before treating the service as backup/PITR-grade production.
@@ -246,9 +246,9 @@ Shared policy-aware scheduled refresh command:
 python -m app.jobs.snapshot_refresh
 ```
 
-Beta cadence: every 30 minutes UTC through GitHub Actions schedule `*/30 * * * *`.
+Beta cadence: every 5 minutes UTC through GitHub Actions schedule `*/5 * * * *` when `GAMEFI_BETA_DATABASE_ENABLED=true`.
 
-Paid production cadence: every 30 minutes UTC through Render Cron.
+Paid production cadence: every 5 minutes UTC through Render Cron.
 
 Overlap prevention:
 

@@ -63,7 +63,7 @@ services:
       - key: GAMEFI_NVIDIA_MAX_TOKENS
         value: "2048"
       - key: GAMEFI_SCHEDULER_CADENCE_MINUTES
-        value: "30"
+        value: "5"
       - key: GAMEFI_PRODUCTION_HARD_STALE_SECONDS
         value: "1800"
       - key: GAMEFI_MARKET_DATA_HTTP_TIMEOUT_SECONDS

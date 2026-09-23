@@ -238,8 +238,31 @@ def _prepare_short_handoff(
         if (not force_rerender and existing and existing.evidence_fingerprint == package.evidence_fingerprint and Path(existing.video_path).is_file() and _stored_render_creative_ready(existing, package)):
             expected_source_url = f"{settings.public_base_url.rstrip('/')}{package.canonical_source_url}"
             expected_description = _description(package)
-            if existing.source_url != expected_source_url or existing.description != expected_description:
-                by_package[package.package_id] = existing.model_copy(update={"source_url": expected_source_url, "description": expected_description})
+            updates: dict[str, Any] = {}
+            if existing.source_url != expected_source_url:
+                updates["source_url"] = expected_source_url
+            if existing.description != expected_description:
+                updates["description"] = expected_description
+            # A quality-gated render can be rebuilt by an operator or a
+            # recovery worker after the handoff record was written.  Adopt the
+            # new checksum only after the persisted render metadata verifies
+            # the current video/audio/caption files and creative QA result.
+            # This prevents a valid rebuilt video from being stuck behind a
+            # stale checksum while still refusing unverified file changes.
+            current_video_checksum = hashlib.sha256(Path(existing.video_path).read_bytes()).hexdigest()
+            if current_video_checksum != existing.video_checksum:
+                if _load_render_quality_metadata(existing) is None:
+                    continue
+                updates.update(
+                    {
+                        "video_checksum": current_video_checksum,
+                        "creative_approval_state": "pending_review",
+                        "creative_approval_video_checksum": None,
+                        "creative_approved_at": None,
+                    }
+                )
+            if updates:
+                by_package[package.package_id] = existing.model_copy(update=updates)
             continue
         # Reconcile/rebuild an existing queued render even when the bounded
         # buffer is full. The limit applies to new queue additions, not to a

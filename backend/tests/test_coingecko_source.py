@@ -107,3 +107,29 @@ def test_coingecko_rejects_zero_market_price() -> None:
                 freshness_window=timedelta(minutes=5),
             )
         )
+
+
+def test_coingecko_reuses_short_lived_price_request_cache_across_strategy_sources() -> None:
+    calls = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        return httpx.Response(
+            200,
+            json={"sps": {"usd": 1.25, "last_updated_at": 1711356300}},
+            request=request,
+        )
+
+    transport = httpx.MockTransport(handler)
+    request = TokenPriceRequest(
+        provider_asset_ids=("sps",),
+        quote_currency="usd",
+        freshness_window=timedelta(minutes=5),
+    )
+    first = CoinGeckoMarketDataSource(_settings(), transport=transport)
+    second = CoinGeckoMarketDataSource(_settings(), transport=transport)
+
+    assert first.get_token_prices(request)[0].value == Decimal("1.25")
+    assert second.get_token_prices(request)[0].value == Decimal("1.25")
+    assert calls == 1

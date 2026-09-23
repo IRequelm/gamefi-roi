@@ -380,6 +380,7 @@ def ops_status_payload(*, engine: Engine, settings: Settings) -> OpsStatusPayloa
             generated_at=generated_at,
             database=database_status,
             scheduler={"cadence_minutes": settings.scheduler_cadence_minutes, "last_successful_run_at": None},
+            measurement={"status": "unavailable", "reason": "Database unavailable"},
             strategies=[],
             failed_calculation_count=0,
             stale_strategy_count=0,
@@ -455,6 +456,7 @@ def ops_status_payload(*, engine: Engine, settings: Settings) -> OpsStatusPayloa
                 for strategy in list_strategies()
             },
         },
+        measurement=_measurement_status(engine=engine, settings=settings),
         strategies=strategies,
         failed_calculation_count=len(failures),
         stale_strategy_count=stale_count,
@@ -591,6 +593,43 @@ def _opportunity_summary(opportunity: OpportunityCatalogEntry) -> OpportunitySum
             else None
         ),
     )
+
+
+def _measurement_status(*, engine: Engine, settings: Settings) -> dict[str, Any]:
+    """Expose aggregate first-party measurement truth without exposing identities.
+
+    This is deliberately separate from ROI and ranking data. A configured
+    browser capture key is not treated as evidence that traffic exists; only
+    persisted first-party records make the data status available.
+    """
+    try:
+        repository = MonetizationRepository(engine)
+        landings = repository.landing_visits()
+        clicks = repository.outbound_clicks()
+        performance = repository.content_performance()
+    except Exception as exc:  # pragma: no cover - operational failure path
+        return {"status": "unavailable", "error_type": type(exc).__name__}
+
+    if landings or clicks or performance:
+        status = "data_available"
+    else:
+        status = "instrumented_no_records"
+    return {
+        "status": status,
+        "first_party": {
+            "landing_events": len(landings),
+            "outbound_clicks": len(clicks),
+            "content_performance_records": len(performance),
+        },
+        "capture": {
+            "posthog_configured": bool(settings.posthog_project_api_key),
+            "ga4_configured": bool(settings.ga_measurement_id),
+        },
+        "external_read": {
+            "status": "not_available_in_runtime",
+            "reason": "No external analytics read result is persisted or inferred by the API.",
+        },
+    }
 
 
 def _opportunity_detail(

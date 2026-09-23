@@ -36,7 +36,7 @@ The MVP remains a modular monolith. No new games, optimization, auth, portfolio,
 Render paid production architecture:
 
 - `gamefi-roi-web`: Python web service running `uvicorn app.main:app`.
-- `gamefi-roi-recalculation`: Python cron service running `python -m app.jobs.production_recalculation` every 30 minutes.
+- `gamefi-roi-recalculation`: Python cron service running `python -m app.jobs.snapshot_refresh` every 5 minutes. The five-minute cadence matches the shortest publication-fresh market observation window; a slower cadence would make fresh rankings disappear between runs.
 - `gamefi-roi-db`: Render Postgres, PostgreSQL 17, paid basic tier to enable backups.
 
 The web service serves both `/api/v1` and the existing static Web MVP. The cron service writes historical strategy snapshots and persisted risk/confidence scores. Normal API and web requests never call live providers.
@@ -45,7 +45,7 @@ Low-cost public beta architecture:
 
 - `render.yaml` defines only `gamefi-roi-web` on Render's Free Web Service plan and `gamefi-roi-db` on Free Render Postgres.
 - The Render Cron service is omitted from `render.yaml` because Render Cron Jobs have paid billing.
-- `.github/workflows/render-beta-recalculation.yml` runs the existing production recalculation command every 30 minutes for beta.
+- `.github/workflows/render-beta-recalculation.yml` runs the policy-aware snapshot refresh every 5 minutes for beta when the beta database feature flag is enabled.
 - The GitHub Actions job uses repository secrets for the external Render Postgres URL and provider credentials.
 - The paid Render Cron + paid Postgres architecture is preserved in `render.production.yaml` for upgrade.
 

@@ -46,9 +46,15 @@ def test_ops_status_exposes_database_scheduler_and_strategy_health(monkeypatch, 
     payload = response.json()
     assert payload["status"] == "ok"
     assert payload["database"] == {"status": "ok"}
+    assert payload["measurement"]["status"] == "instrumented_no_records"
+    assert payload["measurement"]["first_party"] == {
+        "landing_events": 0,
+        "outbound_clicks": 0,
+        "content_performance_records": 0,
+    }
     assert payload["failed_calculation_count"] == 0
     assert payload["stale_strategy_count"] == 0
-    assert payload["scheduler"]["cadence_minutes"] == 30
+    assert payload["scheduler"]["cadence_minutes"] == 5
     assert payload["scheduler"]["last_successful_run_at"] == NOW.isoformat().replace("+00:00", "Z")
     assert {item["strategy_id"] for item in payload["strategies"]} == {
         strategy.strategy_id for strategy in catalog.list_strategies()

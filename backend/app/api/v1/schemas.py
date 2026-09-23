@@ -320,6 +320,7 @@ class OpsStatusPayload(BaseModel):
     generated_at: datetime
     database: dict[str, Any]
     scheduler: dict[str, Any]
+    measurement: dict[str, Any]
     strategies: list[StrategyOpsStatusPayload]
     failed_calculation_count: int
     stale_strategy_count: int

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from decimal import Decimal
+from threading import Lock
+from time import monotonic
 from typing import Any
 from uuid import uuid5, NAMESPACE_URL
 
@@ -18,6 +20,8 @@ from app.sources.observations import Observation, ObservationStatus, SourceType
 
 class CoinGeckoMarketDataSource(UnsupportedMarketDataSource):
     provider_name = "coingecko"
+    _price_cache: dict[tuple[str, tuple[str, ...], str, str], tuple[float, list[Observation]]] = {}
+    _price_cache_lock = Lock()
 
     def __init__(
         self,
@@ -27,6 +31,8 @@ class CoinGeckoMarketDataSource(UnsupportedMarketDataSource):
     ) -> None:
         active_settings = settings or get_settings()
         self._api_key = active_settings.coingecko_api_key
+        self._request_cache_seconds = active_settings.market_data_request_cache_seconds
+        self._cache_transport_key = "default" if transport is None else f"transport:{id(transport)}"
         self._client = SourceHttpClient(
             provider=self.provider_name,
             base_url=active_settings.coingecko_base_url,
@@ -39,6 +45,16 @@ class CoinGeckoMarketDataSource(UnsupportedMarketDataSource):
         self._client.close()
 
     def get_token_prices(self, request: TokenPriceRequest) -> list[Observation]:
+        cache_key = (
+            self._client.base_url,
+            tuple(request.provider_asset_ids),
+            request.quote_currency.upper(),
+            self._cache_transport_key,
+        )
+        cached = self._cached_prices(cache_key)
+        if cached is not None:
+            return cached
+
         params = {
             "ids": ",".join(request.provider_asset_ids),
             "vs_currencies": request.quote_currency.lower(),
@@ -55,7 +71,7 @@ class CoinGeckoMarketDataSource(UnsupportedMarketDataSource):
         retrieved_at = datetime.now(UTC)
         locator = self._client.source_locator("/simple/price", params)
 
-        return [
+        observations = [
             self._observation_from_price_payload(
                 provider_asset_id=provider_asset_id,
                 quote_currency=request.quote_currency,
@@ -66,6 +82,33 @@ class CoinGeckoMarketDataSource(UnsupportedMarketDataSource):
             )
             for provider_asset_id in request.provider_asset_ids
         ]
+        self._store_cached_prices(cache_key, observations)
+        return observations
+
+    def _cached_prices(
+        self,
+        key: tuple[str, tuple[str, ...], str, str],
+    ) -> list[Observation] | None:
+        if self._request_cache_seconds == 0:
+            return None
+        now = monotonic()
+        with self._price_cache_lock:
+            entry = self._price_cache.get(key)
+            if entry is None or now - entry[0] > self._request_cache_seconds:
+                if entry is not None:
+                    self._price_cache.pop(key, None)
+                return None
+            return list(entry[1])
+
+    def _store_cached_prices(
+        self,
+        key: tuple[str, tuple[str, ...], str, str],
+        observations: list[Observation],
+    ) -> None:
+        if self._request_cache_seconds == 0:
+            return
+        with self._price_cache_lock:
+            self._price_cache[key] = (monotonic(), list(observations))
 
     def _observation_from_price_payload(
         self,
