@@ -248,6 +248,33 @@ def test_short_handoff_approval_reactivates_a_prior_dead_letter(tmp_path: Path, 
     assert "YouTubeShortHandoff" not in instance.state.records
 
 
+def test_youtube_auth_recovery_reactivates_prior_dead_letter(tmp_path: Path, monkeypatch):
+    monkeypatch.setattr(
+        "app.publishing.distribution_worker.publish_next_short_handoff",
+        lambda **kwargs: {"status": "dry_run", "content_id": "content-auth-recovered"},
+    )
+    queue_path = tmp_path / "short-handoff.json"
+    queue_path.write_text(json.dumps({"version": "youtube-short-handoff-v1", "items": [], "blocked": {}}), encoding="utf-8")
+    publisher = SimpleNamespace(
+        check_capabilities=lambda: {
+            "authenticated": True,
+            "channel_verified": True,
+            "upload_scope_verified": True,
+        }
+    )
+    instance = worker(tmp_path, youtube=SimpleNamespace(publisher=publisher))
+    instance.state.records["YouTubeShortHandoff"] = {
+        "attempts": 3,
+        "dead_letter": True,
+        "error_category": "YouTubeAuthError",
+    }
+
+    result = instance._process_short_handoff(NOW)
+
+    assert result["status"] in {"idle", "dry_run"}
+    assert "YouTubeShortHandoff" not in instance.state.records
+
+
 def test_pending_creative_review_is_not_recorded_as_worker_failure(tmp_path: Path, monkeypatch):
     monkeypatch.setattr(
         "app.publishing.distribution_worker.publish_next_short_handoff",

@@ -559,7 +559,20 @@ class DistributionWorker:
                 previous.get("error_category") == "BLOCKED_VISUAL_QA"
                 and (_approved_short_waiting(self.config.short_handoff_file) or _pending_review_short_waiting(self.config.short_handoff_file))
             )
-            if review_state_changed:
+            auth_state_recovered = False
+            if previous.get("error_category") == "YouTubeAuthError":
+                probe = getattr(self.youtube_distribution.publisher, "check_capabilities", None)
+                if callable(probe):
+                    try:
+                        capabilities = probe()
+                        auth_state_recovered = bool(
+                            capabilities.get("authenticated")
+                            and capabilities.get("channel_verified")
+                            and capabilities.get("upload_scope_verified")
+                        )
+                    except Exception:
+                        auth_state_recovered = False
+            if review_state_changed or auth_state_recovered:
                 self.state.record_success(key)
             else:
                 return {"platform": key, "status": "dead_letter" if self.state.records[key].get("dead_letter") else "cooldown"}
