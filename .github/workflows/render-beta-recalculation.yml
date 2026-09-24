@@ -2,7 +2,8 @@ name: Render Beta Recalculation
 
 on:
   schedule:
-    - cron: "*/5 * * * *"
+    # Run four times daily, away from the top of the hour (GitHub may delay busy schedules).
+    - cron: "17 */4 * * *"
   workflow_dispatch:
 
 concurrency:
@@ -30,24 +31,24 @@ jobs:
       GAMEFI_DATABASE_POOL_RECYCLE_SECONDS: "1800"
       GAMEFI_SECURITY_HEADERS_ENABLED: "true"
       GAMEFI_PUBLIC_BASE_URL: ${{ vars.GAMEFI_PUBLIC_BASE_URL || 'https://gamcryp.com' }}
-      GAMEFI_SCHEDULER_CADENCE_MINUTES: "5"
-      GAMEFI_PRODUCTION_HARD_STALE_SECONDS: "1800"
+      GAMEFI_SCHEDULER_CADENCE_MINUTES: "240"
+      GAMEFI_PRODUCTION_HARD_STALE_SECONDS: "28800"
       GAMEFI_MARKET_DATA_HTTP_TIMEOUT_SECONDS: "10"
       GAMEFI_MARKET_DATA_HTTP_MAX_RETRIES: "2"
       GAMEFI_MARKET_DATA_REQUEST_CACHE_SECONDS: "30"
-      GAMEFI_MARKET_DATA_PRICE_FRESHNESS_SECONDS: "300"
+      GAMEFI_MARKET_DATA_PRICE_FRESHNESS_SECONDS: "21600"
       GAMEFI_COINGECKO_BASE_URL: https://api.coingecko.com/api/v3
       GAMEFI_COINGECKO_API_KEY: ${{ secrets.GAMEFI_COINGECKO_API_KEY }}
       GAMEFI_ALCOR_BASE_URL: https://wax.alcor.exchange/api/v2
       GAMEFI_ATOMICASSETS_BASE_URL: https://wax.api.atomicassets.io
-      GAMEFI_WAX_MARKET_OBSERVATION_FRESHNESS_SECONDS: "300"
+      GAMEFI_WAX_MARKET_OBSERVATION_FRESHNESS_SECONDS: "21600"
       GAMEFI_DFK_CHAIN_RPC_URL: ${{ secrets.GAMEFI_DFK_CHAIN_RPC_URL }}
-      GAMEFI_DFK_CHAIN_OBSERVATION_FRESHNESS_SECONDS: "300"
+      GAMEFI_DFK_CHAIN_OBSERVATION_FRESHNESS_SECONDS: "21600"
       # The current DFK chain source returns no positive current cJEWEL balance.
       # Keep those strategies stale/visible instead of producing repeated job failures.
       GAMEFI_DFK_JEWELER_REFRESH_ENABLED: "false"
       GAMEFI_SPLINTERLANDS_BASE_URL: https://api.splinterlands.com
-      GAMEFI_SPLINTERLANDS_OBSERVATION_FRESHNESS_SECONDS: "300"
+      GAMEFI_SPLINTERLANDS_OBSERVATION_FRESHNESS_SECONDS: "21600"
     steps:
       - name: Check out repository
         uses: actions/checkout@v4

@@ -224,7 +224,7 @@ def test_wax_market_source_config_defaults_are_present(monkeypatch) -> None:
 
     assert settings.alcor_base_url == "https://wax.alcor.exchange/api/v2"
     assert settings.atomicassets_base_url == "https://wax.api.atomicassets.io"
-    assert settings.wax_market_observation_freshness_seconds == 300
+    assert settings.wax_market_observation_freshness_seconds == 21_600
 
 
 def test_splinterlands_source_config_defaults_are_present(monkeypatch) -> None:
@@ -235,7 +235,7 @@ def test_splinterlands_source_config_defaults_are_present(monkeypatch) -> None:
     settings = get_settings()
 
     assert settings.splinterlands_base_url == "https://api.splinterlands.com"
-    assert settings.splinterlands_observation_freshness_seconds == 300
+    assert settings.splinterlands_observation_freshness_seconds == 21_600
 
 
 def test_observability_config_is_optional_and_validated(monkeypatch) -> None:

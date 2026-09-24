@@ -67,12 +67,12 @@ class Settings(BaseSettings):
     operator_password: str | None = None
     referral_reverify_days: int = Field(default=30, ge=1, le=365)
     referral_pending_recheck_days: int = Field(default=14, ge=1, le=180)
-    scheduler_cadence_minutes: int = Field(default=5, ge=5, le=1_440)
-    production_hard_stale_seconds: int = Field(default=1800, ge=300, le=86_400)
+    scheduler_cadence_minutes: int = Field(default=240, ge=5, le=1_440)
+    production_hard_stale_seconds: int = Field(default=28_800, ge=300, le=86_400)
     market_data_http_timeout_seconds: float = Field(default=10.0, gt=0, le=60)
     market_data_http_max_retries: int = Field(default=2, ge=0, le=5)
     market_data_request_cache_seconds: int = Field(default=30, ge=0, le=300)
-    market_data_price_freshness_seconds: int = Field(default=300, gt=0, le=86_400)
+    market_data_price_freshness_seconds: int = Field(default=21_600, gt=0, le=86_400)
     coingecko_base_url: str = Field(
         default="https://api.coingecko.com/api/v3",
         min_length=1,
@@ -86,15 +86,15 @@ class Settings(BaseSettings):
         default="https://wax.api.atomicassets.io",
         min_length=1,
     )
-    wax_market_observation_freshness_seconds: int = Field(default=300, gt=0, le=86_400)
+    wax_market_observation_freshness_seconds: int = Field(default=21_600, gt=0, le=86_400)
     dfk_chain_rpc_url: str = Field(default=DEFAULT_PUBLIC_DFK_CHAIN_RPC_URL, min_length=1)
-    dfk_chain_observation_freshness_seconds: int = Field(default=300, gt=0, le=86_400)
+    dfk_chain_observation_freshness_seconds: int = Field(default=21_600, gt=0, le=86_400)
     dfk_jeweler_refresh_enabled: bool = True
     splinterlands_base_url: str = Field(
         default="https://api.splinterlands.com",
         min_length=1,
     )
-    splinterlands_observation_freshness_seconds: int = Field(default=300, gt=0, le=86_400)
+    splinterlands_observation_freshness_seconds: int = Field(default=21_600, gt=0, le=86_400)
 
     @field_validator("coingecko_api_key", mode="before")
     @classmethod
