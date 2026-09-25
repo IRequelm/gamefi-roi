@@ -30,6 +30,8 @@ export type VideoProps = {
   steps?: string[];
   facts?: string[];
   captions?: Caption[];
+  siteExplainer?: boolean;
+  brandLogoSrc?: string;
 };
 
 const DEFAULT_PROPS: VideoProps = {
@@ -157,7 +159,68 @@ const Cta: React.FC<{ p: VideoProps }> = ({ p }) => {
 export const GamcrypMotionShort: React.FC<VideoProps> = (input) => {
   const p = { ...DEFAULT_PROPS, ...input };
   const scene = 225;
+  if (p.siteExplainer) {
+    return <AbsoluteFill style={{ backgroundColor: COLORS.ink, fontFamily: "Arial, Helvetica, sans-serif" }}><Sequence durationInFrames={scene}><SiteExplainerBeat p={p} index={0} /></Sequence><Sequence from={scene} durationInFrames={scene}><SiteExplainerBeat p={p} index={1} /></Sequence><Sequence from={scene * 2} durationInFrames={scene}><SiteExplainerBeat p={p} index={2} /></Sequence><Sequence from={scene * 3} durationInFrames={scene}><SiteExplainerBeat p={p} index={3} /></Sequence><Sequence from={scene * 4} durationInFrames={scene}><SiteExplainerBeat p={p} index={4} /></Sequence><Sequence from={scene * 5} durationInFrames={scene}><SiteExplainerBeat p={p} index={5} /></Sequence><CaptionLayer captions={p.captions ?? []} accent={p.accent ?? "#4de1ff"} />{p.audioSrc ? <Audio src={staticFile(p.audioSrc)} volume={0.84} /> : null}{p.brandStingSrc ? <><Sequence durationInFrames={24}><Audio src={staticFile(p.brandStingSrc)} volume={0.16} /></Sequence><Sequence from={1326} durationInFrames={24}><Audio src={staticFile(p.brandStingSrc)} volume={0.12} /></Sequence></> : null}</AbsoluteFill>;
+  }
   return <AbsoluteFill style={{ backgroundColor: COLORS.ink, fontFamily: "Arial, Helvetica, sans-serif" }}><Sequence durationInFrames={scene}><Hook p={p} /></Sequence><Sequence from={scene} durationInFrames={scene}><Identity p={p} /></Sequence><Sequence from={scene * 2} durationInFrames={scene}><Setup p={p} /></Sequence><Sequence from={scene * 3} durationInFrames={scene}><Evidence p={p} /></Sequence><Sequence from={scene * 4} durationInFrames={scene}><Reality p={p} /></Sequence><Sequence from={scene * 5} durationInFrames={scene}><Cta p={p} /></Sequence><CaptionLayer captions={p.captions ?? []} accent={p.accent ?? COLORS.green} />{p.audioSrc ? <Audio src={staticFile(p.audioSrc)} volume={0.32} /> : null}{p.brandStingSrc ? <><Sequence durationInFrames={24}><Audio src={staticFile(p.brandStingSrc)} volume={0.16} /></Sequence><Sequence from={1326} durationInFrames={24}><Audio src={staticFile(p.brandStingSrc)} volume={0.12} /></Sequence></> : null}</AbsoluteFill>;
+};
+
+const SiteExplainerBeat: React.FC<{ p: VideoProps; index: number }> = ({ p, index }) => {
+  const frame = useCurrentFrame();
+  const accent = p.accent ?? "#4de1ff";
+  const accent2 = p.accent2 ?? "#a78bfa";
+  const facts = p.facts ?? [];
+  const fact = facts[Math.min(Math.max(index - 1, 0), facts.length - 1)] ?? p.cta;
+  const reveal = spring({ frame: Math.max(0, frame - 5), fps: 30, config: { damping: 15, stiffness: 95, mass: 0.8 } });
+  const rise = interpolate(reveal, [0, 1], [56, 0], { ...clamp, easing: ease });
+  const pulse = 1 + Math.sin(frame / 13) * 0.025;
+  const labels = ["THE QUESTION", "THE GAMCRYP LENS", "THE FIRST CHECK", "FOLLOW THE EVIDENCE", "THE REALITY CHECK", "YOUR NEXT MOVE"];
+  return <Shell index={index} label={labels[index]} accent={accent} accent2={accent2}>
+    <div style={{ position: "absolute", left: 76, right: 76, top: 215, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div style={{ color: COLORS.muted, fontSize: 22, fontWeight: 800, letterSpacing: 4 }}>EVIDENCE-LED WEB3 INTELLIGENCE</div>
+      <div style={{ width: 72, height: 72, padding: 7, borderRadius: 20, background: "#07111f", border: `1px solid ${accent}70`, boxShadow: `0 0 34px ${accent}22` }}><Img src={staticFile(p.brandLogoSrc ?? "")} style={{ width: "100%", height: "100%", objectFit: "contain" }} /></div>
+    </div>
+    {index === 0 ? <>
+      <div style={{ position: "absolute", left: 78, right: 70, top: 455, opacity: reveal, translate: `0px ${rise}px` }}>
+        <div style={{ color: accent, fontSize: 26, fontWeight: 900, letterSpacing: 6 }}>GAMCRYP / THE QUESTION</div>
+        <div style={{ color: COLORS.white, fontSize: 88, lineHeight: 0.98, letterSpacing: -3.5, fontWeight: 950, marginTop: 34, maxWidth: 920 }}>{p.hook}</div>
+        <div style={{ width: 450, height: 10, marginTop: 42, overflow: "hidden", background: `${accent}35` }}><div style={{ width: `${interpolate(frame, [8, 90], [0, 100], clamp)}%`, height: "100%", background: `linear-gradient(90deg, ${accent}, ${accent2})` }} /></div>
+      </div>
+      <div style={{ position: "absolute", right: 108, bottom: 300, width: 226, height: 226, border: `2px solid ${accent}70`, borderRadius: 999, scale: `${pulse}`, display: "flex", alignItems: "center", justifyContent: "center", color: accent, fontSize: 120, fontWeight: 900, boxShadow: `0 0 80px ${accent}25` }}>?</div>
+    </> : index === 1 ? <>
+      <div style={{ position: "absolute", left: 80, right: 80, top: 440, color: COLORS.white, fontSize: 55, lineHeight: 1.08, fontWeight: 900, opacity: reveal, translate: `0px ${rise}px` }}>{fact}</div>
+      <div style={{ position: "absolute", left: 78, right: 78, top: 720, display: "flex", flexDirection: "column", gap: 23 }}>
+        {(p.steps ?? []).slice(0, 4).map((step, cardIndex) => { const show = spring({ frame: Math.max(0, frame - 12 - cardIndex * 11), fps: 30, config: { damping: 15, stiffness: 110 } }); return <div key={step} style={{ opacity: show, translate: `${interpolate(show, [0, 1], [-80, 0], clamp)}px 0px`, display: "flex", alignItems: "center", gap: 24, minHeight: 126, padding: "0 28px", borderRadius: 25, background: `linear-gradient(100deg, ${cardIndex % 2 ? accent2 : accent}26, #09182b)`, border: `1px solid ${cardIndex % 2 ? accent2 : accent}80`, boxShadow: "0 20px 50px #00000035" }}><div style={{ width: 70, height: 70, flexShrink: 0, borderRadius: 22, display: "flex", alignItems: "center", justifyContent: "center", background: cardIndex % 2 ? `${accent2}25` : `${accent}25`, color: cardIndex % 2 ? accent2 : accent, fontSize: 29, fontWeight: 900 }}>{`0${cardIndex + 1}`}</div><div style={{ color: COLORS.white, fontSize: 28, lineHeight: 1.12, fontWeight: 800 }}>{step}</div></div>; })}
+      </div>
+    </> : index === 2 || index === 3 ? <>
+      <div style={{ position: "absolute", left: 80, right: 80, top: 450, opacity: reveal, translate: `0px ${rise}px` }}>
+        <div style={{ color: accent, fontSize: 25, fontWeight: 900, letterSpacing: 5 }}>{index === 2 ? "CHECK THE INPUT" : "TRACE THE CLAIM"}</div>
+        <div style={{ color: COLORS.white, fontSize: 54, lineHeight: 1.1, fontWeight: 900, marginTop: 26 }}>{fact}</div>
+      </div>
+      <div style={{ position: "absolute", left: 86, right: 86, bottom: 430, height: 235, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+        {[(p.steps ?? []).slice(0, 3)].flat().map((step, cardIndex) => { const show = spring({ frame: Math.max(0, frame - 18 - cardIndex * 12), fps: 30, config: { damping: 16, stiffness: 105 } }); return <div key={step} style={{ flex: 1, height: 205, opacity: show, scale: `${0.88 + show * 0.12}`, borderRadius: 24, padding: "22px 18px", overflow: "hidden", background: `linear-gradient(145deg, ${cardIndex === 1 ? accent2 : accent}24, #081426)`, border: `1px solid ${cardIndex === 1 ? accent2 : accent}90`, boxShadow: `0 24px 60px ${cardIndex === 1 ? accent2 : accent}14`, display: "flex", flexDirection: "column", justifyContent: "space-between" }}><div style={{ color: cardIndex === 1 ? accent2 : accent, fontSize: 34, fontWeight: 950 }}>{`0${cardIndex + 1}`}</div><div style={{ color: COLORS.white, fontSize: 20, fontWeight: 800, lineHeight: 1.12 }}>{step}</div></div>; })}
+      </div>
+      <div style={{ position: "absolute", left: 90, right: 90, bottom: 340, display: "flex", justifyContent: "space-between", color: COLORS.muted, fontSize: 19, fontWeight: 800, letterSpacing: 3 }}><span>ASSUMPTION</span><span>EVIDENCE</span><span>CONTEXT</span></div>
+    </> : index === 4 ? <>
+      <div style={{ position: "absolute", left: 80, right: 80, top: 455, opacity: reveal, translate: `0px ${rise}px` }}>
+        <div style={{ color: accent2, fontSize: 26, fontWeight: 900, letterSpacing: 5 }}>KEEP THE DISTINCTIONS CLEAR</div>
+        <div style={{ color: COLORS.white, fontSize: 61, lineHeight: 1.02, fontWeight: 950, marginTop: 34 }}>{fact}</div>
+      </div>
+      <div style={{ position: "absolute", left: 88, right: 88, bottom: 420, display: "flex", alignItems: "center", justifyContent: "center", gap: 26 }}>
+        <div style={{ width: 340, height: 185, borderRadius: 28, padding: 25, background: `${accent}22`, border: `2px solid ${accent}90`, display: "flex", flexDirection: "column", justifyContent: "space-between", scale: `${pulse}` }}><div style={{ color: accent, fontSize: 23, fontWeight: 900, letterSpacing: 3 }}>MODEL CONFIDENCE</div><div style={{ color: COLORS.white, fontSize: 35, fontWeight: 900 }}>DATA TRUST</div></div>
+        <div style={{ color: accent2, fontSize: 66, fontWeight: 900 }}>≠</div>
+        <div style={{ width: 340, height: 185, borderRadius: 28, padding: 25, background: `${accent2}22`, border: `2px solid ${accent2}90`, display: "flex", flexDirection: "column", justifyContent: "space-between", scale: `${1 + Math.cos(frame / 13) * 0.025}` }}><div style={{ color: accent2, fontSize: 23, fontWeight: 900, letterSpacing: 3 }}>ECONOMIC RISK</div><div style={{ color: COLORS.white, fontSize: 35, fontWeight: 900 }}>MARKET EXPOSURE</div></div>
+      </div>
+      <div style={{ position: "absolute", left: 90, right: 90, bottom: 315, textAlign: "center", color: COLORS.muted, fontSize: 23, fontWeight: 700 }}>Evidence helps you judge the model; it does not remove opportunity risk.</div>
+    </> : <>
+      <div style={{ position: "absolute", left: 80, right: 80, top: 440, opacity: reveal, translate: `0px ${rise}px` }}>
+        <div style={{ color: accent, fontSize: 27, fontWeight: 900, letterSpacing: 5 }}>GAMCRYP / EVIDENCE FIRST</div>
+        <div style={{ color: COLORS.white, fontSize: 86, lineHeight: 0.98, letterSpacing: -3, fontWeight: 950, marginTop: 35 }}>CHECK<br /><span style={{ color: accent }}>THE MODEL.</span></div>
+        <div style={{ color: COLORS.muted, fontSize: 30, lineHeight: 1.2, maxWidth: 860, marginTop: 38 }}>{p.cta}</div>
+      </div>
+      <div style={{ position: "absolute", left: 82, right: 82, bottom: 275, height: 150, borderRadius: 32, padding: "0 30px", background: `linear-gradient(100deg, ${accent}2b, ${accent2}25)`, border: `1px solid ${accent}90`, display: "flex", alignItems: "center", justifyContent: "space-between", scale: `${pulse}` }}><div style={{ color: accent, fontSize: 27, fontWeight: 950, letterSpacing: 2 }}>GAMCRYP.COM</div><div style={{ color: COLORS.white, fontSize: 22, fontWeight: 850 }}>SOURCES · STRATEGIES · CONTEXT</div></div>
+    </>}
+  </Shell>;
 };
 
 export const MyComposition = () => <Composition id="GamcrypMotionShort" component={GamcrypMotionShort} durationInFrames={1350} fps={30} width={1080} height={1920} defaultProps={DEFAULT_PROPS} />;

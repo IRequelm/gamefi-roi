@@ -130,6 +130,7 @@ class InboundLandingEventRecord(Base):
     utm_source: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
     utm_medium: Mapped[str | None] = mapped_column(String(128), nullable=True)
     utm_campaign: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    utm_content: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
     channel: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     coarse_session_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
     occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)

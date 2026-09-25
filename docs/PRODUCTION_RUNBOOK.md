@@ -1,7 +1,15 @@
 # GameFi ROI Production Runbook
 
-Updated: 2026-08-23
+Updated: 2026-09-25
 Gate: G13 - Production public beta
+
+## Current operating-state reconciliation (2026-09-25)
+
+- All numbered gates are complete; this runbook describes the deployed beta architecture and its operating procedures, not an active implementation gate.
+- GitHub remote `master` remains at `b179e98` with a five-minute Actions cadence. Local `master` includes an unpushed four-hour cadence (`17 */4 * * *`) and six-hour input freshness; production behavior must not be inferred from the local checkout.
+- The user reports that both active Render services have paid plans. The Render Dashboard could not be rechecked from this execution environment. The checked-in `render.yaml` still contains Free plan declarations, so do not sync it until its service/database plans are reconciled with the active paid resources. No Render Cron is part of the requested four-hour beta scheduler.
+- The four-hour Actions run writes production snapshots and remains guarded by `GAMEFI_BETA_DATABASE_ENABLED=true`. Verify that setting and the external database/provider connections before relying on scheduled writes. Do not interpret local DB/report counts as production telemetry.
+- On this check, production `/api/v1/ops/status` was unreachable from the inspection environment (`ConnectError`); that does not prove that the public service itself is down. Confirm production status, fresh ranking rows, and rendered homepage results from an authorized browser before considering the release verified.
 
 ## Architecture
 
@@ -10,8 +18,8 @@ Production target: Render.
 Default public beta Blueprint:
 
 - `gamefi-roi-web`: FastAPI modular monolith serving `/api/v1` and the existing Web MVP.
-- `gamefi-roi-db`: Free Render Postgres, PostgreSQL 17.
-- `.github/workflows/render-beta-recalculation.yml`: GitHub Actions scheduled recalculation every 5 minutes when beta database execution is enabled.
+- `gamefi-roi-db`: the checked-in beta Blueprint declares Free Render Postgres, PostgreSQL 17; this is not an assertion about the active Render plan.
+- `.github/workflows/render-beta-recalculation.yml`: the local candidate runs every four hours (six times per UTC day); GitHub remote `master` remains at five minutes until the candidate is pushed and verified.
 
 The repository contains `render.yaml` for the low-cost public beta shape. Normal API and web requests read persisted snapshots and scores only; they do not call CoinGecko, DFK RPC, Alcor, AtomicAssets, Splinterlands, or scheduled recalculation jobs.
 
@@ -117,11 +125,11 @@ The operator console has no default password. If username or password is missing
 
 Freshness:
 
-- `GAMEFI_MARKET_DATA_PRICE_FRESHNESS_SECONDS=300`
-- `GAMEFI_WAX_MARKET_OBSERVATION_FRESHNESS_SECONDS=300`
-- `GAMEFI_DFK_CHAIN_OBSERVATION_FRESHNESS_SECONDS=300`
-- `GAMEFI_SPLINTERLANDS_OBSERVATION_FRESHNESS_SECONDS=300`
-- `GAMEFI_PRODUCTION_HARD_STALE_SECONDS=1800`
+- `GAMEFI_MARKET_DATA_PRICE_FRESHNESS_SECONDS=21600` for the four-hour cadence candidate
+- `GAMEFI_WAX_MARKET_OBSERVATION_FRESHNESS_SECONDS=21600` for the four-hour cadence candidate
+- `GAMEFI_DFK_CHAIN_OBSERVATION_FRESHNESS_SECONDS=21600` for the four-hour cadence candidate
+- `GAMEFI_SPLINTERLANDS_OBSERVATION_FRESHNESS_SECONDS=21600` for the four-hour cadence candidate
+- `GAMEFI_PRODUCTION_HARD_STALE_SECONDS=28800` for the four-hour cadence candidate
 
 GitHub Actions beta scheduler secrets:
 
@@ -135,7 +143,7 @@ GitHub Actions beta scheduler non-secret env:
 - `GAMEFI_PUBLIC_BASE_URL` defaults to `https://gamefi-roi-web.onrender.com` and may be overridden with the GitHub repository variable `GAMEFI_PUBLIC_BASE_URL` when a custom domain becomes canonical,
 - `GAMEFI_BETA_DATABASE_ENABLED` is a fail-closed repository variable and must be exactly `true` before the scheduler job can run; keep it unset/false while the external database is suspended or unverified,
 - pool size is `1`, max overflow is `0`,
-  - cadence is `5` minutes, matching the five-minute market freshness window.
+  - cadence is `240` minutes in the local candidate; the remote default branch has not yet been updated.
 
 ## Deploy Procedure
 
@@ -161,7 +169,7 @@ Upgrade from low-cost beta when real production reliability is required:
 
 1. In Render, upgrade `gamefi-roi-db` from Free to a paid Postgres instance, or create a new paid database and restore/migrate data into it.
 2. Sync a Blueprint using `render.production.yaml` instead of `render.yaml`.
-3. Confirm `gamefi-roi-recalculation` exists as a Render Cron Job with schedule `*/5 * * * *`.
+3. Confirm `gamefi-roi-recalculation` exists as a Render Cron Job with schedule `2-57/5 * * * *`.
 4. Disable the GitHub Actions `Render Beta Recalculation` workflow to avoid duplicate scheduler runs.
 5. Confirm paid Postgres PITR/logical backup capability.
 6. Perform restore verification before treating the service as backup/PITR-grade production.
@@ -246,9 +254,9 @@ Shared policy-aware scheduled refresh command:
 python -m app.jobs.snapshot_refresh
 ```
 
-Beta cadence: every 5 minutes UTC through GitHub Actions schedule `*/5 * * * *` when `GAMEFI_BETA_DATABASE_ENABLED=true`.
+Beta cadence: the local candidate runs every four hours (six times per UTC day) through GitHub Actions schedule `17 */4 * * *`, with six-hour source freshness and an eight-hour hard-stale ceiling. The remote default branch remains on its previously published five-minute schedule until the candidate commits are pushed and verified. Actions schedule delays remain possible; monitor run intervals and public freshness rather than treating the cron expression as an uptime guarantee.
 
-Paid production cadence: every 5 minutes UTC through Render Cron.
+The paid-production Blueprint still describes a separate Render Cron. It is not part of the active four-hour beta schedule and must not be provisioned or synced as a side effect of the cadence change.
 
 Overlap prevention:
 
@@ -465,11 +473,14 @@ Database rollback:
 
 Public URL: `https://gamefi-roi-web.onrender.com`.
 
-Current incident state (2026-09-21):
+Current observed state (2026-09-24; see `docs/MASTER_CONTROL.md` checkpoints 0m and 0n):
 
-- `gamefi-roi-db` Free Render Postgres is suspended because its trial period expired.
-- The GitHub Actions `Render Beta Recalculation` workflow is intentionally disabled and additionally gated by `GAMEFI_BETA_DATABASE_ENABLED`.
-- Do not re-enable the workflow or claim live recalculation health until a funded database connection and a successful manual run are verified.
+- Render dashboard shows `gamefi-roi-web` deployed with a Free-instance spin-down warning. It shows `gamefi-roi-db` Available on `0.1c-256mb`, PostgreSQL 17, 10.51% storage use. The database was not suspended at this observation; the earlier 2026-09-21 incident note is superseded.
+- Render Recovery shows PITR restore controls disabled and zero logical exports. Do not claim recoverable production backups or PITR until enabled and a restore is tested.
+- After the explicitly authorized single GitHub Actions manual run `#350` (`35924208044`, commit `b179e98`), the job completed successfully; the application refresh summary was `degraded` with 7 auto-refreshed, 0 failed, 4 `PARTIAL_REFRESH_ONLY` skipped, 4 `NOT_REFRESHABLE` skipped, and 7 persisted snapshots/scores. Public `/rankings` showed those 7 strategies with a latest snapshot at `2026-09-23 21:44 UTC`. This supersedes the earlier empty-rankings observation below; a representative detail page also showed a `Fresh` snapshot. A green job is not evidence every catalog item refreshed.
+- A read-only follow-up observed scheduled run `#351` at 2026-09-24 00:47 Europe/Istanbul. It also succeeded with an application-level `degraded` summary (7 auto-refreshed, 0 failed, 4 partial-refresh-only and 4 not-refreshable skipped; 7 snapshots/scores). Its existence proves the enable gate was true for that run, but prior scheduled-run history shows multi-hour gaps, so cadence reliability is not proven. Neither run verifies production `/api/v1/ops/status` or database backup/restore readiness. Do not toggle the recurring workflow based only on these runs; independently validate ops/backup and monitor later scheduler health before relying on unattended refreshes.
+- At 00:54 Europe/Istanbul, a fresh `/rankings` reload again showed 0 current matches and no last snapshot timestamp. The successful 21:48 UTC scheduled run therefore did not sustain public freshness; the dashboard/API behavior must be monitored as an end-to-end output, not inferred from job conclusion alone.
+- At approximately 01:00 Europe/Istanbul, the public route still showed 0 results and GitHub still showed #351 (00:47) as the latest run. The remote `master` workflow blob uses `*/5 * * * *`; the local `2-57/5` edit is dirty and not active. See checkpoint 0o for the source/commit reconciliation.
 
 The original G13 public beta accepted these free-tier limitations:
 

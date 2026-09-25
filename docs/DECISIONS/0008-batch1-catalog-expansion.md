@@ -41,3 +41,9 @@ The publication threshold remains at least two qualifying modeled strategy snaps
 ## Consequences
 
 This raises the catalog from 26 to 32 opportunities and modeled strategies from 10 to 15, while preserving existing GAME adapters, ROI/risk/confidence methodology, referrals, GA4, API contracts, sitemap guards, and no-thin-page policy.
+
+## Current model revision — GEODNET (2026-09-24)
+
+The original GEODNET base reward input of 12 GEOD/day was the maximum for July 1, 2025–June 30, 2026 and is no longer the current-period maximum. The official tokenomics documentation states that base rewards halve annually and lists 12/day for that period; applying that published rule after June 30, 2026 yields 6/day for July 1, 2026–June 30, 2027. This is an inference from the official schedule, not a separately listed 2026/2027 row. The scenario is now strategy version `v2`; reward amount and uncertainty high bound are 6 GEOD/day. The low bound remains zero. The support observation expires at 2027-07-01 UTC so this version fails stale-input validation after the reward period rather than silently carrying 6/day forward. This is still a maximum-reward, empty-hex scenario, not an expected user outcome; cell occupancy, online time, signal quality, multipath, and eligibility can lower actual rewards. Historical v1 snapshots must remain immutable and stale, not be rewritten to v2.
+
+Official source: [GEODNET Tokenomics](https://docs.geodnet.com/geod-token/tokenomics) (annual halving schedule) and [Performance-Based Reward Rules](https://docs.geodnet.com/performance-based-reward-rules) (rewards may be forfeited for poor performance). This code/documentation update is local only. The strategy remains `PARTIAL_REFRESH_ONLY`; no production snapshot or public page changes until a separately verified loader and authorized deployment.

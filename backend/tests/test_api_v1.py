@@ -54,7 +54,7 @@ def test_ops_status_exposes_database_scheduler_and_strategy_health(monkeypatch, 
     }
     assert payload["failed_calculation_count"] == 0
     assert payload["stale_strategy_count"] == 0
-    assert payload["scheduler"]["cadence_minutes"] == 5
+    assert payload["scheduler"]["cadence_minutes"] == 240
     assert payload["scheduler"]["last_successful_run_at"] == NOW.isoformat().replace("+00:00", "Z")
     assert {item["strategy_id"] for item in payload["strategies"]} == {
         strategy.strategy_id for strategy in catalog.list_strategies()
@@ -171,8 +171,8 @@ def test_rankings_order_and_tie_breaking_policy(monkeypatch, tmp_path) -> None:
         FARMERS_WORLD_AXE_WOOD_V1.strategy_id,
         "farmers-world-axe-wood-production-10x",
         "farmers-world-axe-wood-production-3x",
-        "geodnet-empty-hex-triple-band-base-station",
         "splinterlands-modern-ranked-active-sps-ev",
+        "geodnet-empty-hex-triple-band-base-station",
         "dfk-crystalvale-jeweler-cjewel-5000-max-lock",
         DFK_CJEWEL_MAX_LOCK_V1.strategy_id,
         SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1.strategy_id,

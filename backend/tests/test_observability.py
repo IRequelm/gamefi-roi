@@ -116,6 +116,7 @@ def test_posthog_capture_posts_allowlisted_properties_and_no_person_profile() ->
             "ranking_slug": "gamefi-under-50",
             "snapshot_id": "snapshot-1",
             "snapshot_timestamp": "2026-08-16T12:00:00Z",
+            "utm_content": "x-test-variant-a",
             "raw_financial_payload": "do-not-send",
             "wallet_address": "do-not-send",
         },
@@ -131,6 +132,7 @@ def test_posthog_capture_posts_allowlisted_properties_and_no_person_profile() ->
     assert payload["properties"]["ranking_slug"] == "gamefi-under-50"
     assert payload["properties"]["snapshot_id"] == "snapshot-1"
     assert payload["properties"]["snapshot_timestamp"] == "2026-08-16T12:00:00Z"
+    assert payload["properties"]["utm_content"] == "x-test-variant-a"
     assert payload["properties"]["$process_person_profile"] is False
     assert "raw_financial_payload" not in payload["properties"]
     assert "wallet_address" not in payload["properties"]

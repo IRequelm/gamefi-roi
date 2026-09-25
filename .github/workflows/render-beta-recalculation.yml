@@ -2,7 +2,7 @@ name: Render Beta Recalculation
 
 on:
   schedule:
-    # Run four times daily, away from the top of the hour (GitHub may delay busy schedules).
+    # Run every four hours at minute 17 UTC (GitHub may delay busy schedules).
     - cron: "17 */4 * * *"
   workflow_dispatch:
 
@@ -13,9 +13,8 @@ concurrency:
 jobs:
   recalculate:
     name: Recalculate beta snapshots
-    # The beta database is currently suspended when the free Render trial
-    # expires. Keep scheduled runs harmless until the operator restores a
-    # funded database and explicitly sets GAMEFI_BETA_DATABASE_ENABLED=true.
+    # Production database writes remain disabled unless the operator has
+    # explicitly validated the external database connection and enabled them.
     if: ${{ vars.GAMEFI_BETA_DATABASE_ENABLED == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 25

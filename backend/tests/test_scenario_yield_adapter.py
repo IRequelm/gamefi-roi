@@ -20,6 +20,7 @@ from app.sources.observations import Observation, ObservationStatus, SourceType
 from app.strategies.catalog import get_opportunity, list_opportunities, list_strategies
 from app.strategies.scenario_yield import (
     DIMO_SOFTWARE_ONLY_V1,
+    GEODNET_EMPTY_HEX_TRIPLE_BAND_V2,
     SCENARIO_YIELD_STRATEGIES,
     ScenarioYieldStrategyDefinition,
     WEATHERXM_D1_WIFI_V1,
@@ -27,7 +28,7 @@ from app.strategies.scenario_yield import (
 )
 
 FIXTURE = Path(__file__).parent / "fixtures" / "v1_strategy_expansion_golden.json"
-CALCULATED_AT = datetime(2026, 8, 16, 12, 0, tzinfo=UTC)
+CALCULATED_AT = datetime(2026, 9, 1, 12, 0, tzinfo=UTC)
 
 
 @pytest.mark.parametrize("strategy", SCENARIO_YIELD_STRATEGIES)
@@ -84,6 +85,37 @@ def test_scenario_yield_preserves_live_config_and_derived_provenance() -> None:
     assert any(observation.source_type == SourceType.OFFICIAL_DOCS for observation in observations)
     assert any(observation.source_type == SourceType.VERIFIED_CONFIG for observation in observations)
     assert set(adapter_result.economics_input.input_observation_ids) == {observation.observation_id for observation in observations}
+
+
+def test_geodnet_current_emission_period_is_versioned_and_halved() -> None:
+    strategy = GEODNET_EMPTY_HEX_TRIPLE_BAND_V2
+
+    assert strategy.strategy_version == "v2"
+    assert strategy.reward.amount_day == "6"
+    assert strategy.uncertainty is not None
+    assert strategy.uncertainty.high_reward_amount_day == "6"
+    assert any(
+        metric.key == "max_daily_reward_2026_2027" and metric.value == "6"
+        for metric in strategy.support_metrics
+    )
+
+    max_reward_observation = next(
+        observation
+        for observation in load_fixture_observations(CALCULATED_AT, strategy=strategy)
+        if observation.metric.endswith(".source.max_daily_reward_2026_2027")
+    )
+    assert max_reward_observation.fresh_until == datetime(2027, 7, 1, tzinfo=UTC)
+
+    after_expiry = datetime(2027, 7, 2, 12, 0, tzinfo=UTC)
+    expired_observations = load_fixture_observations(after_expiry, strategy=strategy)
+    expired_max = next(
+        observation
+        for observation in expired_observations
+        if observation.metric.endswith(".source.max_daily_reward_2026_2027")
+    )
+    assert expired_max.status is ObservationStatus.STALE
+    with pytest.raises(AdapterInputError, match="Missing required"):
+        ScenarioYieldAdapter(strategy).build_engine_input(expired_observations, calculated_at=after_expiry)
 
 
 def test_weatherxm_live_loader_uses_coingecko_api_id_and_supplies_required_economics(monkeypatch) -> None:

@@ -63,15 +63,15 @@ services:
       - key: GAMEFI_NVIDIA_MAX_TOKENS
         value: "2048"
       - key: GAMEFI_SCHEDULER_CADENCE_MINUTES
-        value: "5"
+        value: "240"
       - key: GAMEFI_PRODUCTION_HARD_STALE_SECONDS
-        value: "1800"
+        value: "28800"
       - key: GAMEFI_MARKET_DATA_HTTP_TIMEOUT_SECONDS
         value: "10"
       - key: GAMEFI_MARKET_DATA_HTTP_MAX_RETRIES
         value: "2"
       - key: GAMEFI_MARKET_DATA_PRICE_FRESHNESS_SECONDS
-        value: "300"
+        value: "21600"
       - key: GAMEFI_COINGECKO_BASE_URL
         value: https://api.coingecko.com/api/v3
       - key: GAMEFI_COINGECKO_API_KEY
@@ -81,20 +81,20 @@ services:
       - key: GAMEFI_ATOMICASSETS_BASE_URL
         value: https://wax.api.atomicassets.io
       - key: GAMEFI_WAX_MARKET_OBSERVATION_FRESHNESS_SECONDS
-        value: "300"
+        value: "21600"
       - key: GAMEFI_DFK_CHAIN_RPC_URL
         sync: false
       - key: GAMEFI_DFK_CHAIN_OBSERVATION_FRESHNESS_SECONDS
-        value: "300"
+        value: "21600"
       - key: GAMEFI_DFK_JEWELER_REFRESH_ENABLED
         value: "false"
       - key: GAMEFI_SPLINTERLANDS_BASE_URL
         value: https://api.splinterlands.com
       - key: GAMEFI_SPLINTERLANDS_OBSERVATION_FRESHNESS_SECONDS
-        value: "300"
+        value: "21600"
 
 databases:
   - name: gamefi-roi-db
-    plan: free
+    plan: basic-256mb
     region: ohio
     postgresMajorVersion: "17"

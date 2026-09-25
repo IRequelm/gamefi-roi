@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import Literal
 
 
@@ -24,6 +25,7 @@ class ScenarioSupportMetric:
     source_type: str
     source_locator: str
     note: str
+    expires_at: datetime | None = None
 
 
 @dataclass(frozen=True)
@@ -233,9 +235,9 @@ STORJ_EXISTING_HARDWARE_V1 = ScenarioYieldStrategyDefinition(
 )
 
 
-GEODNET_EMPTY_HEX_TRIPLE_BAND_V1 = ScenarioYieldStrategyDefinition(
+GEODNET_EMPTY_HEX_TRIPLE_BAND_V2 = ScenarioYieldStrategyDefinition(
     strategy_id="geodnet-empty-hex-triple-band-base-station",
-    strategy_version="v1",
+    strategy_version="v2",
     opportunity_id="geodnet",
     opportunity_type="DEPIN_NODE",
     game_id_alias="geodnet",
@@ -244,8 +246,8 @@ GEODNET_EMPTY_HEX_TRIPLE_BAND_V1 = ScenarioYieldStrategyDefinition(
     chain="polygon",
     economy_type="geospatial-node",
     description=(
-        "Triple-band base-station scenario using official hardware price, documented 2025/2026 maximum "
-        "daily GEOD reward, and explicit high-quality empty-hex assumptions."
+        "Triple-band base-station scenario using official hardware price, an annual-halving-inferred 2026/2027 "
+        "maximum daily GEOD reward, and explicit high-quality empty-hex assumptions."
     ),
     reporting_currency="USD",
     metric_prefix="geodnet.empty_hex.triple_band",
@@ -263,14 +265,18 @@ GEODNET_EMPTY_HEX_TRIPLE_BAND_V1 = ScenarioYieldStrategyDefinition(
         kind="token_day",
         reward_asset_id="polygon:geodnet:GEOD",
         reward_asset_symbol="GEOD",
-        amount_day="12",
+        amount_day="6",
         amount_unit="GEOD/day",
         cash_realization_ratio="1",
         realization_haircut_bps="500",
         price_provider_asset_id="geodnet",
         fixture_reward_token_price_usd="0.25",
         source_locator="https://docs.geodnet.com/docs/geodnet-token-metrics",
-        note="Official 2025/2026 maximum reward is 12 GEOD/day; 5% exit haircut reflects non-executable market valuation.",
+        note=(
+            "Current-period maximum is 6 GEOD/day, inferred from the official 12 GEOD/day 2025/2026 maximum "
+            "and documented annual halving; applies July 1, 2026 through June 30, 2027. "
+            "5% exit haircut reflects non-executable market valuation."
+        ),
     ),
     costs=ScenarioCostDefinition(
         operating_cost_day_usd="0.0072",
@@ -280,7 +286,7 @@ GEODNET_EMPTY_HEX_TRIPLE_BAND_V1 = ScenarioYieldStrategyDefinition(
         note="Power uses documented sub-2W hardware at $0.15/kWh; claim/transaction cost is an explicit estimate.",
     ),
     assumptions=(
-        ("max_daily_geod", "12"),
+        ("max_daily_geod", "6"),
         ("reward_quality_ratio", "1"),
         ("realization_haircut_bps", "500"),
         ("hardware_power_watts", "2"),
@@ -297,13 +303,14 @@ GEODNET_EMPTY_HEX_TRIPLE_BAND_V1 = ScenarioYieldStrategyDefinition(
             "Official MobileCM triple-band base-station listing.",
         ),
         ScenarioSupportMetric(
-            "max_daily_reward_2025_2026",
-            "12",
+            "max_daily_reward_2026_2027",
+            "6",
             "GEOD/day",
             "geodnet-docs",
             "official_docs",
             "https://docs.geodnet.com/docs/geodnet-token-metrics",
-            "Official maximum daily reward for 2025/2026 before annual halving.",
+            "Inferred current-period maximum from the official 2025/2026 amount and annual halving rule; July 1, 2026–June 30, 2027.",
+            expires_at=datetime(2027, 7, 1, tzinfo=UTC),
         ),
         ScenarioSupportMetric(
             "minimum_effective_satellites_full_reward",
@@ -353,8 +360,8 @@ GEODNET_EMPTY_HEX_TRIPLE_BAND_V1 = ScenarioYieldStrategyDefinition(
     platforms=("hardware-node",),
     uncertainty=ScenarioRangeDefinition(
         low_reward_amount_day="0",
-        high_reward_amount_day="12",
-        description="Zero-to-maximum reward range captures location and quality dependency.",
+        high_reward_amount_day="6",
+        description="Zero-to-current-period maximum reward range captures location and quality dependency.",
     ),
 )
 
@@ -727,7 +734,7 @@ MYSTERIUM_B2B_EXISTING_DEVICE_V1 = ScenarioYieldStrategyDefinition(
 
 SCENARIO_YIELD_STRATEGIES: tuple[ScenarioYieldStrategyDefinition, ...] = (
     STORJ_EXISTING_HARDWARE_V1,
-    GEODNET_EMPTY_HEX_TRIPLE_BAND_V1,
+    GEODNET_EMPTY_HEX_TRIPLE_BAND_V2,
     WEATHERXM_D1_WIFI_V1,
     DIMO_SOFTWARE_ONLY_V1,
     MYSTERIUM_B2B_EXISTING_DEVICE_V1,

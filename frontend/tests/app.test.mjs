@@ -17,6 +17,7 @@ import {
   initializeAnalytics,
   initializeErrorTracking,
   initializeProductAnalytics,
+  loadRecordedModelsIfNoCurrentRankings,
   opportunityTypeLabel,
   renderAnalyticsConsentBanner,
   renderCatalogStats,
@@ -37,6 +38,7 @@ import {
   renderUnavailableRoiExplanation,
   renderRankingsAnswerBlock,
   renderRankingsPage,
+  renderRecordedModels,
   renderRankingsTable,
   renderStrategyAnswerBlock,
   renderScoreBadge,
@@ -113,11 +115,14 @@ test("home renders results as cards before filters without table ranking markup"
   ]);
 
   assert.match(html, /GamCryp opportunity intelligence/);
-  assert.match(html, /Find Web3 earning opportunities/);
+  assert.match(html, /fits your budget, device, and time/);
+  assert.match(html, /start-path-grid/);
+  assert.match(html, /Start under \$25/);
+  assert.match(html, /\/rankings\?opportunity_type=DEPIN_NODE/);
   assert.match(html, /Risk and confidence separated/);
   assert.match(html, /Top modeled opportunity/);
   assert.match(html, /Ranked by modeled 30D ROI, then confidence, risk, and recency/);
-  assert.match(html, /When rewards and exits can be priced reproducibly/);
+  assert.match(html, /instead of making up an ROI/);
   assert.match(html, /Reviewed opportunities/);
   assert.match(html, /Modeled strategies/);
   assert.match(html, /Opportunity coverage/);
@@ -134,8 +139,85 @@ test("homepage never presents a stale snapshot as the top opportunity", () => {
   rankings.items[0].latest_snapshot.freshness.overall_status = "stale";
   const html = renderTopRankingSummary(rankings);
   assert.match(html, /Latest modeled view/);
-  assert.match(html, /Latest results are available/);
+  assert.match(html, /No current rankings are available/);
+  assert.match(html, /Stale snapshots stay out of current comparisons/);
   assert.doesNotMatch(html, /DFK Jeweler/);
+});
+
+test("homepage explains when there is no fresh ranked snapshot", () => {
+  const html = renderTopRankingSummary({ items: [] });
+  assert.match(html, /No current rankings are available/);
+  assert.match(html, /No fresh modeled snapshot is available for ranking right now/);
+});
+
+test("homepage shows stale snapshots only in a separate historical section", () => {
+  const archived = {
+    strategy_id: "dfk-recorded",
+    name: "DFK recorded scenario",
+    game_name: "DeFi Kingdoms",
+    latest_snapshot: snapshotPayload(),
+  };
+  archived.latest_snapshot.freshness.overall_status = "expired";
+
+  const html = renderHomeShell([], { items: [], page: { total: 0 } }, [opportunityPayload()], [], [archived]);
+
+  assert.match(html, /No current rankings are available/);
+  assert.match(html, /Last recorded models — not current/);
+  assert.match(html, /Not current: source status is expired/);
+  assert.match(html, /Inspect recorded model/);
+  const archiveStart = html.indexOf('<section class="section-panel recorded-models"');
+  const archiveEnd = html.indexOf("</section>", archiveStart);
+  const archiveHtml = html.slice(archiveStart, archiveEnd);
+  assert.doesNotMatch(archiveHtml, /\/go\//);
+  assert.doesNotMatch(html, /#1/);
+});
+
+test("historical strategy lookup runs only when current rankings are empty and fails soft", async () => {
+  const paths = [];
+  const get = async (path) => {
+    paths.push(path);
+    return { items: [{ strategy_id: "stale-model" }] };
+  };
+
+  const skipped = await loadRecordedModelsIfNoCurrentRankings({ items: [{}] }, get);
+  const loaded = await loadRecordedModelsIfNoCurrentRankings({ items: [] }, get);
+  const failed = await loadRecordedModelsIfNoCurrentRankings({ items: [] }, async () => {
+    throw new Error("optional catalog unavailable");
+  });
+
+  assert.deepEqual(skipped, []);
+  assert.deepEqual(loaded, [{ strategy_id: "stale-model" }]);
+  assert.deepEqual(failed, []);
+  assert.deepEqual(paths, ["/strategies?limit=50"]);
+});
+
+test("empty rankings explain that stale snapshots are excluded", () => {
+  const html = renderRankingsTable({ items: [], page: { total: 0 } });
+  assert.match(html, /No current rankings match this view/);
+  assert.match(html, /stale results are intentionally excluded/);
+  assert.match(html, /verified data refresh/);
+});
+
+test("recorded models appear separately with stale warning and no outbound CTA", () => {
+  const archived = {
+    strategy_id: "dfk-recorded",
+    name: "DFK recorded scenario",
+    game_name: "DeFi Kingdoms",
+    latest_snapshot: snapshotPayload(),
+  };
+  archived.latest_snapshot.freshness.overall_status = "stale";
+  const html = renderRecordedModels([archived, {
+    ...archived,
+    strategy_id: "fresh-one",
+    latest_snapshot: { ...archived.latest_snapshot, freshness: { overall_status: "fresh" } },
+  }]);
+
+  assert.match(html, /Last recorded models — not current/);
+  assert.match(html, /Historical context only/);
+  assert.match(html, /Not current: source status is stale/);
+  assert.match(html, /Inspect recorded model/);
+  assert.doesNotMatch(html, /\/go\//);
+  assert.doesNotMatch(html, /fresh-one/);
 });
 
 test("homepage groups multiple strategies under one opportunity", () => {
@@ -800,7 +882,10 @@ test("PostHog product analytics is consent gated, explicit, and privacy safe", (
     posthogProjectApiKey: "phc_test_key",
     posthogHost: "https://us.i.posthog.com",
   });
-  context.win.location = { pathname: "/rankings/gamefi-under-50", search: "?utm_source=x&utm_medium=social" };
+  context.win.location = {
+    pathname: "/rankings/gamefi-under-50",
+    search: "?utm_source=x&utm_medium=social&utm_campaign=roi_truth_probe&utm_content=points_are_not_cash",
+  };
   context.win.navigator = { sendBeacon: (url, body) => sent.push({ url, payload: JSON.parse(body) }) > 0 };
   context.idGenerator = () => "stable-id";
 
@@ -832,6 +917,8 @@ test("PostHog product analytics is consent gated, explicit, and privacy safe", (
   assert.equal(sent[0].payload.properties.snapshot_timestamp, "2026-08-16T12:00:00Z");
   assert.equal(sent[0].payload.properties.utm_source, "x");
   assert.equal(sent[0].payload.properties.utm_medium, "social");
+  assert.equal(sent[0].payload.properties.utm_campaign, "roi_truth_probe");
+  assert.equal(sent[0].payload.properties.utm_content, "points_are_not_cash");
   assert.equal(sent[0].payload.properties.raw_financial_payload, undefined);
   assert.equal(sent[0].payload.properties.wallet_address, undefined);
   assert.equal(sent[0].payload.properties.$process_person_profile, false);

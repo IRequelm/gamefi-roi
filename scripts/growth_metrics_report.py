@@ -9,7 +9,9 @@ converted into a zero or an inferred revenue figure.
 from __future__ import annotations
 
 import argparse
+import errno
 import json
+import os
 import sys
 from collections import Counter
 from datetime import datetime, timezone
@@ -180,7 +182,9 @@ def _distribution_summary() -> dict[str, Any]:
     platform_statuses = heartbeat.get("platform_statuses", [])
     reported_status = heartbeat.get("status", "unknown")
     updated_at = heartbeat.get("updated_at")
+    reported_pid = heartbeat.get("pid")
     heartbeat_age_minutes = None
+    worker_process_alive = _process_is_alive(reported_pid) if reported_pid is not None else None
     status = reported_status
     health_reason = None
     if not heartbeat:
@@ -201,6 +205,13 @@ def _distribution_summary() -> dict[str, Any]:
             elif heartbeat_age_minutes > WORKER_HEARTBEAT_MAX_AGE_MINUTES and reported_status == "ok":
                 status = "stale"
                 health_reason = "heartbeat_expired"
+            elif reported_status == "ok":
+                if worker_process_alive is False:
+                    status = "stopped"
+                    health_reason = "worker_process_not_running"
+                elif worker_process_alive is None:
+                    status = "unknown"
+                    health_reason = "worker_process_liveness_unavailable"
         except (TypeError, ValueError, OverflowError):
             status = "stale"
             health_reason = "heartbeat_timestamp_invalid"
@@ -211,6 +222,8 @@ def _distribution_summary() -> dict[str, Any]:
         "health_reason": health_reason,
         "heartbeat_age_minutes": round(heartbeat_age_minutes, 1) if heartbeat_age_minutes is not None else None,
         "max_heartbeat_age_minutes": WORKER_HEARTBEAT_MAX_AGE_MINUTES,
+        "worker_pid_present": reported_pid is not None,
+        "worker_process_alive": worker_process_alive,
         "updated_at": updated_at,
         "platform_statuses": platform_statuses if isinstance(platform_statuses, list) else [],
         "dead_letters": sorted(
@@ -219,6 +232,21 @@ def _distribution_summary() -> dict[str, Any]:
             if isinstance(record, dict) and record.get("dead_letter") is True
         ),
     }
+
+
+def _process_is_alive(pid: Any) -> bool | None:
+    """Return whether a heartbeat PID exists; None means it could not be checked."""
+    try:
+        os.kill(int(pid), 0)
+        return True
+    except PermissionError:
+        return None
+    except OSError as exc:
+        if isinstance(exc, ProcessLookupError) or exc.errno == errno.ESRCH or getattr(exc, "winerror", None) in {87, 1168}:
+            return False
+        return None
+    except (TypeError, ValueError, OverflowError):
+        return None
 
 
 def _database_summary() -> dict[str, Any]:
@@ -257,6 +285,7 @@ def _database_summary() -> dict[str, Any]:
             "channels": dict(Counter(item.channel for item in landings)),
             "utm_sources": dict(Counter(item.utm_source or "(none)" for item in landings)),
             "utm_campaigns": dict(Counter(item.utm_campaign or "(none)" for item in landings)),
+            "utm_contents": dict(Counter(item.utm_content or "(none)" for item in landings)),
         },
         "outbound": {
             "clicks": len(clicks),

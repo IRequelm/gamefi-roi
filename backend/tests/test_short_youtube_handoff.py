@@ -9,10 +9,11 @@ from types import SimpleNamespace
 import pytest
 
 from app.config.settings import Settings
-from app.content_package.generator import build_content_packages
+from app.content_package.generator import build_content_packages, is_site_explainer
 from app.publishing.short_youtube_handoff import (
     ShortHandoffItem,
     ShortHandoffQueue,
+    _description,
     _stored_render_creative_ready,
     audit_handoff,
     approve_handoff_item,
@@ -32,6 +33,17 @@ def _settings() -> Settings:
 
 def _package():
     return next(package for package in build_content_packages() if package.format == "SHORT_FORM" and package.content_family != "FINANCIAL_ROI")
+
+
+def test_site_explainer_description_credits_the_licensed_music() -> None:
+    package = next(package for package in build_content_packages() if package.format == "SHORT_FORM" and is_site_explainer(package))
+    description = _description(package)
+
+    assert 'Music: "Inspired" Kevin MacLeod (incompetech.com)' in description
+    assert "Creative Commons: By Attribution 4.0 License" in description
+    assert "https://creativecommons.org/licenses/by/4.0/" in description
+    assert "Edited for video duration" in description
+    assert "Original GamCryp instrumental" not in description
 
 
 def _render(tmp_path: Path, *, package, **kwargs) -> RenderResult:

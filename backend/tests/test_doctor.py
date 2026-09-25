@@ -32,7 +32,7 @@ def test_doctor_reports_pending_migration(monkeypatch, tmp_path) -> None:
     migrations = next(result for result in results if result.name == "migrations")
 
     assert migrations.ok is False
-    assert "expected 20260921_0011" in migrations.detail
+    assert "expected 20260924_0012" in migrations.detail
 
 
 def test_doctor_includes_market_source_config(monkeypatch, tmp_path) -> None:
@@ -49,7 +49,7 @@ def test_doctor_includes_market_source_config(monkeypatch, tmp_path) -> None:
 
     assert "market-source-config" in names
     assert market_source_config.ok is True
-    assert "price_freshness=300s" in market_source_config.detail
+    assert "price_freshness=21600s" in market_source_config.detail
 
 
 def test_doctor_includes_adapter_source_config(monkeypatch, tmp_path) -> None:
@@ -66,7 +66,7 @@ def test_doctor_includes_adapter_source_config(monkeypatch, tmp_path) -> None:
 
     assert "adapter-source-config" in names
     assert adapter_source_config.ok is True
-    assert "dfk_freshness=300s" in adapter_source_config.detail
+    assert "dfk_freshness=21600s" in adapter_source_config.detail
     assert "alcor_configured=True" in adapter_source_config.detail
     assert "atomicassets_configured=True" in adapter_source_config.detail
-    assert "wax_market_freshness=300s" in adapter_source_config.detail
+    assert "wax_market_freshness=21600s" in adapter_source_config.detail

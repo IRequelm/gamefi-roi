@@ -105,6 +105,12 @@ def build_scenario_observations(
     support = (*support, *assumptions)
     economic_inputs = support + ((price_observation,) if price_observation is not None else ())
 
+    if any(
+        metric.expires_at is not None and active_time >= metric.expires_at
+        for metric in strategy.support_metrics
+    ):
+        return economic_inputs
+
     if strategy.reward.kind == "token_day" and (price_observation is None or price_observation.value is None):
         return economic_inputs
 
@@ -288,6 +294,7 @@ def _support_observation(
     active_time: datetime,
 ) -> Observation:
     source_type = SourceType(metric.source_type)
+    fresh_until = metric.expires_at or CONFIG_EVIDENCE_ESTABLISHED_AT + timedelta(days=365)
     return Observation(
         observation_id=_config_observation_id(metric.source_provider, strategy.strategy_id, metric.key, metric.value),
         entity_type="strategy",
@@ -301,8 +308,8 @@ def _support_observation(
         source_locator=metric.source_locator,
         observed_at=CONFIG_EVIDENCE_ESTABLISHED_AT,
         retrieved_at=CONFIG_EVIDENCE_ESTABLISHED_AT,
-        fresh_until=CONFIG_EVIDENCE_ESTABLISHED_AT + timedelta(days=365),
-        status=ObservationStatus.FRESH,
+        fresh_until=fresh_until,
+        status=ObservationStatus.FRESH if active_time <= fresh_until else ObservationStatus.STALE,
         metadata={
             "classification": ValueClassification.CONFIG.value,
             "note": metric.note,

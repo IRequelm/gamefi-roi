@@ -17,23 +17,26 @@ from dataclasses import dataclass
 from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any, Callable
+from urllib.parse import urlencode
 from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy.engine import Engine
 
 from app.config.settings import Settings
-from app.content_package.generator import ContentPackage, build_content_packages, validate_package
-from app.video_render.factory import APPROVED_VOICES, RENDER_READY, RenderResult, render_package, short_quality_blockers, validate_render
+from app.content_package.generator import AUTONOMOUS_CATALOG_FAMILIES, ContentPackage, SITE_EXPLAINER_FAMILIES, build_content_packages, is_motion_graphic_explainer, is_site_explainer, validate_package
+from app.video_render.factory import APPROVED_VOICES, RENDER_READY, RenderResult, music_bed_source_fingerprint, render_package, short_quality_blockers, validate_render
 from app.video_render.creative_qa import asset_plan, creative_preflight, frame_qa
 from app.publishing.youtube import YouTubeOperationResult, YouTubePublishManifest, YouTubePublisher
 from app.publishing.youtube import PublishStateStore
 from app.publishing.elevenlabs import _atomic_write_text
 
 HANDOFF_VERSION = "youtube-short-handoff-v1"
-SHORT_CREATIVE_POLICY_VERSION = "approved-reuse-tts-motion-v8"
+SHORT_CREATIVE_POLICY_VERSION = "approved-reuse-tts-motion-v9-licensed-music"
 DEFAULT_QUEUE = Path("distribution/publish_queue/youtube_short_handoff.json")
 DEFAULT_CAP_STATE = Path("data/local/youtube/autonomous_daily_cap.json")
+DEFAULT_STANDING_POLICY = Path("data/local/youtube/site_short_publication_mandate.json")
+STANDING_POLICY_ID = "user-directed-gamcryp-youtube-explainers-v2"
 # A small forward buffer avoids unnecessary ElevenLabs/render credit churn while
 # keeping unattended publication supplied for several weeks at one per day.
 DEFAULT_BUFFER_TARGET = 14
@@ -207,7 +210,7 @@ def _prepare_short_handoff(
         if item.status == "queued":
             family_counts[package_family(item.package_id)] = family_counts.get(package_family(item.package_id), 0) + 1
             opportunity_counts[package_opportunity(item.package_id)] = opportunity_counts.get(package_opportunity(item.package_id), 0) + 1
-    for package in sorted(candidates, key=lambda item: (family_counts.get(item.content_family, 0), opportunity_counts.get(item.opportunity_id or "gamcryp", 0), item.package_id)):
+    for package in sorted(candidates, key=lambda item: (0 if is_site_explainer(item) else 1 if item.content_family in {"HOW_TO_START", "WHAT_YOU_NEED", "HOW_YOU_EARN", "HOW_TO_CLAIM_OR_EXIT", "DEPIN_SETUP", "WHY_ROI_UNAVAILABLE"} else 2, family_counts.get(item.content_family, 0), opportunity_counts.get(item.opportunity_id or "gamcryp", 0), item.package_id)):
         existing = by_package.get(package.package_id)
         prior = publication_state.find(package.source_inventory_item_id)
         if (
@@ -237,7 +240,7 @@ def _prepare_short_handoff(
             continue
         if (not force_rerender and existing and existing.evidence_fingerprint == package.evidence_fingerprint and Path(existing.video_path).is_file() and _stored_render_creative_ready(existing, package)):
             expected_source_url = f"{settings.public_base_url.rstrip('/')}{package.canonical_source_url}"
-            expected_description = _description(package)
+            expected_description = _description(package, settings.public_base_url, existing.audio_mode)
             updates: dict[str, Any] = {}
             if existing.source_url != expected_source_url:
                 updates["source_url"] = expected_source_url
@@ -297,7 +300,7 @@ def _prepare_short_handoff(
             content_id=package.source_inventory_item_id,
             readiness="GREEN",
             title=package.title_candidates[0],
-            description=_description(package),
+            description=_description(package, settings.public_base_url, result.audio_mode),
             source_url=f"{settings.public_base_url.rstrip('/')}{package.canonical_source_url}",
             tags=("GamCryp", "Web3", package.content_family.replace("_", " ").title()),
             video_path=result.video_path,
@@ -334,17 +337,35 @@ def publish_next(
     engine: Engine | None = None,
 ) -> dict[str, Any]:
     queue = load_handoff(queue_path)
-    item = next((candidate for candidate in queue.items if candidate.status == "queued" and candidate.readiness == "GREEN"), None)
+    queued = [candidate for candidate in queue.items if candidate.status == "queued" and candidate.readiness == "GREEN"]
+    # Only user-authorized educational explainers may be auto-approved.
+    # They take precedence over preserved, pre-mandate review backlog.
+    allowed_families = SITE_EXPLAINER_FAMILIES | AUTONOMOUS_CATALOG_FAMILIES
+    item = next((candidate for candidate in queued if package_family(candidate.package_id) in allowed_families), None)
+    if item is None:
+        item = next(iter(queued), None)
     if item is None:
         return {"status": "idle", "detail": "no queued GREEN short"}
+    package = next((candidate for candidate in build_content_packages(engine=engine) if candidate.package_id == item.package_id), None)
     blockers = _handoff_blockers(item, engine=engine)
+    if package is not None:
+        blockers = (*blockers, *creative_preflight(package))
+        if not blockers and item.creative_approval_state != "approved" and _standing_policy_allows(package, item, publisher.config.channel_handle):
+            approved = item.model_copy(update={
+                "creative_approval_state": "approved",
+                "creative_approval_video_checksum": item.video_checksum,
+                "creative_approved_at": (now or datetime.now(UTC)).isoformat(),
+                "creative_reviewed_by": "user-standing-mandate/automated-qa",
+                "creative_review_note": f"{STANDING_POLICY_ID}; factual and render QA passed; checksum recorded; no TTS; licensed Kevin MacLeod music with attribution in description.",
+            })
+            updated = tuple(approved if candidate.package_id == item.package_id else candidate for candidate in queue.items)
+            queue = queue.model_copy(update={"items": updated})
+            write_handoff(queue_path, queue)
+            item = approved
     if item.creative_approval_state != "approved":
         blockers = (*blockers, "human creative quality approval is required before YouTube use")
     elif item.creative_approval_video_checksum != item.video_checksum:
         blockers = (*blockers, "creative approval does not match the current video checksum")
-    package = next((candidate for candidate in build_content_packages(engine=engine) if candidate.package_id == item.package_id), None)
-    if package is not None:
-        blockers = (*blockers, *creative_preflight(package))
     if blockers:
         return {"status": "not_ready", "content_id": item.content_id, "detail": "; ".join(blockers)}
     current = now or datetime.now(UTC)
@@ -412,7 +433,8 @@ def audit_handoff(queue_path: Path = DEFAULT_QUEUE) -> dict[str, Any]:
             blockers.append("source URL points to a local development host")
         if item.audio_mode == "neural_voice" and not item.narration_reused:
             blockers.append("historical neural narration has no verified reuse provenance")
-        if item.audio_mode == "music_only":
+        mandate_audio = item.creative_reviewed_by == "user-standing-mandate/automated-qa" and item.audio_mode == "music_only"
+        if item.audio_mode == "music_only" and not mandate_audio:
             blockers.append("music-only audio is not narration and requires explicit creative review")
         if item.status == "queued" and item.creative_approval_state != "approved":
             blockers.append("queued item is not approved for YouTube use")
@@ -498,9 +520,33 @@ def record_autonomous_youtube_success(path: Path = DEFAULT_CAP_STATE, *, now: da
         _save_cap(path, DailyCap(cap.date, cap.successful_publications + 1))
 
 
-def _description(package: ContentPackage) -> str:
+def _description(package: ContentPackage, public_base_url: str = "https://gamcryp.com", audio_mode: str = "music_only") -> str:
     facts = "\n\n".join(str(point["text"]) for point in package.factual_talking_points if point.get("text"))
-    return f"{package.hook}\n\n{facts}\n\n{package.cta}"[:5000]
+    description = f"{package.hook}\n\n{facts}\n\n{package.cta}"
+    if is_motion_graphic_explainer(package):
+        landing = f"{public_base_url.rstrip('/')}{package.canonical_source_url}"
+        tracking = urlencode({
+            "utm_source": "youtube",
+            "utm_medium": "short",
+            "utm_campaign": "site_explainer" if is_site_explainer(package) else "catalog_guide",
+            "utm_content": package.content_family.lower(),
+        })
+        description += f"\n\nExplore the source and methodology: {landing}?{tracking}"
+        if audio_mode == "music_only":
+            description += (
+                "\n\nMusic: \"Inspired\" Kevin MacLeod (incompetech.com)"
+                "\nLicensed under Creative Commons: By Attribution 4.0 License"
+                "\nhttps://creativecommons.org/licenses/by/4.0/"
+                "\nEdited for video duration with trimming/looping and fades. All guidance is on-screen; there is no spoken narration."
+            )
+        else:
+            description += "\n\nAll guidance is on-screen and no spoken narration is included."
+        description += "\nAnalytics only. No guaranteed returns. Not investment advice.\n\n#GamCryp #Web3 #GameFi"
+        if not is_site_explainer(package):
+            source_links = "\n".join(f"{reference.get('label', 'Official source')}: {reference['url']}" for reference in package.required_source_references if str(reference.get("url", "")).startswith("https://"))
+            if source_links:
+                description += f"\n\nOfficial references:\n{source_links}"
+    return description[:5000]
 
 
 def package_family(package_id: str) -> str:
@@ -549,6 +595,52 @@ def _handoff_blockers(item: ShortHandoffItem, *, engine: Engine | None = None) -
     return tuple(blockers)
 
 
+def _standing_policy_allows(package: ContentPackage, item: ShortHandoffItem, channel_handle: str) -> bool:
+    """Apply the user's explicit mandate to site and active catalog explainers.
+
+    The private policy record is local and ignored by Git. Its narrow allowlist
+    does not approve opportunity-specific financial or promotional content.
+    """
+    if not is_motion_graphic_explainer(package) or item.audio_mode != "music_only":
+        return False
+    if item.audio_mode == "neural_voice" or item.readiness != "GREEN" or item.status != "queued":
+        return False
+    try:
+        current_checksum = hashlib.sha256(Path(item.video_path).read_bytes()).hexdigest()
+    except OSError:
+        return False
+    if item.video_checksum != current_checksum:
+        return False
+    path = DEFAULT_STANDING_POLICY
+    allowed_families = SITE_EXPLAINER_FAMILIES | AUTONOMOUS_CATALOG_FAMILIES
+    try:
+        policy = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return False
+    return (
+        policy.get("policy_id") == STANDING_POLICY_ID
+        and policy.get("status") == "active"
+        and policy.get("channel_handle") == channel_handle == "@GamCryp"
+        and policy.get("visibility") == "public"
+        and policy.get("max_public_shorts_per_local_day") == 1
+        and policy.get("audio_mode") == "music_only"
+        and policy.get("tts_allowed") is False
+        and set(policy.get("allowed_content_families", ())) == allowed_families
+        and package.content_family in allowed_families
+        and (is_site_explainer(package) or _active_official_catalog_package(package))
+        and item.source_url.startswith("https://gamcryp.com/")
+        and bool(policy.get("authorized_at"))
+    )
+
+
+def _active_official_catalog_package(package: ContentPackage) -> bool:
+    if package.content_family not in AUTONOMOUS_CATALOG_FAMILIES or not package.opportunity_id:
+        return False
+    from app.strategies.catalog import get_opportunity
+    opportunity = get_opportunity(package.opportunity_id)
+    return bool(opportunity and opportunity.status == "active" and package.required_source_references and all(str(ref.get("url", "")).startswith("https://") for ref in package.required_source_references))
+
+
 def _load_render_quality_metadata(item: ShortHandoffItem) -> dict[str, Any] | None:
     video = Path(item.video_path)
     candidates = (
@@ -558,6 +650,8 @@ def _load_render_quality_metadata(item: ShortHandoffItem) -> dict[str, Any] | No
     for metadata in candidates:
         try:
             payload = json.loads(metadata.read_text(encoding="utf-8"))
+            if item.audio_mode == "music_only" and payload.get("music_source_sha256") != music_bed_source_fingerprint():
+                return None
             checksums = payload.get("asset_checksums", {})
             for label, path in (("video", item.video_path), ("audio", item.narration_path), ("captions", item.caption_path)):
                 if checksums.get(label) != hashlib.sha256(Path(path).read_bytes()).hexdigest():
@@ -579,6 +673,8 @@ def _stored_render_creative_ready(item: ShortHandoffItem, package: ContentPackag
         quality = payload.get("quality_metadata") or {}
     except (OSError, ValueError, TypeError):
         return False
+    if item.audio_mode == "music_only" and payload.get("music_source_sha256") != music_bed_source_fingerprint():
+        return False
     if package is not None:
         stored_product_paths = tuple((quality.get("asset_plan") or {}).get("product_visual_paths") or ())
         current_product_paths = tuple(asset_plan(package).product_visual_paths)
@@ -588,12 +684,29 @@ def _stored_render_creative_ready(item: ShortHandoffItem, package: ContentPackag
             return False
     source_count = int(quality.get("source_media_count", 0))
     product_count = int(quality.get("product_visual_count", 0))
-    return (
+    common_ready = (
         quality.get("creative_status") == "CREATIVE_QA_PASSED"
         and quality.get("hook_qa", {}).get("status") == "PASSED"
-        and max(source_count, product_count) >= 1
         and quality.get("gamcryp_product_placement") is True
         and quality.get("brand_closing_present") is True
+    )
+    if quality.get("site_explainer") is True and package is not None and is_motion_graphic_explainer(package):
+        logo = Path(str(quality.get("site_brand_logo_path") or ""))
+        try:
+            logo_matches = logo.is_file() and hashlib.sha256(logo.read_bytes()).hexdigest() == quality.get("site_brand_logo_sha256")
+        except OSError:
+            logo_matches = False
+        return (
+            common_ready
+            and quality.get("render_engine") == "remotion"
+            and quality.get("quality_version") == "short-social-remotion-site-explainer-v1"
+            and quality.get("site_visual_mode") == "original_evidence_led_motion_graphics"
+            and quality.get("product_visual_motion") == "site_motion_infographic"
+            and logo_matches
+        )
+    return (
+        common_ready
+        and max(source_count, product_count) >= 1
         and quality.get("product_visual_motion") in {"ken_burns_crop_and_scanline", "official_video_or_ken_burns_capture", "official_video_or_animated_source_capture"}
     )
 

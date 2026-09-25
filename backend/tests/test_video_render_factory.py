@@ -7,15 +7,17 @@ from dataclasses import replace
 from app.publishing.elevenlabs import ElevenLabsGenerationResult, ElevenLabsProviderError, NarrationAssetMetadata
 from app.video_render.factory import (
     APPROVED_VOICES,
+    MUSIC_BED_SOURCE,
     NOT_READY,
     RENDER_READY,
     RenderResult,
     build_render_job,
     render_package,
     validate_render,
+    music_bed_source_fingerprint,
 )
-from app.video_render.factory import _build_motion_filter, _script_for, _select_product_visual, _visual_scene_timings
-from app.content_package.generator import build_content_packages
+from app.video_render.factory import _build_motion_filter, _generate_music_bed, _script_for, _select_product_visual, _visual_scene_timings
+from app.content_package.generator import build_content_packages, is_motion_graphic_explainer
 
 
 def test_visual_scene_timings_follow_caption_groups() -> None:
@@ -71,7 +73,7 @@ def test_product_scene_uses_asset_led_product_view_composition(tmp_path: Path) -
 
 
 def _package(fmt: str = "SHORT_FORM"):
-    package = next(package for package in build_content_packages() if package.format == "SHORT_FORM" and package.content_family != "FINANCIAL_ROI")
+    package = next(package for package in build_content_packages() if package.format == "SHORT_FORM" and package.opportunity_id is not None and package.content_family != "FINANCIAL_ROI" and not is_motion_graphic_explainer(package))
     if fmt == "SHORT_FORM":
         return package
     sections = tuple({"title": f"Section {index}", "text": (f"Evidence-backed detail {index} " * 220).strip(), "evidence_paths": ["opportunity.guidance.how_to_start"]} for index in range(6))
@@ -125,6 +127,24 @@ def _runner(command, **kwargs):
     else:
         Path(command[-1]).write_bytes(b"video")
     return CompletedProcess(command, 0, stdout="", stderr="")
+
+
+def test_music_bed_uses_installed_licensed_source_and_fingerprints_it(tmp_path: Path) -> None:
+    from subprocess import CompletedProcess
+
+    commands = []
+
+    def run(command, **kwargs):
+        commands.append(command)
+        Path(command[-1]).write_bytes(b"rendered audio")
+        return CompletedProcess(command, 0, stdout="", stderr="")
+
+    output = tmp_path / "music-bed.mp3"
+    assert MUSIC_BED_SOURCE.name == "inspired-kevin-macleod.mp3"
+    assert MUSIC_BED_SOURCE.is_file()
+    assert music_bed_source_fingerprint()
+    assert _generate_music_bed(output, duration=10, run=run)
+    assert commands[0][commands[0].index("-i") + 1] == str(MUSIC_BED_SOURCE)
 
 
 def test_ready_short_renders_with_captions_and_evidence(tmp_path: Path, monkeypatch) -> None:

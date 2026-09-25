@@ -105,6 +105,12 @@ def _site_items() -> list[ContentInventoryItem]:
         _item("/", "SITE_PAGE", "HOW_TO_USE_GAMCRYP", ("The current public home and catalog navigation.",), (), READY, True, False),
         _item("/methodology", "SITE_PAGE", "METHODOLOGY_EXPLAINER", ("Published methodology and trust-boundary content.",), (), READY, True, False),
         _item("/methodology", "SITE_PAGE", "RISK_VS_CONFIDENCE", ("Published risk, confidence, and methodology explanations.",), (), READY, True, False),
+        _item("/methodology", "SITE_PAGE", "SITE_STRATEGY_ROI", ("Strategy-specific ROI methodology.",), (), READY, True, False),
+        _item("/methodology", "SITE_PAGE", "SITE_POINTS_VALUE", ("Rules for points and non-realizable rewards.",), (), READY, True, False),
+        _item("/methodology", "SITE_PAGE", "SITE_REALIZABLE_EXIT", ("Realizable reward value and exit-route methodology.",), (), READY, True, False),
+        _item("/methodology", "SITE_PAGE", "SITE_FULL_COSTS", ("Net earnings and modeled cost methodology.",), (), READY, True, False),
+        _item("/methodology", "SITE_PAGE", "SITE_DATA_FRESHNESS", ("Freshness, provenance, and recorded calculation methodology.",), (), READY, True, False),
+        _item("/", "SITE_PAGE", "SITE_PRODUCT_WALKTHROUGH", ("Published product navigation and opportunity-status explanations.",), (), READY, True, False),
     ]
     for page in CURATED_RANKING_PAGES:
         if "capital_max" in page.filters:

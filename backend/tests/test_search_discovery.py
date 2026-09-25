@@ -19,8 +19,9 @@ from app.strategies.catalog import list_opportunities
 from app.strategies.defi_kingdoms import DFK_CJEWEL_MAX_LOCK_V1
 from app.strategies.farmers_world import FARMERS_WORLD_AXE_WOOD_V1
 from app.strategies.splinterlands import SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1
+from app.strategies.catalog import list_strategies
 from app.web.seo import format_datetime
-from test_api_v1 import NOW, _seed_snapshots_and_scores, _seeded_client
+from test_api_v1 import NOW, _mark_latest_stale, _seed_snapshots_and_scores, _seeded_client
 
 
 def test_strategy_page_contains_meaningful_server_rendered_content(monkeypatch, tmp_path) -> None:
@@ -125,6 +126,41 @@ def test_metadata_uses_configurable_canonical_host(monkeypatch, tmp_path) -> Non
     assert '<link rel="canonical" href="https://gamcryp.example/rankings">' in html
     assert '<meta property="og:url" content="https://gamcryp.example/rankings">' in html
     assert '<meta name="twitter:title" content="Web3 ROI Rankings, Risk &amp; Confidence | GamCryp">' in html
+
+
+def test_empty_server_rankings_expose_stale_models_as_separate_historical_context(monkeypatch, tmp_path) -> None:
+    client, engine = _seeded_client(monkeypatch, tmp_path, "seo-recorded-models.db")
+    for strategy in list_strategies():
+        _mark_latest_stale(engine, strategy.strategy_id)
+
+    response = client.get("/rankings")
+
+    assert response.status_code == 200
+    html = response.text
+    assert "No current matches" in html
+    assert "Last recorded models — not current" in html
+    assert "Historical context only" in html
+    assert "Not current: source status is stale." in html
+    assert "Inspect recorded model" in html
+    assert "/go/" not in html
+    assert "#1" not in html
+
+
+def test_homepage_exposes_stale_models_when_current_rankings_are_empty(monkeypatch, tmp_path) -> None:
+    client, engine = _seeded_client(monkeypatch, tmp_path, "seo-home-recorded-models.db")
+    for strategy in list_strategies():
+        _mark_latest_stale(engine, strategy.strategy_id)
+
+    response = client.get("/")
+
+    assert response.status_code == 200
+    html = response.text
+    assert "15 across 8 opportunities" in html
+    assert "Last recorded models — not current" in html
+    assert "Historical context only" in html
+    assert "Not current: source status is stale." in html
+    assert "Inspect recorded model" in html
+    assert "No current matches" not in html
 
 
 def test_query_permutations_are_noindex_and_canonicalized(monkeypatch, tmp_path) -> None:
@@ -317,7 +353,7 @@ def test_inbound_acquisition_attribution_is_privacy_minimal(monkeypatch, tmp_pat
     client, engine = _seeded_client(monkeypatch, tmp_path, "seo-attribution.db")
 
     response = client.get(
-        "/?utm_source=chatgpt.com&utm_medium=search&utm_campaign=g16",
+        "/?utm_source=chatgpt.com&utm_medium=search&utm_campaign=g16&utm_content=answer_link",
         headers={"referer": "https://chatgpt.com/share/test", "x-gamcryp-session": "coarse-1"},
     )
 
@@ -328,6 +364,7 @@ def test_inbound_acquisition_attribution_is_privacy_minimal(monkeypatch, tmp_pat
     assert visits[0].utm_source == "chatgpt.com"
     assert visits[0].utm_medium == "search"
     assert visits[0].utm_campaign == "g16"
+    assert visits[0].utm_content == "answer_link"
     assert visits[0].referrer_domain == "chatgpt.com"
     assert visits[0].coarse_session_id == "coarse-1"
 

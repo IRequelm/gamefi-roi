@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
+import re
 
 import pytest
 
@@ -276,7 +277,8 @@ def test_g12_frontend_source_does_not_recompute_financial_metrics() -> None:
     text = source.read_text(encoding="utf-8")
 
     assert "parseFloat" not in text
-    assert "Number(" not in text
+    number_casts = re.findall(r"\bNumber\s*\(([^()]*)\)", text)
+    assert number_casts == ["opportunity.strategy_count || 0"]
     assert "decimalStringToPercent" not in text
 
 

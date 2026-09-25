@@ -212,6 +212,7 @@ class InboundLandingEvent:
     utm_source: str | None
     utm_medium: str | None
     utm_campaign: str | None
+    utm_content: str | None
     channel: str
     coarse_session_id: str | None
     occurred_at: datetime

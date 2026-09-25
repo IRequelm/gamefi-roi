@@ -43,7 +43,7 @@ def test_long_form_requires_a_real_evidence_backed_budget() -> None:
     items = build_content_inventory()
 
     assert summarize_content_inventory(items)["ready_long_form_count"] == 0
-    assert summarize_content_inventory(items)["ready_short_only_count"] == 137
+    assert summarize_content_inventory(items)["ready_short_only_count"] == 143
     assert all(item.long_form_word_count < 1200 for item in items if item.opportunity_id)
 
 

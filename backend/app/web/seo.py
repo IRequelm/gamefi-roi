@@ -113,6 +113,14 @@ def render_document(page: SeoPage, *, settings: Settings) -> str:
 
 def home_page(service: ApiDataService, *, settings: Settings, request: Request) -> SeoPage:
     rankings = service.rankings_page(limit=50, offset=0)
+    recorded_models = []
+    if not rankings.items:
+        strategies, _total = service.strategies_page(limit=50, offset=0)
+        recorded_models = [
+            strategy for strategy in strategies
+            if strategy.latest_snapshot is not None
+            and strategy.latest_snapshot.freshness.overall_status != "fresh"
+        ]
     # The homepage is server-rendered for crawlers as well as hydrated in the
     # browser. Keep its catalog window above the supported public catalog so
     # the visible “reviewed” count cannot disagree with the API merely because
@@ -125,14 +133,14 @@ def home_page(service: ApiDataService, *, settings: Settings, request: Request) 
     answer = (
         _ranking_answer(top.latest_snapshot, top.strategy)
         if top is not None
-        else "Latest modeled comparisons are shown with their recorded calculation dates."
+        else "No current modeled results are available for comparison right now. Historical estimates are shown separately and are not current opportunities."
     )
     body = f"""
       <div class="page-shell">
         <section class="page-head">
           <p class="eyebrow">GamCryp opportunity intelligence</p>
-          <h1>Web3 earning opportunities with ROI, Risk, Confidence, and evidence.</h1>
-          <p class="lede">GamCryp tracks Web3 earning opportunities. When rewards and exits can be priced reproducibly, we calculate modeled ROI. When they cannot, we show why instead of inventing a number.</p>
+          <h1>Find a Web3 earning strategy that fits your budget, device, and time.</h1>
+          <p class="lede">Compare modeled GameFi and DePIN strategies using net earnings, setup cost, risk, confidence, and source freshness. If a reward cannot be valued reliably, we explain why instead of making up an ROI.</p>
           <p class="muted">{escape(answer)}</p>
           <div class="hero-proof-points" aria-label="GamCryp data principles">
             <span>Recent modeled results</span>
@@ -141,14 +149,20 @@ def home_page(service: ApiDataService, *, settings: Settings, request: Request) 
           </div>
         </section>
         {_render_catalog_stats(rankings, opportunities)}
-        {_render_ranking_cards(
-            _distinct_opportunity_items(rankings.items, limit=3),
-            heading="Latest modeled results" if top is not None else "Latest recorded models",
-        )}
+        <section class="start-path-section" aria-labelledby="start-path-title">
+          <div class="section-header"><div><p class="eyebrow">Start with your situation</p><h2 id="start-path-title">What are you looking for?</h2></div><a class="text-link" href="/opportunities">Browse all opportunities</a></div>
+          <div class="start-path-grid">
+            <a class="start-path-card" href="/rankings?capital_max=25"><span class="start-path-icon" aria-hidden="true">01</span><span><strong>Start under $25</strong><small>See modeled strategies within a smaller starting budget.</small></span><span aria-hidden="true">→</span></a>
+            <a class="start-path-card" href="/rankings?opportunity_type=DEPIN_NODE"><span class="start-path-icon" aria-hidden="true">02</span><span><strong>Explore DePIN</strong><small>Compare infrastructure and resource-sharing strategies.</small></span><span aria-hidden="true">→</span></a>
+            <a class="start-path-card" href="/rankings?confidence_min=80"><span class="start-path-icon" aria-hidden="true">03</span><span><strong>Prioritize stronger evidence</strong><small>Filter for higher model and data confidence.</small></span><span aria-hidden="true">→</span></a>
+          </div>
+          <p class="start-path-note">Filters are comparison tools, not recommendations. Check each strategy’s assumptions, risk, and data date.</p>
+        </section>
+        {_render_ranking_cards(_distinct_opportunity_items(rankings.items, limit=3), heading="Latest modeled results") if top is not None else _render_recorded_models(recorded_models)}
         {_render_opportunity_cards(opportunities, heading="Opportunity radar")}
       </div>
     """
-    description = "Compare Web3 earning opportunities using latest modeled ROI, capital, net/day, break-even, Risk, Confidence, freshness, and source-backed unavailable states."
+    description = "Compare Web3 earning strategies by setup cost, net earnings, device and time requirements, risk, confidence, and source freshness. No invented ROI."
     return _page(
         request=request,
         settings=settings,
@@ -167,6 +181,14 @@ def home_page(service: ApiDataService, *, settings: Settings, request: Request) 
 
 def rankings_page(service: ApiDataService, *, settings: Settings, request: Request) -> SeoPage:
     rankings = service.rankings_page(limit=50, offset=0)
+    recorded_models = []
+    if not rankings.items:
+        strategies, _total = service.strategies_page(limit=50, offset=0)
+        recorded_models = [
+            strategy for strategy in strategies
+            if strategy.latest_snapshot is not None
+            and strategy.latest_snapshot.freshness.overall_status != "fresh"
+        ]
     description = "Organic Web3 strategy rankings by latest 30D ROI, confidence, risk, calculation time, and strategy id. Sponsor and affiliate data never changes this order."
     body = f"""
       <div class="page-shell">
@@ -179,6 +201,7 @@ def rankings_page(service: ApiDataService, *, settings: Settings, request: Reque
         {_render_rankings_answer_block(rankings, "Web3 ROI strategy rankings")}
         {_render_curated_links(service)}
         {_render_ranking_cards(rankings.items, heading="Ranked strategies")}
+        {_render_recorded_models(recorded_models)}
       </div>
     """
     return _page(
@@ -198,6 +221,44 @@ def rankings_page(service: ApiDataService, *, settings: Settings, request: Reque
         ),
         lastmod=_rankings_lastmod(rankings),
     )
+
+
+def _render_recorded_models(strategies) -> str:
+    if not strategies:
+        return ""
+    cards = []
+    for strategy in strategies:
+        snapshot = strategy.latest_snapshot
+        if snapshot is None:
+            continue
+        cards.append(f"""
+          <article class="ranking-card recorded-model-card">
+            <div class="ranking-card-head"><div><p class="ranking-parent"><span>Recorded opportunity</span> {escape(snapshot.game_name or strategy.game_name or "Web3 opportunity")}</p><h3>{escape(strategy.name)}</h3></div></div>
+            <p class="muted">Not current: source status is {escape(snapshot.freshness.overall_status)}.</p>
+            <div class="card-metrics">
+              {_metric("Recorded capital", format_money_html(snapshot.capital.total_capital))}
+              {_metric("Recorded net/day", format_money_html(snapshot.earnings.net_earnings_day, per_day=True))}
+              {_metric("Recorded 30-day ROI", format_ratio_html(snapshot.roi.roi_total_30d))}
+            </div>
+            <div class="card-badges">
+              {_badge(f"Confidence {score_text(snapshot.confidence)}", score_class(snapshot.confidence, "confidence"))}
+              {_badge(f"Risk {score_text(snapshot.risk)}", score_class(snapshot.risk, "risk"))}
+              {_badge(f"Updated {format_datetime(snapshot.calculated_at)}", "info")}
+              {_badge(f"Data {labelize(snapshot.freshness.overall_status)}", "warning")}
+            </div>
+            <p class="muted">Historical model output only; do not use as a current estimate or recommendation.</p>
+            <div class="card-actions"><a class="secondary-button" href="/strategies/{escape(strategy.strategy_id)}">Inspect recorded model</a></div>
+          </article>
+        """)
+    if not cards:
+        return ""
+    return f"""
+      <section class="section-panel recorded-models" aria-labelledby="recorded-models-title">
+        <div class="section-header"><h2 id="recorded-models-title">Last recorded models — not current</h2><span class="badge warning">Historical context only</span></div>
+        <p class="muted">These saved estimates are outside the current rankings because their source data is stale or expired. They are not current opportunities and are not ranked against one another.</p>
+        <div class="ranking-card-grid">{''.join(cards)}</div>
+      </section>
+    """
 
 
 def curated_rankings_page(
@@ -484,6 +545,7 @@ def record_landing_visit(request: Request, repository: MonetizationRepository, *
     utm_source = request.query_params.get("utm_source")
     utm_medium = request.query_params.get("utm_medium")
     utm_campaign = request.query_params.get("utm_campaign")
+    utm_content = request.query_params.get("utm_content")
     coarse_session_id = request.headers.get("x-gamcryp-session")
     repository.record_landing_visit(
         landing_path=path,
@@ -491,6 +553,7 @@ def record_landing_visit(request: Request, repository: MonetizationRepository, *
         utm_source=utm_source,
         utm_medium=utm_medium,
         utm_campaign=utm_campaign,
+        utm_content=utm_content,
         channel=normalize_acquisition_channel(utm_source=utm_source, referrer_domain=referrer_domain),
         coarse_session_id=coarse_session_id,
     )

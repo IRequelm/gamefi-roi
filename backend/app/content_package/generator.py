@@ -14,6 +14,42 @@ from app.content_inventory.inventory import LONG_FORM_MIN_SECTIONS, LONG_FORM_MI
 from app.strategies.catalog import OpportunityCatalogEntry, StrategyCatalogEntry, get_opportunity, get_strategy, list_opportunities
 
 PACKAGE_SCHEMA_VERSION = "content-package-v1"
+SITE_EXPLAINER_FAMILIES = frozenset({
+    "HOW_TO_USE_GAMCRYP", "METHODOLOGY_EXPLAINER", "RISK_VS_CONFIDENCE",
+    "SITE_STRATEGY_ROI", "SITE_POINTS_VALUE", "SITE_REALIZABLE_EXIT",
+    "SITE_FULL_COSTS", "SITE_DATA_FRESHNESS", "SITE_PRODUCT_WALKTHROUGH",
+})
+AUTONOMOUS_CATALOG_FAMILIES = frozenset({
+    "DEPIN_SETUP", "HOW_TO_START", "WHAT_YOU_NEED", "HOW_YOU_EARN",
+    "HOW_TO_CLAIM_OR_EXIT", "WHY_ROI_UNAVAILABLE",
+})
+
+
+def is_site_explainer(package: "ContentPackage") -> bool:
+    return package.opportunity_id is None and package.content_family in SITE_EXPLAINER_FAMILIES
+
+
+def is_catalog_motion_explainer(package: "ContentPackage") -> bool:
+    if (
+        package.format != "SHORT_FORM"
+        or not package.opportunity_id
+        or package.content_family not in AUTONOMOUS_CATALOG_FAMILIES
+        or package.generation_status != "READY_FOR_REVIEW"
+        or not package.factual_talking_points
+        or not package.required_source_references
+    ):
+        return False
+    opportunity = get_opportunity(package.opportunity_id)
+    return bool(
+        opportunity
+        and opportunity.status == "active"
+        and bool(opportunity.official_source_references)
+        and all(str(reference.get("url", "")).startswith("https://") for reference in package.required_source_references)
+    )
+
+
+def is_motion_graphic_explainer(package: "ContentPackage") -> bool:
+    return is_site_explainer(package) or is_catalog_motion_explainer(package)
 
 
 @dataclass(frozen=True)
@@ -177,7 +213,8 @@ def _references(opportunity: OpportunityCatalogEntry | None, item: ContentInvent
 def _talking_points(item: ContentInventoryItem, opportunity: OpportunityCatalogEntry | None, strategies: tuple[StrategyCatalogEntry | None, ...]) -> list[dict[str, Any]]:
     points: list[dict[str, Any]] = []
     if opportunity is None:
-        return [{"text": _site_fact(item), "evidence_paths": [item.source_url]}]
+        facts = _site_facts(item)
+        return [{"text": fact, "evidence_paths": [item.source_url]} for fact in facts]
     if item.content_family == "WHY_ROI_UNAVAILABLE" and opportunity.roi_unavailable is not None:
         explanation = opportunity.roi_unavailable
         points.append({"text": explanation.reason, "evidence_paths": ["opportunity.roi_unavailable.reason"]})
@@ -220,13 +257,36 @@ def _narration_sections(item: ContentInventoryItem, points: list[dict[str, Any]]
 
 
 def _titles(item: ContentInventoryItem, opportunity: OpportunityCatalogEntry | None) -> tuple[str, ...]:
+    if opportunity is None and item.content_family in _SITE_TITLES:
+        return (_SITE_TITLES[item.content_family],)
     name = opportunity.name if opportunity is not None else "GamCryp"
+    if item.content_family in AUTONOMOUS_CATALOG_FAMILIES:
+        label = {
+            "DEPIN_SETUP": "Setup checks before you commit",
+            "HOW_TO_START": "How to start: requirements to verify",
+            "WHAT_YOU_NEED": "Requirements to check first",
+            "HOW_YOU_EARN": "How the reward path works",
+            "HOW_TO_CLAIM_OR_EXIT": "How to claim or exit",
+            "WHY_ROI_UNAVAILABLE": "Why ROI is not verified yet",
+        }[item.content_family]
+        return (f"{name}: {label}",)
     family = item.content_family.replace("_", " ").title()
     return (f"{name}: {family}", f"GamCryp {family}: {name}")
 
 
 def _hook(item: ContentInventoryItem, opportunity: OpportunityCatalogEntry | None, strategies: tuple[StrategyCatalogEntry | None, ...] = ()) -> str:
     name = opportunity.name if opportunity is not None else "GamCryp"
+    if opportunity is None and item.content_family in _SITE_HOOKS:
+        return _SITE_HOOKS[item.content_family]
+    if item.content_family in AUTONOMOUS_CATALOG_FAMILIES:
+        return {
+            "DEPIN_SETUP": f"Could your setup run {name}? Check these requirements first.",
+            "HOW_TO_START": f"Thinking about {name}? Start with its requirements.",
+            "WHAT_YOU_NEED": f"What do you need for {name}? Check the official guide.",
+            "HOW_YOU_EARN": f"Where do {name} rewards actually come from?",
+            "HOW_TO_CLAIM_OR_EXIT": f"How would you claim {name} rewards? Check the route first.",
+            "WHY_ROI_UNAVAILABLE": f"Why can’t GamCryp show an ROI for {name} yet?",
+        }[item.content_family]
     if item.content_family == "WHY_ROI_UNAVAILABLE":
         return "Can this actually make money? We cannot verify it yet."
     if item.content_family == "DEPIN_SETUP" or opportunity and opportunity.opportunity_type == "DEPIN_NODE":
@@ -245,6 +305,10 @@ def _hook(item: ContentInventoryItem, opportunity: OpportunityCatalogEntry | Non
 
 
 def _cta(item: ContentInventoryItem, opportunity: OpportunityCatalogEntry | None) -> str:
+    if opportunity is None and item.content_family in _SITE_TITLES:
+        return "Check the sources and methodology for yourself at GamCryp.com."
+    if item.content_family in AUTONOMOUS_CATALOG_FAMILIES:
+        return "Check the official sources, current status, and requirements on GamCryp before acting."
     if item.content_family == "WHY_ROI_UNAVAILABLE":
         return "GamCryp shows what is missing instead of inventing a number. See the full breakdown on GamCryp."
     if item.content_family in {"METHODOLOGY_EXPLAINER", "RISK_VS_CONFIDENCE", "HOW_TO_USE_GAMCRYP"}:
@@ -260,12 +324,84 @@ def _visuals(item: ContentInventoryItem) -> tuple[str, ...]:
     return ("Official opportunity logo", "Official product, dashboard, device, or game visual", "Evidence reference card", "Key metric card", "GamCryp CTA end card")
 
 
-def _site_fact(item: ContentInventoryItem) -> str:
-    return {
-        "HOW_TO_USE_GAMCRYP": "GamCryp's public home explains how to navigate the catalog and inspect available opportunity information.",
-        "METHODOLOGY_EXPLAINER": "GamCryp's methodology page explains strategy-specific evidence, ROI boundaries, risk, confidence, and freshness.",
-        "RISK_VS_CONFIDENCE": "GamCryp presents risk and confidence as separate concepts for economic risk and model or data confidence.",
-    }.get(item.content_family, "GamCryp provides a canonical public page for this topic.")
+_SITE_HOOKS = {
+    "HOW_TO_USE_GAMCRYP": "A better Web3 opportunity filter starts with one question: what is actually measurable?",
+    "METHODOLOGY_EXPLAINER": "A token price is not the same thing as money in your wallet.",
+    "RISK_VS_CONFIDENCE": "High confidence does not make a risky opportunity safe.",
+    "SITE_STRATEGY_ROI": "One game. Three strategies. Why do they have different ROI?",
+    "SITE_POINTS_VALUE": "Those points look huge. Can you actually cash them out?",
+    "SITE_REALIZABLE_EXIT": "A displayed price does not prove you can sell at that price.",
+    "SITE_FULL_COSTS": "That reward figure is not your profit. What costs are missing?",
+    "SITE_DATA_FRESHNESS": "A precise number can still be out of date. Check its timestamp.",
+    "SITE_PRODUCT_WALKTHROUGH": "Before you install anything, find these four checks on GamCryp.",
+}
+
+_SITE_TITLES = {
+    "HOW_TO_USE_GAMCRYP": "How to filter Web3 opportunities with evidence",
+    "METHODOLOGY_EXPLAINER": "A token price is not your realized return",
+    "RISK_VS_CONFIDENCE": "Risk vs confidence: the difference matters",
+    "SITE_STRATEGY_ROI": "Why one game has no single ROI",
+    "SITE_POINTS_VALUE": "Points are not cash. Here is what to check",
+    "SITE_REALIZABLE_EXIT": "Can you actually sell the reward?",
+    "SITE_FULL_COSTS": "The costs that can erase a reward",
+    "SITE_DATA_FRESHNESS": "Is that Web3 ROI number still current?",
+    "SITE_PRODUCT_WALKTHROUGH": "Four checks before you start a Web3 opportunity",
+}
+
+_SITE_FACTS = {
+    "HOW_TO_USE_GAMCRYP": (
+        "Browse games, DePIN and points programs from the opportunity catalog.",
+        "Open an opportunity to inspect its status, requirements and available strategies.",
+        "Check the sources and methodology before acting; a guide is not a return promise.",
+    ),
+    "METHODOLOGY_EXPLAINER": (
+        "A quoted token price alone does not establish a realizable reward value.",
+        "The method considers a supported exit route, fees and liquidity where evidence is available.",
+        "If a value cannot be reproduced, GamCryp leaves ROI unavailable instead of guessing.",
+    ),
+    "RISK_VS_CONFIDENCE": (
+        "Confidence describes trust in the model and its data.",
+        "Risk describes economic or market exposure in the opportunity.",
+        "A well-supported calculation can still describe a high-risk opportunity.",
+    ),
+    "SITE_STRATEGY_ROI": (
+        "ROI depends on the strategy, not just the game name.",
+        "Capital, play time, costs, rewards and exit assumptions change the result.",
+        "GamCryp compares those assumptions; a modeled result is not a guarantee.",
+    ),
+    "SITE_POINTS_VALUE": (
+        "Points with no reliable, lawful cash-out route are not assigned an invented dollar value.",
+        "Unavailable value is not the same as zero value.",
+        "GamCryp can show tracked points while marking financial ROI as not measurable yet.",
+    ),
+    "SITE_REALIZABLE_EXIT": (
+        "A spot price does not prove that a reward can be sold at that price.",
+        "An estimate needs an identifiable exit route and must account for costs and liquidity limits.",
+        "When the route cannot be supported, GamCryp shows that evidence gap.",
+    ),
+    "SITE_FULL_COSTS": (
+        "Net earnings start with rewards that can be realized, not headline emissions.",
+        "Subtract operating, claim, transaction and other strategy-specific costs.",
+        "If cost data is missing, do not assume zero or publish a net-profit estimate.",
+    ),
+    "SITE_DATA_FRESHNESS": (
+        "Every modeled comparison has assumptions and a calculation date.",
+        "Source freshness and confidence help show how much the inputs can be trusted.",
+        "A recorded calculation describes its inputs and date; it is not a forecast.",
+    ),
+    "SITE_PRODUCT_WALKTHROUGH": (
+        "Open Opportunities to find a game, node or points program.",
+        "Check its status, requirements, reward route and available strategies.",
+        "Open Methodology for source, freshness, risk and confidence definitions.",
+        "Follow the official source link only after checking what remains unverified.",
+    ),
+}
+
+
+def _site_facts(item: ContentInventoryItem) -> tuple[str, ...]:
+    return _SITE_FACTS.get(item.content_family, (
+        "GamCryp explains its opportunity information and limits on the published product pages.",
+    ))
 
 
 def _count_families(packages: list[ContentPackage]) -> dict[str, int]:

@@ -97,7 +97,7 @@ services:
     startCommand: "python -m app.jobs.snapshot_refresh"
     # Provider observations are publication-fresh for five minutes. A slower
     # cron makes /rankings correctly go empty between successful runs.
-    schedule: "*/5 * * * *"
+    schedule: "2-57/5 * * * *"
     autoDeployTrigger: off
     envVars:
       - key: GAMEFI_ENVIRONMENT

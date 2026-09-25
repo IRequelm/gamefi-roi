@@ -131,6 +131,7 @@ const PRODUCT_ANALYTICS_ALLOWED_PARAMS = new Set([
   "utm_source",
   "utm_medium",
   "utm_campaign",
+  "utm_content",
   "capital_min",
   "capital_max",
   "confidence_min",
@@ -247,15 +248,15 @@ export function applyCuratedRankingConstraints(rankings, opportunities = [], pat
   };
 }
 
-export function renderHomeShell(games = [], rankings = { items: [], page: { total: 0 } }, opportunities = [], degradedMessages = []) {
+export function renderHomeShell(games = [], rankings = { items: [], page: { total: 0 } }, opportunities = [], degradedMessages = [], recordedModels = []) {
   const economyOptions = Array.from(new Set(games.flatMap((game) => game.economy_types || []))).sort();
   const opportunityTypeOptions = Array.from(new Set(opportunities.map((opportunity) => opportunity.opportunity_type))).sort();
   return `
     <div class="page-shell">
       <section class="page-head">
         <p class="eyebrow">GamCryp opportunity intelligence</p>
-        <h1>Find Web3 earning opportunities with evidence behind them.</h1>
-        <p class="lede">GamCryp tracks Web3 earning opportunities. When rewards and exits can be priced reproducibly, we calculate modeled ROI. When they cannot, we show why instead of inventing a number.</p>
+        <h1>Find a Web3 earning strategy that fits your budget, device, and time.</h1>
+        <p class="lede">Compare modeled GameFi and DePIN strategies using net earnings, setup cost, risk, confidence, and source freshness. If a reward cannot be valued reliably, we explain why instead of making up an ROI.</p>
         <div class="hero-proof-points" aria-label="GamCryp data principles">
           <span>Modeled ROI where reproducible</span>
           <span>Risk and confidence separated</span>
@@ -265,6 +266,8 @@ export function renderHomeShell(games = [], rankings = { items: [], page: { tota
       ${renderDegradedNotice(degradedMessages)}
       ${renderTopRankingSummary(rankings)}
       ${renderCatalogStats(rankings, opportunities)}
+      ${renderStartPaths()}
+      ${renderRecordedModels(recordedModels)}
       <section class="finder-grid" aria-label="ROI finder">
         <div id="finder-results">
           ${renderRankingsTable(rankings, { compact: true, groupByOpportunity: true })}
@@ -357,8 +360,8 @@ export function renderTopRankingSummary(rankings = { items: [] }) {
       <section class="top-opportunity-card top-opportunity-empty" aria-label="Modeled result status">
         <div class="top-opportunity-copy">
           <span class="eyebrow">Latest modeled view</span>
-          <h2>Latest results are available</h2>
-          <p class="muted">The catalog shows the latest modeled comparisons with their source and calculation dates.</p>
+          <h2>No current rankings are available</h2>
+          <p class="muted">No fresh modeled snapshot is available for ranking right now. Stale snapshots stay out of current comparisons; review the opportunity catalog or check again after a verified data refresh.</p>
         </div>
         <div class="top-opportunity-actions"><a class="secondary-button" href="/rankings" data-link>Review rankings</a></div>
       </section>
@@ -682,6 +685,7 @@ export function renderRankingsPage(rankings, options = {}) {
       ${renderRankingsAnswerBlock(rankings, { title })}
       ${renderCuratedRankingLinks()}
       ${renderRankingsTable(rankings, { groupByOpportunity: true })}
+      ${renderRecordedModels(options.recordedModels || [])}
       ${renderSponsoredPlacements(rankings.sponsored_placements || [])}
     </div>
   `;
@@ -904,8 +908,8 @@ export function renderRankingsTable(rankings, options = {}) {
   if (!items.length) {
     return `
       <section class="empty-state">
-        <h2>No matching rankings</h2>
-        <p class="muted">No stored strategy snapshot matches these filters. Try relaxing capital, risk, confidence, game, or economy filters.</p>
+        <h2>No current rankings match this view</h2>
+        <p class="muted">Current rankings include only fresh snapshots; stale results are intentionally excluded. Try relaxing filters, or check again after the next verified data refresh.</p>
       </section>
     `;
   }
@@ -2496,7 +2500,7 @@ function safeProductAnalyticsParams(params = {}, context = {}) {
   const search = win?.location?.search || "";
   try {
     const urlParams = new URLSearchParams(search);
-    for (const key of ["utm_source", "utm_medium", "utm_campaign"]) {
+    for (const key of ["utm_source", "utm_medium", "utm_campaign", "utm_content"]) {
       const value = urlParams.get(key);
       if (value) {
         safeParams[key] = value.slice(0, 160);
@@ -2669,6 +2673,64 @@ function trackPageView(path = globalThis.window?.location?.pathname || "", title
   return trackedGoogleAnalytics || trackedProductAnalytics;
 }
 
+export function renderStartPaths() {
+  return `
+    <section class="start-path-section" aria-labelledby="start-path-title">
+      <div class="section-header"><div><p class="eyebrow">Start with your situation</p><h2 id="start-path-title">What are you looking for?</h2></div><a class="text-link" href="/opportunities" data-link>Browse all opportunities</a></div>
+      <div class="start-path-grid">
+        <a class="start-path-card" href="/rankings?capital_max=25" data-link><span class="start-path-icon" aria-hidden="true">01</span><span><strong>Start under $25</strong><small>See modeled strategies within a smaller starting budget.</small></span><span aria-hidden="true">→</span></a>
+        <a class="start-path-card" href="/rankings?opportunity_type=DEPIN_NODE" data-link><span class="start-path-icon" aria-hidden="true">02</span><span><strong>Explore DePIN</strong><small>Compare infrastructure and resource-sharing strategies.</small></span><span aria-hidden="true">→</span></a>
+        <a class="start-path-card" href="/rankings?confidence_min=80" data-link><span class="start-path-icon" aria-hidden="true">03</span><span><strong>Prioritize stronger evidence</strong><small>Filter for higher model and data confidence.</small></span><span aria-hidden="true">→</span></a>
+      </div>
+      <p class="start-path-note">Filters are comparison tools, not recommendations. Check each strategy’s assumptions, risk, and data date.</p>
+    </section>
+  `;
+}
+
+export async function loadRecordedModelsIfNoCurrentRankings(rankings, getter = apiGet) {
+  if ((rankings?.items || []).length > 0) return [];
+  try {
+    const catalog = await getter("/strategies?limit=50");
+    return catalog.items || [];
+  } catch {
+    return [];
+  }
+}
+
+export function renderRecordedModels(strategies = []) {
+  const items = strategies.filter((strategy) => {
+    const snapshot = strategy.latest_snapshot;
+    return snapshot && snapshot.freshness?.overall_status !== "fresh";
+  });
+  if (!items.length) return "";
+  return `
+    <section class="section-panel recorded-models" aria-labelledby="recorded-models-title">
+      <div class="section-header"><h2 id="recorded-models-title">Last recorded models — not current</h2><span class="badge warning">Historical context only</span></div>
+      <p class="muted">These saved estimates are outside the current rankings because their source data is stale or expired. They are not current opportunities and are not ranked against one another.</p>
+      <div class="ranking-card-grid">
+        ${items.map((strategy) => {
+          const snapshot = strategy.latest_snapshot;
+          return `
+            <article class="ranking-card recorded-model-card">
+              <div class="ranking-card-head"><div><p class="ranking-parent"><span>Recorded opportunity</span> ${escapeHtml(snapshot.game_name || strategy.game_name || "Web3 opportunity")}</p><h3>${escapeHtml(strategy.name)}</h3></div></div>
+              <p class="muted">Not current: source status is ${escapeHtml(snapshot.freshness?.overall_status || "unknown")}.</p>
+              <div class="card-metrics">
+                ${metricItem("Recorded capital", formatMoney(snapshot.capital.total_capital))}
+                ${metricItem("Recorded net/day", formatMoney(snapshot.earnings.net_earnings_day, { perDay: true }))}
+                ${metricItem("Recorded 30-day ROI", formatRatio(snapshot.roi.roi_total_30d))}
+              </div>
+              <div class="card-badges">${renderScoreBadge(snapshot.confidence, "confidence")} ${renderScoreBadge(snapshot.risk, "risk")} ${renderFreshnessPill(snapshot.freshness)}</div>
+              <p class="updated-note">Calculated ${formatUpdatedAge(snapshot.calculated_at)}</p>
+              <p class="muted">Historical model output only; do not use as a current estimate or recommendation.</p>
+              <div class="card-actions"><a class="secondary-button" href="/strategies/${encodeURIComponent(strategy.strategy_id)}" data-link>Inspect recorded model</a></div>
+            </article>
+          `;
+        }).join("")}
+      </div>
+    </section>
+  `;
+}
+
 function trackRouteView(path, routeContext = {}) {
   if (path.startsWith("/opportunities/")) {
     const opportunityId = routeContext.opportunity_id || decodeURIComponent(path.replace("/opportunities/", ""));
@@ -2838,19 +2900,26 @@ async function renderCurrentRoute() {
       const games = gamesResult.status === "fulfilled" ? gamesResult.value : { items: [] };
       const rankings = rankingsResult.status === "fulfilled" ? rankingsResult.value : { items: [], page: { total: 0 } };
       const opportunities = opportunitiesResult.status === "fulfilled" ? opportunitiesResult.value : { items: [] };
+      let recordedModels = [];
+      if (rankingsResult.status === "fulfilled" && !(rankings.items || []).length) {
+        recordedModels = await loadRecordedModelsIfNoCurrentRankings(rankings);
+      }
       const degradedMessages = results
         .filter((result) => result.status === "rejected")
         .map((result) => result.reason?.message || "A data request failed.");
       if (results.every((result) => result.status === "rejected")) {
         preserveServerRenderedPage(root, initialMarkup, results[0].reason);
       } else {
-        root.innerHTML = renderHomeShell(games.items, rankings, opportunities.items, degradedMessages);
+        root.innerHTML = renderHomeShell(games.items, rankings, opportunities.items, degradedMessages, recordedModels);
       }
       routeAnalyticsContext = rankingAnalyticsContext(rankings, "home");
       bindFinder(root);
     } else if (path === "/rankings") {
       const rankings = await apiGet(`/rankings${window.location.search}`);
-      root.innerHTML = renderRankingsPage(rankings);
+      const recordedModels = window.location.search
+        ? []
+        : await loadRecordedModelsIfNoCurrentRankings(rankings);
+      root.innerHTML = renderRankingsPage(rankings, { recordedModels });
       routeAnalyticsContext = rankingAnalyticsContext(rankings, "rankings");
     } else if (CURATED_RANKING_FILTERS[path]) {
       const query = curatedRankingQuery(path, window.location.search);

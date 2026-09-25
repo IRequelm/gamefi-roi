@@ -4,7 +4,7 @@ from pathlib import Path
 from subprocess import CompletedProcess
 from dataclasses import replace
 
-from app.content_package.generator import build_content_packages
+from app.content_package.generator import build_content_packages, is_motion_graphic_explainer
 from app.video_render.creative_qa import (
     ASSETS_READY,
     BLOCKED_MISSING_ASSETS,
@@ -16,7 +16,7 @@ from app.video_render.creative_qa import (
 
 
 def _package():
-    return next(package for package in build_content_packages() if package.format == "SHORT_FORM" and package.content_family != "FINANCIAL_ROI")
+    return next(package for package in build_content_packages() if package.format == "SHORT_FORM" and package.opportunity_id is not None and package.content_family != "FINANCIAL_ROI" and not is_motion_graphic_explainer(package))
 
 
 def test_generic_intro_is_rejected_as_a_weak_hook():

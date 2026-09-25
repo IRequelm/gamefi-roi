@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from app.config.settings import Settings
-from app.content_package.generator import ContentPackage, build_content_packages, validate_package
+from app.content_package.generator import AUTONOMOUS_CATALOG_FAMILIES, ContentPackage, SITE_EXPLAINER_FAMILIES, build_content_packages, is_motion_graphic_explainer, is_site_explainer, validate_package
 from app.content_inventory.inventory import LONG_FORM_MIN_SECONDS, LONG_FORM_MIN_WORDS
 from app.publishing.elevenlabs import ElevenLabsConfig, ElevenLabsNarrationProvider, ElevenLabsGenerationResult, ElevenLabsProviderError, reuse_existing_narration
 from app.video_render.creative_qa import asset_plan, creative_preflight, frame_qa, hook_blockers
@@ -34,7 +34,8 @@ APPROVED_VOICES = (
     ("Bella", "FGY2WhTYpPnrIDTdsKH5"),
     ("Laura", "hpp4J3VqNfWAUOO0d1Us"),
 )
-MUSIC_BED_SOURCE = Path(__file__).resolve().parents[3] / "video" / "remotion" / "public" / "audio" / "gym-dubstep-bed.mp3"
+REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
+MUSIC_BED_SOURCE = REPOSITORY_ROOT / "video" / "remotion" / "public" / "audio" / "inspired-kevin-macleod.mp3"
 
 
 @dataclass(frozen=True)
@@ -136,7 +137,7 @@ def render_package(
     audio_mode = "music_only"
     next_index = _load_rotation_index(state_path)
     base_config = ElevenLabsConfig.from_settings(settings)
-    if reuse_local_narration:
+    if reuse_local_narration and not is_motion_graphic_explainer(package):
         narration = reuse_existing_narration(package.source_inventory_item_id, narration_dir, script=job.script)
         if narration is not None:
             voice_id = narration.metadata.voice_id
@@ -170,6 +171,7 @@ def render_package(
             last_error = str(exc)
             if isinstance(exc, ElevenLabsProviderError) and exc.account_blocked:
                 break
+    audio_mode = "music_only" if narration is None else "neural_voice"
     if narration is None and job.format == SHORT_FORM and paid_narration_allowed:
         return _failed(
             package,
@@ -179,15 +181,18 @@ def render_package(
             height=job.height,
         )
     if narration is None and job.format == SHORT_FORM:
-        audio = narration_dir / f"{package.source_inventory_item_id}-music-bed.mp3"
+        source_fingerprint = music_bed_source_fingerprint()
+        if source_fingerprint is None:
+            return _failed(package, "BLOCKED_RENDER: licensed music bed source is unavailable", evidence=job.evidence_fingerprint, width=job.width, height=job.height, audio_mode="music_only")
+        audio = narration_dir / f"{package.source_inventory_item_id}-music-bed-{source_fingerprint[:12]}.mp3"
         if not audio.is_file() and not _generate_music_bed(audio, duration=45, run=run):
-            return _failed(package, "BLOCKED_RENDER: non-TTS music bed could not be created", evidence=job.evidence_fingerprint, width=job.width, height=job.height)
+            return _failed(package, "BLOCKED_RENDER: non-TTS music bed could not be created", evidence=job.evidence_fingerprint, width=job.width, height=job.height, audio_mode="music_only")
     elif narration is None:
         return _failed(package, f"approved ElevenLabs narration is required: {last_error or 'provider error'}", evidence=job.evidence_fingerprint, width=job.width, height=job.height)
     else:
         audio = Path(narration.metadata.audio_path)
     caption_path = caption_dir / f"{package.package_id}.srt"
-    spoken_script = narration.metadata.source_script if narration and narration.reused else job.script
+    spoken_script = narration.metadata.source_script if narration and narration.reused else job.script if audio_mode != "music_only" else ""
     _write_captions(caption_path, spoken_script, _audio_duration(audio, run) or _estimate_duration(spoken_script))
     caption_text_paths = _write_caption_text_files(caption_path)
     video_path = format_dir / f"{package.package_id}.mp4"
@@ -197,6 +202,11 @@ def render_package(
     subtitle_path.write_text("GamCryp evidence-aware explainer", encoding="utf-8")
     logo_path = _local_logo_path(package)
     brand_logo_path = _brand_logo_path()
+    if is_motion_graphic_explainer(package):
+        # These explainers use the real GamCryp logo with original motion
+        # graphics built from published methodology copy. They never imitate
+        # or pretend to show a live product screenshot.
+        logo_path = brand_logo_path
     duration = max(1, _audio_duration(audio, run) or _estimate_duration(job.script))
     quality_metadata = _short_quality_metadata(package, duration, logo_path) if job.format == SHORT_FORM else None
     if quality_metadata is not None:
@@ -230,7 +240,7 @@ def render_package(
             not re.search(r"(?:\.\.\.|…)", path.read_text(encoding="utf-8"))
             for path in scene_text_paths
         )
-    if job.format == SHORT_FORM and source_media_path is not None and _remotion_short_enabled(command_runner):
+    if job.format == SHORT_FORM and (source_media_path is not None or is_motion_graphic_explainer(package)) and _remotion_short_enabled(command_runner):
         return _render_remotion_short(
             package=package,
             job=job,
@@ -305,14 +315,14 @@ def render_package(
     try:
         completed = run(command, check=False, capture_output=True, text=True)
     except OSError as exc:
-        return _failed(package, "ffmpeg is unavailable", evidence=job.evidence_fingerprint, width=job.width, height=job.height)
+        return _failed(package, "ffmpeg is unavailable", evidence=job.evidence_fingerprint, width=job.width, height=job.height, audio_mode=audio_mode if narration is None else "neural_voice")
     if completed.returncode != 0 or not video_path.is_file():
-        return _failed(package, f"video render failed: {_safe_process_reason(completed.stderr)}", evidence=job.evidence_fingerprint, width=job.width, height=job.height)
+        return _failed(package, f"video render failed: {_safe_process_reason(completed.stderr)}", evidence=job.evidence_fingerprint, width=job.width, height=job.height, audio_mode=audio_mode if narration is None else "neural_voice")
     duration = _probe_video(video_path, run)
     if duration is None:
-        return _failed(package, "rendered video is not decodable", evidence=job.evidence_fingerprint, width=job.width, height=job.height)
+        return _failed(package, "rendered video is not decodable", evidence=job.evidence_fingerprint, width=job.width, height=job.height, audio_mode=audio_mode if narration is None else "neural_voice")
     if job.format == LONG_FORM and duration < LONG_FORM_MIN_SECONDS:
-        return _failed(package, "rendered long-form video is shorter than the evidence-backed minimum", evidence=job.evidence_fingerprint, width=job.width, height=job.height)
+        return _failed(package, "rendered long-form video is shorter than the evidence-backed minimum", evidence=job.evidence_fingerprint, width=job.width, height=job.height, audio_mode=audio_mode if narration is None else "neural_voice")
     if job.format == SHORT_FORM and quality_metadata is not None:
         quality_metadata["frame_qa"] = frame_qa(video_path, root / "qa" / package.package_id, runner=run)
     result = RenderResult(package.source_inventory_item_id, package.package_id, job.format, RENDER_READY, None, str(video_path), str(caption_path), str(audio), duration, job.width, job.height, voice_name, voice_id, narration.metadata.model_id if narration else None, job.evidence_fingerprint, str(metadata_dir / f"{package.package_id}.json"), (now or datetime.now(UTC)).isoformat(), quality_metadata, audio_mode if narration is None else "neural_voice")
@@ -379,6 +389,7 @@ def _short_quality_metadata(package: ContentPackage, duration: float, logo_path:
     points = [str(point["text"]) for point in package.factual_talking_points if point.get("text")]
     plan = asset_plan(package)
     hook_errors = hook_blockers(package)
+    site_explainer = is_motion_graphic_explainer(package)
     scene_count = 6
     return {
         "quality_version": "short-social-motion-v8",
@@ -416,18 +427,25 @@ def _short_quality_metadata(package: ContentPackage, duration: float, logo_path:
         "source_media_selection": "official_video_preferred" if plan.source_media_paths else "none",
         "product_visual_selection": "deterministic_package_rotation" if plan.product_visual_paths else "none",
         "product_visual_provenance": "OFFICIAL_SOURCE_MEDIA" if plan.source_media_paths else "NONE",
-        "composition_mode": "official_source_led" if plan.source_media_paths else "motion_cards",
-        "product_visual_storytelling": bool(plan.source_media_paths),
-        "product_visual_motion": "official_video_or_ken_burns_capture" if plan.source_media_paths else "none",
+        "composition_mode": "gamcryp_site_motion_graphics" if site_explainer else "official_source_led" if plan.source_media_paths else "motion_cards",
+        "product_visual_storytelling": site_explainer or bool(plan.source_media_paths),
+        "product_visual_motion": "site_motion_infographic" if site_explainer else "official_video_or_ken_burns_capture" if plan.source_media_paths else "none",
+        "site_explainer": site_explainer,
+        "site_visual_mode": "original_evidence_led_motion_graphics" if site_explainer else None,
+        "site_brand_logo_path": str(logo_path) if site_explainer and logo_path is not None else None,
+        "site_brand_logo_sha256": _sha256(logo_path) if site_explainer and logo_path is not None else None,
         "gamcryp_product_placement": True,
         "chart": {"used": False, "reason": "No verified comparison metric set was available."},
-        "primary_visual_elements": [
+        "primary_visual_elements": (
+            ["gamcryp_brand_identity", "methodology_motion_graphic", "evidence_point_sequence", "branded_cta"]
+            if site_explainer else [
             "identity_card",
             "setup_diagram",
             "evidence_or_product_visual",
             "evidence_metric_card",
             "branded_cta",
-        ],
+            ]
+        ),
     }
 
 
@@ -644,15 +662,37 @@ def short_quality_blockers(quality: dict[str, Any]) -> list[str]:
         blockers.append("GamCryp closing is missing")
     if quality.get("creative_status") != "CREATIVE_QA_PASSED":
         blockers.append("editorial visual QA has not passed")
+    site_explainer = quality.get("site_explainer") is True
     source_media_count = int(quality.get("source_media_count", 0))
     product_visual_count = int(quality.get("product_visual_count", 0))
-    if max(source_media_count, product_visual_count) < 1:
-        blockers.append("approved official product/app source media is missing (product or app visual is missing)")
-    if max(source_media_count, product_visual_count) >= 1 and not quality.get("product_visual_storytelling"):
-        blockers.append("official source media is not used as the primary evidence scene")
-    allowed_motion = {"ken_burns_crop_and_scanline", "official_video_or_ken_burns_capture", "official_video_or_animated_source_capture"}
-    if max(source_media_count, product_visual_count) >= 1 and quality.get("product_visual_motion") not in allowed_motion:
-        blockers.append("official source media lacks motion treatment (product visual lacks motion treatment)")
+    if site_explainer:
+        family = str(quality.get("content_family") or "")
+        logo = Path(str(quality.get("site_brand_logo_path") or ""))
+        if family not in SITE_EXPLAINER_FAMILIES | AUTONOMOUS_CATALOG_FAMILIES:
+            blockers.append("motion explainer family is not on the approved educational-content list")
+        if (
+            quality.get("render_engine") != "remotion"
+            or quality.get("quality_version") != "short-social-remotion-site-explainer-v1"
+            or
+            quality.get("site_visual_mode") != "original_evidence_led_motion_graphics"
+            or not logo.is_file()
+            or not quality.get("site_brand_logo_sha256")
+            or _sha256(logo) != quality.get("site_brand_logo_sha256")
+        ):
+            blockers.append("official GamCryp brand asset or site-explainer visual provenance is missing")
+        minimum_points = 3 if family in SITE_EXPLAINER_FAMILIES else 1
+        if int(quality.get("evidence_point_count", 0)) < minimum_points:
+            blockers.append("motion explainer has too few evidence-backed points")
+        if quality.get("product_visual_motion") != "site_motion_infographic":
+            blockers.append("site explainer motion-graphic treatment is missing")
+    else:
+        if max(source_media_count, product_visual_count) < 1:
+            blockers.append("approved official product/app source media is missing (product or app visual is missing)")
+        if max(source_media_count, product_visual_count) >= 1 and not quality.get("product_visual_storytelling"):
+            blockers.append("official source media is not used as the primary evidence scene")
+        allowed_motion = {"ken_burns_crop_and_scanline", "official_video_or_ken_burns_capture", "official_video_or_animated_source_capture"}
+        if max(source_media_count, product_visual_count) >= 1 and quality.get("product_visual_motion") not in allowed_motion:
+            blockers.append("official source media lacks motion treatment (product visual lacks motion treatment)")
     if quality.get("hook_qa", {}).get("status") != "PASSED":
         blockers.append("opening hook QA has not passed")
     if not quality.get("gamcryp_product_placement"):
@@ -711,7 +751,7 @@ def _local_logo_path(package: ContentPackage) -> Path | None:
     opportunity = get_opportunity(package.opportunity_id)
     if opportunity is None or not opportunity.logo_asset:
         return None
-    candidate = Path("frontend") / opportunity.logo_asset.lstrip("/")
+    candidate = REPOSITORY_ROOT / "frontend" / opportunity.logo_asset.lstrip("/")
     # ffmpeg's Windows build cannot decode SVG inputs reliably. Keep the
     # renderer fail-closed for the asset itself, but use the safe branded
     # identity card when the catalog only has a vector logo.
@@ -721,12 +761,12 @@ def _local_logo_path(package: ContentPackage) -> Path | None:
 
 
 def _brand_logo_path() -> Path | None:
-    candidate = Path("frontend/assets/brand/gamcryp-logo.png")
+    candidate = REPOSITORY_ROOT / "frontend/assets/brand/gamcryp-logo.png"
     return candidate if candidate.is_file() else None
 
 
-def _failed(package: ContentPackage, reason: str, *, evidence: str = "", width: int = 0, height: int = 0) -> RenderResult:
-    return RenderResult(package.source_inventory_item_id, package.package_id, package.format, NOT_READY, reason, None, None, None, None, width, height, None, None, None, evidence or package.evidence_fingerprint, None, None)
+def _failed(package: ContentPackage, reason: str, *, evidence: str = "", width: int = 0, height: int = 0, audio_mode: str = "music_only") -> RenderResult:
+    return RenderResult(package.source_inventory_item_id, package.package_id, package.format, NOT_READY, reason, None, None, None, None, width, height, None, None, None, evidence or package.evidence_fingerprint, None, None, audio_mode=audio_mode)
 
 
 def _load_rotation_index(path: Path) -> int:
@@ -743,6 +783,9 @@ def _save_rotation_index(path: Path, value: int) -> None:
 
 def _write_captions(path: Path, text: str, duration: float) -> None:
     words = text.split()
+    if not words:
+        path.write_text("", encoding="utf-8")
+        return
     chunks = [" ".join(words[index:index + 8]) for index in range(0, len(words), 8)] or [text]
     step = max(duration / len(chunks), 0.5)
     lines = []
@@ -871,40 +914,59 @@ def _render_remotion_short(
     voice_id: str | None,
     narration: ElevenLabsGenerationResult | None,
     audio_mode: str,
-    source_media_path: Path,
+    source_media_path: Path | None,
     run: Callable[..., subprocess.CompletedProcess[str]],
     now: datetime | None,
 ) -> RenderResult:
     """Render an evidence-led Short with the Remotion motion-design composition."""
-    remotion_root = Path("video/remotion")
+    remotion_root = REPOSITORY_ROOT / "video/remotion"
     if not (remotion_root / "package.json").is_file():
         return _failed(package, "BLOCKED_RENDER: Remotion project is missing", evidence=job.evidence_fingerprint, width=job.width, height=job.height)
 
     public_root = remotion_root / "public"
-    source_name = f"source/{package.package_id}{source_media_path.suffix.lower()}"
+    site_explainer = is_motion_graphic_explainer(package)
+    source_name = f"source/{package.package_id}{source_media_path.suffix.lower()}" if source_media_path is not None else ""
+    logo_source_name = f"brand/{package.package_id}-gamcryp.png" if site_explainer else ""
     audio_name = f"audio/{package.package_id}.{'mp3' if audio.suffix.lower() != '.wav' else 'wav'}"
-    source_target = public_root / source_name
     audio_target = public_root / audio_name
-    source_target.parent.mkdir(parents=True, exist_ok=True)
     audio_target.parent.mkdir(parents=True, exist_ok=True)
+    staged_assets = [audio_target]
     try:
-        shutil.copy2(source_media_path, source_target)
+        if source_media_path is not None:
+            source_target = public_root / source_name
+            source_target.parent.mkdir(parents=True, exist_ok=True)
+            staged_assets.append(source_target)
+            shutil.copy2(source_media_path, source_target)
+        if site_explainer:
+            logo_target = public_root / logo_source_name
+            logo_target.parent.mkdir(parents=True, exist_ok=True)
+            staged_assets.append(logo_target)
+            shutil.copy2(REPOSITORY_ROOT / "frontend/assets/brand/gamcryp-logo.png", logo_target)
         shutil.copy2(audio, audio_target)
     except OSError as exc:
+        _remove_staged_assets(staged_assets)
         return _failed(package, f"BLOCKED_RENDER: Remotion asset staging failed: {exc}", evidence=job.evidence_fingerprint, width=job.width, height=job.height)
 
     sting_path = _ensure_brand_sting(root, run)
     sting_name: str | None = None
     if sting_path is not None:
-        sting_name = "audio/gamcryp-brand-sting.wav"
-        try:
-            shutil.copy2(sting_path, public_root / sting_name)
-        except OSError:
-            sting_name = None
+        public_sting = public_root / "audio/gamcryp-brand-sting.wav"
+        if public_sting.is_file():
+            sting_name = "audio/gamcryp-brand-sting.wav"
+        else:
+            sting_name = f"audio/{package.package_id}-gamcryp-brand-sting.wav"
+            staged_sting = public_root / sting_name
+            try:
+                shutil.copy2(sting_path, staged_sting)
+                staged_assets.append(staged_sting)
+            except OSError:
+                sting_name = None
 
     points = [str(point.get("text", "")).strip() for point in package.factual_talking_points if point.get("text")]
     source = package.required_source_references[0]["url"] if package.required_source_references else package.canonical_source_url
     source = re.sub(r"^https?://", "", source).rstrip("/")
+    if site_explainer and source.startswith("/"):
+        source = f"gamcryp.com{source}"
     props = {
         "title": package.title_candidates[0] if package.title_candidates else package.content_family.replace("_", " "),
         "eyebrow": package.content_family.replace("_", " / "),
@@ -912,13 +974,15 @@ def _render_remotion_short(
         "cta": package.cta,
         "source": source,
         "sourceMedia": source_name,
-        "sourceMediaKind": "video" if source_media_path.suffix.lower() in {".mp4", ".webm", ".mov", ".m4v"} else "image",
+        "sourceMediaKind": "video" if source_media_path is not None and source_media_path.suffix.lower() in {".mp4", ".webm", ".mov", ".m4v"} else "image",
         "productImage": source_name,
+        "siteExplainer": site_explainer,
+        "brandLogoSrc": logo_source_name,
         "audioSrc": audio_name,
         "brandStingSrc": sting_name,
         "accent": "#4de1ff",
         "accent2": "#a78bfa",
-        "steps": ["Read the official guide", "Check required infrastructure", "Verify costs and exit paths"],
+        "steps": points[:4] if site_explainer else ["Read the official guide", "Check required infrastructure", "Verify costs and exit paths"],
         "facts": points[:3] or ["Read the official source", "Check operational requirements", "Verify the current status"],
         "captions": [{"start": start, "end": end, "text": text} for start, end, text in _read_srt_entries(caption_path)],
     }
@@ -929,7 +993,9 @@ def _render_remotion_short(
     try:
         completed = run(command, check=False, capture_output=True, text=True, cwd=str(remotion_root.resolve()))
     except OSError:
+        _remove_staged_assets(staged_assets)
         return _failed(package, "Remotion is unavailable", evidence=job.evidence_fingerprint, width=job.width, height=job.height)
+    _remove_staged_assets(staged_assets)
     if completed.returncode != 0 or not video_path.is_file():
         return _failed(package, f"Remotion render failed: {_safe_process_reason(completed.stderr)}", evidence=job.evidence_fingerprint, width=job.width, height=job.height)
 
@@ -938,10 +1004,10 @@ def _render_remotion_short(
         return _failed(package, "Remotion output is not decodable", evidence=job.evidence_fingerprint, width=job.width, height=job.height)
     quality = dict(quality_metadata)
     quality.update({
-        "quality_version": "short-social-remotion-v2-source-led",
-        "composition_mode": "remotion_official_source_led",
-        "product_visual_motion": "official_video_or_animated_source_capture",
-        "render_motion_treatment": "source_media_first_with_animated_overlays",
+        "quality_version": "short-social-remotion-site-explainer-v1" if site_explainer else "short-social-remotion-v2-source-led",
+        "composition_mode": "remotion_gamcryp_site_motion_graphics" if site_explainer else "remotion_official_source_led",
+        "product_visual_motion": "site_motion_infographic" if site_explainer else "official_video_or_animated_source_capture",
+        "render_motion_treatment": "original_evidence_led_site_explainer" if site_explainer else "source_media_first_with_animated_overlays",
         "animated_motion": True,
         "transition_effects": ["fade_in", "fade_out", "spring_scene_reveal", "cross_scene_fade", "moving_orbit", "browser_scan"],
         "brand_sting_present": sting_name is not None,
@@ -952,13 +1018,21 @@ def _render_remotion_short(
     blockers = validate_render(result)
     if blockers:
         result = replace(result, status=NOT_READY, reason="BLOCKED_VISUAL_QA: " + "; ".join(blockers))
-    Path(result.metadata_path).write_text(json.dumps({**asdict(result), "asset_checksums": {"video": _sha256(video_path), "audio": _sha256(audio), "captions": _sha256(caption_path)}}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    Path(result.metadata_path).write_text(json.dumps({**asdict(result), "music_source_sha256": music_bed_source_fingerprint() if audio_mode == "music_only" else None, "asset_checksums": {"video": _sha256(video_path), "audio": _sha256(audio), "captions": _sha256(caption_path)}}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return result
 
 
 def _safe_process_reason(stderr: str | None) -> str:
     lines = [line.strip() for line in (stderr or "").splitlines() if line.strip()]
     return lines[-1][:240] if lines else "unknown ffmpeg error"
+
+
+def _remove_staged_assets(paths: list[Path]) -> None:
+    for path in paths:
+        try:
+            path.unlink(missing_ok=True)
+        except OSError:
+            pass
 
 
 def _music_only_fallback_enabled() -> bool:
@@ -970,8 +1044,16 @@ def _last_provider_failure_was_account_blocked(error: str | None) -> bool:
     return "quota" in text or "rate limit" in text or "credentials were rejected" in text
 
 
+def music_bed_source_fingerprint() -> str | None:
+    """Return the checksum of the licensed music asset currently used for rendering."""
+    try:
+        return _sha256(MUSIC_BED_SOURCE)
+    except OSError:
+        return None
+
+
 def _generate_music_bed(path: Path, *, duration: int, run: Callable[..., subprocess.CompletedProcess[str]]) -> bool:
-    """Create a local original gym/dubstep bed without spending TTS credits."""
+    """Create a trimmed/faded copy of the licensed music bed without TTS credits."""
 
     path.parent.mkdir(parents=True, exist_ok=True)
     if not MUSIC_BED_SOURCE.is_file():

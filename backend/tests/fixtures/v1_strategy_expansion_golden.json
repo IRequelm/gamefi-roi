@@ -1,5 +1,5 @@
 {
-  "calculated_at": "2026-08-16T12:00:00Z",
+  "calculated_at": "2026-09-01T12:00:00Z",
   "manual_expected": {
     "dfk-crystalvale-jeweler-cjewel-100-max-lock": {
       "break_even_days": "627.3525721455457967377666248",
@@ -211,20 +211,20 @@
       "transaction_cost_day": "0.001"
     },
     "geodnet-empty-hex-triple-band-base-station": {
-      "break_even_days": "246.2094374380048179112937509",
+      "break_even_days": "497.2099012734296752038918300",
       "capital_at_risk": "695",
       "exit_adjusted_pnl": "-695",
-      "gross_nominal_earnings_day": "3.00",
-      "net_earnings_day": "2.8228",
+      "gross_nominal_earnings_day": "1.50",
+      "net_earnings_day": "1.3978",
       "operating_cost_day": "0.0072",
-      "realizable_earnings_day": "2.8500",
+      "realizable_earnings_day": "1.4250",
       "recoverable_capital": "0",
-      "roi_risk_30d": "0.1218474820143884892086330935",
-      "roi_risk_7d": "0.02843107913669064748201438849",
-      "roi_risk_90d": "0.3655424460431654676258992806",
-      "roi_total_30d": "0.1218474820143884892086330935",
-      "roi_total_7d": "0.02843107913669064748201438849",
-      "roi_total_90d": "0.3655424460431654676258992806",
+      "roi_risk_30d": "0.06033669064748201438848920863",
+      "roi_risk_7d": "0.01407856115107913669064748201",
+      "roi_risk_90d": "0.1810100719424460431654676259",
+      "roi_total_30d": "0.06033669064748201438848920863",
+      "roi_total_7d": "0.01407856115107913669064748201",
+      "roi_total_90d": "0.1810100719424460431654676259",
       "sunk_cost": "695",
       "total_capital": "695",
       "transaction_cost_day": "0.02"

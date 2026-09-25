@@ -1,6 +1,7 @@
 import json
 import os
 from decimal import Decimal
+from datetime import datetime, timezone
 from types import SimpleNamespace
 
 from scripts import growth_metrics_report
@@ -179,6 +180,7 @@ def test_distribution_summary_marks_expired_ok_heartbeat_stale(tmp_path, monkeyp
     (distribution_dir / "worker_heartbeat.json").write_text(
         json.dumps(
             {
+                "pid": 99999999,
                 "status": "ok",
                 "updated_at": "2020-01-01T00:00:00+00:00",
                 "platform_statuses": [],
@@ -193,7 +195,31 @@ def test_distribution_summary_marks_expired_ok_heartbeat_stale(tmp_path, monkeyp
     assert summary["reported_status"] == "ok"
     assert summary["status"] == "stale"
     assert summary["health_reason"] == "heartbeat_expired"
+    assert summary["worker_process_alive"] is False
     assert summary["heartbeat_age_minutes"] > summary["max_heartbeat_age_minutes"]
+
+
+def test_distribution_summary_requires_live_process_for_fresh_ok_heartbeat(tmp_path, monkeypatch):
+    distribution_dir = tmp_path / "data/local/distribution"
+    distribution_dir.mkdir(parents=True)
+    (distribution_dir / "worker_heartbeat.json").write_text(
+        json.dumps(
+            {
+                "pid": 99999999,
+                "status": "ok",
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+                "platform_statuses": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(growth_metrics_report, "ROOT", tmp_path)
+
+    summary = growth_metrics_report._distribution_summary()
+
+    assert summary["heartbeat_age_minutes"] == 0
+    assert summary["status"] == "stopped"
+    assert summary["health_reason"] == "worker_process_not_running"
 
 
 def test_public_runtime_measurement_labels_aggregate_counts(monkeypatch):

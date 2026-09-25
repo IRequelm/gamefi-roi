@@ -52,6 +52,7 @@ POSTHOG_ALLOWED_PROPERTIES = frozenset(
         "utm_source",
         "utm_medium",
         "utm_campaign",
+        "utm_content",
         "environment",
         "release",
         "app_version",

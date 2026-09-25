@@ -13,7 +13,9 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Callable
 
-from app.content_package.generator import ContentPackage
+from app.content_package.generator import ContentPackage, is_motion_graphic_explainer, is_site_explainer
+
+REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
 
 BLOCKED_MISSING_ASSETS = "BLOCKED_MISSING_ASSETS"
 BLOCKED_WEAK_HOOK = "BLOCKED_WEAK_HOOK"
@@ -54,6 +56,16 @@ def asset_plan(package: ContentPackage) -> AssetPlan:
     """
     opportunity_id = package.opportunity_id or "gamcryp"
     logo = _find_logo(package)
+    if is_motion_graphic_explainer(package):
+        brand = REPOSITORY_ROOT / "frontend/assets/brand/gamcryp-logo.png"
+        return AssetPlan(
+            ASSETS_READY if brand.is_file() else ASSETS_REQUIRED,
+            ("official brand asset and evidence-led motion graphics",),
+            str(brand) if brand.is_file() else None,
+            (),
+            (),
+            source_card_required=False,
+        )
     root = Path(os.getenv("GAMEFI_SHORT_ASSET_ROOT", "data/local/video_assets")) / opportunity_id
     required = ("gameplay_or_ui",) if _is_game(package) else ("product_ui_or_device",)
     source_media = tuple(str(path) for path in sorted(root.glob("*")) if path.is_file() and _is_source_media(path))
@@ -68,6 +80,22 @@ def creative_preflight(package: ContentPackage) -> tuple[str, ...]:
     if not package.cta or "gamcryp" not in package.cta.lower():
         blockers.append(f"{BLOCKED_SCRIPT_QA}: CTA does not position GamCryp as the evaluator")
     plan = asset_plan(package)
+    if is_site_explainer(package):
+        if plan.status != ASSETS_READY:
+            blockers.append(f"{BLOCKED_MISSING_ASSETS}: official GamCryp brand asset is missing")
+        if len(package.factual_talking_points) < 3:
+            blockers.append(f"{BLOCKED_SCRIPT_QA}: site explainer needs at least three evidence-backed points")
+        if not package.canonical_source_url.startswith(("/", "https://gamcryp.com/")):
+            blockers.append(f"{BLOCKED_SCRIPT_QA}: site explainer source is not a GamCryp canonical page")
+        return tuple(blockers)
+    if is_motion_graphic_explainer(package):
+        if plan.status != ASSETS_READY:
+            blockers.append(f"{BLOCKED_MISSING_ASSETS}: official GamCryp brand asset is missing")
+        if not package.factual_talking_points or not package.required_source_references:
+            blockers.append(f"{BLOCKED_SCRIPT_QA}: catalog explainer needs cited facts")
+        if any(not str(ref.get("url", "")).startswith("https://") for ref in package.required_source_references):
+            blockers.append(f"{BLOCKED_SCRIPT_QA}: catalog references must be HTTPS")
+        return tuple(blockers)
     if plan.status != ASSETS_READY:
         blockers.append(f"{BLOCKED_MISSING_ASSETS}: approved official source media is missing ({', '.join(plan.required_kinds)})")
     return tuple(blockers)

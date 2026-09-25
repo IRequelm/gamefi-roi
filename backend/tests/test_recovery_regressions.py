@@ -99,7 +99,7 @@ def test_visual_retry_preserves_legacy_neural_audio_without_paid_provider(tmp_pa
 def test_missing_narration_does_not_generate_by_default(tmp_path):
     def forbidden(*a, **kw):
         raise AssertionError("Unexpected paid generation")
-    result = render_package(_package(), settings=_settings(tmp_path), root=tmp_path, narration_provider_factory=forbidden)
+    result = render_package(_package(), settings=_settings(tmp_path), root=tmp_path, narration_provider_factory=forbidden, command_runner=_runner, reuse_local_narration=False)
     assert result.audio_mode == "music_only"
     assert "BLOCKED_VISUAL_QA" in result.reason
 
