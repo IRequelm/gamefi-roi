@@ -51,7 +51,7 @@ def test_homepage_omits_internal_audit_blocks(monkeypatch, tmp_path) -> None:
     assert "DATA SOURCE" not in html.upper()
     assert "served through /api/v1" not in html
     assert "page requests do not call live providers" not in html
-    assert "Find a Web3 earning strategy that fits your budget, device, and time." in html
+    assert "Compare what Web3 earning strategies cost, earn, and risk." in html
     assert "What are you looking for?" in html
     assert 'href="/rankings?capital_max=25"' in html
 

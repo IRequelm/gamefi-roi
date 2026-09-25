@@ -139,8 +139,8 @@ def home_page(service: ApiDataService, *, settings: Settings, request: Request) 
       <div class="page-shell">
         <section class="page-head">
           <p class="eyebrow">GamCryp opportunity intelligence</p>
-          <h1>Find a Web3 earning strategy that fits your budget, device, and time.</h1>
-          <p class="lede">Compare modeled GameFi and DePIN strategies using net earnings, setup cost, risk, confidence, and source freshness. If a reward cannot be valued reliably, we explain why instead of making up an ROI.</p>
+          <h1>Compare what Web3 earning strategies cost, earn, and risk.</h1>
+          <p class="lede">See modeled net earnings, setup costs, and data confidence for GameFi and DePIN. When rewards cannot be valued reliably, we mark ROI unavailable and explain why instead of guessing.</p>
           <p class="muted">{escape(answer)}</p>
           <div class="hero-proof-points" aria-label="GamCryp data principles">
             <span>Recent modeled results</span>
@@ -162,7 +162,7 @@ def home_page(service: ApiDataService, *, settings: Settings, request: Request) 
         {_render_opportunity_cards(opportunities, heading="Opportunity radar")}
       </div>
     """
-    description = "Compare Web3 earning strategies by setup cost, net earnings, device and time requirements, risk, confidence, and source freshness. No invented ROI."
+    description = "Compare modeled Web3 strategy costs, net earnings, risk, and data confidence. Unpriced rewards are marked unavailable instead of guessed."
     return _page(
         request=request,
         settings=settings,

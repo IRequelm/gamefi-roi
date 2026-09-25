@@ -115,14 +115,14 @@ test("home renders results as cards before filters without table ranking markup"
   ]);
 
   assert.match(html, /GamCryp opportunity intelligence/);
-  assert.match(html, /fits your budget, device, and time/);
+  assert.match(html, /Compare what Web3 earning strategies cost, earn, and risk/);
   assert.match(html, /start-path-grid/);
   assert.match(html, /Start under \$25/);
   assert.match(html, /\/rankings\?opportunity_type=DEPIN_NODE/);
   assert.match(html, /Risk and confidence separated/);
   assert.match(html, /Top modeled opportunity/);
   assert.match(html, /Ranked by modeled 30D ROI, then confidence, risk, and recency/);
-  assert.match(html, /instead of making up an ROI/);
+  assert.match(html, /mark ROI unavailable and explain why instead of guessing/);
   assert.match(html, /Reviewed opportunities/);
   assert.match(html, /Modeled strategies/);
   assert.match(html, /Opportunity coverage/);

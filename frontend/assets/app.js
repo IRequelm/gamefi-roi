@@ -255,8 +255,8 @@ export function renderHomeShell(games = [], rankings = { items: [], page: { tota
     <div class="page-shell">
       <section class="page-head">
         <p class="eyebrow">GamCryp opportunity intelligence</p>
-        <h1>Find a Web3 earning strategy that fits your budget, device, and time.</h1>
-        <p class="lede">Compare modeled GameFi and DePIN strategies using net earnings, setup cost, risk, confidence, and source freshness. If a reward cannot be valued reliably, we explain why instead of making up an ROI.</p>
+        <h1>Compare what Web3 earning strategies cost, earn, and risk.</h1>
+        <p class="lede">See modeled net earnings, setup costs, and data confidence for GameFi and DePIN. When rewards cannot be valued reliably, we mark ROI unavailable and explain why instead of guessing.</p>
         <div class="hero-proof-points" aria-label="GamCryp data principles">
           <span>Modeled ROI where reproducible</span>
           <span>Risk and confidence separated</span>
