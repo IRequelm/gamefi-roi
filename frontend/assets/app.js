@@ -666,7 +666,9 @@ function filterSummary(query) {
 
 function majorAssumptions(snapshot) {
   const counts = snapshot.classification_summary?.counts || {};
-  return `${counts.LIVE ?? 0} live observations, ${counts.CONFIG ?? 0} configured assumptions, and ${counts.DERIVED ?? 0} derived metrics are attached to this snapshot.`;
+  const inputCount = snapshot.freshness?.input_count ?? 0;
+  const freshCount = snapshot.freshness?.status_counts?.fresh ?? 0;
+  return `${inputCount} source observations are attached (${freshCount} fresh); the model uses ${counts.CONFIG ?? 0} configured assumptions and derives ${counts.DERIVED ?? 0} metrics.`;
 }
 
 function warningSummary(warnings = []) {
