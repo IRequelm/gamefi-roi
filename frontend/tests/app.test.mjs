@@ -506,6 +506,26 @@ test("homepage opportunity radar distinguishes a stale model from a fresh strate
   assert.doesNotMatch(fresh, /No current estimate/);
 });
 
+test("opportunity catalog can label modeled results using fresh ranking data", () => {
+  const modeled = {
+    ...opportunityPayload(),
+    opportunity_id: "defi-kingdoms",
+    name: "DeFi Kingdoms",
+    strategy_count: 3,
+    value_realization_status: "realizable",
+  };
+  const stale = renderOpportunitiesPage({ items: [modeled] }, { items: [] });
+  const fresh = renderOpportunitiesPage(
+    { items: [modeled] },
+    { items: [{ strategy: { opportunity_id: "defi-kingdoms" } }] },
+  );
+
+  assert.match(stale, /No current estimate/);
+  assert.match(stale, /excluded from current rankings/);
+  assert.match(fresh, /Fresh strategy available/);
+  assert.doesNotMatch(fresh, /No current estimate/);
+});
+
 test("DePIN setup cues map platform evidence without leaking enums", () => {
   const opportunity = { ...opportunityPayload(), platforms: ["browser-extension", "desktop", "hardware-node"] };
   assert.deepEqual(depinSetupLabels(opportunity), ["Browser / extension", "Existing PC", "Dedicated hardware"]);

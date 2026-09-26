@@ -181,6 +181,20 @@ def test_homepage_exposes_stale_models_when_current_rankings_are_empty(monkeypat
     assert "excluded from current rankings" in html
 
 
+def test_opportunity_catalog_exposes_stale_models_as_not_current(monkeypatch, tmp_path) -> None:
+    client, engine = _seeded_client(monkeypatch, tmp_path, "seo-opportunities-stale.db")
+    for strategy in list_strategies():
+        _mark_latest_stale(engine, strategy.strategy_id)
+
+    response = client.get("/opportunities")
+
+    assert response.status_code == 200
+    html = response.text
+    assert "No current estimate" in html
+    assert "A prior model exists, but its data is stale or unavailable" in html
+    assert "ROI modeled" not in html
+
+
 def test_query_permutations_are_noindex_and_canonicalized(monkeypatch, tmp_path) -> None:
     client, _engine = _seeded_client(monkeypatch, tmp_path, "seo-query.db")
 

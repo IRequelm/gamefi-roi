@@ -307,6 +307,12 @@ def curated_rankings_page(
 
 def opportunities_page(service: ApiDataService, *, settings: Settings, request: Request) -> SeoPage:
     opportunities, _total = service.opportunities_page(limit=100, offset=0)
+    rankings = service.rankings_page(limit=50, offset=0)
+    fresh_opportunity_ids = {
+        item.strategy.opportunity_id or item.strategy.game_id
+        for item in rankings.items
+        if item.latest_snapshot and item.latest_snapshot.freshness.overall_status == "fresh"
+    }
     description = "Crawlable catalog of Games, DePIN / Nodes, and Points programs reviewed by GamCryp, including modeled ROI availability and unavailable-value reasons."
     body = f"""
       <div class="page-shell">
@@ -316,7 +322,11 @@ def opportunities_page(service: ApiDataService, *, settings: Settings, request: 
           <p class="lede">GamCryp publishes financial ROI only when reward value, costs, timing, and exit route are lawful and reproducible. Points-only opportunities remain unavailable, not zero.</p>
         </section>
         {_render_opportunity_index_answer_block(opportunities)}
-        {_render_opportunity_cards(opportunities, heading="Reviewed opportunities")}
+        {_render_opportunity_cards(
+            opportunities,
+            heading="Reviewed opportunities",
+            fresh_opportunity_ids=fresh_opportunity_ids,
+        )}
       </div>
     """
     return _page(

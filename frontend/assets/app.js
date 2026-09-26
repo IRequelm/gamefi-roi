@@ -725,7 +725,7 @@ function renderCuratedRankingLinks() {
     </section>
   `;
 }
-export function renderOpportunitiesPage(opportunitiesPage = { items: [], page: { total: 0 } }) {
+export function renderOpportunitiesPage(opportunitiesPage = { items: [], page: { total: 0 } }, rankings = { items: [] }) {
   return `
     <div class="page-shell">
       <section class="page-head">
@@ -733,7 +733,9 @@ export function renderOpportunitiesPage(opportunitiesPage = { items: [], page: {
         <h1>Games, nodes, and points programs under review.</h1>
         <p class="lede">GamCryp keeps modeled strategies and watchlist candidates in one taxonomy. Points-only or future-claim programs stay marked unavailable until value is lawful and reproducible.</p>
       </section>
-      ${renderOpportunityList(opportunitiesPage.items || [])}
+      ${renderOpportunityList(opportunitiesPage.items || [], {
+        freshOpportunityIds: (rankings.items || []).map((item) => item.strategy?.opportunity_id || item.strategy?.game_id).filter(Boolean),
+      })}
     </div>
   `;
 }
@@ -3022,7 +3024,8 @@ async function renderCurrentRoute() {
       });
       routeAnalyticsContext = rankingAnalyticsContext(visibleRankings, rankingSlugForPath(path));
     } else if (path === "/opportunities") {
-      root.innerHTML = renderOpportunitiesPage(await loadOpportunityCatalog());
+      const [opportunities, rankings] = await Promise.all([loadOpportunityCatalog(), apiGet("/rankings")]);
+      root.innerHTML = renderOpportunitiesPage(opportunities, rankings);
       bindOpportunityFilters(root);
     } else if (path.startsWith("/opportunities/")) {
       const opportunityId = decodeURIComponent(path.replace("/opportunities/", ""));
