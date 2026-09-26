@@ -120,7 +120,7 @@ test("home renders results as cards before filters without table ranking markup"
   ]);
 
   assert.match(html, /GamCryp opportunity intelligence/);
-  assert.match(html, /Compare what Web3 earning strategies cost, earn, and risk/);
+  assert.match(html, /Compare GameFi and Web3 earning strategies by cost, net earnings, and risk/);
   assert.match(html, /start-path-grid/);
   assert.match(html, /Start under \$25/);
   assert.match(html, /Explore opportunities/);
@@ -318,7 +318,7 @@ test("catalog stats summarize V1 coverage without financial recomputation", () =
 test("static shell uses the official GamCryp logo asset without placeholder markup", () => {
   const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
 
-  assert.match(html, /GamCryp \| Web3 Opportunity Intelligence/);
+  assert.match(html, /GameFi ROI &amp; Web3 Earnings Analysis/);
   assert.match(html, /<img class="brand-logo" src="\/assets\/brand\/gamcryp-logo\.png" alt="GamCryp">/);
   assert.match(html, /brand-lockup/);
   assert.match(html, /https:\/\/x.com\/GamCryp/);

@@ -221,3 +221,5 @@ Priorities, in order:
 4. **Review the funnel after a meaningful sample.** Separate test/operator sessions from human acquisition. Repeat a landing topic only after tagged qualified sessions and downstream events arrive; do not scale paid traffic based on view counts or raw GA events.
 
 Completion evidence still required: live deployment of the SEO change, successful IndexNow/Search Console request where configured, and post-release tagged human traffic/conversion data over a sufficient observation window. No claim of growth lift is made by this checkpoint.
+
+Deployment follow-up (2026-09-26): Render deployment `dep-das0nlh7lnhs73f5jvkg` brought backend commit `4c38a90` live and `/api/v1/ops/status` remained healthy. Browser verification caught the hydrated frontend replacing the revised server-rendered H1 with its old text. Follow-up commit synchronizes the client-rendered H1 and static-shell title/description; its frontend suite passes 63/63. The updated root URL is already indexed in Search Console; a recrawl request was submitted and its live-URL indexing check is still processing. Ship the hydration correction before treating the SEO change as complete.
