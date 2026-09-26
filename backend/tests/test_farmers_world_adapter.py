@@ -31,7 +31,7 @@ from app.adapters.farmers_world_probe import _build_probe_observations
 from app.engine.calculator import calculate_strategy_roi
 from app.engine.results import MetricStatus
 from app.sources.observations import Observation, ObservationStatus, SourceType
-from app.strategies.farmers_world import FARMERS_WORLD_AXE_WOOD_V1
+from app.strategies.farmers_world import FARMERS_WORLD_AXE_WOOD_10X_V1, FARMERS_WORLD_AXE_WOOD_V1
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures" / "farmers_world_axe_golden.json"
 
@@ -126,6 +126,8 @@ def test_farmers_world_probe_derivations_expire_with_their_market_inputs() -> No
 
     floor = (
         market_observation("atomicassets.nft.floor_price", "1", "WAX", "axe"),
+        market_observation("atomicassets.nft.listing_basket_cost", "1", "WAX", "axe"),
+        market_observation("atomicassets.nft.listing_basket_exit_value", "0.95", "WAX", "axe"),
         market_observation("atomicassets.collection_market_fee_ratio", "0.05", "ratio", "axe"),
     )
     price = (market_observation("token.price", "0.05", "USD", "WAX"),)
@@ -142,6 +144,65 @@ def test_farmers_world_probe_derivations_expire_with_their_market_inputs() -> No
     derived = [observation for observation in observations if observation.source_type == SourceType.DERIVED_PROVIDER_DATA]
     assert derived
     assert all(observation.fresh_until == retrieved_at + freshness for observation in derived)
+
+
+def test_farmers_world_multi_axe_capital_uses_the_full_listing_basket() -> None:
+    retrieved_at = datetime(2026, 8, 15, 12, 0, tzinfo=UTC)
+    freshness = timedelta(minutes=5)
+
+    def market_observation(metric: str, value: str, unit: str, entity_id: str) -> Observation:
+        return Observation(
+            observation_id=f"{entity_id}:{metric}",
+            entity_type="asset",
+            entity_id=entity_id,
+            metric=metric,
+            value=Decimal(value),
+            unit=unit,
+            source_provider="fixture",
+            source_type=SourceType.MARKET_API,
+            source_locator="fixture://market-data",
+            observed_at=retrieved_at,
+            retrieved_at=retrieved_at,
+            fresh_until=retrieved_at + freshness,
+            status=ObservationStatus.FRESH,
+        )
+
+    strategy = FARMERS_WORLD_AXE_WOOD_10X_V1
+
+    def ticker(token_id: str) -> tuple[Observation, ...]:
+        return (
+            market_observation("alcor.market.base_amm_liquidity", "1000000", strategy.market_quote_token_id, token_id),
+            market_observation("alcor.market.target_amm_liquidity", "1000000", token_id, token_id),
+            market_observation("alcor.market.fee_bps", "30", "basis_point", token_id),
+            market_observation("alcor.market.frozen", "0", "boolean", token_id),
+        )
+
+    floor = (
+        market_observation("atomicassets.nft.floor_price", "0.44", "WAX", "axe"),
+        market_observation("atomicassets.nft.listing_basket_cost", "5.14", "WAX", "axe"),
+        market_observation("atomicassets.nft.listing_basket_exit_value", "4.883", "WAX", "axe"),
+        market_observation("atomicassets.collection_market_fee_ratio", "0.05", "ratio", "axe"),
+    )
+    price = (market_observation("token.price", "0.006", "USD", "WAX"),)
+    observations = _build_probe_observations(
+        strategy=strategy,
+        fww_ticker=ticker(strategy.reward_token_id),
+        fwf_ticker=ticker(strategy.food_token_id),
+        fwg_ticker=ticker(strategy.repair_token_id),
+        floor=floor,
+        wax_price=price,
+        retrieved_at=retrieved_at,
+    )
+    by_metric = {observation.metric: observation for observation in observations}
+    adapter_result = FarmersWorldAxeAdapter(strategy).build_engine_input(observations, calculated_at=retrieved_at)
+    roi = calculate_strategy_roi(adapter_result.economics_input)
+
+    assert by_metric[ENTRY_VALUE_USD].value == Decimal("0.03084")
+    assert by_metric[EXIT_VALUE_USD].value == Decimal("0.029298")
+    assert by_metric[ENTRY_VALUE_USD].source_locator.startswith("sum of the required lowest-priced active")
+    assert roi.total_capital.amount == Decimal("0.03084")
+    assert adapter_result.warnings[0].code == "multi_tool_listing_basket"
+    assert "not a guaranteed execution or resale quote" in adapter_result.warnings[0].message
 
 
 def test_farmers_world_adapter_fails_when_required_observation_is_missing() -> None:

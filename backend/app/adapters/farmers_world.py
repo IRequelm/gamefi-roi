@@ -10,6 +10,7 @@ from types import MappingProxyType
 from app.adapters.contract import (
     AdapterInputError,
     AdapterResultV1,
+    AdapterWarning,
     ValueClassification,
     classify_observation,
     derived_observation,
@@ -156,7 +157,8 @@ class FarmersWorldAxeAdapter:
                     "tool": self.strategy.tool_name,
                     "cycle_hours": str(cycle_hours),
                     "cycles_per_day": str(cycles_per_day),
-                    "capital_at_risk_basis": "entry value of the tool NFT while market liquidity remains thin",
+                    "capital_at_risk_basis": "sum of the required lowest-priced distinct active tool listings; the source checks listing depth",
+                    "tool_listing_quote_basis": "current AtomicAssets sales sorted by price; basket costs can change before execution",
                     "transaction_cost_basis": "explicit WAX resource/transaction assumption from strategy config",
                     "production_config_source": "Farmers World docs plus corroborating public tool tables",
                 }
@@ -183,6 +185,20 @@ class FarmersWorldAxeAdapter:
                     "farmers_world.axe.gross_nominal_value_day_usd": gross_nominal_value_day,
                     "farmers_world.axe.operating_cost_day_usd": operating_cost_day,
                 }
+            ),
+            warnings=(
+                (
+                    AdapterWarning(
+                        code="multi_tool_listing_basket",
+                        message=(
+                            "Starting capital and recoverable value use the required number of distinct lowest-priced active Axe listings. "
+                            "The listing basket is a market snapshot, not a guaranteed execution or resale quote."
+                        ),
+                        severity="warning",
+                    ),
+                )
+                if tool_count > Decimal("1")
+                else ()
             ),
         )
 

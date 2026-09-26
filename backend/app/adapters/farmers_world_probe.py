@@ -93,6 +93,7 @@ def load_live_observations(
                 template_id=strategy.tool_template_id,
                 listing_symbol=strategy.market_quote_token_symbol,
                 freshness_window=market_freshness,
+                quantity=int(strategy.tool_count),
             )
         )
         wax_price = tuple(
@@ -156,10 +157,11 @@ def _build_probe_observations(
     if wax_usd is None:
         raise RuntimeError("WAX/USD price is missing")
 
-    floor_wax = _require_metric(floor, "atomicassets.nft.floor_price").value
+    entry_basket_wax = _require_metric(floor, "atomicassets.nft.listing_basket_cost").value
+    exit_basket_wax = _require_metric(floor, "atomicassets.nft.listing_basket_exit_value").value
     market_fee_ratio = _require_metric(floor, "atomicassets.collection_market_fee_ratio").value
-    if floor_wax is None or market_fee_ratio is None:
-        raise RuntimeError("AtomicAssets floor or fee value is missing")
+    if entry_basket_wax is None or exit_basket_wax is None or market_fee_ratio is None:
+        raise RuntimeError("AtomicAssets listing basket or fee value is missing")
 
     fww_reference_price_wax = spot_price(fww_pool, base_token_id=strategy.reward_token_id)
     fww_reference_price_usd = FINANCIAL_DECIMAL_CONTEXT.multiply(fww_reference_price_wax, wax_usd)
@@ -181,12 +183,8 @@ def _build_probe_observations(
     )
     fwf_cost_usd = FINANCIAL_DECIMAL_CONTEXT.multiply(fwf_cost_wax, wax_usd)
     fwg_cost_usd = FINANCIAL_DECIMAL_CONTEXT.multiply(fwg_cost_wax, wax_usd)
-    entry_value_usd = FINANCIAL_DECIMAL_CONTEXT.multiply(floor_wax, wax_usd)
-    exit_multiplier = FINANCIAL_DECIMAL_CONTEXT.subtract(Decimal("1"), market_fee_ratio)
-    exit_value_usd = FINANCIAL_DECIMAL_CONTEXT.multiply(
-        FINANCIAL_DECIMAL_CONTEXT.multiply(floor_wax, exit_multiplier),
-        wax_usd,
-    )
+    entry_value_usd = FINANCIAL_DECIMAL_CONTEXT.multiply(entry_basket_wax, wax_usd)
+    exit_value_usd = FINANCIAL_DECIMAL_CONTEXT.multiply(exit_basket_wax, wax_usd)
     tx_cost_usd = FINANCIAL_DECIMAL_CONTEXT.multiply(decimal_from_text(strategy.transaction_cost_wax_day), wax_usd)
 
     source_locator = f"farmers-world-strategy:{strategy.strategy_id}:{strategy.strategy_version}"
@@ -248,8 +246,8 @@ def _build_probe_observations(
             metric=ENTRY_VALUE_USD,
             value=entry_value_usd,
             unit="USD",
-            source_locator="atomicassets floor * CoinGecko WAX/USD",
-            input_observation_ids=(_require_metric(floor, "atomicassets.nft.floor_price").observation_id, wax_price[0].observation_id),
+            source_locator="sum of the required lowest-priced active AtomicAssets Axe listings * CoinGecko WAX/USD",
+            input_observation_ids=(_require_metric(floor, "atomicassets.nft.listing_basket_cost").observation_id, wax_price[0].observation_id),
             retrieved_at=retrieved_at,
             freshness=derived_freshness,
         ),
@@ -260,10 +258,9 @@ def _build_probe_observations(
             metric=EXIT_VALUE_USD,
             value=exit_value_usd,
             unit="USD",
-            source_locator="AtomicAssets floor net marketplace fee * CoinGecko WAX/USD",
+            source_locator="sum of required active AtomicAssets Axe listings net marketplace fees * CoinGecko WAX/USD",
             input_observation_ids=(
-                _require_metric(floor, "atomicassets.nft.floor_price").observation_id,
-                _require_metric(floor, "atomicassets.collection_market_fee_ratio").observation_id,
+                _require_metric(floor, "atomicassets.nft.listing_basket_exit_value").observation_id,
                 wax_price[0].observation_id,
             ),
             retrieved_at=retrieved_at,

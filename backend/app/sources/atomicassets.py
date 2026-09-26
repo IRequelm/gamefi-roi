@@ -12,7 +12,7 @@ import httpx
 
 from app.config.settings import Settings, get_settings
 from app.engine.decimal_context import FINANCIAL_DECIMAL_CONTEXT, decimal_from_int
-from app.sources.errors import SourceErrorDetail, SourceParseError
+from app.sources.errors import InsufficientMarketDepth, SourceErrorDetail, SourceParseError
 from app.sources.http import SourceHttpClient
 from app.sources.observations import Observation, ObservationStatus, SourceType
 
@@ -24,6 +24,11 @@ class AtomicAssetsFloorRequest:
     template_id: str
     listing_symbol: str
     freshness_window: timedelta
+    quantity: int = 1
+
+    def __post_init__(self) -> None:
+        if isinstance(self.quantity, bool) or not isinstance(self.quantity, int) or not 1 <= self.quantity <= 100:
+            raise ValueError("AtomicAssets listing quantity must be an integer between 1 and 100")
 
 
 class AtomicAssetsMarketDataSource:
@@ -56,7 +61,7 @@ class AtomicAssetsMarketDataSource:
             "symbol": request.listing_symbol,
             "sort": "price",
             "order": "asc",
-            "limit": "1",
+            "limit": str(request.quantity),
         }
         payload = self._client.get_json("/atomicmarket/v2/sales", params=params, operation="get_floor_listing")
         retrieved_at = datetime.now(UTC)
@@ -85,31 +90,118 @@ class AtomicAssetsMarketDataSource:
                 ),
             )
 
-        sale = data[0]
-        if not isinstance(sale, dict):
+        if len(data) < request.quantity:
+            raise InsufficientMarketDepth(
+                SourceErrorDetail(
+                    provider=self.provider_name,
+                    operation="get_floor_listing",
+                    message=(
+                        f"AtomicAssets has {len(data)} active listings for {request.template_id}; "
+                        f"strategy requires {request.quantity} distinct tool listings to price entry and exit."
+                    ),
+                    retryable=False,
+                )
+            )
+
+        sales = data[: request.quantity]
+        parsed_sales: list[tuple[dict[str, Any], Decimal, str, Decimal]] = []
+        for sale in sales:
+            if not isinstance(sale, dict):
+                raise SourceParseError(
+                    SourceErrorDetail(
+                        provider=self.provider_name,
+                        operation="get_floor_listing",
+                        message="AtomicAssets sale must be an object",
+                        retryable=False,
+                    )
+                )
+            price_value, price_unit = _sale_price(sale)
+            market_fee_ratio = _market_fee_ratio(sale)
+            if price_unit != request.listing_symbol.upper():
+                raise SourceParseError(
+                    SourceErrorDetail(
+                        provider=self.provider_name,
+                        operation="get_floor_listing",
+                        message=f"AtomicAssets listing quote currency {price_unit} does not match {request.listing_symbol.upper()}",
+                        retryable=False,
+                    )
+                )
+            if market_fee_ratio < Decimal("0") or market_fee_ratio > Decimal("1"):
+                raise SourceParseError(
+                    SourceErrorDetail(
+                        provider=self.provider_name,
+                        operation="get_floor_listing",
+                        message="AtomicAssets collection market fee ratio must be between zero and one",
+                        retryable=False,
+                    )
+                )
+            parsed_sales.append((sale, price_value, price_unit, market_fee_ratio))
+
+        symbols = {entry[2] for entry in parsed_sales}
+        fees = {entry[3] for entry in parsed_sales}
+        if len(symbols) != 1 or len(fees) != 1:
             raise SourceParseError(
                 SourceErrorDetail(
                     provider=self.provider_name,
                     operation="get_floor_listing",
-                    message="AtomicAssets sale must be an object",
+                    message="AtomicAssets basket listings must use one quote currency and one collection fee",
                     retryable=False,
                 )
             )
-        price_value, price_unit = _sale_price(sale)
-        market_fee_ratio = _market_fee_ratio(sale)
+        floor_sale, floor_price, price_unit, market_fee_ratio = parsed_sales[0]
+        basket_cost = Decimal("0")
+        basket_exit_value = Decimal("0")
+        for _, price, _, fee in parsed_sales:
+            basket_cost = FINANCIAL_DECIMAL_CONTEXT.add(basket_cost, price)
+            net_sale_value = FINANCIAL_DECIMAL_CONTEXT.multiply(
+                price, FINANCIAL_DECIMAL_CONTEXT.subtract(Decimal("1"), fee)
+            )
+            basket_exit_value = FINANCIAL_DECIMAL_CONTEXT.add(basket_exit_value, net_sale_value)
+        sale_ids = [str(sale.get("sale_id")) for sale, _, _, _ in parsed_sales if sale.get("sale_id") is not None]
+        if len(sale_ids) != request.quantity or len(set(sale_ids)) != request.quantity:
+            raise SourceParseError(
+                SourceErrorDetail(
+                    provider=self.provider_name,
+                    operation="get_floor_listing",
+                    message="AtomicAssets basket must contain a distinct sale ID for every requested listing",
+                    retryable=False,
+                )
+            )
         metadata = {
             "classification": "LIVE",
             "collection_name": request.collection_name,
             "schema_name": request.schema_name,
             "template_id": request.template_id,
-            "sale_id": str(sale.get("sale_id")) if sale.get("sale_id") is not None else None,
+            "sale_id": str(floor_sale.get("sale_id")),
+            "basket_quantity": request.quantity,
+            "basket_sale_ids": sale_ids,
         }
 
         return (
             _market_observation(
                 entity_id=entity_id,
                 metric="atomicassets.nft.floor_price",
-                value=price_value,
+                value=floor_price,
+                unit=price_unit,
+                locator=locator,
+                retrieved_at=retrieved_at,
+                fresh_until=fresh_until,
+                metadata={**metadata, "basket_quantity": 1, "basket_sale_ids": [metadata["sale_id"]]},
+            ),
+            _market_observation(
+                entity_id=entity_id,
+                metric="atomicassets.nft.listing_basket_cost",
+                value=basket_cost,
+                unit=price_unit,
+                locator=locator,
+                retrieved_at=retrieved_at,
+                fresh_until=fresh_until,
+                metadata=metadata,
+            ),
+            _market_observation(
+                entity_id=entity_id,
+                metric="atomicassets.nft.listing_basket_exit_value",
+                value=basket_exit_value,
                 unit=price_unit,
                 locator=locator,
                 retrieved_at=retrieved_at,

@@ -28,5 +28,9 @@ class SourceParseError(SourceError):
     """Raised when provider payloads do not match the expected contract."""
 
 
+class InsufficientMarketDepth(SourceError):
+    """Raised when a market has fewer executable listings than a strategy requires."""
+
+
 class UnsupportedSourceCapability(SourceError):
     """Raised when a provider does not implement a requested source capability."""

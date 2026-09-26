@@ -111,9 +111,12 @@ Do not assume an NFT/miner/character maintains purchase price.
 
 Current recoverable value should use:
 - current floor/market quote appropriate to asset attributes,
+- the full quantity of distinct active listings required by the strategy, summed at their observed prices and net of applicable market fees; a one-item floor must not be multiplied as if it proves multi-item depth,
 - liquidity/fees,
 - modeled sellability,
 - confidence penalty if only indicative floor prices are available.
+
+If the requested acquisition or exit quantity exceeds visible active listing depth, the current multi-unit strategy estimate is unavailable. A depth basket is still an indicative snapshot, not a guaranteed fill or resale quote; price and availability can change before execution.
 
 ## 8. Subscriptions and periodic costs
 

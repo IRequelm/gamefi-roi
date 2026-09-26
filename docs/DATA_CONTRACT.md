@@ -54,6 +54,8 @@ At minimum:
 
 Missing required input must not become numeric zero.
 
+For strategies requiring multiple identical NFTs or other discrete marketplace assets, the market observation must cover the full modeled quantity. A single lowest-priced listing is not evidence that a multi-unit strategy can be acquired or exited at that unit price. Preserve the distinct listing identifiers and quote currency; fail that strategy refresh when active listing depth is below the required quantity. Derived capital and exit values must reference the basket observations used.
+
 ## 4. Asset identity
 
 Every asset must have unambiguous identity.
