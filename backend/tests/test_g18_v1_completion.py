@@ -126,7 +126,17 @@ def test_v1_api_history_and_search_surfaces_cover_all_modeled_strategies(monkeyp
 
     sitemap = client.get("/sitemap.xml").text
     inventory_paths = {page.path for page in canonical_page_inventory(engine)}
-    assert {f"/opportunities/{opportunity.opportunity_id}" for opportunity in list_opportunities()} <= inventory_paths
+    modeled_opportunity_ids = {
+        opportunity.opportunity_id
+        for opportunity in list_opportunities()
+        if opportunity.strategy_ids
+    }
+    assert {f"/opportunities/{opportunity_id}" for opportunity_id in modeled_opportunity_ids} <= inventory_paths
+    assert not any(
+        f"/opportunities/{opportunity.opportunity_id}" in inventory_paths
+        for opportunity in list_opportunities()
+        if not opportunity.strategy_ids
+    )
     assert {f"/strategies/{strategy.strategy_id}" for strategy in list_strategies()} <= inventory_paths
     assert all("/api/" not in path and "/go/" not in path and "/operator/" not in path for path in inventory_paths)
     assert "2026-08-24" in sitemap

@@ -210,6 +210,12 @@ def canonical_page_inventory(engine: Engine) -> list[CanonicalPage]:
             for strategy_id in opportunity.strategy_ids
             if strategy_id in latest_by_strategy
         ]
+        # Keep the sitemap focused on opportunity pages backed by at least one
+        # persisted strategy model. The full catalog remains browsable, but
+        # guide-only pages add little search value until their economics can be
+        # modeled from reproducible evidence.
+        if not strategy_times:
+            continue
         pages.append(
             CanonicalPage(
                 f"/opportunities/{opportunity.opportunity_id}",
@@ -220,6 +226,8 @@ def canonical_page_inventory(engine: Engine) -> list[CanonicalPage]:
 
     for strategy in list_strategies():
         snapshot = latest_by_strategy.get(strategy.strategy_id)
+        if snapshot is None:
+            continue
         pages.append(
             CanonicalPage(
                 f"/strategies/{strategy.strategy_id}",

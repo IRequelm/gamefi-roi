@@ -499,6 +499,11 @@ def test_canonical_inventory_has_no_api_go_or_query_urls(monkeypatch, tmp_path) 
     assert "/rankings/gamefi" in paths
     assert "/rankings/gamefi-under-100" in paths
     assert "/rankings/highest-roi-gamefi" in paths
+    assert not any(
+        f"/opportunities/{opportunity.opportunity_id}" in paths
+        for opportunity in list_opportunities()
+        if not opportunity.strategy_ids
+    )
     assert all(not path.startswith(("/api", "/go")) and "?" not in path for path in paths)
 
 
