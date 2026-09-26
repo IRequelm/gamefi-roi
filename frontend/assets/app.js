@@ -2684,10 +2684,10 @@ export function renderStartPaths() {
       <div class="section-header"><div><p class="eyebrow">Start with your situation</p><h2 id="start-path-title">What are you looking for?</h2></div><a class="text-link" href="/opportunities" data-link>Browse all opportunities</a></div>
       <div class="start-path-grid">
         <a class="start-path-card" href="/rankings?capital_max=25" data-link><span class="start-path-icon" aria-hidden="true">01</span><span><strong>Start under $25</strong><small>See modeled strategies within a smaller starting budget.</small></span><span aria-hidden="true">→</span></a>
-        <a class="start-path-card" href="/rankings?opportunity_type=DEPIN_NODE" data-link><span class="start-path-icon" aria-hidden="true">02</span><span><strong>Explore DePIN</strong><small>Compare infrastructure and resource-sharing strategies.</small></span><span aria-hidden="true">→</span></a>
-        <a class="start-path-card" href="/rankings?confidence_min=80" data-link><span class="start-path-icon" aria-hidden="true">03</span><span><strong>Prioritize stronger evidence</strong><small>Filter for higher model and data confidence.</small></span><span aria-hidden="true">→</span></a>
+        <a class="start-path-card" href="/opportunities" data-link><span class="start-path-icon" aria-hidden="true">02</span><span><strong>Explore opportunities</strong><small>Browse GameFi, DePIN, and points programs, including guides without current ROI.</small></span><span aria-hidden="true">→</span></a>
+        <a class="start-path-card" href="/methodology" data-link><span class="start-path-icon" aria-hidden="true">03</span><span><strong>Understand the evidence</strong><small>See how freshness, confidence, risk, costs, and exit assumptions are assessed.</small></span><span aria-hidden="true">→</span></a>
       </div>
-      <p class="start-path-note">Filters are comparison tools, not recommendations. Check each strategy’s assumptions, risk, and data date.</p>
+      <p class="start-path-note">Rankings include only strategies with current source data. The opportunity catalog also includes guide-only entries without a financial ROI estimate.</p>
     </section>
   `;
 }

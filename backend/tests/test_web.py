@@ -54,6 +54,9 @@ def test_homepage_omits_internal_audit_blocks(monkeypatch, tmp_path) -> None:
     assert "Compare what Web3 earning strategies cost, earn, and risk." in html
     assert "What are you looking for?" in html
     assert 'href="/rankings?capital_max=25"' in html
+    assert "Browse GameFi, DePIN, and points programs, including guides without current ROI." in html
+    assert 'href="/methodology"' in html
+    assert "Rankings include only strategies with current source data." in html
 
 
 def test_rankings_omits_empty_filter_label_and_spreads_duplicate_opportunities(monkeypatch, tmp_path) -> None:
