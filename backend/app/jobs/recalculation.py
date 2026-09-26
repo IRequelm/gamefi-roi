@@ -9,7 +9,13 @@ from datetime import UTC, datetime, timedelta
 from app.adapters.contract import ADAPTER_CONTRACT_VERSION, StrategyAdapterV1
 from app.engine.calculator import MODEL_VERSION, calculate_strategy_roi
 from app.sources.observations import Observation
-from app.storage.history import CalculationWindow, HistoryRepository, StrategyCalculationFailure, StrategySnapshot
+from app.storage.history import (
+    CalculationWindow,
+    HistoryRepository,
+    StrategyCalculationFailure,
+    StrategySnapshot,
+    snapshot_idempotency_key,
+)
 
 
 ObservationLoader = Callable[[datetime], tuple[Observation, ...]]
@@ -31,6 +37,7 @@ class RecalculationRunResult:
     intended_window: CalculationWindow
     snapshots: tuple[StrategySnapshot, ...]
     failures: tuple[StrategyCalculationFailure, ...]
+    new_snapshot_count: int
 
 
 class ScheduledRecalculator:
@@ -47,6 +54,7 @@ class ScheduledRecalculator:
         active_time = _normalize_utc(datetime.now(UTC) if calculated_at is None else calculated_at)
         snapshots: list[StrategySnapshot] = []
         failures: list[StrategyCalculationFailure] = []
+        new_snapshot_count = 0
 
         for task in tasks:
             observations: tuple[Observation, ...] = ()
@@ -54,6 +62,15 @@ class ScheduledRecalculator:
                 observations = task.load_observations(active_time)
                 adapter_result = task.adapter.build_engine_input(observations, calculated_at=active_time)
                 roi_result = calculate_strategy_roi(adapter_result.economics_input)
+                already_persisted = self.repository.has_snapshot(
+                    idempotency_key=snapshot_idempotency_key(
+                        strategy_id=roi_result.strategy_id,
+                        strategy_version=roi_result.strategy_version,
+                        adapter_contract_version=adapter_result.contract_version,
+                        model_version=roi_result.model_version,
+                        intended_window=intended_window,
+                    )
+                )
                 snapshots.append(
                     self.repository.save_snapshot(
                         adapter_result=adapter_result,
@@ -63,6 +80,8 @@ class ScheduledRecalculator:
                         intended_window=intended_window,
                     )
                 )
+                if not already_persisted:
+                    new_snapshot_count += 1
             except Exception as exc:
                 failures.append(
                     self.repository.record_failure(
@@ -82,6 +101,7 @@ class ScheduledRecalculator:
             intended_window=intended_window,
             snapshots=tuple(snapshots),
             failures=tuple(failures),
+            new_snapshot_count=new_snapshot_count,
         )
 
 

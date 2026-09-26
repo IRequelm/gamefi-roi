@@ -162,6 +162,15 @@ class HistoryRepository:
             session.commit()
             return _snapshot_from_record(record)
 
+    def has_snapshot(self, *, idempotency_key: str) -> bool:
+        """Return whether this calculation window already has a persisted snapshot."""
+        with Session(self.engine) as session:
+            return session.scalar(
+                select(StrategySnapshotRecord.snapshot_id).where(
+                    StrategySnapshotRecord.idempotency_key == idempotency_key
+                )
+            ) is not None
+
     def record_failure(
         self,
         *,

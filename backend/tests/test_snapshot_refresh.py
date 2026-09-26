@@ -144,9 +144,28 @@ def test_refresh_summary_separates_refresh_and_skip_categories(monkeypatch) -> N
     monkeypatch.setattr(snapshot_refresh, "run_recalculation_tasks", lambda **kwargs: SuccessfulSummary())
     result = run_snapshot_refresh(settings=_test_settings())
     assert result.auto_refreshed == 1
+    assert result.reused_count == 0
     assert result.partial_skipped == 4
     assert result.not_refreshable_skipped == 1
     assert result.failed == 0
+
+
+def test_refresh_reports_same_window_reuse_without_claiming_new_refresh(monkeypatch) -> None:
+    class ReusedSummary:
+        status = "ok"
+        snapshot_ids = ("snapshot-1",)
+        failure_ids = ()
+        new_snapshot_count = 0
+        reused_snapshot_count = 1
+
+    monkeypatch.setattr(snapshot_refresh, "_database_engine", lambda settings: _DisposableEngine())
+    monkeypatch.setattr(snapshot_refresh, "run_recalculation_tasks", lambda **kwargs: ReusedSummary())
+    result = run_snapshot_refresh(settings=_test_settings())
+
+    assert result.refreshed_count == 0
+    assert result.auto_refreshed == 0
+    assert result.reused_count == 1
+    assert result.status == "degraded"
 
 
 def test_refresh_does_not_regenerate_distribution_after_strategy_failure(monkeypatch, tmp_path: Path) -> None:

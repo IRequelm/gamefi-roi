@@ -45,6 +45,8 @@ class ProductionRecalculationSummary:
     snapshot_ids: tuple[str, ...]
     failure_ids: tuple[str, ...]
     score_count: int
+    new_snapshot_count: int = 0
+    reused_snapshot_count: int = 0
 
 
 @dataclass(frozen=True)
@@ -161,6 +163,8 @@ def run_recalculation_tasks(
                 snapshot_ids=(),
                 failure_ids=(),
                 score_count=0,
+                new_snapshot_count=0,
+                reused_snapshot_count=0,
             )
 
         repository = HistoryRepository(lock.bind)
@@ -171,6 +175,7 @@ def run_recalculation_tasks(
         )
         score_count = _persist_scores(bind=lock.bind, snapshots=run.snapshots, scored_at=run.calculated_at)
         _log_run_result(run, score_count=score_count)
+        new_snapshot_count = run.new_snapshot_count
         return ProductionRecalculationSummary(
             status="failed" if run.failures else "ok",
             calculated_at=run.calculated_at,
@@ -178,6 +183,8 @@ def run_recalculation_tasks(
             snapshot_ids=tuple(snapshot.snapshot_id for snapshot in run.snapshots),
             failure_ids=tuple(failure.failure_id for failure in run.failures),
             score_count=score_count,
+            new_snapshot_count=new_snapshot_count,
+            reused_snapshot_count=len(run.snapshots) - new_snapshot_count,
         )
 
 
@@ -272,9 +279,11 @@ def _rollback_if_active(connection: Connection) -> None:
 
 def _log_run_result(run: RecalculationRunResult, *, score_count: int) -> None:
     logger.info(
-        "production_recalculation_complete calculated_at=%s snapshots=%s failures=%s scores=%s",
+        "production_recalculation_complete calculated_at=%s snapshots=%s new_snapshots=%s reused_snapshots=%s failures=%s scores=%s",
         run.calculated_at.isoformat(),
         len(run.snapshots),
+        run.new_snapshot_count,
+        len(run.snapshots) - run.new_snapshot_count,
         len(run.failures),
         score_count,
     )
@@ -297,6 +306,8 @@ def _summary_payload(summary: ProductionRecalculationSummary) -> dict[str, Any]:
             "end": summary.intended_window.end.isoformat(),
         },
         "snapshot_ids": list(summary.snapshot_ids),
+        "new_snapshot_count": summary.new_snapshot_count,
+        "reused_snapshot_count": summary.reused_snapshot_count,
         "failure_ids": list(summary.failure_ids),
         "score_count": summary.score_count,
     }

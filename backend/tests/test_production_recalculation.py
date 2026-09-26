@@ -69,6 +69,10 @@ def test_production_recalculation_is_idempotent_per_window(monkeypatch, tmp_path
     duplicate = run_recalculation_tasks(engine=engine, tasks=(task,), calculated_at=NOW, cadence_minutes=30)
 
     assert duplicate.snapshot_ids == first.snapshot_ids
+    assert first.new_snapshot_count == 1
+    assert first.reused_snapshot_count == 0
+    assert duplicate.new_snapshot_count == 0
+    assert duplicate.reused_snapshot_count == 1
     assert len(HistoryRepository(engine).ordered_time_series(DFK_CJEWEL_MAX_LOCK_V1.strategy_id, start=first.intended_window.start, end=first.intended_window.end)) == 1
 
 

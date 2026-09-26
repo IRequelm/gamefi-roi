@@ -45,6 +45,7 @@ class RefreshCommandResult:
     distribution_regenerated: bool = False
     status: str = "planned"
     eligible_count: int = 0
+    reused_count: int = 0
 
 
 def build_refresh_plan(
@@ -135,13 +136,15 @@ def run_snapshot_refresh(
             source_dataset=f"{rankings_url} + {opportunities_url}",
         )
         distribution_regenerated = True
+    new_snapshot_count = getattr(summary, "new_snapshot_count", len(summary.snapshot_ids))
+    reused_snapshot_count = getattr(summary, "reused_snapshot_count", len(summary.snapshot_ids) - new_snapshot_count)
     return RefreshCommandResult(
         mode="refresh",
         refreshability=plan,
-        refreshed_count=len(summary.snapshot_ids),
+        refreshed_count=new_snapshot_count,
         skipped_count=skipped_count,
         failed_count=len(summary.failure_ids),
-        auto_refreshed=len(summary.snapshot_ids),
+        auto_refreshed=new_snapshot_count,
         partial_skipped=partial_skipped,
         not_refreshable_skipped=not_refreshable_skipped,
         failed=len(summary.failure_ids),
@@ -149,6 +152,7 @@ def run_snapshot_refresh(
         distribution_regenerated=distribution_regenerated,
         status="failure" if summary.failure_ids else "skipped_lock_busy" if summary.status == "skipped_lock_busy" else "degraded" if skipped_count else "success",
         eligible_count=len(eligible_tasks),
+        reused_count=reused_snapshot_count,
     )
 
 
@@ -190,7 +194,7 @@ def main() -> int:
     lock_busy = result.snapshot_summary is not None and result.snapshot_summary.status == "skipped_lock_busy"
     if result.failed_count:
         return 1
-    return 0 if result.mode == "dry-run" or result.refreshed_count or result.skipped_count or lock_busy else 1
+    return 0 if result.mode == "dry-run" or result.refreshed_count or result.skipped_count or result.reused_count or lock_busy else 1
 
 
 if __name__ == "__main__":
