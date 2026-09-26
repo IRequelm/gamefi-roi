@@ -2995,7 +2995,7 @@ async function renderCurrentRoute() {
       const results = await Promise.allSettled([
         apiGet("/games"),
         apiGet("/rankings"),
-        apiGet("/opportunities"),
+        loadOpportunityCatalog(),
       ]);
       const [gamesResult, rankingsResult, opportunitiesResult] = results;
       const games = gamesResult.status === "fulfilled" ? gamesResult.value : { items: [] };
