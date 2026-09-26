@@ -19,6 +19,7 @@ import {
   initializeProductAnalytics,
   loadRecordedModelsIfNoCurrentRankings,
   loadRecentHistoryPage,
+  loadOpportunityCatalog,
   opportunityTypeLabel,
   bindOpportunityFilters,
   renderAnalyticsConsentBanner,
@@ -647,6 +648,15 @@ test("opportunity catalog exposes accessible search and type filters", () => {
   assert.match(html, /opportunity-type-filter/);
   assert.match(html, /All types/);
   assert.match(html, /data-opportunity-search="dimo dimo"/);
+});
+
+test("opportunity catalog loads the full API page instead of the default 50 records", async () => {
+  let requestedPath = null;
+  await loadOpportunityCatalog(async (path) => {
+    requestedPath = path;
+    return { items: Array.from({ length: 51 }, (_, index) => ({ opportunity_id: `op-${index}` })) };
+  });
+  assert.equal(requestedPath, "/opportunities?limit=100");
 });
 
 test("opportunity catalog filters by name and type and reports an empty result", () => {

@@ -198,6 +198,10 @@ export async function loadRecentHistoryPage(strategyId, getter = apiGet) {
   return getter(`${historyPath}?limit=50&latest_window=true`);
 }
 
+export async function loadOpportunityCatalog(getter = apiGet) {
+  return getter("/opportunities?limit=100");
+}
+
 export function buildRankingsPath(filters = {}) {
   const params = new URLSearchParams();
   addParam(params, "capital_min", filters.capitalMin);
@@ -2980,7 +2984,7 @@ async function renderCurrentRoute() {
       });
       routeAnalyticsContext = rankingAnalyticsContext(visibleRankings, rankingSlugForPath(path));
     } else if (path === "/opportunities") {
-      root.innerHTML = renderOpportunitiesPage(await apiGet("/opportunities"));
+      root.innerHTML = renderOpportunitiesPage(await loadOpportunityCatalog());
       bindOpportunityFilters(root);
     } else if (path.startsWith("/opportunities/")) {
       const opportunityId = decodeURIComponent(path.replace("/opportunities/", ""));
