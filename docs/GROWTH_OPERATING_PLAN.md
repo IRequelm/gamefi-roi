@@ -4,6 +4,12 @@ Status: IN PROGRESS — homepage and catalog freshness wording are live. Eligibl
 
 Updated: 2026-09-26 (Europe/Istanbul)
 
+### Hydrated homepage catalog count correction — 2026-09-26
+
+- Production mobile inspection found the server-rendered homepage showed 51 opportunities / 43 guide-only entries, then hydration reduced those counts to 50 / 42 because the homepage used the API's default 50-record page. The post-deploy browser viewport measured 355 CSS px wide; the document remained 341 px wide, with no horizontal overflow.
+- Commit `3ef32f4` reuses the full-catalog loader (`/opportunities?limit=100`) for homepage hydration. Frontend tests pass 63/63, and Render deployment `dep-das1cl0jo6nc739qtegg` is live from `3ef32f4` with `/api/v1/ops/status` health checks passing.
+- After a fresh mobile reload, production retains 51 opportunities / 43 guide-only entries after hydration. This fixes counter consistency; it does not establish an acquisition lift.
+
 ### Live-source recheck — 2026-09-26 16:04 UTC
 
 - Production `/api/v1/ops/status` remains `degraded`: 4/7 eligible strategies are fresh (all Splinterlands), the three Farmers World snapshots are stale, 11/15 modeled strategies are stale, and the public database still reports 13:08:54 UTC. GitHub run `36249537959` reported seven snapshots calculated at 14:44:59 UTC, but its following read-only recovery step and the public API continued to report 13:08:54 UTC. Run `36250262134` then reported `auto_refreshed=0`, `eligible_count=7`, and eight structurally skipped candidates. This is a confirmed workflow-to-database visibility/persistence discrepancy that must be reconciled before relying on “success” summaries. The next four-hour scheduled window is due at 16:17 UTC; verify its actual persisted outcome before claiming improved freshness.
