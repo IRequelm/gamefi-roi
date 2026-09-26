@@ -10,6 +10,12 @@ Updated: 2026-09-26 (Europe/Istanbul)
 - Commit `3ef32f4` reuses the full-catalog loader (`/opportunities?limit=100`) for homepage hydration. Frontend tests pass 63/63, and Render deployment `dep-das1cl0jo6nc739qtegg` is live from `3ef32f4` with `/api/v1/ops/status` health checks passing.
 - After a fresh mobile reload, production retains 51 opportunities / 43 guide-only entries after hydration. This fixes counter consistency; it does not establish an acquisition lift.
 
+### Homepage decision transparency — 2026-09-26
+
+- The top organic strategy card now includes the snapshot's modeled break-even duration alongside starting capital, net/day, and 30-day ROI. This brings the long recovery period into the first comparison before a visitor opens the project CTA.
+- Commit `9a97f68` is Live on Render as `dep-das1guou01pc73e9t630`. Frontend tests pass 63/63. Mobile production inspection shows Splinterlands at 5,601 modeled break-even days and retains 51 opportunities / 43 guide-only entries after hydration; document width remained below the 355 CSS px viewport.
+- This makes the current weak yields easier to assess; it does not improve underlying yield or establish acquisition lift.
+
 ### Live-source recheck — 2026-09-26 16:04 UTC
 
 - Production `/api/v1/ops/status` remains `degraded`: 4/7 eligible strategies are fresh (all Splinterlands), the three Farmers World snapshots are stale, 11/15 modeled strategies are stale, and the public database still reports 13:08:54 UTC. GitHub run `36249537959` reported seven snapshots calculated at 14:44:59 UTC, but its following read-only recovery step and the public API continued to report 13:08:54 UTC. Run `36250262134` then reported `auto_refreshed=0`, `eligible_count=7`, and eight structurally skipped candidates. This is a confirmed workflow-to-database visibility/persistence discrepancy that must be reconciled before relying on “success” summaries. The next four-hour scheduled window is due at 16:17 UTC; verify its actual persisted outcome before claiming improved freshness.
