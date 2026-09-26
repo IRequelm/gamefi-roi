@@ -4,6 +4,12 @@ Status: IN PROGRESS — homepage and catalog freshness wording are live. Eligibl
 
 Updated: 2026-09-27 (Europe/Istanbul)
 
+### Product improvement prepared — show modeled activity assumptions — 2026-09-27 01:55 Europe/Istanbul
+
+- Added `effort_summary` to each public strategy summary, generated only from explicit strategy configuration. Splinterlands will show its modeled ranked battles/day; Farmers World will show cycle count per Axe and the one-hour cycle. Other models explicitly say effort is unquantified. The UI will say active minutes/attention are not measured and will not derive hourly earnings.
+- The value appears in the strategy answer card and ranking cards so a visitor can judge modeled activity alongside net/day, ROI, risk, confidence, and freshness. It does not change financial calculations, rankings, or snapshots.
+- This is committed locally but not deployed yet. Render auto-sync is off and the Render dashboard is signed out in the task browser. After the account owner signs in and rotates the exposed CoinGecko key, deploy the commit and verify the new strategy summary field and live cards. No tests were run in this step; `git diff --check` is the current repository validation.
+
 ### Fresh strategy portfolio, not just opportunity coverage — 2026-09-27 01:53 Europe/Istanbul
 
 - Re-read live `/api/v1/rankings?limit=100` while the last successful snapshot set remained current: 7/7 eligible strategies are fresh, across two opportunities. Four modeled net/day results are positive and three Splinterlands scenarios are negative. The homepage intentionally shows one best strategy per opportunity, so the two visible cards do not expose that scenario spread.

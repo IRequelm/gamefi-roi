@@ -818,6 +818,7 @@ G16 public discovery data is additive. It must not modify strategy snapshots, ri
 Search-rendered public pages are generated from existing read models and catalog data:
 
 - `StrategySummary`,
+- `StrategySummary.effort_summary`, a plain-language description of effort-unit assumptions already present in the strategy configuration,
 - `StrategySnapshotPayload`,
 - `RankingItem`,
 - `OpportunitySummary`,
@@ -827,6 +828,8 @@ Search-rendered public pages are generated from existing read models and catalog
 - sponsored placement payloads where an existing page already renders commercial surfaces.
 
 Display formatting may convert exact API Decimal strings into human-readable text at the HTML/UI boundary. The exact API values remain authoritative and must remain available via API responses and title attributes where useful. Formatting must never feed back into the ROI engine, snapshot persistence, scoring, or ranking.
+
+`effort_summary` may expose configured activity counts (for example, ranked battles per day or production cycles per tool per day). It must distinguish configured activity from observed user time. Do not infer hands-on minutes or hourly earnings unless those values are separately sourced or explicitly supplied as user assumptions; unknown effort must remain explicit.
 
 Canonical public URL records contain:
 

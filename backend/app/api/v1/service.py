@@ -180,6 +180,7 @@ class ApiDataService:
             chain=strategy.chain,
             economy_type=strategy.economy_type,
             description=strategy.description,
+            effort_summary=strategy.effort_summary,
             outbound_destinations=[
                 _outbound_destination(destination) for destination in outbound_destinations_for_strategy(strategy.strategy_id)
             ],

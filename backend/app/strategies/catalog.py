@@ -140,6 +140,7 @@ class StrategyCatalogEntry:
     chain: str
     economy_type: str
     description: str
+    effort_summary: str
     outbound_destination_slugs: tuple[str, ...]
 
 
@@ -149,6 +150,28 @@ def _sources(items: Iterable[tuple[str, str]]) -> tuple[SourceReference, ...]:
 
 def _strategy_ids(strategies: Iterable[object]) -> tuple[str, ...]:
     return tuple(str(strategy.strategy_id) for strategy in strategies)
+
+
+def _strategy_effort_summary(strategy: object) -> str:
+    battles_per_day = getattr(strategy, "battles_per_day", None)
+    if battles_per_day is not None:
+        return (
+            f"Model assumes {battles_per_day} ranked battles per day; "
+            "active time per battle is not measured."
+        )
+
+    cycles_per_day = getattr(strategy, "cycles_per_day", None)
+    cycle_hours = getattr(strategy, "cycle_hours", None)
+    tool_count = getattr(strategy, "tool_count", None)
+    tool_name = getattr(strategy, "tool_name", None)
+    if all(value is not None for value in (cycles_per_day, cycle_hours, tool_count, tool_name)):
+        tool_suffix = "" if str(tool_count) == "1" else "s"
+        return (
+            f"Model assumes {tool_count} {tool_name}{tool_suffix}, each with {cycles_per_day} "
+            f"{cycle_hours}-hour cycles per day; player attention time is not measured."
+        )
+
+    return "Required time and active effort are not quantified in this strategy configuration."
 
 
 def _strategy_catalogs(
@@ -173,6 +196,7 @@ def _strategy_catalogs(
             chain=chain,
             economy_type=economy_type,
             description=description,
+            effort_summary=_strategy_effort_summary(strategy),
             outbound_destination_slugs=(outbound_destination_slug,),
         )
         for strategy in strategies
@@ -192,6 +216,7 @@ def _scenario_strategy_catalogs(strategies: Iterable[object]) -> tuple[StrategyC
             chain=str(strategy.chain),
             economy_type=str(strategy.economy_type),
             description=str(strategy.description),
+            effort_summary=_strategy_effort_summary(strategy),
             outbound_destination_slugs=(f"{strategy.opportunity_id}-official",),
         )
         for strategy in strategies

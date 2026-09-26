@@ -574,6 +574,7 @@ export function renderStrategyAnswerBlock(strategy, snapshot) {
       ["Opportunity", escapeHtml(strategy.game_name)],
       ["Opportunity type", escapeHtml(opportunityTypeLabel(strategy.opportunity_type))],
       ["ROI status", "No successful stored calculation yet."],
+      ["Required time/effort", escapeHtml(strategy.effort_summary || "Required time and active effort are not quantified in this strategy configuration.")],
     ]);
   }
   return renderAnswerBlock("Quick strategy summary", rankingAnswer(snapshot, strategy), strategyAnswerFields(strategy, snapshot));
@@ -595,7 +596,7 @@ function strategyAnswerFields(strategy, snapshot) {
     ["Confidence", escapeHtml(scoreText(snapshot.confidence))],
     ["Data status", escapeHtml(labelize(snapshot.freshness?.overall_status || "unknown"))],
     ["Snapshot timestamp", formatDateTime(snapshot.calculated_at)],
-    ["Required time/effort", "Not separately quantified in this strategy snapshot."],
+    ["Modelled activity", escapeHtml(strategy.effort_summary || "Required time and active effort are not quantified in this strategy configuration.")],
     ["Major assumptions", escapeHtml(majorAssumptions(snapshot))],
     ["Warnings", escapeHtml(warningSummary(snapshot.warnings || []))],
   ];
@@ -1036,6 +1037,7 @@ function renderOpportunityRankingGroup(group) {
       </div>
       ${renderStrategySignals(snapshot)}
       ${renderRiskContext(snapshot)}
+      <p class="muted ranking-context">${escapeHtml(strategy.effort_summary || "Required time and active effort are not quantified in this strategy configuration.")}</p>
       <div class="card-metrics">
         ${metricItem("Top strategy capital", formatMoney(snapshot.capital.total_capital))}
         ${metricItem("Top strategy net/day", formatMoney(snapshot.earnings.net_earnings_day, { perDay: true }))}
@@ -1084,6 +1086,7 @@ export function renderRankingCard(item, options = {}) {
         ${metricItem("Modeled break-even", formatBreakEven(snapshot.roi.break_even))}
       </div>
       ${renderNetEarningsInterpretation(snapshot)}
+      <p class="muted ranking-context">${escapeHtml(strategy.effort_summary || "Required time and active effort are not quantified in this strategy configuration.")}</p>
       <p class="muted ranking-context">Organic comparison, not a recommendation.</p>
       <div class="card-badges">
         ${renderScoreBadge(snapshot.confidence, "confidence")}

@@ -260,6 +260,7 @@ class StrategySummary(BaseModel):
     chain: str
     economy_type: str
     description: str
+    effort_summary: str = "Required time and active effort are not quantified in this strategy configuration."
     outbound_destinations: list[OutboundDestinationPayload] = Field(default_factory=list)
     primary_destination: OutboundDestinationPayload | None = None
     latest_snapshot: StrategySnapshotPayload | None = None
