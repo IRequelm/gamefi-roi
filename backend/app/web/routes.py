@@ -326,7 +326,11 @@ def outbound_redirect(
     _track_outbound_product_analytics(
         settings=settings,
         destination=destination,
-        distinct_id=product_analytics.distinct_id_for_outbound_click(coarse_session_id, click_event_id),
+        distinct_id=product_analytics.distinct_id_for_outbound_click(
+            coarse_session_id,
+            click_event_id,
+            request.cookies.get("gamcryp_phid"),
+        ),
         source_page=request.query_params.get("source_page"),
         placement=request.query_params.get("placement"),
         user_agent_category=_user_agent_category(request.headers.get("user-agent", "")),
@@ -375,8 +379,10 @@ def _track_outbound_product_analytics(
         # /go is intentionally usable without analytics consent, so it also
         # receives crawler and link-preview requests. Keep those observable
         # instead of silently discarding them, but make them separable from
-        # human traffic in PostHog. This server event is the single authority
-        # for outbound_go_click; the browser only sends its GA event.
+        # human traffic in PostHog. A valid identity cookie is set only after
+        # explicit analytics consent; otherwise each click remains anonymous.
+        # This server event is the single authority for outbound_go_click;
+        # the browser only sends its GA event.
         "event_origin": "server_redirect",
         "traffic_class": "automated" if user_agent_category == "bot" else "human_or_unknown",
     }

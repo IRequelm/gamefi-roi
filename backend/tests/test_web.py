@@ -170,6 +170,35 @@ def test_outbound_redirect_resolves_reviewed_destination_without_tracking_cookie
     assert "set-cookie" not in response.headers
 
 
+def test_outbound_redirect_reuses_consent_scoped_analytics_identity(monkeypatch, tmp_path) -> None:
+    from app.config.settings import clear_settings_cache
+
+    clear_settings_cache()
+    monkeypatch.setenv("GAMEFI_POSTHOG_PROJECT_API_KEY", "phc_test_key")
+    tracked = []
+    monkeypatch.setattr(
+        "app.web.routes.product_analytics.track_product_event",
+        lambda settings, *, event_name, distinct_id, properties: tracked.append(
+            {"event_name": event_name, "distinct_id": distinct_id, "properties": properties}
+        ) or True,
+    )
+    client, _engine = _seeded_client(monkeypatch, tmp_path, "web-redirect-consented-identity.db")
+
+    client.cookies.set("gamcryp_phid", "visitor:consented-browser-id")
+    response = client.get("/go/defi-kingdoms-play", follow_redirects=False)
+
+    assert response.status_code == 302
+    assert [event["event_name"] for event in tracked] == ["outbound_go_click", "official_fallback_outbound_click"]
+    assert all(event["distinct_id"] == "visitor:consented-browser-id" for event in tracked)
+    assert all(event["properties"]["traffic_class"] == "human_or_unknown" for event in tracked)
+    tracked.clear()
+    client.cookies.set("gamcryp_phid", "person@example.com")
+    client.get("/go/defi-kingdoms-play", follow_redirects=False)
+    assert tracked
+    assert all(event["distinct_id"].startswith("outbound:") for event in tracked)
+    clear_settings_cache()
+
+
 def test_outbound_redirect_fails_closed_for_unknown_destination(monkeypatch, tmp_path) -> None:
     client, _engine = _seeded_client(monkeypatch, tmp_path, "web-redirect-404.db")
 

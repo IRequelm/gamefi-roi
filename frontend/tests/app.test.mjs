@@ -897,10 +897,11 @@ test("analytics is absent without measurement id and gated by consent", () => {
 test("reject consent prevents GA initialization", () => {
   resetAnalyticsForTests();
   const storage = fakeStorage();
-  const context = fakeAnalyticsContext("G-TEST1234", storage);
+  const context = fakeAnalyticsContext("G-TEST1234", storage, { posthogProjectApiKey: "phc_test_key" });
 
   assert.match(renderAnalyticsConsentBanner(context.win), /Accept analytics/);
   assert.equal(setAnalyticsConsent("rejected", context), true);
+  assert.match(context.doc.cookie, /gamcryp_phid=; Max-Age=0/);
   assert.equal(initializeAnalytics(context), false);
   assert.equal(trackAnalyticsEvent("strategy_view", { strategy_id: "dfk" }, context), false);
   assert.equal(context.doc.scripts.length, 0);
@@ -956,6 +957,9 @@ test("PostHog product analytics is consent gated, explicit, and privacy safe", (
   assert.equal(trackProductAnalyticsEvent("ranking_view", { ranking_slug: "gamefi-under-50" }, context), false);
   assert.equal(setAnalyticsConsent("accepted", context), true);
   assert.equal(initializeProductAnalytics(context), true);
+  assert.match(context.doc.cookie, /gamcryp_phid=visitor:stable-id/);
+  assert.match(context.doc.cookie, /Path=\/go/);
+  assert.match(context.doc.cookie, /SameSite=Lax; Secure/);
   assert.equal(
     trackProductAnalyticsEvent(
       "ranking_view",

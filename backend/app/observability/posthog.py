@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from collections.abc import Mapping
 from datetime import UTC, datetime
 from typing import Any
@@ -61,6 +62,7 @@ POSTHOG_ALLOWED_PROPERTIES = frozenset(
     }
 )
 _MAX_TEXT_LENGTH = 160
+_CONSENTED_ANALYTICS_ID = re.compile(r"^visitor:[A-Za-z0-9._-]{1,120}$")
 
 
 def track_product_event(
@@ -139,7 +141,14 @@ def _clean_distinct_id(value: str) -> str:
     return text[:128]
 
 
-def distinct_id_for_outbound_click(coarse_session_id: str | None, click_event_id: str | None = None) -> str:
+def distinct_id_for_outbound_click(
+    coarse_session_id: str | None,
+    click_event_id: str | None = None,
+    consented_analytics_id: str | None = None,
+) -> str:
+    analytics_id = str(consented_analytics_id or "").strip()
+    if _CONSENTED_ANALYTICS_ID.fullmatch(analytics_id):
+        return analytics_id
     if coarse_session_id and coarse_session_id.strip():
         return coarse_session_id.strip()[:128]
     if click_event_id and click_event_id.strip():

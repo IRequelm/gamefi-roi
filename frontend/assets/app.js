@@ -77,6 +77,7 @@ const RANKING_FILTER_KEYS = new Set([
 ]);
 const ANALYTICS_CONSENT_KEY = "gamcryp.analyticsConsent.v1";
 const PRODUCT_ANALYTICS_DISTINCT_ID_KEY = "gamcryp.productAnalyticsDistinctId.v1";
+const PRODUCT_ANALYTICS_ID_COOKIE = "gamcryp_phid";
 const SENTRY_BROWSER_SDK_URL = "https://browser.sentry-cdn.com/8.55.0/bundle.tracing.min.js";
 const ANALYTICS_ALLOWED_EVENTS = new Set([
   "page_view",
@@ -2420,6 +2421,8 @@ export function setAnalyticsConsent(preference, context = {}) {
   if (normalized === "accepted") {
     initializeAnalytics(context);
     initializeProductAnalytics(context);
+  } else {
+    clearProductAnalyticsIdentityCookie(context);
   }
   return true;
 }
@@ -2463,8 +2466,34 @@ export function initializeProductAnalytics(context = {}) {
   if (!productAnalyticsDistinctId(context)) {
     return false;
   }
+  writeProductAnalyticsIdentityCookie(productAnalyticsDistinctId(context), context);
   initializedProductAnalyticsKey = key;
   return true;
+}
+
+function writeProductAnalyticsIdentityCookie(distinctId, context = {}) {
+  const win = context.win || globalThis.window;
+  const doc = context.doc || win?.document || globalThis.document;
+  if (!doc || analyticsConsent(context.storage || win?.localStorage) !== "accepted") return false;
+  if (!/^visitor:[A-Za-z0-9._-]{1,120}$/.test(String(distinctId || ""))) return false;
+  try {
+    doc.cookie = `${PRODUCT_ANALYTICS_ID_COOKIE}=${distinctId}; Max-Age=15552000; Path=/go; SameSite=Lax; Secure`;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function clearProductAnalyticsIdentityCookie(context = {}) {
+  const win = context.win || globalThis.window;
+  const doc = context.doc || win?.document || globalThis.document;
+  if (!doc) return false;
+  try {
+    doc.cookie = `${PRODUCT_ANALYTICS_ID_COOKIE}=; Max-Age=0; Path=/go; SameSite=Lax; Secure`;
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function productAnalyticsDistinctId(context = {}) {
