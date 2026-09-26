@@ -581,15 +581,21 @@ def _render_logo(logo, label: str = "Opportunity", *, compact: bool = False) -> 
 
 def _ranking_answer(snapshot: StrategySnapshotPayload, strategy: StrategySummary) -> str:
     stale = getattr(getattr(snapshot, "freshness", None), "overall_status", "fresh") != "fresh"
+    if stale:
+        return (
+            f"Historical snapshot — not current. On {format_datetime(snapshot.calculated_at)}, GamCryp recorded "
+            f"{strategy.name} at {format_ratio_text(snapshot.roi.roi_total_30d)} 30-day modeled ROI "
+            f"using {format_money_text(snapshot.capital.total_capital)} capital. Its source data is stale; "
+            "see the page for historical context."
+        )
     lead = "GamCryp models"
     earnings_label = "Modeled net earnings"
-    freshness_note = " Source freshness and calculation dates are shown with this estimate." if stale else ""
     return (
         f"{lead} {strategy.name} at {format_ratio_text(snapshot.roi.roi_total_30d)} 30-day ROI "
         f"using {format_money_text(snapshot.capital.total_capital)} capital. {earnings_label} are "
         f"{format_money_text(snapshot.earnings.net_earnings_day, per_day=True)}. Risk is "
         f"{score_text(snapshot.risk)} and Confidence is {score_text(snapshot.confidence)}. "
-        f"Latest model calculation was recorded at {format_datetime(snapshot.calculated_at)}.{freshness_note}"
+        f"Latest model calculation was recorded at {format_datetime(snapshot.calculated_at)}."
     )
 
 

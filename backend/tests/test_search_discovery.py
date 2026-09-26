@@ -52,6 +52,21 @@ def test_strategy_page_contains_meaningful_server_rendered_content(monkeypatch, 
     assert '"@type":"WebPage"' in html
 
 
+def test_stale_strategy_metadata_leads_with_historical_not_current_notice(monkeypatch, tmp_path) -> None:
+    client, engine = _seeded_client(monkeypatch, tmp_path, "seo-stale-strategy.db")
+    _mark_latest_stale(engine, DFK_CJEWEL_MAX_LOCK_V1.strategy_id)
+
+    response = client.get(f"/strategies/{DFK_CJEWEL_MAX_LOCK_V1.strategy_id}")
+
+    assert response.status_code == 200
+    html = response.text
+    description = re.search(r'<meta name="description" content="([^"]+)"', html)
+    assert description is not None
+    assert description.group(1).startswith("Historical snapshot — not current.")
+    assert "Aug 16, 2026 12:00 UTC" in description.group(1)
+    assert "Historical snapshot — not current." in html
+
+
 def test_methodology_page_explains_modeling_and_trust_boundaries(monkeypatch, tmp_path) -> None:
     client, _engine = _seeded_client(monkeypatch, tmp_path, "seo-methodology.db")
 
