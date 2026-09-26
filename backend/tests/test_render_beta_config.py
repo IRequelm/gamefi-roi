@@ -37,7 +37,8 @@ def test_beta_scheduler_workflow_uses_policy_aware_snapshot_refresh_with_overlap
     workflow = (ROOT / ".github/workflows/render-beta-recalculation.yml").read_text(encoding="utf-8")
     beta_blueprint = (ROOT / "render.yaml").read_text(encoding="utf-8")
 
-    assert 'cron: "17 */4 * * *"' in workflow
+    assert 'cron: "17 * * * *"' in workflow
+    assert 'default: "60"' in workflow
     assert "cancel-in-progress: false" in workflow
     assert "vars.GAMEFI_BETA_DATABASE_ENABLED == 'true'" in workflow
     assert "GAMEFI_BETA_DATABASE_URL" in workflow
@@ -47,7 +48,7 @@ def test_beta_scheduler_workflow_uses_policy_aware_snapshot_refresh_with_overlap
     assert "GAMEFI_COINGECKO_API_KEY" in workflow
     assert "GAMEFI_DFK_CHAIN_RPC_URL" in workflow
     assert "GAMEFI_DFK_JEWELER_REFRESH_ENABLED" in workflow
-    assert 'GAMEFI_SCHEDULER_CADENCE_MINUTES: "240"' in workflow
+    assert "GAMEFI_SCHEDULER_CADENCE_MINUTES: ${{ inputs.calculation_window_minutes || '60' }}" in workflow
     assert 'GAMEFI_PRODUCTION_HARD_STALE_SECONDS: "28800"' in workflow
     assert 'GAMEFI_MARKET_DATA_PRICE_FRESHNESS_SECONDS: "21600"' in workflow
     assert 'GAMEFI_WAX_MARKET_OBSERVATION_FRESHNESS_SECONDS: "21600"' in workflow

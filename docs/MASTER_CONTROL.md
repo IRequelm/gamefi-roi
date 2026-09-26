@@ -1,5 +1,13 @@
 # GamCryp V2 Master Control
 
+Updated: 2026-09-26 (Europe/Istanbul)
+
+## Current growth execution checkpoint
+
+- The production recalculation workflow previously ran every four hours, but recent scheduled runs were 4–8 hours apart while provider inputs remain fresh for six hours. Changed `.github/workflows/render-beta-recalculation.yml` to schedule hourly at minute 17 UTC and made a manual recovery dispatch default to a 60-minute calculation window; the 240-minute choice remains available. This improves retry tolerance for the seven currently auto-refreshable strategies without widening freshness or admitting partial economics.
+- Evidence: `gh run list` showed the latest scheduled runs at 05:03 and 13:08 UTC on Sep 26; a manual run followed at 17:11 UTC. The documented official DFK Chain mainnet RPC responded HTTP 405 to a JSON-RPC POST in this environment, so the documented endpoint alone does not resolve the quarantined DFK source. No new DFK values were admitted.
+- The focused workflow configuration test now passes, including the hourly schedule and 60-minute scheduled window. Push, first hourly schedule execution, and resulting live `/api/v1/ops/status` and `/api/v1/rankings` remain to be verified. Coverage remains limited to the existing seven refreshable strategies until other sources pass data feasibility.
+
 Updated: 2026-09-24 (Europe/Istanbul)
 
 This is the durable operational summary for the GamCryp V2 finish pass. Repository files, verified runtime state, provider logs, and deployment evidence outrank chat memory. This document does not override `AGENTS.md`, the master specification, the architecture, the ROI methodology, or the data contract.
