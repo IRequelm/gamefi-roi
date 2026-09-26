@@ -171,12 +171,13 @@ def get_latest_strategy_snapshot(
     "/strategies/{strategy_id}/history",
     response_model=HistoryPage,
     summary="Get strategy history",
-    description="Returns successful persisted snapshots in ascending calculated_at order.",
+    description="Returns successful persisted snapshots in ascending calculated_at order. Set latest_window=true to return the newest snapshots.",
 )
 def get_strategy_history(
     strategy_id: str,
     limit: Limit = 50,
     offset: Offset = 0,
+    latest_window: bool = Query(False, description="Return the newest limit snapshots, still in ascending calculated_at order."),
     start_at: datetime | None = Query(None, description="Inclusive UTC lower bound for calculated_at."),
     end_at: datetime | None = Query(None, description="Inclusive UTC upper bound for calculated_at."),
     engine: Engine = Depends(get_database_engine),
@@ -187,6 +188,7 @@ def get_strategy_history(
         strategy_id,
         limit=limit,
         offset=offset,
+        latest_window=latest_window,
         start_at=start_at,
         end_at=end_at,
     )

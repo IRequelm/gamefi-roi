@@ -132,7 +132,9 @@ def _build_probe_observations(
     retrieved_at: datetime | None = None,
 ) -> tuple[Observation, ...]:
     retrieved_at = datetime.now(UTC) if retrieved_at is None else retrieved_at.astimezone(UTC)
-    _require_fresh_values((*fww_ticker, *fwf_ticker, *fwg_ticker, *floor, *wax_price), retrieved_at)
+    market_inputs = (*fww_ticker, *fwf_ticker, *fwg_ticker, *floor, *wax_price)
+    _require_fresh_values(market_inputs, retrieved_at)
+    derived_freshness = min(observation.fresh_until for observation in market_inputs) - retrieved_at
     _require_market_open(fww_ticker, strategy.fww_wax_ticker_id)
     _require_market_open(fwf_ticker, strategy.fwf_wax_ticker_id)
     _require_market_open(fwg_ticker, strategy.fwg_wax_ticker_id)
@@ -249,6 +251,7 @@ def _build_probe_observations(
             source_locator="atomicassets floor * CoinGecko WAX/USD",
             input_observation_ids=(_require_metric(floor, "atomicassets.nft.floor_price").observation_id, wax_price[0].observation_id),
             retrieved_at=retrieved_at,
+            freshness=derived_freshness,
         ),
         derived_observation(
             provider="farmers-world-derived",
@@ -264,6 +267,7 @@ def _build_probe_observations(
                 wax_price[0].observation_id,
             ),
             retrieved_at=retrieved_at,
+            freshness=derived_freshness,
         ),
         derived_observation(
             provider="farmers-world-derived",
@@ -275,6 +279,7 @@ def _build_probe_observations(
             source_locator="Alcor FWW/WAX spot * CoinGecko WAX/USD",
             input_observation_ids=tuple(observation.observation_id for observation in fww_ticker) + (wax_price[0].observation_id,),
             retrieved_at=retrieved_at,
+            freshness=derived_freshness,
         ),
         derived_observation(
             provider="farmers-world-derived",
@@ -286,6 +291,7 @@ def _build_probe_observations(
             source_locator="Alcor FWW/WAX quote_exact_input * CoinGecko WAX/USD",
             input_observation_ids=tuple(observation.observation_id for observation in fww_ticker) + (wax_price[0].observation_id,),
             retrieved_at=retrieved_at,
+            freshness=derived_freshness,
             metadata={"input_fww": str(daily.fww_output_day), "output_wax": str(fww_realizable_wax)},
         ),
         derived_observation(
@@ -298,6 +304,7 @@ def _build_probe_observations(
             source_locator="Alcor FWF/WAX quote_exact_output * CoinGecko WAX/USD",
             input_observation_ids=tuple(observation.observation_id for observation in fwf_ticker) + (wax_price[0].observation_id,),
             retrieved_at=retrieved_at,
+            freshness=derived_freshness,
             metadata={"output_fwf": str(daily.fwf_input_day), "input_wax": str(fwf_cost_wax)},
         ),
         derived_observation(
@@ -310,6 +317,7 @@ def _build_probe_observations(
             source_locator="Alcor FWG/WAX quote_exact_output * CoinGecko WAX/USD",
             input_observation_ids=tuple(observation.observation_id for observation in fwg_ticker) + (wax_price[0].observation_id,),
             retrieved_at=retrieved_at,
+            freshness=derived_freshness,
             metadata={"output_fwg": str(daily.fwg_input_day), "input_wax": str(fwg_cost_wax)},
         ),
         derived_observation(
@@ -322,6 +330,7 @@ def _build_probe_observations(
             source_locator="configured WAX transaction/resource assumption * CoinGecko WAX/USD",
             input_observation_ids=(wax_price[0].observation_id,),
             retrieved_at=retrieved_at,
+            freshness=derived_freshness,
             metadata={"transaction_cost_wax_day": strategy.transaction_cost_wax_day},
         ),
     )

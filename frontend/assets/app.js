@@ -193,6 +193,11 @@ export async function apiGet(path, fetcher = fetch, timeoutMs = 10000) {
   }
 }
 
+export async function loadRecentHistoryPage(strategyId, getter = apiGet) {
+  const historyPath = `/strategies/${encodeURIComponent(strategyId)}/history`;
+  return getter(`${historyPath}?limit=50&latest_window=true`);
+}
+
 export function buildRankingsPath(filters = {}) {
   const params = new URLSearchParams();
   addParam(params, "capital_min", filters.capitalMin);
@@ -2952,7 +2957,7 @@ async function renderCurrentRoute() {
       const strategyId = decodeURIComponent(path.replace("/strategies/", ""));
       const [strategy, history] = await Promise.all([
         apiGet(`/strategies/${encodeURIComponent(strategyId)}`),
-        apiGet(`/strategies/${encodeURIComponent(strategyId)}/history`),
+        loadRecentHistoryPage(strategyId),
       ]);
       root.innerHTML = renderStrategyDetail(strategy, history);
       routeAnalyticsContext = strategyAnalyticsContext(strategy);

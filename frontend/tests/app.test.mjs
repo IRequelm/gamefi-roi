@@ -18,6 +18,7 @@ import {
   initializeErrorTracking,
   initializeProductAnalytics,
   loadRecordedModelsIfNoCurrentRankings,
+  loadRecentHistoryPage,
   opportunityTypeLabel,
   renderAnalyticsConsentBanner,
   renderCatalogStats,
@@ -631,6 +632,18 @@ test("history no-history state is explicit", () => {
 
   assert.match(html, /At least two stored snapshots are needed/);
   assert.doesNotMatch(html, /snapshots<\/span>/);
+});
+
+test("recent history requests the latest chronological window in one page", async () => {
+  const requested = [];
+  const result = { items: [], page: { limit: 50, offset: 50, total: 100 } };
+  const page = await loadRecentHistoryPage("strategy/one", async (path) => {
+    requested.push(path);
+    return result;
+  });
+
+  assert.deepEqual(requested, ["/strategies/strategy%2Fone/history?limit=50&latest_window=true"]);
+  assert.equal(page, result);
 });
 
 test("financial formatting preserves exact API Decimal strings", () => {

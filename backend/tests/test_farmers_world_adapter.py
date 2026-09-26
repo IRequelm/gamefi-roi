@@ -27,9 +27,10 @@ from app.adapters.farmers_world import (
     derived_observation,
     verified_config_observation,
 )
+from app.adapters.farmers_world_probe import _build_probe_observations
 from app.engine.calculator import calculate_strategy_roi
 from app.engine.results import MetricStatus
-from app.sources.observations import Observation
+from app.sources.observations import Observation, ObservationStatus, SourceType
 from app.strategies.farmers_world import FARMERS_WORLD_AXE_WOOD_V1
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures" / "farmers_world_axe_golden.json"
@@ -72,6 +73,75 @@ def test_farmers_world_axe_golden_fixture_matches_manual_expected_roi() -> None:
     assert result.roi_risk_30d.value == Decimal(expected["roi_risk_30d"])
     assert result.roi_risk_90d.value == Decimal(expected["roi_risk_90d"])
     assert result.exit_adjusted_pnl.amount == Decimal(expected["exit_adjusted_pnl"])
+
+
+def test_derived_observation_keeps_the_market_input_freshness_window() -> None:
+    retrieved_at = datetime(2026, 8, 15, 12, 0, tzinfo=UTC)
+    observation = derived_observation(
+        provider="farmers-world-derived",
+        entity_type="strategy",
+        entity_id=FARMERS_WORLD_AXE_WOOD_V1.strategy_id,
+        metric=FWW_REALIZABLE_VALUE_DAY_USD,
+        value=Decimal("1.25"),
+        unit="USD",
+        source_locator="fixture market inputs",
+        input_observation_ids=("input-one", "input-two"),
+        retrieved_at=retrieved_at,
+        freshness=timedelta(hours=6),
+    )
+
+    assert observation.fresh_until == retrieved_at + timedelta(hours=6)
+
+
+def test_farmers_world_probe_derivations_expire_with_their_market_inputs() -> None:
+    retrieved_at = datetime(2026, 8, 15, 12, 0, tzinfo=UTC)
+    freshness = timedelta(hours=6)
+
+    def market_observation(metric: str, value: str, unit: str, entity_id: str) -> Observation:
+        return Observation(
+            observation_id=f"{entity_id}:{metric}",
+            entity_type="asset",
+            entity_id=entity_id,
+            metric=metric,
+            value=Decimal(value),
+            unit=unit,
+            source_provider="fixture",
+            source_type=SourceType.MARKET_API,
+            source_locator="fixture://market-data",
+            observed_at=retrieved_at,
+            retrieved_at=retrieved_at,
+            fresh_until=retrieved_at + freshness,
+            status=ObservationStatus.FRESH,
+        )
+
+    strategy = FARMERS_WORLD_AXE_WOOD_V1
+
+    def ticker(token_id: str) -> tuple[Observation, ...]:
+        return (
+            market_observation("alcor.market.base_amm_liquidity", "1000000", strategy.market_quote_token_id, token_id),
+            market_observation("alcor.market.target_amm_liquidity", "1000000", token_id, token_id),
+            market_observation("alcor.market.fee_bps", "30", "basis_point", token_id),
+            market_observation("alcor.market.frozen", "0", "boolean", token_id),
+        )
+
+    floor = (
+        market_observation("atomicassets.nft.floor_price", "1", "WAX", "axe"),
+        market_observation("atomicassets.collection_market_fee_ratio", "0.05", "ratio", "axe"),
+    )
+    price = (market_observation("token.price", "0.05", "USD", "WAX"),)
+    observations = _build_probe_observations(
+        strategy=strategy,
+        fww_ticker=ticker(strategy.reward_token_id),
+        fwf_ticker=ticker(strategy.food_token_id),
+        fwg_ticker=ticker(strategy.repair_token_id),
+        floor=floor,
+        wax_price=price,
+        retrieved_at=retrieved_at,
+    )
+
+    derived = [observation for observation in observations if observation.source_type == SourceType.DERIVED_PROVIDER_DATA]
+    assert derived
+    assert all(observation.fresh_until == retrieved_at + freshness for observation in derived)
 
 
 def test_farmers_world_adapter_fails_when_required_observation_is_missing() -> None:

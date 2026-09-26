@@ -13,6 +13,8 @@ V2 finish-pass operational truth is maintained in `docs/MASTER_CONTROL.md`; this
 
 **PROJECT STATUS: V1 COMPLETE — OPERATIONS / GROWTH MODE**
 
+2026-09-26 live growth recheck: production `/rankings` returns 4 fresh Splinterlands strategies out of 15 catalog strategies. The latest scheduler summary reports 7 eligible and 8 skipped; although three Farmers World snapshots were written at 13:08 UTC, their derived observation expiry was 13:13 UTC, leaving them stale at the 14:30 UTC check. Live refresh policy skips three DFK strategies (no positive cJEWEL balance), Storj (no approved loader), and four partial DePIN models (required economics absent). A backward-compatible latest-history API option and input-bounded freshness for Farmers World derived observations are implemented locally with regression coverage; this release is not yet deployed. See `docs/GROWTH_OPERATING_PLAN.md` for the current acquisition evidence and priorities.
+
 G12 is complete and frozen in the G12 baseline Git commit.
 
 G13 is complete for the accepted public beta deployment. The repository contains both free-beta and paid-production Render blueprints. A 2026-09-24 Render dashboard check found the active Blueprint still points to root `render.yaml` (Free web, no Render Cron); the live web service is Free, while the PostgreSQL database is now Available on plan `0.1c-256mb`. The last attempted Blueprint sync failed because the beta file would downgrade that database to Free. `render.production.yaml` is not active. GitHub Actions remains the only verified production refresh scheduler; see `docs/MASTER_CONTROL.md` for current operational truth.

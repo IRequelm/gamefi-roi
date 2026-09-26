@@ -1,8 +1,18 @@
 # GamCryp Growth Operating Plan
 
-Status: INCOMPLETE — implementation and live-service verification remain in progress.
+Status: IN PROGRESS — relaunch fixes are being deployed and verified.
 
-Updated: 2026-09-24 (Europe/Istanbul)
+Updated: 2026-09-26 (Europe/Istanbul)
+
+## Current priority order — 2026-09-26 live recheck
+
+1. **Keep the comparison usable:** the latest production refresh wrote seven strategy snapshots, but only four rank as fresh. Three Farmers World snapshots expire five minutes after calculation because derived market values use a fixed five-minute lifetime even though their input observations remain valid for six hours. Aligning derived lifetime to the earliest input expiry is implemented and awaiting production verification.
+2. **Resolve model coverage honestly:** 11 of 15 strategies are stale. Three DFK strategies are quarantined while current cJEWEL balance is unavailable; Storj has no approved live economics loader; four DePIN strategies are partial because required economics are missing. Never publish these as current or fill gaps with zero. Either fund reliable, approved data acquisition and complete the models, or explicitly park candidates that cannot pass feasibility.
+3. **Fix the acquisition funnel before adding volume:** the last 28 days show 58 GA4 sessions / 4 active users, 25 explicitly tagged test/operator sessions, 29 unattributed `(direct)/(none)` sessions, and four X/t.co-tagged sessions. There were three `start_click` and three `outbound_click` events, mostly test-labelled. Search Console page rows show 162 impressions and no clicks; YouTube shows 215 views / 60 engaged views and zero subscriber gains. Keep channel comparisons inconclusive at this volume; use exact per-post `utm_content` and exclude tests.
+4. **Repair X operations only when economically justified:** the worker is stopped and X API credit exhaustion is recorded. Keep publication disabled until credit access and live publishing are verifiable; do not buy credits as an unmeasured growth bet.
+5. **Improve the first visit around a concrete decision:** show reliable, current, strategy-specific comparisons first; make the evidence/fees/exit route and uncertainty legible; label guide-only candidates and stale snapshots clearly; route the visitor to a relevant opportunity detail or official start path. Do not imply guaranteed earnings or device/time fit the model cannot verify.
+
+The production database records 3,928 landing events and 1,465 outbound clicks over its retained lifetime; these are event totals, not unique visitors, qualified sessions, partner conversions, or revenue. Keep them separate from GA4 and do not use them as proof of growth.
 
 This plan extends the completed engineering roadmap with the operating loop required to make GamCryp useful to users and grow it toward a USD 1,000 monthly revenue target within three months. The revenue target is a target, not a guaranteed outcome.
 

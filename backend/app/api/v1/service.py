@@ -210,6 +210,7 @@ class ApiDataService:
         *,
         limit: int,
         offset: int,
+        latest_window: bool = False,
         start_at: datetime | None = None,
         end_at: datetime | None = None,
     ) -> HistoryPage | None:
@@ -224,14 +225,15 @@ class ApiDataService:
             end=end,
             strategy_version=strategy.strategy_version,
         )
-        page = _paginate(snapshots, limit=limit, offset=offset)
+        page_offset = max(0, len(snapshots) - limit) if latest_window else offset
+        page = _paginate(snapshots, limit=limit, offset=page_offset)
         scores = self.scoring.get_scores_for_snapshots(tuple(snapshot.snapshot_id for snapshot in page))
         return HistoryPage(
             items=[
                 snapshot_payload(snapshot, strategy=strategy, score=scores.get(snapshot.snapshot_id))
                 for snapshot in page
             ],
-            page=PageMeta(limit=limit, offset=offset, total=len(snapshots)),
+            page=PageMeta(limit=limit, offset=page_offset, total=len(snapshots)),
         )
 
     def rankings_page(

@@ -176,6 +176,7 @@ def derived_observation(
     source_locator: str,
     input_observation_ids: tuple[str, ...],
     retrieved_at: datetime | None = None,
+    freshness: timedelta = timedelta(minutes=5),
     metadata: dict[str, Any] | None = None,
 ) -> Observation:
     active_time = utc_now() if retrieved_at is None else normalize_utc(retrieved_at)
@@ -192,7 +193,7 @@ def derived_observation(
         source_locator=source_locator,
         observed_at=active_time,
         retrieved_at=active_time,
-        fresh_until=active_time + timedelta(minutes=5),
+        fresh_until=active_time + freshness,
         status=ObservationStatus.FRESH,
         metadata={
             "classification": ValueClassification.DERIVED.value,

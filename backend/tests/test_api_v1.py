@@ -274,6 +274,22 @@ def test_history_is_ordered_and_paginated(monkeypatch, tmp_path) -> None:
     assert [item["calculated_at"] for item in payload["items"]] == [(NOW + timedelta(hours=1)).isoformat().replace("+00:00", "Z")]
 
 
+def test_history_latest_window_returns_newest_page_in_chronological_order(monkeypatch, tmp_path) -> None:
+    client, engine = _seeded_client(monkeypatch, tmp_path, "history-latest.db")
+    _seed_snapshots_and_scores(engine, calculated_at=NOW + timedelta(hours=1))
+
+    response = client.get(
+        f"/api/v1/strategies/{DFK_CJEWEL_MAX_LOCK_V1.strategy_id}/history?limit=1&latest_window=true"
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["page"] == {"limit": 1, "offset": 1, "total": 2}
+    assert [item["calculated_at"] for item in payload["items"]] == [
+        (NOW + timedelta(hours=1)).isoformat().replace("+00:00", "Z")
+    ]
+
+
 def test_unavailable_optional_fields_and_decimal_serialization(monkeypatch, tmp_path) -> None:
     client, engine = _seeded_client(monkeypatch, tmp_path, "optional.db")
     _delete_score(engine, DFK_CJEWEL_MAX_LOCK_V1.strategy_id)

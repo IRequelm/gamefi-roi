@@ -176,7 +176,7 @@ def serve_strategy_detail(
     try:
         service = ApiDataService(engine)
         strategy = service.strategy_detail(strategy_id)
-        history = service.history_page(strategy_id, limit=50, offset=0)
+        history = service.history_page(strategy_id, limit=50, offset=0, latest_window=True)
     except SQLAlchemyError as exc:
         logger.error("public_strategy_degraded", extra={"error": str(exc), "strategy_id": strategy_id})
         return _degraded_html_response(request=request, settings=settings, path=f"/strategies/{strategy_id}", title="Strategy temporarily unavailable")
