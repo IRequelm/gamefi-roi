@@ -5,7 +5,7 @@
   "language": "en",
   "title": "Why one cheap item can break an ROI model",
   "hook": "Would you price ten game assets using the cheapest one?",
-  "short_script": "Would you price ten game assets using the cheapest one? A previous Farmers World 10-Axe estimate did exactly that, so it understated the capital needed. The model now uses a basket of ten distinct active listings. Its latest estimate is three cents of capital, 0.15% modeled return over 30 days, and 19,649 modeled break-even days. That is an estimate, not a promise—and the current yield is tiny. Check the assumptions and timestamp before drawing your own conclusion.",
+  "short_script": "Would you price ten game assets using the cheapest one? A previous Farmers World 10-Axe estimate did exactly that, so it understated the capital needed. The model now uses a basket of ten distinct active listings. Its latest estimate is three cents of capital, 0.15% modeled return over 30 days, and 19,649 modeled break-even days. That is an estimate, not a promise—and the current yield is tiny. Visit @GamCryp and tap the first channel profile link to check the assumptions and timestamp.",
   "attribution_url": "https://gamcryp.com/strategies/farmers-world-axe-wood-production-10x?utm_campaign=distribution-mvp&utm_content=axe-basket-cost-correction-20260926&utm_medium=short&utm_source=youtube",
   "evidence": {
     "public_strategy_url": "https://gamcryp.com/strategies/farmers-world-axe-wood-production-10x",
@@ -24,7 +24,7 @@
     "Show the ten-item basket concept; do not imply a guaranteed purchase or resale price.",
     "Keep 0.15% labeled as modeled 30-day ROI and 19,649 days labeled as modeled break-even.",
     "Keep the three-cent capital value rounded and show the snapshot timestamp on screen.",
-    "End on the tagged strategy page; do not add an investment recommendation."
+    "Do not present a Shorts description URL as clickable. Direct viewers to the clickable GamCryp channel profile link and its first site link; do not add an investment recommendation."
   ],
   "publication_gate": "Not queued or published. The 2026-09-26 local-day YouTube Short cap is already used; only consider after the local-day reset and successful creative review."
 }
