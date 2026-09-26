@@ -2278,7 +2278,7 @@ function plainUnavailableReason(opportunity) {
 
 function feasibilityLabel(value) {
   if (value === "GO") {
-    return "Ready";
+    return "Modelable";
   }
   if (value === "PARTIAL") {
     return "Research";

@@ -1682,7 +1682,7 @@ def value_status_label(status: str, strategy_count: int) -> str:
 def feasibility_label(status: str) -> str:
     normalized = str(status or "").upper()
     if normalized == "GO":
-        return "Ready"
+        return "Modelable"
     if normalized == "PARTIAL":
         return "Research"
     if normalized == "PARKED":

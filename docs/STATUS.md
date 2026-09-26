@@ -1,6 +1,6 @@
 # GameFi ROI — Project Status
 
-Updated: 2026-09-26
+Updated: 2026-09-27
 Project version: 0.1
 
 2026-09-09 distribution hardening: autonomous worker execution is restricted to the quality-gated Short handoff, the one-public-Short daily cap is process-locked, and an atomic worker heartbeat is emitted for operator health checks. The local Task Scheduler runner anchors execution at the repository root; re-registration still requires Windows task-registration permission.
@@ -12,6 +12,8 @@ V2 finish-pass operational truth is maintained in `docs/MASTER_CONTROL.md`; this
 ## Current state
 
 **PROJECT STATUS: V1 COMPLETE — OPERATIONS / GROWTH MODE**
+
+2026-09-27 catalog wording correction: live catalog review found “Ready” on model-feasible opportunities whose current estimates were stale/unavailable (for example, DeFi Kingdoms), which can read as “current result ready.” Changed the public feasibility label to “Modelable” in server-rendered and hydrated catalog cards. Freshness/ROI availability remain separate labels. Deployment and live verification are pending.
 
 2026-09-26 public strategy SSR correction: a fresh live Farmers World strategy page still rendered “0 live observations” despite the API reporting 13 fresh input observations. The interactive frontend and server-rendered strategy description used different count sources; updated the SSR summary to use freshness input counts and preserve configured-assumption / derived-metric counts. Deployment and live recheck are pending. Growth audit also reconfirmed only 2 of 51 opportunities have current results, and public X / YouTube audience remains very small (4 followers / 2 subscribers). See `docs/GROWTH_OPERATING_PLAN.md`.
 
