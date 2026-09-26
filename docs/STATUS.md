@@ -1,6 +1,6 @@
 # GameFi ROI — Project Status
 
-Updated: 2026-09-24
+Updated: 2026-09-26
 Project version: 0.1
 
 2026-09-09 distribution hardening: autonomous worker execution is restricted to the quality-gated Short handoff, the one-public-Short daily cap is process-locked, and an atomic worker heartbeat is emitted for operator health checks. The local Task Scheduler runner anchors execution at the repository root; re-registration still requires Windows task-registration permission.
@@ -12,6 +12,8 @@ V2 finish-pass operational truth is maintained in `docs/MASTER_CONTROL.md`; this
 ## Current state
 
 **PROJECT STATUS: V1 COMPLETE — OPERATIONS / GROWTH MODE**
+
+2026-09-26 scheduler reliability follow-up: GitHub Actions has not produced a scheduled recalculation since 13:08 UTC; production still reports its last snapshot at 18:40 UTC, a 240-minute cadence, and 7/7 eligible strategies fresh. A low-cost Render Cron change is prepared in `render.yaml`: it keeps the web service on Free, adds hourly calculations using the existing database and same Render-held provider secrets, and sets the API's reported cadence to 60 minutes. GitHub's schedule remains enabled as a fallback until the Render Cron is provisioned and verified. The existing Render Blueprint uses manual sync, so pushing the file does not provision the Cron. Render documents a $1/month minimum per Cron service plus active runtime billing; provisioning awaits an explicit maximum monthly spend limit. No numbered gate is active; this is Operations/Growth work, not a gate reopen.
 
 2026-09-26 mobile hydration correction: commit `3ef32f4` reuses the full 100-record opportunity API page when hydrating the homepage, preventing the live 51 / 43 catalog coverage from reverting to 50 / 42. Frontend suite passed 63/63; Render deployment `dep-das1cl0jo6nc739qtegg` is Live from `3ef32f4`, and a fresh mobile reload retained 51 opportunities / 43 guide-only entries with no horizontal overflow. This corrects display consistency only; it does not demonstrate acquisition growth. See `docs/GROWTH_OPERATING_PLAN.md`.
 

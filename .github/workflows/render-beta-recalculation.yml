@@ -2,12 +2,12 @@ name: Render Beta Recalculation
 
 on:
   schedule:
-    # Refresh hourly to leave room for GitHub schedule delays inside the six-hour input TTL.
+    # Keep this fallback until the Render Cron is provisioned and proven.
     - cron: "17 * * * *"
   workflow_dispatch:
     inputs:
       calculation_window_minutes:
-        description: Calculation window for this manual recovery run; scheduled runs remain hourly.
+        description: Calculation window for a manual recovery run.
         type: choice
         options:
           - "60"
