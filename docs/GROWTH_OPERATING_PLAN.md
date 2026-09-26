@@ -8,7 +8,7 @@ Updated: 2026-09-27 (Europe/Istanbul)
 
 - Added `effort_summary` to each public strategy summary, generated only from explicit strategy configuration. Splinterlands will show its modeled ranked battles/day; Farmers World will show cycle count per Axe and the one-hour cycle. Other models explicitly say effort is unquantified. The UI will say active minutes/attention are not measured and will not derive hourly earnings.
 - The value appears in the strategy answer card and ranking cards so a visitor can judge modeled activity alongside net/day, ROI, risk, confidence, and freshness. It does not change financial calculations, rankings, or snapshots.
-- This is committed locally but not deployed yet. Render auto-sync is off and the Render dashboard is signed out in the task browser. After the account owner signs in and rotates the exposed CoinGecko key, deploy the commit and verify the new strategy summary field and live cards. No tests were run in this step; `git diff --check` is the current repository validation.
+- This is committed and pushed to `master` as `2becc3b`, but not deployed. Render auto-sync is off and the dashboard is still at its login page. The live API still omits `effort_summary`; the public operations endpoint remains `degraded` with seven unresolved refresh failures and last successful snapshots at `2026-09-26T22:12:36Z`. After the account owner signs in and rotates the exposed CoinGecko key, deploy and verify the new strategy summary field, live cards, refresh status, and persisted snapshot time. No tests were run; `git diff --check` passed.
 
 ### Fresh strategy portfolio, not just opportunity coverage — 2026-09-27 01:53 Europe/Istanbul
 
