@@ -255,10 +255,34 @@ select {
 .start-path-note { margin: 0; font-size: 0.84rem; }
 .start-path-icon { color: var(--cyan); font-size: 0.72rem; font-weight: 850; letter-spacing: 0.06em; }
 
+.home-catalog-details {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(7, 16, 30, 0.72);
+}
+.home-catalog-details > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 750;
+  list-style-position: inside;
+}
+.home-catalog-details > summary:hover,
+.home-catalog-details > summary:focus-visible { background: rgba(15, 33, 55, 0.72); }
+.home-catalog-details > summary small { color: var(--muted); font-size: 0.84rem; font-weight: 500; text-align: right; }
+.home-catalog-details[open] > .opportunity-section { margin: 0 12px 12px; }
+
 @media (max-width: 760px) {
   .start-path-grid { grid-template-columns: 1fr; }
   .start-path-card { min-height: auto; }
   .start-path-section .section-header { align-items: start; flex-direction: column; }
+  .home-catalog-details > summary { align-items: start; flex-direction: column; gap: 6px; }
+  .home-catalog-details > summary small { text-align: left; }
 }
 
 .opportunity-logo-fallback {

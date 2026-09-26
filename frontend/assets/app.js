@@ -334,10 +334,7 @@ export function renderHomeShell(games = [], rankings = { items: [], page: { tota
           </div>
         </form>
       </section>
-      ${renderOpportunityList(opportunities, {
-        compact: true,
-        freshOpportunityIds: (rankings.items || []).map((item) => item.strategy?.opportunity_id || item.strategy?.game_id).filter(Boolean),
-      })}
+      ${renderHomeOpportunityCatalog(opportunities, rankings)}
     </div>
   `;
 }
@@ -669,6 +666,23 @@ function majorAssumptions(snapshot) {
   const inputCount = snapshot.freshness?.input_count ?? 0;
   const freshCount = snapshot.freshness?.status_counts?.fresh ?? 0;
   return `${inputCount} source observations are attached (${freshCount} fresh); the model uses ${counts.CONFIG ?? 0} configured assumptions and derives ${counts.DERIVED ?? 0} metrics.`;
+}
+
+export function renderHomeOpportunityCatalog(opportunities = [], rankings = { items: [] }) {
+  if (!opportunities.length) return "";
+  const freshOpportunityIds = Array.from(new Set((rankings.items || [])
+    .map((item) => item.strategy?.opportunity_id || item.strategy?.game_id)
+    .filter(Boolean)));
+  const withoutFreshEstimate = Math.max(0, opportunities.length - freshOpportunityIds.length);
+  const summary = freshOpportunityIds.length
+    ? `Browse ${opportunities.length} opportunities · ${freshOpportunityIds.length} with current modeled results · ${withoutFreshEstimate} guides or items without a current estimate`
+    : `Browse ${opportunities.length} opportunities · no current modeled results available`;
+  return `
+    <details class="home-catalog-details">
+      <summary><span>Explore the wider opportunity catalog</span><small>${escapeHtml(summary)}</small></summary>
+      ${renderOpportunityList(opportunities, { compact: true, freshOpportunityIds })}
+    </details>
+  `;
 }
 
 function warningSummary(warnings = []) {
