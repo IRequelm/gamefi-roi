@@ -1,12 +1,12 @@
 # GamCryp Growth Operating Plan
 
-Status: IN PROGRESS — relaunch fixes are being deployed and verified.
+Status: IN PROGRESS — relaunch fixes are live; next cadence-window verification is pending.
 
 Updated: 2026-09-26 (Europe/Istanbul)
 
 ## Current priority order — 2026-09-26 live recheck
 
-1. **Keep the comparison usable:** the latest production refresh wrote seven strategy snapshots, but only four rank as fresh. Three Farmers World snapshots expire five minutes after calculation because derived market values use a fixed five-minute lifetime even though their input observations remain valid for six hours. Aligning derived lifetime to the earliest input expiry is implemented and awaiting production verification.
+1. **Keep the comparison usable:** release `5c24e12` is live. Production still shows the pre-release calculation at 13:08 UTC (4 fresh results from one opportunity). The 14:44 manual dispatch fell in the same 12:00–16:00 UTC idempotency window and returned the existing snapshot IDs; it did not create a new calculation. The next four-hour window begins at 16:00 UTC, so verify its post-release Farmers World freshness before calling the fix proven.
 2. **Resolve model coverage honestly:** 11 of 15 strategies are stale. Three DFK strategies are quarantined while current cJEWEL balance is unavailable; Storj has no approved live economics loader; four DePIN strategies are partial because required economics are missing. Never publish these as current or fill gaps with zero. Either fund reliable, approved data acquisition and complete the models, or explicitly park candidates that cannot pass feasibility.
 3. **Fix the acquisition funnel before adding volume:** the last 28 days show 58 GA4 sessions / 4 active users, 25 explicitly tagged test/operator sessions, 29 unattributed `(direct)/(none)` sessions, and four X/t.co-tagged sessions. There were three `start_click` and three `outbound_click` events, mostly test-labelled. Search Console page rows show 162 impressions and no clicks; YouTube shows 215 views / 60 engaged views and zero subscriber gains. Keep channel comparisons inconclusive at this volume; use exact per-post `utm_content` and exclude tests.
 4. **Repair X operations only when economically justified:** the worker is stopped and X API credit exhaustion is recorded. Keep publication disabled until credit access and live publishing are verifiable; do not buy credits as an unmeasured growth bet.
