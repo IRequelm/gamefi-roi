@@ -1,0 +1,30 @@
+{
+  "content_id": "axe-basket-cost-correction-20260926",
+  "channel": "YOUTUBE_SHORT",
+  "status": "DRAFT_REVIEW_REQUIRED",
+  "language": "en",
+  "title": "Why one cheap item can break an ROI model",
+  "hook": "Would you price ten game assets using the cheapest one?",
+  "short_script": "Would you price ten game assets using the cheapest one? A previous Farmers World 10-Axe estimate did exactly that, so it understated the capital needed. The model now uses a basket of ten distinct active listings. Its latest estimate is three cents of capital, 0.15% modeled return over 30 days, and 19,649 modeled break-even days. That is an estimate, not a promise—and the current yield is tiny. Check the assumptions and timestamp before drawing your own conclusion.",
+  "attribution_url": "https://gamcryp.com/strategies/farmers-world-axe-wood-production-10x?utm_campaign=distribution-mvp&utm_content=axe-basket-cost-correction-20260926&utm_medium=short&utm_source=youtube",
+  "evidence": {
+    "public_strategy_url": "https://gamcryp.com/strategies/farmers-world-axe-wood-production-10x",
+    "snapshot_id": "1badd633-6869-52bb-8e54-008c193ef161",
+    "snapshot_calculated_at": "2026-09-26T18:40:11Z",
+    "fresh_observations": 13,
+    "configured_assumptions": 6,
+    "validated_claims": {
+      "starting_capital_usd_rounded": "0.03",
+      "modeled_roi_30d": "0.15%",
+      "modeled_net_per_day_usd": "<0.0001",
+      "modeled_break_even_days": 19649
+    }
+  },
+  "creative_requirements": [
+    "Show the ten-item basket concept; do not imply a guaranteed purchase or resale price.",
+    "Keep 0.15% labeled as modeled 30-day ROI and 19,649 days labeled as modeled break-even.",
+    "Keep the three-cent capital value rounded and show the snapshot timestamp on screen.",
+    "End on the tagged strategy page; do not add an investment recommendation."
+  ],
+  "publication_gate": "Not queued or published. The 2026-09-26 local-day YouTube Short cap is already used; only consider after the local-day reset and successful creative review."
+}
