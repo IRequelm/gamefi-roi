@@ -159,7 +159,11 @@ def home_page(service: ApiDataService, *, settings: Settings, request: Request) 
           <p class="start-path-note">Rankings include only strategies with current source data. The opportunity catalog also includes guide-only entries without a financial ROI estimate.</p>
         </section>
         {_render_ranking_cards(_distinct_opportunity_items(rankings.items, limit=3), heading="Latest modeled results") if top is not None else _render_recorded_models(recorded_models)}
-        {_render_opportunity_cards(opportunities, heading="Opportunity radar")}
+        {_render_opportunity_cards(
+            opportunities,
+            heading="Opportunity radar",
+            fresh_opportunity_ids={item.strategy.opportunity_id or item.strategy.game_id for item in rankings.items if item.latest_snapshot and item.latest_snapshot.freshness.overall_status == "fresh"},
+        )}
       </div>
     """
     description = "Compare modeled Web3 strategy costs, net earnings, risk, and data confidence. Unpriced rewards are marked unavailable instead of guessed."
@@ -1092,7 +1096,12 @@ def _distinct_opportunity_items(items: list[RankingItem], *, limit: int) -> list
     return selected
 
 
-def _render_opportunity_cards(opportunities: list[OpportunitySummary], *, heading: str) -> str:
+def _render_opportunity_cards(
+    opportunities: list[OpportunitySummary],
+    *,
+    heading: str,
+    fresh_opportunity_ids: set[str] | None = None,
+) -> str:
     cards = []
     types = sorted({opportunity.opportunity_type for opportunity in opportunities if opportunity.opportunity_type})
     filter_controls = ""
@@ -1110,13 +1119,29 @@ def _render_opportunity_cards(opportunities: list[OpportunitySummary], *, headin
           <p id="opportunity-filter-empty" class="empty-state opportunity-filter-empty" hidden>No opportunities match these filters. Try a different project name or type.</p>
         '''
     for opportunity in opportunities:
+        has_fresh_estimate = (
+            fresh_opportunity_ids is not None and opportunity.opportunity_id in fresh_opportunity_ids
+        )
+        freshness_is_scoped = fresh_opportunity_ids is not None
         roi_text = "Review the modeled strategy for current assumptions." if opportunity.strategy_count else plain_unavailable_reason(opportunity)
         strategy_text = (
-            f"{opportunity.strategy_count} modeled strategy"
+            f"{opportunity.strategy_count} modeled strategy{'; current data unavailable' if freshness_is_scoped and opportunity.strategy_count and not has_fresh_estimate else ''}"
             if opportunity.strategy_count == 1
-            else f"{opportunity.strategy_count} modeled strategies"
+            else f"{opportunity.strategy_count} modeled strategies{'; current data unavailable' if freshness_is_scoped and opportunity.strategy_count and not has_fresh_estimate else ''}"
             if opportunity.strategy_count
             else roi_text
+        )
+        roi_status = (
+            "Fresh strategy available"
+            if freshness_is_scoped and has_fresh_estimate
+            else "No current estimate"
+            if freshness_is_scoped and opportunity.strategy_count
+            else value_status_label(opportunity.value_realization_status, opportunity.strategy_count)
+        )
+        freshness_note = (
+            '<p class="muted watchlist-note">A prior model exists, but its data is stale or unavailable; it is excluded from current rankings.</p>'
+            if freshness_is_scoped and opportunity.strategy_count and not has_fresh_estimate
+            else ""
         )
         setup_labels = depin_setup_labels(opportunity)
         setup_text = f"Setup: {'; '.join(setup_labels[:2])}" if setup_labels else ""
@@ -1137,8 +1162,9 @@ def _render_opportunity_cards(opportunities: list[OpportunitySummary], *, headin
               {f'<p class="muted">{escape(setup_text)}</p>' if setup_text else ''}
               <div class="opportunity-facts">
                 {_metric("Reward type", escape(", ".join(opportunity.reward_asset_or_points_type) or "Unspecified"))}
-                {_metric("ROI status", value_status_label(opportunity.value_realization_status, opportunity.strategy_count))}
+                {_metric("ROI status", roi_status)}
               </div>
+              {freshness_note}
               <div class="card-actions">
                 <a class="secondary-button" href="/opportunities/{escape(opportunity.opportunity_id)}">Learn more</a>
                 {_destination_button(opportunity.primary_destination, "Open")}

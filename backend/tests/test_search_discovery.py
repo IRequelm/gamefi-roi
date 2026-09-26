@@ -176,6 +176,9 @@ def test_homepage_exposes_stale_models_when_current_rankings_are_empty(monkeypat
     assert "Not current: source status is stale." in html
     assert "Inspect recorded model" in html
     assert "No current matches" not in html
+    assert "3 modeled strategies; current data unavailable" in html
+    assert "No current estimate" in html
+    assert "excluded from current rankings" in html
 
 
 def test_query_permutations_are_noindex_and_canonicalized(monkeypatch, tmp_path) -> None:

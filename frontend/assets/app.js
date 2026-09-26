@@ -334,7 +334,10 @@ export function renderHomeShell(games = [], rankings = { items: [], page: { tota
           </div>
         </form>
       </section>
-      ${renderOpportunityList(opportunities, { compact: true })}
+      ${renderOpportunityList(opportunities, {
+        compact: true,
+        freshOpportunityIds: (rankings.items || []).map((item) => item.strategy?.opportunity_id || item.strategy?.game_id).filter(Boolean),
+      })}
     </div>
   `;
 }
@@ -876,19 +879,25 @@ export function renderOpportunityList(opportunities = [], options = {}) {
         <p id="opportunity-filter-empty" class="empty-state opportunity-filter-empty" hidden>No opportunities match these filters. Try a different project name or type.</p>
       `}
       <div class="opportunity-grid">
-        ${opportunities.map(renderOpportunityCard).join("")}
+        ${opportunities.map((opportunity) => renderOpportunityCard(opportunity, options)).join("")}
       </div>
     </section>
   `;
 }
 
-export function renderOpportunityCard(opportunity) {
+export function renderOpportunityCard(opportunity, options = {}) {
+  const freshnessIsScoped = Array.isArray(options.freshOpportunityIds);
+  const hasFreshEstimate = freshnessIsScoped
+    ? options.freshOpportunityIds.includes(opportunity.opportunity_id)
+    : null;
   const strategyText = opportunity.strategy_count > 0
-    ? `${escapeHtml(String(opportunity.strategy_count))} modeled strateg${opportunity.strategy_count === 1 ? "y" : "ies"}`
+    ? `${escapeHtml(String(opportunity.strategy_count))} modeled strateg${opportunity.strategy_count === 1 ? "y" : "ies"}${hasFreshEstimate === false ? "; current data unavailable" : ""}`
     : opportunityCardState(opportunity);
   const rewardTypes = (opportunity.reward_asset_or_points_type || []).join(", ") || "Unspecified";
-  const roiText = opportunity.strategy_count > 0 && opportunity.value_realization_status === "realizable"
-    ? '<span class="badge good">ROI modeled</span>'
+  const roiText = hasFreshEstimate === false
+    ? '<span class="badge warning">No current estimate</span>'
+    : opportunity.strategy_count > 0 && opportunity.value_realization_status === "realizable"
+      ? `<span class="badge good">${hasFreshEstimate === true ? "Fresh strategy available" : "ROI modeled"}</span>`
     : `<span class="badge warning">${escapeHtml(opportunityCardState(opportunity))}</span>`;
   const setupLabels = depinSetupLabels(opportunity);
   const participation = opportunityParticipationLabel(opportunity);
@@ -909,7 +918,7 @@ export function renderOpportunityCard(opportunity) {
         ${metricItem("Reward type", escapeHtml(rewardTypes))}
         ${metricItem("ROI status", roiText)}
       </div>
-      <p class="muted watchlist-note">${opportunity.strategy_count > 0 ? "Review the modeled strategy for assumptions and current freshness." : escapeHtml(conciseUnavailableRoiReason(opportunity))}</p>
+      <p class="muted watchlist-note">${hasFreshEstimate === false ? "A prior model exists, but its data is stale or unavailable; it is excluded from current rankings." : opportunity.strategy_count > 0 ? "Review the modeled strategy for assumptions and current freshness." : escapeHtml(conciseUnavailableRoiReason(opportunity))}</p>
       <div class="card-actions">
         <a class="secondary-button" href="/opportunities/${encodeURIComponent(opportunity.opportunity_id)}" data-link${productClickAttributes("internal_compare_or_next_click", {
           opportunityId: opportunity.opportunity_id,

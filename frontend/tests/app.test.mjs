@@ -35,6 +35,7 @@ import {
   renderOpportunityAnswerBlock,
   renderOpportunityCard,
   renderOpportunityDetail,
+  renderOpportunityList,
   renderOpportunitiesPage,
   renderOpportunityLogo,
   renderOpportunityGuidance,
@@ -485,6 +486,24 @@ test("strategy and ranking surfaces inherit the parent opportunity logo without 
   assert.equal((strategyHtml.match(/src="\/assets\/logos\/grass\.png"/g) || []).length, 1);
   assert.match(rankingHtml, /class="opportunity-logo opportunity-logo-compact"/);
   assert.match(strategyHtml, /DFK Jeweler cJEWEL Max Lock/);
+});
+
+test("homepage opportunity radar distinguishes a stale model from a fresh strategy", () => {
+  const modeled = {
+    ...opportunityPayload(),
+    opportunity_id: "defi-kingdoms",
+    name: "DeFi Kingdoms",
+    strategy_count: 3,
+    value_realization_status: "realizable",
+  };
+  const stale = renderOpportunityList([modeled], { compact: true, freshOpportunityIds: ["splinterlands"] });
+  const fresh = renderOpportunityList([modeled], { compact: true, freshOpportunityIds: ["defi-kingdoms"] });
+
+  assert.match(stale, /3 modeled strategies; current data unavailable/);
+  assert.match(stale, /No current estimate/);
+  assert.match(stale, /excluded from current rankings/);
+  assert.match(fresh, /Fresh strategy available/);
+  assert.doesNotMatch(fresh, /No current estimate/);
 });
 
 test("DePIN setup cues map platform evidence without leaking enums", () => {
