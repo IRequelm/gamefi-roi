@@ -17,7 +17,6 @@ from dataclasses import dataclass
 from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any, Callable
-from urllib.parse import urlencode
 from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel, ConfigDict
@@ -25,6 +24,7 @@ from sqlalchemy.engine import Engine
 
 from app.config.settings import Settings
 from app.content_package.generator import AUTONOMOUS_CATALOG_FAMILIES, ContentPackage, SITE_EXPLAINER_FAMILIES, build_content_packages, is_motion_graphic_explainer, is_site_explainer, validate_package
+from app.distribution.youtube_queue import SHORTS_PROFILE_CTA
 from app.video_render.factory import APPROVED_VOICES, RENDER_READY, RenderResult, music_bed_source_fingerprint, render_package, short_quality_blockers, validate_render
 from app.video_render.creative_qa import asset_plan, creative_preflight, frame_qa
 from app.publishing.youtube import YouTubeOperationResult, YouTubePublishManifest, YouTubePublisher
@@ -240,7 +240,7 @@ def _prepare_short_handoff(
             continue
         if (not force_rerender and existing and existing.evidence_fingerprint == package.evidence_fingerprint and Path(existing.video_path).is_file() and _stored_render_creative_ready(existing, package)):
             expected_source_url = f"{settings.public_base_url.rstrip('/')}{package.canonical_source_url}"
-            expected_description = _description(package, settings.public_base_url, existing.audio_mode)
+            expected_description = _description(package, existing.audio_mode)
             updates: dict[str, Any] = {}
             if existing.source_url != expected_source_url:
                 updates["source_url"] = expected_source_url
@@ -300,7 +300,7 @@ def _prepare_short_handoff(
             content_id=package.source_inventory_item_id,
             readiness="GREEN",
             title=package.title_candidates[0],
-            description=_description(package, settings.public_base_url, result.audio_mode),
+            description=_description(package, result.audio_mode),
             source_url=f"{settings.public_base_url.rstrip('/')}{package.canonical_source_url}",
             tags=("GamCryp", "Web3", package.content_family.replace("_", " ").title()),
             video_path=result.video_path,
@@ -520,18 +520,10 @@ def record_autonomous_youtube_success(path: Path = DEFAULT_CAP_STATE, *, now: da
         _save_cap(path, DailyCap(cap.date, cap.successful_publications + 1))
 
 
-def _description(package: ContentPackage, public_base_url: str = "https://gamcryp.com", audio_mode: str = "music_only") -> str:
+def _description(package: ContentPackage, audio_mode: str = "music_only") -> str:
     facts = "\n\n".join(str(point["text"]) for point in package.factual_talking_points if point.get("text"))
-    description = f"{package.hook}\n\n{facts}\n\n{package.cta}"
+    description = f"{package.hook}\n\n{facts}\n\n{package.cta}\n\n{SHORTS_PROFILE_CTA}"
     if is_motion_graphic_explainer(package):
-        landing = f"{public_base_url.rstrip('/')}{package.canonical_source_url}"
-        tracking = urlencode({
-            "utm_source": "youtube",
-            "utm_medium": "short",
-            "utm_campaign": "site_explainer" if is_site_explainer(package) else "catalog_guide",
-            "utm_content": package.content_family.lower(),
-        })
-        description += f"\n\nExplore the source and methodology: {landing}?{tracking}"
         if audio_mode == "music_only":
             description += (
                 "\n\nMusic: \"Inspired\" Kevin MacLeod (incompetech.com)"

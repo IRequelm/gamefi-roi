@@ -10,6 +10,7 @@ import pytest
 
 from app.config.settings import Settings
 from app.content_package.generator import build_content_packages, is_site_explainer
+from app.distribution.youtube_queue import SHORTS_PROFILE_CTA
 from app.publishing.short_youtube_handoff import (
     ShortHandoffItem,
     ShortHandoffQueue,
@@ -44,6 +45,8 @@ def test_site_explainer_description_credits_the_licensed_music() -> None:
     assert "https://creativecommons.org/licenses/by/4.0/" in description
     assert "Edited for video duration" in description
     assert "Original GamCryp instrumental" not in description
+    assert SHORTS_PROFILE_CTA in description
+    assert "utm_source=youtube" not in description
 
 
 def _render(tmp_path: Path, *, package, **kwargs) -> RenderResult:
