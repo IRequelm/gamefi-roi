@@ -27,7 +27,6 @@ from app.search.canonical import (
     canonical_url,
     curated_rankings_for_page,
     get_curated_ranking_page,
-    is_curated_ranking_page_publishable,
     lastmod_date,
 )
 from app.storage.monetization import MonetizationRepository
@@ -104,8 +103,6 @@ def serve_curated_rankings(
     except SQLAlchemyError as exc:
         logger.error("public_curated_rankings_degraded", extra={"error": str(exc), "landing_slug": landing_slug})
         return _degraded_html_response(request=request, settings=settings, path=f"/rankings/{landing_slug}", title="Ranking view temporarily unavailable")
-    if not is_curated_ranking_page_publishable(landing, rankings):
-        raise HTTPException(status_code=404, detail=f"Ranking landing page is not publishable yet: {landing_slug}")
     page = curated_rankings_page(service, settings=settings, request=request, landing=landing, rankings=rankings)
     return _html_response(page, request=request, settings=settings, engine=engine)
 

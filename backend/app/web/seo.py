@@ -270,6 +270,17 @@ def curated_rankings_page(
     rankings: RankingsPage | None = None,
 ) -> SeoPage:
     rankings = rankings or curated_rankings_for_page(service, landing)
+    has_enough_results = rankings.page.total >= landing.min_results
+    empty_state = "" if has_enough_results else f"""
+        <section class="section-panel">
+          <h2>No current strategies match this view</h2>
+          <p>GamCryp only publishes a focused ranking when at least {landing.min_results} strategies have fresh, reproducible modeled results. This filter does not meet that threshold right now, so no strategy is presented as current.</p>
+          <div class="card-actions">
+            <a class="secondary-button" href="/rankings">Browse current rankings</a>
+            <a class="secondary-button" href="/opportunities">Browse reviewed opportunities</a>
+          </div>
+        </section>
+    """
     body = f"""
       <div class="page-shell">
         <section class="page-head">
@@ -279,6 +290,7 @@ def curated_rankings_page(
           <p class="muted">{escape(landing.description)} Sponsored and affiliate relationships never affect these results.</p>
         </section>
         {_render_rankings_answer_block(rankings, landing.title, landing.filters)}
+        {empty_state}
         {_render_ranking_cards(rankings.items, heading="Matching modeled strategies")}
       </div>
     """
@@ -298,6 +310,7 @@ def curated_rankings_page(
             [("/", "Home"), ("/rankings", "Rankings"), (landing.path, landing.title)],
         ),
         lastmod=_rankings_lastmod(rankings),
+        robots="index,follow" if has_enough_results else "noindex,follow",
     )
 
 
@@ -537,8 +550,9 @@ def _page(
     body_html: str,
     json_ld: tuple[dict, ...],
     lastmod: datetime | None = None,
+    robots: str | None = None,
 ) -> SeoPage:
-    robots = "noindex,follow" if request.url.query else "index,follow"
+    robots = robots or ("noindex,follow" if request.url.query else "index,follow")
     return SeoPage(
         path=path,
         title=title,

@@ -302,7 +302,12 @@ def test_depin_curated_pages_publish_only_when_authoritative_data_qualifies(monk
         assert f"/rankings/{slug}" in sitemap
 
     for slug in blocked_slugs:
-        assert client.get(f"/rankings/{slug}").status_code == 404
+        response = client.get(f"/rankings/{slug}")
+        assert response.status_code == 200
+        assert '<meta name="robots" content="noindex,follow">' in response.text
+        assert "No current strategies match this view" in response.text
+        assert 'href="/rankings"' in response.text
+        assert 'href="/opportunities"' in response.text
         assert f"/rankings/{slug}" not in inventory_paths
         assert f"/rankings/{slug}" not in sitemap
 
