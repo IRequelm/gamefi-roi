@@ -4,6 +4,13 @@ Status: IN PROGRESS — homepage and catalog freshness wording are live. Eligibl
 
 Updated: 2026-09-27 (Europe/Istanbul)
 
+### Recovery result and current-state supersession — 2026-09-27 01:15 Europe/Istanbul
+
+- GitHub recovery dispatch `36275500580` completed successfully at 22:12 UTC: `auto_refreshed=7`, `refreshed_count=7`, `reused_count=0`, `failed_count=0`. The read-only evidence step and direct production API both confirm 7/7 eligible strategies fresh, zero unresolved failures, and status `ok`; newest snapshots are at 22:12:36 UTC. This restores current eligible results through the GitHub path.
+- Render Cron remains a separate unresolved reliability issue. Its earlier scheduled/manual attempts had CoinGecko 401/429 responses; the GitHub run uses a different secret and does not validate the Render credential. The account owner still needs to revoke the key posted in chat, enter a newly rotated key in Render, and verify the next scheduled Cron writes snapshots. Until that happens, call current eligible data recovered but Cron reliability unproven.
+- The refreshed homepage now reports Splinterlands at $10 capital, 0.57% modeled 30-day ROI, $0.0019/day, risk 100, confidence 39, and 5,308 modeled break-even days. Farmers World reports 0.17% modeled 30-day ROI and less than $0.0001/day. Freshness is back; model economics are still weak. The narrow user-job and evidence-backed usefulness constraint remains the highest product/growth issue.
+- This result supersedes the earlier “production remains degraded” and “replace key, then recover eligible data” statements above: the data recovery step is complete via GitHub. The remaining sequence is (1) rotate/configure the Render-only credential and verify scheduled Cron reliability; (2) improve one narrow, fresh, reproducible user job; (3) validate consented qualified-session attribution; (4) publish the prepared zero-spend long-form bridge only after live model/link checks; (5) scale only after repeatable downstream use.
+
 ### Live recheck and decision metrics — 2026-09-27 01:10 Europe/Istanbul
 
 - A direct production read at 22:10 UTC returns HTTP 200 for `/`, `/opportunities`, `/methodology`, and `/api/v1/ops/status`; the opportunity API returns 51 records. The homepage currently shows two modeled results, 49 without current estimates, and the Splinterlands lead at $10 capital, 0.54% modeled 30-day ROI, $0.0018/day, 100 risk, 39 confidence, and 5,542 modeled break-even days. The underlying result is explicit but offers little immediate economic value to a new visitor.
