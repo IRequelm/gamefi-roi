@@ -1013,10 +1013,14 @@ def _filter_summary(filters: dict[str, object] | None) -> str:
 
 def _major_assumptions(snapshot: StrategySnapshotPayload) -> str:
     counts = snapshot.classification_summary.counts
-    live = counts.get("LIVE", 0)
+    input_count = snapshot.freshness.input_count
+    fresh_count = snapshot.freshness.status_counts.get("fresh", 0)
     config = counts.get("CONFIG", 0)
     derived = counts.get("DERIVED", 0)
-    return f"{live} live observations, {config} configured assumptions, and {derived} derived metrics are attached to this snapshot."
+    return (
+        f"{input_count} source observations are attached ({fresh_count} fresh); "
+        f"the model uses {config} configured assumptions and derives {derived} metrics."
+    )
 
 
 def _warning_summary(warnings) -> str:
