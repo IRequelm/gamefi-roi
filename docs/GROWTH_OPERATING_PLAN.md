@@ -4,6 +4,13 @@ Status: IN PROGRESS — homepage and catalog freshness wording are live. Eligibl
 
 Updated: 2026-09-27 (Europe/Istanbul)
 
+### Verified recovery and release checkpoint — 2026-09-27 23:14 UTC
+
+- GitHub Actions run `36278728801` was manually dispatched at 23:12:51 UTC after the 60-minute freshness window had elapsed. It completed successfully: `auto_refreshed=7`, `refreshed_count=7`, `reused_count=0`, `failed_count=0`; four non-refreshable/partial records remain outside that refresh set.
+- The public `/api/v1/ops/status` read at 23:13:47 UTC returned `ok`, 7/7 eligible strategies fresh, zero unresolved failures, and last success `23:13:14.982482Z`. The new snapshots are persisted and visible. This recovers the GitHub Actions path; it does not prove the Render Cron's CoinGecko key or cadence.
+- Live `/api/v1/rankings?limit=1` still returns `effort_summary: null`. Commit `2becc3b` is on GitHub `master`, but Render auto-deploy remains off. Render dashboard is still signed out in the available task browser; production deployment and UI verification remain open.
+- Acquisition remains unproven. Keep the current priority order: reliable scheduled production refresh first; then user-relevant, evidence-backed utility and coverage; then clean conversion measurement; then retention and the no-spend content experiment. Do not scale publishing or paid reach based on this recovery alone.
+
 ### Product improvement prepared — show modeled activity assumptions — 2026-09-27 01:55 Europe/Istanbul
 
 - Added `effort_summary` to each public strategy summary, generated only from explicit strategy configuration. Splinterlands will show its modeled ranked battles/day; Farmers World will show cycle count per Axe and the one-hour cycle. Other models explicitly say effort is unquantified. The UI will say active minutes/attention are not measured and will not derive hourly earnings.
