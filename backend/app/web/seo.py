@@ -159,11 +159,7 @@ def home_page(service: ApiDataService, *, settings: Settings, request: Request) 
           <p class="start-path-note">Rankings include only strategies with current source data. The opportunity catalog also includes guide-only entries without a financial ROI estimate.</p>
         </section>
         {_render_ranking_cards(_distinct_opportunity_items(rankings.items, limit=3), heading="Latest modeled results") if top is not None else _render_recorded_models(recorded_models)}
-        {_render_opportunity_cards(
-            opportunities,
-            heading="Opportunity radar",
-            fresh_opportunity_ids={item.strategy.opportunity_id or item.strategy.game_id for item in rankings.items if item.latest_snapshot and item.latest_snapshot.freshness.overall_status == "fresh"},
-        )}
+        {_render_home_opportunity_catalog(opportunities, rankings)}
       </div>
     """
     description = "Compare modeled Web3 strategy costs, net earnings, risk, and data confidence. Unpriced rewards are marked unavailable instead of guessed."
@@ -1206,6 +1202,29 @@ def _render_catalog_stats(rankings: RankingsPage, opportunities: list[Opportunit
         {_summary("Opportunity types", escape(opportunity_types))}
         {_summary("Guide-only opportunities", escape(str(unavailable_count)))}
       </section>
+    """
+
+
+def _render_home_opportunity_catalog(opportunities: list[OpportunitySummary], rankings: RankingsPage) -> str:
+    if not opportunities:
+        return ""
+    fresh_opportunity_ids = {
+        item.strategy.opportunity_id or item.strategy.game_id
+        for item in rankings.items
+        if item.latest_snapshot and item.latest_snapshot.freshness.overall_status == "fresh"
+    }
+    without_fresh_estimate = max(0, len(opportunities) - len(fresh_opportunity_ids))
+    summary = (
+        f"Browse {len(opportunities)} opportunities · {len(fresh_opportunity_ids)} with current modeled results · "
+        f"{without_fresh_estimate} guides or items without a current estimate"
+        if fresh_opportunity_ids
+        else f"Browse {len(opportunities)} opportunities · no current modeled results available"
+    )
+    return f"""
+      <details class="home-catalog-details">
+        <summary><span>Explore the wider opportunity catalog</span><small>{escape(summary)}</small></summary>
+        {_render_opportunity_cards(opportunities, heading="Opportunity radar", fresh_opportunity_ids=fresh_opportunity_ids)}
+      </details>
     """
 
 
