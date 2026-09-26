@@ -20,6 +20,7 @@ import {
   loadRecordedModelsIfNoCurrentRankings,
   loadRecentHistoryPage,
   opportunityTypeLabel,
+  bindOpportunityFilters,
   renderAnalyticsConsentBanner,
   renderCatalogStats,
   renderDestinationButton,
@@ -33,6 +34,7 @@ import {
   renderOpportunityAnswerBlock,
   renderOpportunityCard,
   renderOpportunityDetail,
+  renderOpportunitiesPage,
   renderOpportunityLogo,
   renderOpportunityGuidance,
   renderMethodologyPage,
@@ -634,6 +636,42 @@ test("history no-history state is explicit", () => {
 
   assert.match(html, /At least two stored snapshots are needed/);
   assert.doesNotMatch(html, /snapshots<\/span>/);
+});
+
+test("opportunity catalog exposes accessible search and type filters", () => {
+  const html = renderOpportunitiesPage({ items: [
+    { ...opportunityPayload(), opportunity_type: "DEPIN_NODE", name: "DIMO", reward_asset_or_points_type: ["DIMO"] },
+    { ...opportunityPayload(), opportunity_type: "GAME", name: "Splinterlands", reward_asset_or_points_type: ["SPS"] },
+  ] });
+  assert.match(html, /Search by project or reward/);
+  assert.match(html, /opportunity-type-filter/);
+  assert.match(html, /All types/);
+  assert.match(html, /data-opportunity-search="dimo dimo"/);
+});
+
+test("opportunity catalog filters by name and type and reports an empty result", () => {
+  const handlers = {};
+  const search = { value: "dimo", addEventListener: (name, handler) => { handlers[`search:${name}`] = handler; } };
+  const type = { value: "DEPIN_NODE", addEventListener: (name, handler) => { handlers[`type:${name}`] = handler; } };
+  const status = { textContent: "" };
+  const empty = { hidden: true };
+  const cards = [
+    { dataset: { opportunitySearch: "dimo dimo", opportunityType: "DEPIN_NODE" }, hidden: false },
+    { dataset: { opportunitySearch: "splinterlands sps", opportunityType: "GAME" }, hidden: false },
+  ];
+  const root = {
+    querySelector: (selector) => ({ "#opportunity-search": search, "#opportunity-type-filter": type, "#opportunity-filter-status": status, "#opportunity-filter-empty": empty })[selector],
+    querySelectorAll: () => cards,
+  };
+  assert.equal(bindOpportunityFilters(root), true);
+  handlers["search:input"]();
+  assert.deepEqual(cards.map((card) => card.hidden), [false, true]);
+  assert.equal(status.textContent, "Showing 1 of 2 opportunities");
+  type.value = "POINTS";
+  handlers["type:change"]();
+  assert.deepEqual(cards.map((card) => card.hidden), [true, true]);
+  assert.equal(empty.hidden, false);
+  assert.equal(status.textContent, "Showing 0 of 2 opportunities");
 });
 
 test("recent history requests the latest chronological window in one page", async () => {

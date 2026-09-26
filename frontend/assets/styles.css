@@ -730,6 +730,33 @@ tr:last-child td {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
 }
 
+.opportunity-filters {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(180px, 0.6fr) auto;
+  gap: 12px;
+  align-items: end;
+  margin: 14px 0;
+}
+
+.opportunity-filter-status {
+  align-self: center;
+}
+
+.opportunity-filter-empty {
+  margin-bottom: 14px;
+}
+
+.opportunity-card[hidden],
+.opportunity-filter-empty[hidden] {
+  display: none;
+}
+
+@media (max-width: 680px) {
+  .opportunity-filters {
+    grid-template-columns: 1fr;
+  }
+}
+
 .ranking-card,
 .opportunity-card {
   position: relative;

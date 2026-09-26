@@ -29,6 +29,10 @@ def test_web_mvp_pages_are_served_by_fastapi(monkeypatch, tmp_path) -> None:
         assert 'mailto:info@gamcryp.com">info@gamcryp.com</a>' in response.text
         assert "https://www.youtube.com/@GamCryp" in response.text
         assert "gamcryp@gmail.com" not in response.text
+        if path == "/opportunities":
+            assert "Search by project or reward" in response.text
+            assert 'id="opportunity-type-filter"' in response.text
+            assert 'data-opportunity-search=' in response.text
 
 
 def test_legacy_game_route_permanently_redirects_to_canonical_opportunity(monkeypatch, tmp_path) -> None:

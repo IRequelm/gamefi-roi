@@ -1094,6 +1094,21 @@ def _distinct_opportunity_items(items: list[RankingItem], *, limit: int) -> list
 
 def _render_opportunity_cards(opportunities: list[OpportunitySummary], *, heading: str) -> str:
     cards = []
+    types = sorted({opportunity.opportunity_type for opportunity in opportunities if opportunity.opportunity_type})
+    filter_controls = ""
+    if heading == "Reviewed opportunities":
+        options = ''.join(
+            f'<option value="{escape(value)}">{escape(opportunity_type_label(value))}</option>'
+            for value in types
+        )
+        filter_controls = f'''
+          <div class="opportunity-filters" role="search" aria-label="Filter opportunities">
+            <div class="field"><label for="opportunity-search">Search by project or reward</label><input id="opportunity-search" type="search" placeholder="e.g. DIMO, SPS, storage" autocomplete="off"></div>
+            <div class="field"><label for="opportunity-type-filter">Opportunity type</label><select id="opportunity-type-filter"><option value="">All types</option>{options}</select></div>
+            <p id="opportunity-filter-status" class="muted opportunity-filter-status" role="status" aria-live="polite">Showing {len(opportunities)} opportunities</p>
+          </div>
+          <p id="opportunity-filter-empty" class="empty-state opportunity-filter-empty" hidden>No opportunities match these filters. Try a different project name or type.</p>
+        '''
     for opportunity in opportunities:
         roi_text = "Review the modeled strategy for current assumptions." if opportunity.strategy_count else plain_unavailable_reason(opportunity)
         strategy_text = (
@@ -1106,9 +1121,10 @@ def _render_opportunity_cards(opportunities: list[OpportunitySummary], *, headin
         setup_labels = depin_setup_labels(opportunity)
         setup_text = f"Setup: {'; '.join(setup_labels[:2])}" if setup_labels else ""
         participation = opportunity_participation_label(opportunity)
+        search_text = ' '.join((opportunity.name, *opportunity.reward_asset_or_points_type)).lower()
         cards.append(
             f"""
-            <article class="opportunity-card">
+            <article class="opportunity-card" data-opportunity-type="{escape(opportunity.opportunity_type or '')}" data-opportunity-search="{escape(search_text)}">
               <div class="identity-row">
                 {_badge(opportunity_type_label(opportunity.opportunity_type), "info")}
                 {_badge(feasibility_label(opportunity.data_feasibility_status), "good" if opportunity.data_feasibility_status == "GO" else "medium")}
@@ -1133,6 +1149,7 @@ def _render_opportunity_cards(opportunities: list[OpportunitySummary], *, headin
     return f"""
       <section class="section-panel opportunity-section">
         <div class="section-header"><h2>{escape(heading)}</h2><span class="badge info">{len(opportunities)} reviewed</span></div>
+        {filter_controls}
         <div class="opportunity-grid">{''.join(cards)}</div>
       </section>
     """

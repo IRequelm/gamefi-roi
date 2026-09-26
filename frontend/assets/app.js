@@ -855,12 +855,21 @@ export function renderOpportunityList(opportunities = [], options = {}) {
     return "";
   }
   const heading = options.compact ? "Opportunity radar" : "Opportunity catalog";
+  const types = Array.from(new Set(opportunities.map((item) => item.opportunity_type).filter(Boolean))).sort();
   return `
     <section class="section-panel opportunity-section">
       <div class="section-header">
         <h2>${heading}</h2>
         <span class="badge info">${escapeHtml(String(opportunities.length))} reviewed</span>
       </div>
+      ${options.compact ? "" : `
+        <div class="opportunity-filters" role="search" aria-label="Filter opportunities">
+          <div class="field"><label for="opportunity-search">Search by project or reward</label><input id="opportunity-search" type="search" placeholder="e.g. DIMO, SPS, storage" autocomplete="off"></div>
+          <div class="field"><label for="opportunity-type-filter">Opportunity type</label><select id="opportunity-type-filter"><option value="">All types</option>${types.map((type) => `<option value="${escapeHtml(type)}">${escapeHtml(opportunityTypeLabel(type))}</option>`).join("")}</select></div>
+          <p id="opportunity-filter-status" class="muted opportunity-filter-status" role="status" aria-live="polite">Showing ${escapeHtml(String(opportunities.length))} opportunities</p>
+        </div>
+        <p id="opportunity-filter-empty" class="empty-state opportunity-filter-empty" hidden>No opportunities match these filters. Try a different project name or type.</p>
+      `}
       <div class="opportunity-grid">
         ${opportunities.map(renderOpportunityCard).join("")}
       </div>
@@ -878,8 +887,9 @@ export function renderOpportunityCard(opportunity) {
     : `<span class="badge warning">${escapeHtml(opportunityCardState(opportunity))}</span>`;
   const setupLabels = depinSetupLabels(opportunity);
   const participation = opportunityParticipationLabel(opportunity);
+  const searchText = [opportunity.name, ...(opportunity.reward_asset_or_points_type || [])].join(" ").toLowerCase();
   return `
-    <article class="opportunity-card">
+    <article class="opportunity-card" data-opportunity-type="${escapeHtml(String(opportunity.opportunity_type || ""))}" data-opportunity-search="${escapeHtml(searchText)}">
       <div class="identity-row">
         <span class="badge info">${escapeHtml(opportunityTypeLabel(opportunity.opportunity_type))}</span>
         ${renderFeasibilityStatus(opportunity.data_feasibility_status)}
@@ -906,6 +916,32 @@ export function renderOpportunityCard(opportunity) {
       </div>
     </article>
   `;
+}
+
+export function bindOpportunityFilters(root) {
+  const search = root.querySelector("#opportunity-search");
+  const typeFilter = root.querySelector("#opportunity-type-filter");
+  const status = root.querySelector("#opportunity-filter-status");
+  const empty = root.querySelector("#opportunity-filter-empty");
+  const cards = Array.from(root.querySelectorAll(".opportunity-card[data-opportunity-search]"));
+  if (!search || !typeFilter || !status || !empty || !cards.length) return false;
+
+  const apply = () => {
+    const query = search.value.trim().toLowerCase();
+    const type = typeFilter.value;
+    let visible = 0;
+    for (const card of cards) {
+      const matches = (!query || card.dataset.opportunitySearch.includes(query))
+        && (!type || card.dataset.opportunityType === type);
+      card.hidden = !matches;
+      if (matches) visible += 1;
+    }
+    status.textContent = `Showing ${visible} of ${cards.length} opportunities`;
+    empty.hidden = visible > 0;
+  };
+  search.addEventListener("input", apply);
+  typeFilter.addEventListener("change", apply);
+  return true;
 }
 
 export function renderRankingsTable(rankings, options = {}) {
@@ -2945,6 +2981,7 @@ async function renderCurrentRoute() {
       routeAnalyticsContext = rankingAnalyticsContext(visibleRankings, rankingSlugForPath(path));
     } else if (path === "/opportunities") {
       root.innerHTML = renderOpportunitiesPage(await apiGet("/opportunities"));
+      bindOpportunityFilters(root);
     } else if (path.startsWith("/opportunities/")) {
       const opportunityId = decodeURIComponent(path.replace("/opportunities/", ""));
       const opportunity = await apiGet(`/opportunities/${encodeURIComponent(opportunityId)}`);
