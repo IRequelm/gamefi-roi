@@ -139,7 +139,7 @@ def home_page(service: ApiDataService, *, settings: Settings, request: Request) 
       <div class="page-shell">
         <section class="page-head">
           <p class="eyebrow">GamCryp opportunity intelligence</p>
-          <h1>Compare what Web3 earning strategies cost, earn, and risk.</h1>
+          <h1>Compare GameFi and Web3 earning strategies by cost, net earnings, and risk.</h1>
           <p class="lede">See modeled net earnings, setup costs, and data confidence for GameFi and DePIN. When rewards cannot be valued reliably, we mark ROI unavailable and explain why instead of guessing.</p>
           <p class="muted">{escape(answer)}</p>
           <div class="hero-proof-points" aria-label="GamCryp data principles">
@@ -162,18 +162,18 @@ def home_page(service: ApiDataService, *, settings: Settings, request: Request) 
         {_render_home_opportunity_catalog(opportunities, rankings)}
       </div>
     """
-    description = "Compare modeled Web3 strategy costs, net earnings, risk, and data confidence. Unpriced rewards are marked unavailable instead of guessed."
+    description = "Compare current GameFi and Web3 strategy costs, modeled net earnings, ROI, risk, and confidence. Unpriced rewards stay unavailable instead of guessed."
     return _page(
         request=request,
         settings=settings,
         path="/",
-        title="GamCryp | Web3 Opportunity Intelligence",
+        title="GameFi ROI & Web3 Earnings Analysis | GamCryp",
         description=description,
         body_html=body,
         json_ld=(
             _organization_json(settings),
             _website_json(settings),
-            _webpage_json(settings, "/", "GamCryp Web3 Opportunity Intelligence", description),
+            _webpage_json(settings, "/", "GameFi ROI and Web3 Earnings Analysis", description),
         ),
         lastmod=_rankings_lastmod(rankings),
     )

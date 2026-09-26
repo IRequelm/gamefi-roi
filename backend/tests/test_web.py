@@ -55,7 +55,8 @@ def test_homepage_omits_internal_audit_blocks(monkeypatch, tmp_path) -> None:
     assert "DATA SOURCE" not in html.upper()
     assert "served through /api/v1" not in html
     assert "page requests do not call live providers" not in html
-    assert "Compare what Web3 earning strategies cost, earn, and risk." in html
+    assert "GameFi ROI &amp; Web3 Earnings Analysis | GamCryp" in html
+    assert "Compare GameFi and Web3 earning strategies by cost, net earnings, and risk." in html
     assert "What are you looking for?" in html
     assert 'href="/rankings?capital_max=25"' in html
     assert "Browse GameFi, DePIN, and points programs, including guides without current ROI." in html
