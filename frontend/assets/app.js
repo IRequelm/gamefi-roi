@@ -403,6 +403,7 @@ export function renderTopRankingSummary(rankings = { items: [] }) {
         ${summaryItem("Estimated starting capital", formatMoney(snapshot.capital.total_capital))}
         ${summaryItem("Estimated net/day", formatMoney(snapshot.earnings.net_earnings_day, { perDay: true }))}
         ${summaryItem("30-day modeled ROI", formatRatio(snapshot.roi.roi_total_30d))}
+        ${summaryItem("Modeled break-even", formatBreakEven(snapshot.roi.break_even))}
       </div>
       <div class="top-opportunity-actions">
         <a class="secondary-button" href="/strategies/${encodeURIComponent(strategy.strategy_id)}" data-link${strategyClickAnalytics}>View strategy</a>

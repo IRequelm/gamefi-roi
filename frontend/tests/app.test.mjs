@@ -129,6 +129,8 @@ test("home renders results as cards before filters without table ranking markup"
   assert.match(html, /Risk and confidence separated/);
   assert.match(html, /Top modeled opportunity/);
   assert.match(html, /Ranked by modeled 30D ROI, then confidence, risk, and recency/);
+  assert.match(html, /Modeled break-even/);
+  assert.match(html, /512 days/);
   assert.match(html, /mark ROI unavailable and explain why instead of guessing/);
   assert.match(html, /Reviewed opportunities/);
   assert.match(html, /Modeled strategies/);
