@@ -7,6 +7,7 @@ import pytest
 from app.distribution.content_pack import ContentReadiness
 from app.distribution.x_queue import load_content_pack_batch
 from app.distribution.youtube_queue import (
+    SHORTS_PROFILE_CTA,
     build_youtube_publish_queue,
     load_youtube_queue,
     youtube_package_checksum,
@@ -88,7 +89,8 @@ def test_queue_preserves_provenance_without_financial_recomputation() -> None:
         assert item.source_snapshot_hash == pack.source.source_snapshot_hash
         assert item.official_source_refs == tuple(pack.source.official_source_refs)
         assert item.package_checksum == youtube_package_checksum(pack)
-        assert item.attribution_url in item.description
+        assert SHORTS_PROFILE_CTA in item.description
+        assert item.attribution_url not in item.description
 
 
 def test_grass_yellow_requires_exact_creative_approval(tmp_path: Path) -> None:

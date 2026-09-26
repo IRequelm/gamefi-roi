@@ -21,6 +21,7 @@ from app.distribution.content_pack import (
 YOUTUBE_QUEUE_VERSION = "youtube-publish-queue-v1"
 APPROVED_NEURAL_PROVIDERS = frozenset({"elevenlabs", "heygen"})
 FORBIDDEN_NARRATION_PROVIDERS = frozenset({"system", "windows", "pyttsx", "basic_tts", "generic_tts"})
+SHORTS_PROFILE_CTA = "For the source and current assumptions, visit @GamCryp and tap the first link on the channel profile."
 
 
 class YouTubeApprovalState(str, Enum):
@@ -172,7 +173,7 @@ def _has_youtube_package(pack: ContentPackLite) -> bool:
 
 def _final_description(pack: ContentPackLite) -> str:
     description = (pack.editorial.youtube_description or "").strip()
-    return f"{description}\n\nExplore the source-backed opportunity: {pack.distribution.youtube_utm_url}"
+    return f"{description}\n\n{SHORTS_PROFILE_CTA}"
 
 
 def _queue_item(pack: ContentPackLite, order: int, generated_at: str) -> YouTubeQueueItem:

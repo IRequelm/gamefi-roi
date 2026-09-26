@@ -18,6 +18,7 @@ from app.distribution.x_queue import load_content_pack_batch
 from app.distribution.youtube_queue import (
     YouTubePublishQueue,
     YouTubeQueueItem,
+    SHORTS_PROFILE_CTA,
     build_youtube_publish_queue,
     load_youtube_queue,
     write_youtube_queue,
@@ -349,8 +350,8 @@ class YouTubeDistributionPublisher:
         blockers: list[str] = []
         if youtube_package_checksum(pack) != item.package_checksum:
             blockers.append("YouTube package checksum does not match canonical content pack")
-        if item.attribution_url not in item.description:
-            blockers.append("YouTube description is missing the exact attribution URL")
+        if SHORTS_PROFILE_CTA not in item.description:
+            blockers.append("YouTube Shorts description is missing the clickable channel-profile CTA")
         if pack.editorial.readiness is not item.status:
             blockers.append("YouTube queue readiness does not match canonical content pack")
         if item.status is ContentReadiness.GREEN:
