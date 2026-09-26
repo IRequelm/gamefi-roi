@@ -255,7 +255,13 @@ class DistributionWorker:
         except Exception as exc:
             logger.error("distribution_refill_failed category=%s", type(exc).__name__)
             results.append({"platform": "distribution", "status": "refill_failed", "error_category": type(exc).__name__})
-        results.append(self._process_x(now))
+        try:
+            results.append(self._process_x(now))
+        except Exception as exc:
+            # A stale or malformed X queue must not prevent the independent
+            # YouTube Short handoff (or later channels) from running.
+            logger.exception("distribution_x_cycle_failed category=%s", type(exc).__name__)
+            results.append({"platform": "X", "status": "failed", "error_category": type(exc).__name__})
         amplification_result = self._process_x_amplification(now)
         if amplification_result.get("status") != "idle":
             results.append(amplification_result)

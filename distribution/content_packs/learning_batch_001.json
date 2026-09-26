@@ -4,6 +4,123 @@
   "generated_at": "2026-08-31T18:00:00Z",
   "packs": [
     {
+      "claims": [
+        {
+          "claim_id": "capital",
+          "display_value": "$0.0029",
+          "source_path": "snapshot.capital.total_capital.amount",
+          "source_value": "0.0029326616820239483214831",
+          "text": "Modeled capital is $0.0029."
+        },
+        {
+          "claim_id": "net_day",
+          "display_value": "<$0.0001/day",
+          "source_path": "snapshot.earnings.net_earnings_day.amount",
+          "source_value": "1.650500806978304951805599535E-7",
+          "text": "Modeled net earnings are <$0.0001/day."
+        },
+        {
+          "claim_id": "roi_30d",
+          "display_value": "0.17%",
+          "source_path": "snapshot.roi.roi_total_30d.value",
+          "source_value": "0.001688398785064659408101610912",
+          "text": "Modeled 30D ROI is 0.17%."
+        }
+      ],
+      "content_id": "x-farmers-world-tiny-economics-20260831",
+      "content_pack_version": "content-pack-lite-v1",
+      "created_at": "2026-08-31T18:00:00Z",
+      "distribution": {
+        "canonical_site_url": "https://gamcryp.com/strategies/farmers-world-axe-wood-production",
+        "content_id": "x-farmers-world-tiny-economics-20260831",
+        "x_utm_url": "https://gamcryp.com/strategies/farmers-world-axe-wood-production?utm_campaign=distribution-mvp&utm_content=x-farmers-world-tiny-economics-20260831&utm_medium=social&utm_source=x",
+        "youtube_utm_url": "https://gamcryp.com/strategies/farmers-world-axe-wood-production?utm_campaign=distribution-mvp&utm_content=x-farmers-world-tiny-economics-20260831&utm_medium=short&utm_source=youtube"
+      },
+      "editorial": {
+        "content_angle": "low-cost but weak economics",
+        "core_message": "GamCryp uses Farmers World to show that tiny capital and tiny earnings can produce weak or negative economics once market realization is considered.",
+        "disclosure": "Draft educational content. Not investment advice. No guaranteed rewards or returns.",
+        "hook": "Farmers World is cheap to model, but cheap is not the same as attractive.",
+        "narration_mode": "unknown",
+        "narration_quality_status": "unknown",
+        "readiness": "YELLOW",
+        "visual_plan": [],
+        "x_post": "Farmers World is a useful reminder: cheap entry is not the same as good economics.\n\nGamCryp's axe strategy shows capital $0.0029, net/day <$0.0001/day, and 30D ROI of 0.17%.\n\nThis is why GamCryp separates modeled return from risk, liquidity, and confidence.\n\nhttps://gamcryp.com/strategies/farmers-world-axe-wood-production?utm_campaign=distribution-mvp&utm_content=x-farmers-world-tiny-economics-20260831&utm_medium=social&utm_source=x"
+      },
+      "facts": {
+        "break_even": {
+          "display": "17,768 days",
+          "source_path": "snapshot.roi.break_even.days",
+          "status": "available",
+          "unit": "days",
+          "value": "17768.31413607722498153643281"
+        },
+        "capital": {
+          "display": "$0.0029",
+          "source_path": "snapshot.capital.total_capital.amount",
+          "status": "available",
+          "unit": "USD",
+          "value": "0.0029326616820239483214831"
+        },
+        "confidence": {
+          "display": "MODERATE 77/100",
+          "label": "MODERATE",
+          "score": 77,
+          "source_path": "snapshot.confidence",
+          "status": "available"
+        },
+        "freshness": {
+          "display": "fresh",
+          "source_path": "snapshot.freshness.overall_status",
+          "status": "available",
+          "value": "fresh"
+        },
+        "major_catch": "Review the strategy assumptions, freshness, and exit route before acting.",
+        "modeled_return": {
+          "display": "0.17%",
+          "source_path": "snapshot.roi.roi_total_30d.value",
+          "status": "available",
+          "unit": "ratio",
+          "value": "0.001688398785064659408101610912"
+        },
+        "net_earnings": {
+          "display": "<$0.0001/day",
+          "source_path": "snapshot.earnings.net_earnings_day.amount",
+          "status": "available",
+          "unit": "USD/day",
+          "value": "1.650500806978304951805599535E-7"
+        },
+        "opportunity_type": "GAME",
+        "project_name": "Farmers World",
+        "reward_source": "GAME strategy using resource-production rewards.",
+        "risk": {
+          "display": "MEDIUM 41/100",
+          "label": "MEDIUM",
+          "score": 41,
+          "source_path": "snapshot.risk",
+          "status": "available"
+        }
+      },
+      "source": {
+        "adapter_contract_version": "adapter-contract-v1",
+        "model_version": "roi-core-v1",
+        "official_source_refs": [
+          {
+            "label": "Official site",
+            "url": "https://farmersworld.io/"
+          }
+        ],
+        "opportunity_id": "farmers-world",
+        "refreshability": "AUTO_REFRESHABLE",
+        "scoring_methodology_version": "risk-confidence-v1",
+        "snapshot_id": "d0435e8a-77bd-597e-841b-24eab060a456",
+        "snapshot_timestamp": "2026-09-26T17:11:47.583291Z",
+        "source_snapshot_hash": "4dce5d4e11ba88fe363becd9a835ea497e8345d9fae682c1452da5b8d79d99a7",
+        "strategy_id": "farmers-world-axe-wood-production",
+        "strategy_version": "v1"
+      }
+    },
+    {
       "claims": [],
       "content_id": "x-gamcryp-methodology-not-recommendation-20260831",
       "content_pack_version": "content-pack-lite-v1",
@@ -107,12 +224,129 @@
         "opportunity_id": "grass",
         "source_snapshot_hash": "d83dff37880370f02b02a7934fc912efc698740d544cd8601cfaff65e128d5c9"
       }
+    },
+    {
+      "claims": [
+        {
+          "claim_id": "capital",
+          "display_value": "$10",
+          "source_path": "snapshot.capital.total_capital.amount",
+          "source_value": "10",
+          "text": "Modeled capital is $10."
+        },
+        {
+          "claim_id": "net_day",
+          "display_value": "$0.0018/day",
+          "source_path": "snapshot.earnings.net_earnings_day.amount",
+          "source_value": "0.001833536333111656377500",
+          "text": "Modeled net earnings are $0.0018/day."
+        },
+        {
+          "claim_id": "roi_30d",
+          "display_value": "0.55%",
+          "source_path": "snapshot.roi.roi_total_30d.value",
+          "source_value": "0.005500608999334969132500",
+          "text": "Modeled 30D ROI is 0.55%."
+        }
+      ],
+      "content_id": "x-splinterlands-expected-value-20260831",
+      "content_pack_version": "content-pack-lite-v1",
+      "created_at": "2026-08-31T18:00:00Z",
+      "distribution": {
+        "canonical_site_url": "https://gamcryp.com/strategies/splinterlands-modern-ranked-sps-ev",
+        "content_id": "x-splinterlands-expected-value-20260831",
+        "x_utm_url": "https://gamcryp.com/strategies/splinterlands-modern-ranked-sps-ev?utm_campaign=distribution-mvp&utm_content=x-splinterlands-expected-value-20260831&utm_medium=social&utm_source=x",
+        "youtube_utm_url": "https://gamcryp.com/strategies/splinterlands-modern-ranked-sps-ev?utm_campaign=distribution-mvp&utm_content=x-splinterlands-expected-value-20260831&utm_medium=short&utm_source=youtube"
+      },
+      "editorial": {
+        "content_angle": "expected value is not guaranteed earnings",
+        "core_message": "GamCryp treats Splinterlands ranked SPS rewards as a performance-dependent expected-value model, so win assumptions and reward uncertainty stay visible.",
+        "disclosure": "Draft educational content. Not investment advice. No guaranteed rewards or returns.",
+        "hook": "Splinterlands is modeled as expected value, not guaranteed income.",
+        "narration_mode": "unknown",
+        "narration_quality_status": "unknown",
+        "readiness": "YELLOW",
+        "visual_plan": [],
+        "x_post": "Splinterlands is modeled as expected value, not guaranteed income.\n\nGamCryp's Modern Ranked SPS strategy uses $10 capital, $0.0018/day net, and 0.55% 30D ROI.\n\nThe catch: win rate and SPS per win are assumptions, so confidence stays LOW and uncertainty is explicit.\n\nhttps://gamcryp.com/strategies/splinterlands-modern-ranked-sps-ev?utm_campaign=distribution-mvp&utm_content=x-splinterlands-expected-value-20260831&utm_medium=social&utm_source=x"
+      },
+      "facts": {
+        "break_even": {
+          "display": "5,454 days",
+          "source_path": "snapshot.roi.break_even.days",
+          "status": "available",
+          "unit": "days",
+          "value": "5453.941555130902684357859882"
+        },
+        "capital": {
+          "display": "$10",
+          "source_path": "snapshot.capital.total_capital.amount",
+          "status": "available",
+          "unit": "USD",
+          "value": "10"
+        },
+        "confidence": {
+          "display": "LOW 39/100",
+          "label": "LOW",
+          "score": 39,
+          "source_path": "snapshot.confidence",
+          "status": "available"
+        },
+        "freshness": {
+          "display": "fresh",
+          "source_path": "snapshot.freshness.overall_status",
+          "status": "available",
+          "value": "fresh"
+        },
+        "major_catch": "Performance-dependent SPS rewards are modeled as expected value, not guaranteed earnings.",
+        "modeled_return": {
+          "display": "0.55%",
+          "source_path": "snapshot.roi.roi_total_30d.value",
+          "status": "available",
+          "unit": "ratio",
+          "value": "0.005500608999334969132500"
+        },
+        "net_earnings": {
+          "display": "$0.0018/day",
+          "source_path": "snapshot.earnings.net_earnings_day.amount",
+          "status": "available",
+          "unit": "USD/day",
+          "value": "0.001833536333111656377500"
+        },
+        "opportunity_type": "GAME",
+        "project_name": "Splinterlands",
+        "reward_source": "GAME strategy using probabilistic-performance rewards.",
+        "risk": {
+          "display": "VERY HIGH 100/100",
+          "label": "VERY HIGH",
+          "score": 100,
+          "source_path": "snapshot.risk",
+          "status": "available"
+        }
+      },
+      "source": {
+        "adapter_contract_version": "adapter-contract-v1",
+        "model_version": "roi-core-v1",
+        "official_source_refs": [
+          {
+            "label": "Official site",
+            "url": "https://splinterlands.com/"
+          }
+        ],
+        "opportunity_id": "splinterlands",
+        "refreshability": "AUTO_REFRESHABLE",
+        "scoring_methodology_version": "risk-confidence-v1",
+        "snapshot_id": "eb9e196d-51c8-5f16-9a4c-503d0c0abde4",
+        "snapshot_timestamp": "2026-09-26T17:11:47.583291Z",
+        "source_snapshot_hash": "561f842a252ba10beece9aaca7941faa3ee78399663da3454bd6e7801a206c60",
+        "strategy_id": "splinterlands-modern-ranked-sps-ev",
+        "strategy_version": "v1"
+      }
     }
   ],
   "readiness_counts": {
     "GREEN": 1,
     "RED": 0,
-    "YELLOW": 1
+    "YELLOW": 3
   },
   "source_dataset": "https://gamcryp.com/api/v1/rankings?limit=100 + https://gamcryp.com/api/v1/opportunities?limit=100"
 }
