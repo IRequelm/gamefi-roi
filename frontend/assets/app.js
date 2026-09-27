@@ -118,6 +118,7 @@ const PRODUCT_ANALYTICS_ALLOWED_EVENTS = new Set([
   "official_fallback_outbound_click",
   "opportunity_search_used",
   "ranking_filter_used",
+  "strategy_comparison_view",
 ]);
 const PRODUCT_ANALYTICS_ALLOWED_PARAMS = new Set([
   "$current_url",
@@ -146,6 +147,7 @@ const PRODUCT_ANALYTICS_ALLOWED_PARAMS = new Set([
   "capital_min",
   "capital_max",
   "setup_filter",
+  "strategy_count",
   "confidence_min",
   "risk_max",
   "game_id",
@@ -1083,6 +1085,7 @@ export function bindStrategyComparison(root) {
   const status = panel.querySelector("[data-compare-status]");
   const table = panel.querySelector("[data-compare-table]");
   const toggles = root.querySelectorAll("[data-compare-toggle]");
+  let comparisonWasActive = false;
   const selectedStrategies = () => Array.from(toggles)
     .filter((toggle) => toggle.checked)
     .map((toggle) => {
@@ -1096,6 +1099,17 @@ export function bindStrategyComparison(root) {
 
   const render = (limitReached = false) => {
     const selected = selectedStrategies();
+    const comparisonIsActive = selected.length >= 2;
+    if (comparisonIsActive && !comparisonWasActive) {
+      const params = {
+        ranking_slug: "rankings",
+        page_path: window.location.pathname,
+        strategy_count: selected.length,
+      };
+      trackAnalyticsEvent("strategy_comparison_view", { page_path: params.page_path });
+      trackProductAnalyticsEvent("strategy_comparison_view", params);
+    }
+    comparisonWasActive = comparisonIsActive;
     panel.hidden = selected.length === 0;
     for (const toggle of toggles) {
       toggle.disabled = selected.length >= 3 && !toggle.checked;
