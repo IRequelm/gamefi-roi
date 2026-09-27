@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from decimal import Decimal
+from hashlib import sha256
 from threading import Lock
 from time import monotonic
 from typing import Any
@@ -12,7 +13,7 @@ from uuid import uuid5, NAMESPACE_URL
 import httpx
 
 from app.config.settings import Settings, get_settings
-from app.sources.errors import SourceErrorDetail, SourceParseError
+from app.sources.errors import SourceErrorDetail, SourceParseError, SourceRequestError
 from app.sources.http import SourceHttpClient
 from app.sources.market_data import TokenPriceRequest, UnsupportedMarketDataSource
 from app.sources.observations import Observation, ObservationStatus, SourceType
@@ -20,7 +21,8 @@ from app.sources.observations import Observation, ObservationStatus, SourceType
 
 class CoinGeckoMarketDataSource(UnsupportedMarketDataSource):
     provider_name = "coingecko"
-    _price_cache: dict[tuple[str, tuple[str, ...], str, str], tuple[float, list[Observation]]] = {}
+    _price_cache: dict[tuple[str, tuple[str, ...], str, str, str], tuple[float, list[Observation]]] = {}
+    _price_error_cache: dict[tuple[str, tuple[str, ...], str, str, str], tuple[float, SourceErrorDetail]] = {}
     _price_cache_lock = Lock()
 
     def __init__(
@@ -33,6 +35,7 @@ class CoinGeckoMarketDataSource(UnsupportedMarketDataSource):
         self._api_key = active_settings.coingecko_api_key
         self._request_cache_seconds = active_settings.market_data_request_cache_seconds
         self._cache_transport_key = "default" if transport is None else f"transport:{id(transport)}"
+        self._credential_cache_key = sha256(self._api_key.encode("utf-8")).hexdigest() if self._api_key else "no-key"
         self._client = SourceHttpClient(
             provider=self.provider_name,
             base_url=active_settings.coingecko_base_url,
@@ -50,6 +53,7 @@ class CoinGeckoMarketDataSource(UnsupportedMarketDataSource):
             tuple(request.provider_asset_ids),
             request.quote_currency.upper(),
             self._cache_transport_key,
+            self._credential_cache_key,
         )
         cached = self._cached_prices(cache_key)
         if cached is not None:
@@ -62,12 +66,16 @@ class CoinGeckoMarketDataSource(UnsupportedMarketDataSource):
             "precision": "full",
         }
         headers = {"x-cg-demo-api-key": self._api_key} if self._api_key else None
-        payload = self._client.get_json(
-            "/simple/price",
-            params=params,
-            headers=headers,
-            operation="get_token_prices",
-        )
+        try:
+            payload = self._client.get_json(
+                "/simple/price",
+                params=params,
+                headers=headers,
+                operation="get_token_prices",
+            )
+        except SourceRequestError as exc:
+            self._store_cached_price_error(cache_key, exc.detail)
+            raise
         retrieved_at = datetime.now(UTC)
         locator = self._client.source_locator("/simple/price", params)
 
@@ -87,28 +95,44 @@ class CoinGeckoMarketDataSource(UnsupportedMarketDataSource):
 
     def _cached_prices(
         self,
-        key: tuple[str, tuple[str, ...], str, str],
+        key: tuple[str, tuple[str, ...], str, str, str],
     ) -> list[Observation] | None:
         if self._request_cache_seconds == 0:
             return None
         now = monotonic()
         with self._price_cache_lock:
             entry = self._price_cache.get(key)
-            if entry is None or now - entry[0] > self._request_cache_seconds:
-                if entry is not None:
-                    self._price_cache.pop(key, None)
-                return None
-            return list(entry[1])
+            if entry is not None and now - entry[0] <= self._request_cache_seconds:
+                return list(entry[1])
+            if entry is not None:
+                self._price_cache.pop(key, None)
+            error_entry = self._price_error_cache.get(key)
+            if error_entry is not None:
+                if now - error_entry[0] <= self._request_cache_seconds:
+                    raise SourceRequestError(error_entry[1])
+                self._price_error_cache.pop(key, None)
+            return None
 
     def _store_cached_prices(
         self,
-        key: tuple[str, tuple[str, ...], str, str],
+        key: tuple[str, tuple[str, ...], str, str, str],
         observations: list[Observation],
     ) -> None:
         if self._request_cache_seconds == 0:
             return
         with self._price_cache_lock:
             self._price_cache[key] = (monotonic(), list(observations))
+            self._price_error_cache.pop(key, None)
+
+    def _store_cached_price_error(
+        self,
+        key: tuple[str, tuple[str, ...], str, str, str],
+        detail: SourceErrorDetail,
+    ) -> None:
+        if self._request_cache_seconds == 0:
+            return
+        with self._price_cache_lock:
+            self._price_error_cache[key] = (monotonic(), detail)
 
     def _observation_from_price_payload(
         self,
