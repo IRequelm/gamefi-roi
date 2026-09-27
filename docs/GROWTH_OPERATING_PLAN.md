@@ -4,6 +4,13 @@ Status: IN PROGRESS — homepage and catalog freshness wording are live. Eligibl
 
 Updated: 2026-09-27 (Europe/Istanbul)
 
+### Kaito Yaps search landing-page repair — 2026-09-27 14:24 Europe/Istanbul
+
+- Search Console's prior 28-day sample showed 14 impressions and zero clicks for `/opportunities/kaito-yaps`. Inspection found the visible source link pointed to a removed Kaito documentation page, while the page did not explain the point mechanism, requirements, or claim limits.
+- Updated the catalog to link the current official Yaps FAQs and added source-based practical guidance: relevance/originality and reputation-weighted engagement matter; scoring windows roll; Yaps are non-transferable points without a fixed cash conversion; partner rewards may be distributed to selected wallets but are conditional and not Yaps cash value.
+- Kept financial ROI unavailable. This should improve answer quality and source trust for a narrow search landing page; it is not evidence that clicks or acquisition will rise. Verify the deployed route after release and compare Search Console clicks/impressions once Google refreshes the page.
+- Source checked: https://faq.yaps.kaito.ai/yap-faqs
+
 ### Search Console recrawl and acquisition baseline — 2026-09-27 08:07 UTC
 
 - Resubmitted the live sitemap in the verified `gamcryp.com` Search Console property. Google confirmed “sitemap successfully submitted” and changed the submitted date to 27 Sep. Its last-read timestamp is still 26 Sep and its discovered count still says 34, so Google has not yet processed the 20-URL current sitemap; do not report crawl/index impact yet.

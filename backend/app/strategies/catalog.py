@@ -850,10 +850,33 @@ OPPORTUNITIES = (
         economy_types=("attention-points", "social-signal"),
         reward_asset_or_points_type=("Yaps",),
         value_realization_status="non_transferable_points",
-        source_references=(("Yaps open protocol", "https://docs.kaito.ai/kaito-yaps-tokenized-attention/yaps-open-protocol"),),
+        source_references=(("Yap FAQs", "https://faq.yaps.kaito.ai/yap-faqs"),),
         data_feasibility_status="PARTIAL",
-        feasibility_summary="Yaps scores are API-visible, but they are not an executable financial reward.",
+        feasibility_summary=(
+            "Yaps are non-transferable attention points with no fixed cash conversion. "
+            "Kaito describes possible partner reward distributions for selected wallet lists, "
+            "but eligibility and payout are not guaranteed or reproducible as ROI."
+        ),
         outbound_destination_slug="kaito-yaps-official",
+        guidance=OpportunityGuidance(
+            how_to_start=(
+                "Review Kaito's current Yaps FAQs and the program terms before participating.",
+                "Use the Yaps site and complete X authentication if the current onboarding flow requires it.",
+            ),
+            what_you_need=(
+                "A web browser and an X account for initial authentication.",
+                "A public crypto account that you are comfortable associating with public participation; do not share private keys.",
+            ),
+            how_you_earn=(
+                "Yaps are points for relevant, original crypto discussion and reputation-weighted engagement; posting volume alone does not guarantee points.",
+                "Kaito describes rolling scoring windows, so a post's contribution can decay over time.",
+                "Some partners may distribute separate rewards to selected wallet lists. That is conditional and is not a cash value for Yaps.",
+            ),
+            how_to_exit_or_claim=(
+                "Yaps are not currently a transferable token or guaranteed cash claim, so this site does not assign them financial ROI.",
+                "Check each partner's official eligibility and claim terms separately before spending time or money.",
+            ),
+        ),
     ),
     _opportunity(
         opportunity_id="layer3",
