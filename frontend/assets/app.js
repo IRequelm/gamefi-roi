@@ -341,6 +341,17 @@ export function renderHomeShell(games = [], rankings = { items: [], page: { tota
                 ${economyOptions.map((value) => `<option value="${escapeHtml(value)}">${escapeHtml(labelize(value))}</option>`).join("")}
               </select>
             </div>
+            <div class="field">
+              <label for="setup-filter">Device or setup</label>
+              <select id="setup-filter" name="setupFilter">
+                <option value="">Any recorded setup</option>
+                <option value="desktop">PC or laptop</option>
+                <option value="browser">Browser or web</option>
+                <option value="mobile">Mobile device</option>
+                <option value="node">Node software or server</option>
+                <option value="hardware">Dedicated hardware</option>
+              </select>
+            </div>
           </div>
           <div class="button-row">
             <button class="button" type="submit">Apply filters</button>
@@ -3389,6 +3400,7 @@ function bindFinder(root) {
       gameId: data.get("gameId"),
       opportunityType: data.get("opportunityType"),
       economyType: data.get("economyType"),
+      setupFilter: data.get("setupFilter"),
     };
     trackProductAnalyticsEvent("ranking_filter_used", {
       capital_max: filters.capitalMax,
@@ -3397,17 +3409,47 @@ function bindFinder(root) {
       game_id: filters.gameId,
       opportunity_type: filters.opportunityType,
       economy_type: filters.economyType,
+      setup_filter: filters.setupFilter,
       ranking_slug: "home",
       page_path: window.location.pathname,
     });
     results.innerHTML = renderLoading();
     try {
-      const rankings = await apiGet(buildRankingsPath(filters));
-      results.innerHTML = renderRankingsTable(rankings, { compact: true });
+      const [rankings, opportunities] = await Promise.all([
+        apiGet(buildRankingsPath(filters)),
+        filters.setupFilter ? loadOpportunityCatalog() : Promise.resolve([]),
+      ]);
+      const matchingRankings = filters.setupFilter
+        ? filterRankingsBySetup(rankings, opportunities, filters.setupFilter)
+        : rankings;
+      results.innerHTML = matchingRankings.items.length
+        ? renderRankingsTable(matchingRankings, { compact: true, groupByOpportunity: true })
+        : renderFinderNoMatch(filters.setupFilter, (rankings.items || []).length > 0);
     } catch (error) {
       results.innerHTML = renderError(error);
     }
   });
+}
+
+function filterRankingsBySetup(rankings, opportunities, setupFilter) {
+  const requiredPlatforms = OPPORTUNITY_SETUP_FILTERS[setupFilter];
+  if (!requiredPlatforms) return rankings;
+  const opportunitiesById = new Map((opportunities || []).map((opportunity) => [opportunity.opportunity_id, opportunity]));
+  const items = (rankings.items || []).filter((item) => {
+    const opportunity = opportunitiesById.get(item.strategy?.opportunity_id || item.strategy?.game_id);
+    return (opportunity?.platforms || []).some((platform) => requiredPlatforms.has(String(platform).toLowerCase()));
+  });
+  return { ...rankings, items, page: { ...(rankings.page || {}), total: items.length, offset: 0 } };
+}
+
+function renderFinderNoMatch(setupFilter = "", hasUnmatchedRankings = false) {
+  const labels = { desktop: "PC or laptop", browser: "browser or web", mobile: "mobile device", node: "node software or server", hardware: "dedicated hardware" };
+  const label = labels[setupFilter] || "selected filters";
+  const heading = hasUnmatchedRankings ? "No current modeled results match this setup." : "No current modeled results match these filters.";
+  const explanation = hasUnmatchedRankings
+    ? `The matching strategies returned by the selected budget, risk, and confidence filters are not tagged for a ${escapeHtml(label)} setup. Other catalog entries may still fit; review their setup requirements and ROI evidence.`
+    : "No fresh, source-backed strategy matches the selected budget, risk, confidence, and setup filters. Try widening your filters or review the catalog for opportunities without a current estimate.";
+  return `<div class="empty-state"><strong>${heading}</strong><p>${explanation}</p><a class="secondary-button" href="/opportunities" data-link>Review opportunity setup tags</a></div>`;
 }
 
 function setActiveNav() {
