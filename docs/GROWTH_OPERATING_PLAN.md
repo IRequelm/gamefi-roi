@@ -19,7 +19,7 @@ Updated: 2026-09-27 (Europe/Istanbul)
 - Added Timpi as a guide-only DePIN opportunity with its official node setup, reward schedule, and migration sources; explained the hardware/access-NFT and operating-cost requirements; kept ROI unavailable until current eligibility, realized payout, full costs, and a reproducible liquid exit can be verified. No token amount was converted into money.
 - Allowed this one guide-only page into indexing and the sitemap because it now answers observed search intent with current official evidence. The allowlist remains explicit and limited to Timpi; other unmodeled opportunity pages retain the existing noindex/sitemap rules. Click or ranking impact is not yet known.
 - Official sources: https://github.com/Timpi-official/Nodes/blob/main/Rewards/RewardStructures.md and https://timpi.io/ntmpi-consolidation-and-migration
-- Code is prepared for release. Validate the new public route, indexing directive, and sitemap entry after deployment. `git diff --check` and Python syntax compilation passed; no tests were run.
+- Render web deploy `dep-dasg0om0tbcc73f8au3g` successfully made `fc64032` live. Public verification returned HTTP 200 for `/opportunities/timpi`, confirmed `index,follow`, the self canonical, and sitemap inclusion; the opportunity API reports `candidate` with zero modeled strategies. `git diff --check` and Python syntax compilation passed; no tests were run.
 
 ### Search Console recrawl and acquisition baseline — 2026-09-27 08:07 UTC
 
