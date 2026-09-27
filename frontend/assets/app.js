@@ -734,7 +734,7 @@ export function renderRankingsPage(rankings, options = {}) {
         <p class="lede">Ranked by modeled 30-day ROI, then confidence, risk, and recency. Brand or referral metadata never changes this order.</p>
       </section>
       ${renderRankingsAnswerBlock(rankings, { title })}
-      ${renderRankingsTable(rankings, { groupByOpportunity: true })}
+      ${renderRankingsTable(rankings)}
       ${renderCuratedRankingLinks()}
       ${renderRecordedModels(options.recordedModels || [])}
       ${renderSponsoredPlacements(rankings.sponsored_placements || [])}
