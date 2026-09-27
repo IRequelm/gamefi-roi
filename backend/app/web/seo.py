@@ -860,6 +860,7 @@ def _render_opportunity_human_summary(
     modeled = strategy is not None and snapshot is not None
     unavailable = plain_unavailable_reason(opportunity)
     no_model_message = "No financial model is published for this opportunity yet; see the explanation below for the specific evidence gap."
+    model_caveat = "This is a strategy-specific estimate, not a guaranteed payout. Review its assumptions, source dates, risk, and confidence before acting."
     items = [
         ("What it is", escape(f"{opportunity.name} is tracked as {opportunity_type_label(opportunity.opportunity_type).lower()}.")),
         ("How it may earn", escape(reward_types)),
@@ -877,8 +878,8 @@ def _render_opportunity_human_summary(
             else escape("A payout route is not modeled yet; do not treat the reward as cash."),
         ),
         (
-            "What is still unverified",
-            escape(unavailable),
+            "Model caveat" if modeled else "What is still unverified",
+            escape(model_caveat if modeled else unavailable),
         ),
     ]
     return _render_human_summary("Plain-language summary", items)

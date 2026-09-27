@@ -476,13 +476,14 @@ export function renderOpportunityHumanSummary(opportunity) {
   const rewardTypes = humanList(opportunity.reward_asset_or_points_type, "Reward type not specified yet");
   const access = humanList([...(opportunity.platforms || []), ...(opportunity.chains || [])], "Check the official project page for access requirements");
   const modeled = opportunity.strategy_count > 0 && primaryStrategy?.latest_snapshot;
+  const modelCaveat = "This is a strategy-specific estimate, not a guaranteed payout. Review its assumptions, source dates, risk, and confidence before acting.";
   const items = [
     ["What it is", escapeHtml(`${opportunity.name} is tracked as ${opportunityTypeLabel(opportunity.opportunity_type).toLowerCase()}.`)],
     ["How it may earn", escapeHtml(rewardTypes)],
     ["What you need", escapeHtml(access)],
     ["Cost and return", modeled ? `Modeled in ${escapeHtml(primaryStrategy.name)}; open the strategy for current capital, costs, and ROI.` : "No financial model is published yet; see the evidence gap below."],
     ["Cash-out", modeled ? "Realizable value is modeled inside the strategy snapshot where market data supports it." : "A payout route is not modeled yet; do not treat the reward as cash."],
-    ["What is still unverified", escapeHtml(plainUnavailableReason(opportunity))],
+    [modeled ? "Model caveat" : "What is still unverified", escapeHtml(modeled ? modelCaveat : plainUnavailableReason(opportunity))],
   ];
   return renderHumanSummary("Plain-language summary", items);
 }
