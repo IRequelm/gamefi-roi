@@ -16,7 +16,6 @@ class SplinterlandsModernRankedStrategyDefinition:
     battle_format: str
     reward_token_id: str
     reward_token_symbol: str
-    reward_coingecko_asset_id: str
     battles_per_day: str
     win_probability: str
     win_probability_low: str
@@ -38,7 +37,6 @@ SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1 = SplinterlandsModernRankedStrategyDefinit
     battle_format="modern",
     reward_token_id="splinterlands:sps",
     reward_token_symbol="SPS",
-    reward_coingecko_asset_id="splinterlands",
     battles_per_day="20",
     win_probability="0.55",
     win_probability_low="0.45",

@@ -11,24 +11,21 @@ from app.adapters.splinterlands import (
     BATTLES_PER_DAY,
     CARD_RENTAL_COST_DAY_USD,
     REALIZATION_HAIRCUT_BPS,
-    SPS_REFERENCE_PRICE_USD,
     SPS_REWARD_PER_WIN,
     TRANSACTION_COST_DAY_USD,
     WIN_PROBABILITY,
     WIN_PROBABILITY_HIGH,
     WIN_PROBABILITY_LOW,
     SplinterlandsModernRankedAdapter,
-    live_observation,
     verified_config_observation,
 )
 from app.config.settings import get_settings
 from app.engine.calculator import calculate_strategy_roi
-from app.sources.coingecko import CoinGeckoMarketDataSource
-from app.sources.market_data import TokenPriceRequest
-from app.sources.observations import Observation, ObservationStatus, SourceType
+from app.sources.observations import Observation, ObservationStatus
 from app.sources.splinterlands import (
     SEASON_ID,
     SETTINGS_SEASON_ID,
+    SETTINGS_SPS_PRICE_USD,
     SplinterlandsGameDataSource,
     SplinterlandsSeasonRequest,
     SplinterlandsSettingsRequest,
@@ -81,10 +78,8 @@ def load_live_observations_with_season_probe(
 ) -> tuple[tuple[Observation, ...], tuple[Observation, ...]]:
     settings = get_settings()
     game_freshness = timedelta(seconds=settings.splinterlands_observation_freshness_seconds)
-    price_freshness = timedelta(seconds=settings.market_data_price_freshness_seconds)
 
     splinterlands = SplinterlandsGameDataSource(settings)
-    coingecko = CoinGeckoMarketDataSource(settings)
     try:
         settings_observations = splinterlands.get_settings(SplinterlandsSettingsRequest(freshness_window=game_freshness))
         season_id = _require_metric(settings_observations, SETTINGS_SEASON_ID)
@@ -93,27 +88,15 @@ def load_live_observations_with_season_probe(
         season_observations = splinterlands.get_season(
             SplinterlandsSeasonRequest(season_id=str(season_id.value), freshness_window=game_freshness)
         )
-        sps_price = tuple(
-            coingecko.get_token_prices(
-                TokenPriceRequest(
-                    provider_asset_ids=(strategy.reward_coingecko_asset_id,),
-                    quote_currency=strategy.reporting_currency,
-                    freshness_window=price_freshness,
-                )
-            )
-        )
-
         observations = _build_probe_observations(
             strategy=strategy,
             settings_observations=settings_observations,
             season_observations=season_observations,
-            sps_price=sps_price,
             retrieved_at=active_time,
         )
         return observations, season_observations
     finally:
         splinterlands.close()
-        coingecko.close()
 
 
 def _build_probe_observations(
@@ -121,33 +104,14 @@ def _build_probe_observations(
     strategy,
     settings_observations: tuple[Observation, ...],
     season_observations: tuple[Observation, ...],
-    sps_price: tuple[Observation, ...],
     retrieved_at: datetime | None = None,
 ) -> tuple[Observation, ...]:
     retrieved_at = datetime.now(UTC) if retrieved_at is None else retrieved_at.astimezone(UTC)
-    _require_fresh_values((*settings_observations, *season_observations, *sps_price))
+    _require_fresh_values((*settings_observations, *season_observations))
     _require_metric(season_observations, SEASON_ID)
-    price = _require_metric(sps_price, "token.price")
-    if price.value is None:
-        raise RuntimeError("CoinGecko SPS/USD price is missing")
-
-    sps_reference_price = live_observation(
-        provider=price.source_provider,
-        entity_type="asset",
-        entity_id=strategy.reward_token_id,
-        metric=SPS_REFERENCE_PRICE_USD,
-        value=price.value,
-        unit="USD",
-        source_locator=price.source_locator,
-        source_type=SourceType.MARKET_API,
-        retrieved_at=price.retrieved_at,
-        observed_at=price.observed_at,
-        freshness=price.fresh_until - price.retrieved_at,
-        metadata={
-            "provider_asset_id": strategy.reward_coingecko_asset_id,
-            "input_observation_id": price.observation_id,
-        },
-    )
+    price = _require_metric(settings_observations, SETTINGS_SPS_PRICE_USD)
+    if price.value is None or price.value <= Decimal("0"):
+        raise RuntimeError("Splinterlands official SPS/USD reference price is missing or non-positive")
     source_locator = f"splinterlands-strategy:{strategy.strategy_id}:{strategy.strategy_version}"
     config = (
         verified_config_observation(
@@ -218,7 +182,7 @@ def _build_probe_observations(
             metadata={"basis": "SPS reward realization modeled off-platform; no claim gas in baseline"},
         ),
     )
-    return (*settings_observations, sps_reference_price, *config)
+    return (*settings_observations, *config)
 
 
 def _require_fresh_values(observations: tuple[Observation, ...]) -> None:

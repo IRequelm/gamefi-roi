@@ -1423,6 +1423,9 @@ function renderMarketPriceAttribution(snapshot) {
   if (!hasLiveMarketPrice) {
     return "";
   }
+  if (metrics["splinterlands.settings.sps_price_usd"] === "LIVE") {
+    return '<p class="muted source-attribution">SPS reference price from the <a href="https://api.splinterlands.com/settings" rel="noopener noreferrer" target="_blank">official Splinterlands API</a>; this is not an executable sell quote.</p>';
+  }
   return '<p class="muted source-attribution">Price data provided by <a href="https://www.coingecko.com/en/api" rel="noopener noreferrer" target="_blank">CoinGecko API</a>.</p>';
 }
 

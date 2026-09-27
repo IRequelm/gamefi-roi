@@ -36,6 +36,7 @@ from app.sources.splinterlands import (
     SETTINGS_ENERGY_REGEN_PER_HOUR,
     SETTINGS_SEASON_END_UNIX,
     SETTINGS_SEASON_ID,
+    SETTINGS_SPS_PRICE_USD,
     SETTINGS_STARTER_PACK_PRICE_USD,
 )
 from app.strategies.splinterlands import SplinterlandsModernRankedStrategyDefinition
@@ -54,7 +55,7 @@ WIN_PROBABILITY = "splinterlands.modern_ranked.win_probability"
 WIN_PROBABILITY_LOW = "splinterlands.modern_ranked.win_probability_low"
 WIN_PROBABILITY_HIGH = "splinterlands.modern_ranked.win_probability_high"
 SPS_REWARD_PER_WIN = "splinterlands.modern_ranked.sps_reward_per_win"
-SPS_REFERENCE_PRICE_USD = "splinterlands.modern_ranked.sps_reference_price_usd"
+SPS_REFERENCE_PRICE_USD = SETTINGS_SPS_PRICE_USD
 REALIZATION_HAIRCUT_BPS = "splinterlands.modern_ranked.realization_haircut_bps"
 CARD_RENTAL_COST_DAY_USD = "splinterlands.modern_ranked.card_rental_cost_day_usd"
 TRANSACTION_COST_DAY_USD = "splinterlands.modern_ranked.transaction_cost_day_usd"

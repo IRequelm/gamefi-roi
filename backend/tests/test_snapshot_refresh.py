@@ -227,41 +227,31 @@ def test_auto_provider_to_snapshot_to_distribution_can_qualify(monkeypatch, tmp_
             request=request,
         )
 
-    def price_handler(request: httpx.Request) -> httpx.Response:
-        return httpx.Response(
-            200,
-            text=f'{{"splinterlands":{{"usd":0.003,"last_updated_at":{int(active_time.timestamp())}}}}}',
-            request=request,
-        )
-
     game_source = SplinterlandsGameDataSource(settings, transport=httpx.MockTransport(game_handler))
-    price_source = CoinGeckoMarketDataSource(settings, transport=httpx.MockTransport(price_handler))
     try:
         settings_observations = game_source.get_settings(SplinterlandsSettingsRequest(freshness_window=timedelta(minutes=5)))
         season_id = next(observation for observation in settings_observations if observation.metric == SETTINGS_SEASON_ID)
         season_observations = game_source.get_season(
             SplinterlandsSeasonRequest(season_id=str(season_id.value), freshness_window=timedelta(minutes=5))
         )
-        price_observations = tuple(
-            price_source.get_token_prices(
-                TokenPriceRequest(
-                    provider_asset_ids=(SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1.reward_coingecko_asset_id,),
-                    quote_currency="USD",
-                    freshness_window=timedelta(minutes=5),
-                )
-            )
-        )
     finally:
         game_source.close()
-        price_source.close()
 
     observations = _build_probe_observations(
         strategy=SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1,
         settings_observations=settings_observations,
         season_observations=season_observations,
-        sps_price=price_observations,
         retrieved_at=active_time,
     )
+    sps_reference = next(
+        observation
+        for observation in observations
+        if observation.metric == "splinterlands.settings.sps_price_usd"
+    )
+    assert sps_reference.source_provider == "splinterlands"
+    assert sps_reference.source_type.value == "official_api"
+    assert sps_reference.value == Decimal("0.003")
+
     engine = _migrated_engine(monkeypatch, tmp_path, "refresh-auto-integration.db")
     task = StrategyCalculationTask(
         strategy_id=SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1.strategy_id,

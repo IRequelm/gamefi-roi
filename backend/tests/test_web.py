@@ -3,7 +3,7 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 from app.strategies.defi_kingdoms import DFK_CJEWEL_MAX_LOCK_V1
-from app.web.seo import _ordered_ranking_items, plain_unavailable_reason, value_status_label
+from app.web.seo import _market_price_attribution, _ordered_ranking_items, plain_unavailable_reason, value_status_label
 from test_api_v1 import _seeded_client
 from sqlalchemy.exc import OperationalError
 
@@ -64,6 +64,21 @@ def test_homepage_omits_internal_audit_blocks(monkeypatch, tmp_path) -> None:
     assert "Rankings include only strategies with current source data." in html
     assert "Current strategy results" in html
     assert "Configured strategies" in html
+
+
+def test_splinterlands_price_attribution_uses_official_reference_and_exit_caveat() -> None:
+    snapshot = SimpleNamespace(
+        classification_summary=SimpleNamespace(
+            metrics={"splinterlands.settings.sps_price_usd": "LIVE"}
+        )
+    )
+
+    attribution = _market_price_attribution(snapshot)
+
+    assert "official Splinterlands API" in attribution
+    assert "api.splinterlands.com/settings" in attribution
+    assert "not an executable sell quote" in attribution
+    assert "CoinGecko" not in attribution
 
 
 def test_rankings_omits_empty_filter_label_and_preserves_organic_rank_order(monkeypatch, tmp_path) -> None:
