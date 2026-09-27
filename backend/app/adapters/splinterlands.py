@@ -225,7 +225,10 @@ class SplinterlandsModernRankedAdapter:
                 ),
                 AdapterWarning(
                     code="configured_reward_per_win",
-                    message="Representative SPS per win is a configured strategy input until live battle-result sampling is reliable.",
+                    message=(
+                        "SPS per win is a configured estimate, not a live player reward. Actual payout varies with rating, "
+                        "staked SPS and reward bonuses; this model excludes SPS staking/delegation capital and any rental cost."
+                    ),
                     severity="info",
                 ),
             ),

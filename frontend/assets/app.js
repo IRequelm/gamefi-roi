@@ -513,10 +513,13 @@ export function renderOpportunityHumanSummary(opportunity) {
 }
 
 export function renderStrategyHumanSummary(strategy, snapshot) {
+  const stakingCaveat = strategy.game_id === "splinterlands"
+    ? " This amount excludes SPS staking or delegation capital and any rental cost; these can affect ranked rewards."
+    : "";
   const items = [
     ["What it is", escapeHtml(`${strategy.name} is a modeled strategy for ${strategy.game_name}.`)],
     ["How it may earn", escapeHtml(`${labelize(strategy.economy_type)} economics are converted into the generic ROI model.`)],
-    ["What you need", `Estimated starting capital is ${formatMoney(snapshot.capital.total_capital)}.`],
+    ["What you need", `Estimated starting capital is ${formatMoney(snapshot.capital.total_capital)}.${stakingCaveat}`],
     ["Expected return", `${formatMoney(snapshot.earnings.net_earnings_day, { perDay: true })} estimated net earnings and ${formatRatio(snapshot.roi.roi_total_30d)} modeled 30-day ROI.`],
     ["Cash-out", `Recoverable value: ${formatMoney(snapshot.capital.recoverable_capital)}. Exit-adjusted P&L: ${formatMoney(snapshot.roi.exit_adjusted_pnl)}.`],
     ["Main catch", escapeHtml(strategyRiskSummary(snapshot))],
@@ -1501,7 +1504,7 @@ function renderMarketPriceAttribution(snapshot) {
     return "";
   }
   if (metrics["splinterlands.settings.sps_price_usd"] === "LIVE") {
-    return '<p class="muted source-attribution">SPS reference price from the <a href="https://api.splinterlands.com/settings" rel="noopener noreferrer" target="_blank">official Splinterlands API</a>; this is not an executable sell quote.</p>';
+    return '<p class="muted source-attribution">SPS reference price from the <a href="https://api.splinterlands.com/settings" rel="noopener noreferrer" target="_blank">official Splinterlands API</a>; this is not an executable sell quote. SPS staking changes ranked rewards; <a href="https://support.splinterlands.com/hc/en-us/articles/17101979325972-Reward-Multipliers-from-SPS-Staking" rel="noopener noreferrer" target="_blank">review the official staking rules</a>.</p>';
   }
   if (Object.keys(metrics).some((metric) => metric.startsWith("farmers_world."))) {
     return '<p class="muted source-attribution">Farmers World USD estimates convert token/WAX market quotes using CoinGecko’s WAX/USD reference price. That conversion is not an executable WAX/USD sell quote, so realized USD proceeds may differ.</p>';

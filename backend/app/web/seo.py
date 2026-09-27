@@ -1046,7 +1046,15 @@ def _render_strategy_human_summary(strategy: StrategySummary, snapshot: Strategy
     items = [
         ("What it is", escape(f"{strategy.name} is a modeled strategy for {strategy.game_name}.")),
         ("How it may earn", escape(f"{labelize(strategy.economy_type)} economics are converted into the generic ROI model.")),
-        ("What you need", f"Estimated starting capital is {format_money_html(snapshot.capital.total_capital)}."),
+        (
+            "What you need",
+            f"Estimated starting capital is {format_money_html(snapshot.capital.total_capital)}."
+            + (
+                " This amount excludes SPS staking or delegation capital and any rental cost; these can affect ranked rewards."
+                if strategy.game_id == "splinterlands"
+                else ""
+            ),
+        ),
         (
             "Expected return",
             f"{format_money_html(snapshot.earnings.net_earnings_day, per_day=True)} estimated net earnings and {format_ratio_html(snapshot.roi.roi_total_30d)} modeled 30-day ROI.",
@@ -1114,7 +1122,13 @@ def _market_price_attribution(snapshot: StrategySnapshotPayload) -> str:
     if not has_live_usd_price:
         return ""
     if metrics.get("splinterlands.settings.sps_price_usd") == "LIVE":
-        return '<p class="muted source-attribution">SPS reference price from the <a href="https://api.splinterlands.com/settings" rel="noopener noreferrer" target="_blank">official Splinterlands API</a>; this is not an executable sell quote.</p>'
+        return (
+            '<p class="muted source-attribution">SPS reference price from the '
+            '<a href="https://api.splinterlands.com/settings" rel="noopener noreferrer" target="_blank">official Splinterlands API</a>; '
+            'this is not an executable sell quote. SPS staking changes ranked rewards; '
+            '<a href="https://support.splinterlands.com/hc/en-us/articles/17101979325972-Reward-Multipliers-from-SPS-Staking" '
+            'rel="noopener noreferrer" target="_blank">review the official staking rules</a>.</p>'
+        )
     if any(name.startswith("farmers_world.") for name in metrics):
         return '<p class="muted source-attribution">Farmers World USD estimates convert token/WAX market quotes using CoinGecko’s WAX/USD reference price. That conversion is not an executable WAX/USD sell quote, so realized USD proceeds may differ.</p>'
     return '<p class="muted source-attribution">Price data provided by <a href="https://www.coingecko.com/en/api" rel="noopener noreferrer" target="_blank">CoinGecko API</a>.</p>'
