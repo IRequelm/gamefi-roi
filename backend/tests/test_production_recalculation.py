@@ -19,6 +19,7 @@ from app.jobs.production_recalculation import (
     run_recalculation_tasks,
 )
 from app.jobs.recalculation import StrategyCalculationTask
+from app.sources.errors import SourceErrorDetail, SourceRequestError
 from app.sources.observations import SourceType
 from app.storage.history import HistoryRepository
 from app.storage.scoring import ScoringRepository
@@ -56,6 +57,15 @@ def test_production_recalculation_persists_snapshots_scores_and_failures(monkeyp
     assert summary.status == "failed"
     assert len(summary.snapshot_ids) == 1
     assert len(summary.failure_ids) == 1
+    assert summary.failure_details == (
+        production_recalculation.ProductionFailureDiagnostic(
+            strategy_id=FARMERS_WORLD_AXE_WOOD_V1.strategy_id,
+            error_type="SourceRequestError",
+            provider="coingecko",
+            operation="get_token_prices",
+            http_status=401,
+        ),
+    )
     assert summary.score_count == 1
     assert HistoryRepository(engine).latest_snapshot(DFK_CJEWEL_MAX_LOCK_V1.strategy_id) is not None
     assert ScoringRepository(engine).get_score(summary.snapshot_ids[0]) is not None
@@ -132,4 +142,11 @@ def test_hard_stale_live_inputs_fail_explicitly() -> None:
 
 
 def _provider_failure(_active_time: datetime):
-    raise RuntimeError("provider unavailable")
+    raise SourceRequestError(
+        SourceErrorDetail(
+            provider="coingecko",
+            operation="get_token_prices",
+            message="Provider returned HTTP 401",
+            status_code=401,
+        )
+    )

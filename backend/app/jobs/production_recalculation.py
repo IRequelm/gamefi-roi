@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -26,7 +27,7 @@ from app.jobs.recalculation import RecalculationRunResult, ScheduledRecalculator
 from app.risk.scoring import SnapshotScorer
 from app.sources.observations import Observation
 from app.storage.database import create_database_engine
-from app.storage.history import CalculationWindow, HistoryRepository, StrategySnapshot
+from app.storage.history import CalculationWindow, HistoryRepository, StrategyCalculationFailure, StrategySnapshot
 from app.storage.scoring import ScoringRepository
 from app.strategies.defi_kingdoms import DFK_JEWELER_STRATEGIES
 from app.strategies.farmers_world import FARMERS_WORLD_AXE_STRATEGIES
@@ -47,6 +48,22 @@ class ProductionRecalculationSummary:
     score_count: int
     new_snapshot_count: int = 0
     reused_snapshot_count: int = 0
+    failure_details: tuple["ProductionFailureDiagnostic", ...] = ()
+
+
+@dataclass(frozen=True)
+class ProductionFailureDiagnostic:
+    strategy_id: str
+    error_type: str
+    provider: str | None = None
+    operation: str | None = None
+    http_status: int | None = None
+
+
+_STRUCTURED_PROVIDER_FAILURE = re.compile(
+    r"^(?P<provider>[A-Za-z0-9_-]+)\.(?P<operation>[A-Za-z0-9_-]+) returned HTTP (?P<status>[1-5][0-9]{2})$"
+)
+_HTTP_STATUS_FAILURE = re.compile(r"\bHTTP (?P<status>[1-5][0-9]{2})\b")
 
 
 @dataclass(frozen=True)
@@ -165,6 +182,7 @@ def run_recalculation_tasks(
                 score_count=0,
                 new_snapshot_count=0,
                 reused_snapshot_count=0,
+                failure_details=(),
             )
 
         repository = HistoryRepository(lock.bind)
@@ -185,6 +203,7 @@ def run_recalculation_tasks(
             score_count=score_count,
             new_snapshot_count=new_snapshot_count,
             reused_snapshot_count=len(run.snapshots) - new_snapshot_count,
+            failure_details=tuple(_failure_diagnostic(failure) for failure in run.failures),
         )
 
 
@@ -295,6 +314,24 @@ def _log_run_result(run: RecalculationRunResult, *, score_count: int) -> None:
             failure.error_type,
             failure.error_message,
         )
+
+
+def _failure_diagnostic(failure: StrategyCalculationFailure) -> ProductionFailureDiagnostic:
+    structured = _STRUCTURED_PROVIDER_FAILURE.fullmatch(failure.error_message)
+    if structured:
+        return ProductionFailureDiagnostic(
+            strategy_id=failure.strategy_id,
+            error_type=failure.error_type,
+            provider=structured.group("provider"),
+            operation=structured.group("operation"),
+            http_status=int(structured.group("status")),
+        )
+    status = _HTTP_STATUS_FAILURE.search(failure.error_message)
+    return ProductionFailureDiagnostic(
+        strategy_id=failure.strategy_id,
+        error_type=failure.error_type,
+        http_status=int(status.group("status")) if status else None,
+    )
 
 
 def _summary_payload(summary: ProductionRecalculationSummary) -> dict[str, Any]:

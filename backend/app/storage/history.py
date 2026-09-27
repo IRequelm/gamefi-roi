@@ -20,6 +20,7 @@ from app.adapters.contract import ADAPTER_CONTRACT_VERSION, AdapterResultV1
 from app.engine.calculator import MODEL_VERSION
 from app.engine.money import Money
 from app.engine.results import BreakEvenMetric, RatioMetric, RoiResult
+from app.sources.errors import SourceError
 from app.sources.observations import Observation
 from app.storage.models import StrategyCalculationFailureRecord, StrategySnapshotRecord
 
@@ -219,7 +220,7 @@ class HistoryRepository:
                 intended_window_end=intended_window.end,
                 failed_at=failed_at,
                 error_type=type(error).__name__,
-                error_message=str(error),
+                error_message=_failure_error_message(error),
                 input_observation_ids_json=list(observation_ids),
                 input_observation_references_json=observation_references,
                 freshness_summary_json=freshness_summary,
@@ -573,6 +574,17 @@ def _failure_from_record(record: StrategyCalculationFailureRecord) -> StrategyCa
         freshness_summary=MappingProxyType(dict(record.freshness_summary_json)),
         created_at=_as_utc(record.created_at),
     )
+
+
+def _failure_error_message(error: Exception) -> str:
+    """Persist a useful, credential-safe summary for structured source errors."""
+    if isinstance(error, SourceError):
+        detail = error.detail
+        location = f"{detail.provider}.{detail.operation}"
+        if detail.status_code is not None:
+            return f"{location} returned HTTP {detail.status_code}"
+        return f"{location} failed ({type(error).__name__})"
+    return str(error)[:2048]
 
 
 def _json_safe_mapping(value: Mapping[str, Any]) -> dict[str, Any]:
