@@ -474,7 +474,7 @@ export function renderOpportunityHumanSummary(opportunity) {
     ["What you need", escapeHtml(access)],
     ["Cost and return", modeled ? `Modeled in ${escapeHtml(primaryStrategy.name)}; open the strategy for current capital, costs, and ROI.` : "No financial model is published yet; see the evidence gap below."],
     ["Cash-out", modeled ? "Realizable value is modeled inside the strategy snapshot where market data supports it." : "A payout route is not modeled yet; do not treat the reward as cash."],
-    ["Main catch", escapeHtml(opportunity.data_feasibility_status === "GO" ? "Review risk, confidence, and freshness before acting." : "Review the evidence and limitations before acting.")],
+    ["What is still unverified", escapeHtml(plainUnavailableReason(opportunity))],
   ];
   return renderHumanSummary("Plain-language summary", items);
 }

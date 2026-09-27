@@ -877,8 +877,8 @@ def _render_opportunity_human_summary(
             else escape("A payout route is not modeled yet; do not treat the reward as cash."),
         ),
         (
-            "Main catch",
-            escape("Review risk, confidence, and freshness before acting." if opportunity.data_feasibility_status == "GO" else "Review the evidence and limitations before acting."),
+            "What is still unverified",
+            escape(unavailable),
         ),
     ]
     return _render_human_summary("Plain-language summary", items)
