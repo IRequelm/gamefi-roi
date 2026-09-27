@@ -7,6 +7,8 @@ Project version: 0.1
 
 2026-09-27 17:26 UTC YouTube CTA audit: fresh GA4/Search Console/YouTube reads confirm the prior acquisition diagnosis. Most sampled recent YouTube descriptions direct viewers to the generic channel-profile link; the Acurast Short with the most views in the 28-day sample (60 views, 14 engaged views, 24 watched minutes) lacks a direct tagged link, while its long-form companion already has one and has no views yet. Added the measurable next experiment to `docs/GROWTH_OPERATING_PLAN.md`; no public channel metadata was changed in this check.
 
+2026-09-27 17:28 UTC distribution access check: the connected vidIQ account currently returns no authorized YouTube channels; its write endpoint therefore cannot update video descriptions yet. X has no connected analytics connector. No new channel permissions were granted and no public post or video metadata was changed.
+
 2026-09-09 distribution hardening: autonomous worker execution is restricted to the quality-gated Short handoff, the one-public-Short daily cap is process-locked, and an atomic worker heartbeat is emitted for operator health checks. The local Task Scheduler runner anchors execution at the repository root; re-registration still requires Windows task-registration permission.
 
 V2 finish-pass operational truth is maintained in `docs/MASTER_CONTROL.md`; this document remains the authoritative gate board and currently has no numbered gate active.
