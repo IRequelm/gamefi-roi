@@ -6,7 +6,7 @@
       "attribution_url": "https://gamcryp.com/opportunities/grass?utm_campaign=distribution-mvp&utm_content=x-grass-roi-unavailable-20260831&utm_medium=short&utm_source=youtube",
       "channel": "YOUTUBE_SHORT",
       "content_id": "x-grass-roi-unavailable-20260831",
-      "description": "A GamCryp Short explaining why points-based opportunities like Grass may be useful to track while ROI remains unavailable.\n\nFor the source and current assumptions, visit @GamCryp and tap the first link on the channel profile.",
+      "description": "A GamCryp Short explaining why points-based opportunities like Grass may be useful to track while ROI remains unavailable.\n\nExplore the source-backed opportunity: https://gamcryp.com/opportunities/grass?utm_campaign=distribution-mvp&utm_content=x-grass-roi-unavailable-20260831&utm_medium=short&utm_source=youtube",
       "generated_at": "2026-08-31T18:00:00Z",
       "narration_mode": "unknown",
       "narration_quality_status": "unknown",
@@ -16,7 +16,7 @@
           "url": "https://www.grass.io/"
         }
       ],
-      "package_checksum": "87f4812490fde9758e6a6d5aa86eb4644a6add2ef4cd3785b1388e118bbf922d",
+      "package_checksum": "f41789e9ae88f2a1a880c0b73c206f1e8219ed71b9a2a507043c83187c227c6d",
       "project": "Grass",
       "recommended_order": 1,
       "refreshability": null,
@@ -39,6 +39,6 @@
   "pending_asset": [],
   "publishable": [],
   "queue_version": "youtube-publish-queue-v1",
-  "source_batch_hash": "da7bf36802002f4570fc22fddef9c126f58095118680b544d0b1bf3c4f00a1f7",
+  "source_batch_hash": "06a7e31c7e0554d64d34511a1002d0c4f55d38e50b0058cf321593fe9061558e",
   "source_batch_id": "distribution-learning-batch-001"
 }
