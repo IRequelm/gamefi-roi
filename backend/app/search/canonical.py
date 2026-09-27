@@ -12,7 +12,14 @@ from sqlalchemy import Engine
 from app.api.v1.service import ApiDataService
 from app.config.settings import Settings
 from app.storage.history import HistoryRepository
-from app.strategies.catalog import CATALOG_REVIEWED_AT, get_opportunity, list_games, list_opportunities
+from app.strategies.catalog import (
+    CATALOG_REVIEWED_AT,
+    GUIDE_ONLY_INDEXABLE_OPPORTUNITY_IDS,
+    get_opportunity,
+    list_games,
+    list_opportunities,
+    primary_destination_for_opportunity,
+)
 
 CURATED_RANKING_MIN_RESULTS = 2
 
@@ -219,17 +226,18 @@ def canonical_page_inventory(engine: Engine) -> list[CanonicalPage]:
             for strategy_id in opportunity.strategy_ids
             if strategy_id in current_strategy_times
         ]
-        # Keep the sitemap focused on opportunity pages backed by at least one
-        # persisted strategy model. The full catalog remains browsable, but
-        # guide-only pages add little search value until their economics can be
-        # modeled from reproducible evidence.
-        if not strategy_times:
+        # Keep ordinary guide-only records out of the sitemap. A small explicit
+        # exception allows a current, evidence-rich guide to answer demonstrated
+        # search intent even when responsible financial ROI is unavailable.
+        if not strategy_times and opportunity.opportunity_id not in GUIDE_ONLY_INDEXABLE_OPPORTUNITY_IDS:
             continue
+        destination = primary_destination_for_opportunity(opportunity.opportunity_id)
+        reviewed_at = destination.reviewed_at if destination else CATALOG_REVIEWED_AT
         pages.append(
             CanonicalPage(
                 f"/opportunities/{opportunity.opportunity_id}",
-                max(strategy_times, default=CATALOG_REVIEWED_AT),
-                priority="0.7" if opportunity.strategy_ids else "0.55",
+                max(strategy_times, default=reviewed_at),
+                priority="0.7" if strategy_times else "0.6",
             )
         )
 

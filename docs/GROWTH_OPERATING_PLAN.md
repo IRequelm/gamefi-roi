@@ -12,6 +12,15 @@ Updated: 2026-09-27 (Europe/Istanbul)
 - Source checked: https://faq.yaps.kaito.ai/yap-faqs
 - Render web deploy `dep-dasfq9t9fdbs73d8i740` successfully made `14e0416` live. Fresh public-route verification returned the page and the guidance sections, and the source link now resolves to the current FAQ. No Cron or key setting was changed. `git diff --check` and Python syntax compilation passed; no tests were run.
 
+### Timpi node-rewards search landing page — 2026-09-27 14:40 Europe/Istanbul
+
+- Search Console's prior 28-day query sample sent eight impressions for `timpi node rewards` to the broad `/opportunities` page (average position about 61, zero clicks). The corresponding `/opportunities/timpi` route returned HTTP 404 before this change because Timpi was missing from the catalog.
+- Timpi's official Nodes repository now publishes a dated reward schedule: Collector 210 NTMPI/month and Guardian 375 NTMPI/month for Sep 2026–Aug 2027; Geo-Core 400 NTMPI/month for Sep 2026–Aug 2027; Synaptron Tier 1/2 800/1,000 NTMPI/month for Jan–Dec 2026. These are token quantities, not USD earnings. Its official July 2026 migration announcement says the destination chain has not yet been selected.
+- Added Timpi as a guide-only DePIN opportunity with its official node setup, reward schedule, and migration sources; explained the hardware/access-NFT and operating-cost requirements; kept ROI unavailable until current eligibility, realized payout, full costs, and a reproducible liquid exit can be verified. No token amount was converted into money.
+- Allowed this one guide-only page into indexing and the sitemap because it now answers observed search intent with current official evidence. The allowlist remains explicit and limited to Timpi; other unmodeled opportunity pages retain the existing noindex/sitemap rules. Click or ranking impact is not yet known.
+- Official sources: https://github.com/Timpi-official/Nodes/blob/main/Rewards/RewardStructures.md and https://timpi.io/ntmpi-consolidation-and-migration
+- Code is prepared for release. Validate the new public route, indexing directive, and sitemap entry after deployment. `git diff --check` and Python syntax compilation passed; no tests were run.
+
 ### Search Console recrawl and acquisition baseline — 2026-09-27 08:07 UTC
 
 - Resubmitted the live sitemap in the verified `gamcryp.com` Search Console property. Google confirmed “sitemap successfully submitted” and changed the submitted date to 27 Sep. Its last-read timestamp is still 26 Sep and its discovered count still says 34, so Google has not yet processed the 20-URL current sitemap; do not report crawl/index impact yet.

@@ -17,7 +17,11 @@ from app.strategies.splinterlands import (
 
 G14_REVIEWED_AT = datetime(2026, 8, 23, tzinfo=UTC)
 G18_REVIEWED_AT = datetime(2026, 8, 24, tzinfo=UTC)
+GROWTH_REVIEWED_AT = datetime(2026, 9, 27, tzinfo=UTC)
 CATALOG_REVIEWED_AT = G18_REVIEWED_AT
+# Evidence-backed, guide-only pages with observed search intent. Keep this
+# explicit allowlist small; ordinary unmodeled opportunity pages remain noindex.
+GUIDE_ONLY_INDEXABLE_OPPORTUNITY_IDS = frozenset({"timpi"})
 
 
 @dataclass(frozen=True)
@@ -279,6 +283,7 @@ def _destination(
     official_url: str,
     game_id: str | None = None,
     destination_type: str = "official_site",
+    reviewed_at: datetime = G18_REVIEWED_AT,
 ) -> OutboundDestination:
     return OutboundDestination(
         destination_id=f"dest-{slug}-v1",
@@ -298,7 +303,7 @@ def _destination(
         commercial_relationship="none",
         disclosure_text="Official outbound link. No affiliate relationship is configured for this destination.",
         source_reference=SourceReference("Official site", official_url),
-        reviewed_at=G18_REVIEWED_AT,
+        reviewed_at=reviewed_at,
         verification_status="verified",
         allowed_surfaces=("web", "api", "redirect"),
     )
@@ -556,6 +561,61 @@ OPPORTUNITIES = (
             how_to_exit_or_claim=(
                 "Check earnings and withdrawable balance in NodeUI at the documented local node address, typically http://[ip-of-your-node]:4449.",
                 "Unsettled earnings are automatically settled at 5 MYST or can be manually settled to the configured external wallet; blockchain fees still apply.",
+            ),
+        ),
+    ),
+    _opportunity(
+        opportunity_id="timpi",
+        opportunity_type="DEPIN_NODE",
+        name="Timpi Node Rewards",
+        status="candidate",
+        platforms=("desktop", "server", "hardware-node"),
+        chains=("neutaro",),
+        economy_types=("depin-node-rewards",),
+        reward_asset_or_points_type=("NTMPI",),
+        value_realization_status="unknown",
+        source_references=(
+            ("Official node reward structures", "https://github.com/Timpi-official/Nodes/blob/main/Rewards/RewardStructures.md"),
+            ("Official node setup and checkers", "https://github.com/Timpi-official/Nodes"),
+            ("Timpi DePIN overview", "https://timpi.io/depin"),
+            ("NTMPI migration announcement", "https://timpi.io/ntmpi-consolidation-and-migration"),
+        ),
+        data_feasibility_status="PARTIAL",
+        feasibility_summary=(
+            "Timpi publishes dated NTMPI reward schedules, but an operator-specific USD result "
+            "cannot be reproduced without current eligibility, realized payout, operating cost, "
+            "and an executable token exit route. Timpi has announced an NTMPI migration and "
+            "CEX delisting process; its July 2026 update says the destination chain is undecided."
+        ),
+        outbound_destination_slug="timpi-official",
+        guidance=OpportunityGuidance(
+            how_to_start=(
+                "Choose the Timpi node type first, then follow its current official setup and hardware guide.",
+                "Check the node's current software version and eligibility with Timpi's official checker before spending on hardware or an Access NFT.",
+            ),
+            what_you_need=(
+                "Most node types require a node Access NFT and compatible, continuously available hardware; requirements differ by node type.",
+                "Budget electricity, connectivity, maintenance, and the node purchase separately. This catalog has not verified your location-specific costs or the current Access NFT price.",
+            ),
+            how_you_earn=(
+                "Timpi's official schedule lists dated monthly NTMPI reference amounts: Collector 210 and Guardian 375 for Sep 2026–Aug 2027; Geo-Core 400 for Sep 2026–Aug 2027; Synaptron Tier 1/2 800/1,000 for Jan–Dec 2026.",
+                "These are token-denominated schedule figures, not USD earnings or a guarantee of an individual operator's realized payout. Confirm the current node version and eligibility with Timpi.",
+            ),
+            how_to_exit_or_claim=(
+                "Timpi has announced plans to remove NTMPI from its current centralized exchange listings and migrate the token; its July 2026 update says the destination chain has not yet been selected.",
+                "Confirm current reward claims, migration instructions, and executable market liquidity before valuing or buying into a node. GamCryp does not convert these schedule amounts into financial ROI.",
+            ),
+        ),
+        roi_unavailable=RoiUnavailableExplanation(
+            reason="Published token reward schedules do not establish a current, reproducible USD return or exit route for a specific node operator.",
+            missing_evidence=(
+                "Current per-node eligibility and realized payout evidence for the chosen node type.",
+                "Current Access NFT and hardware cost for the chosen setup, plus operating costs such as electricity and connectivity.",
+                "A current, executable NTMPI claim and sale route with observable liquidity while the announced migration is unresolved.",
+            ),
+            modeling_requirements=(
+                "Model a named node type and hardware scenario, with dated reward assumptions and an observed payout/uptime basis.",
+                "Use a verified NTMPI exit route and price, subtract complete operating and transaction costs, and show uncertainty rather than treating token counts as USD.",
             ),
         ),
     ),
@@ -1659,7 +1719,8 @@ OUTBOUND_DESTINATIONS = (
     _destination(opportunity_id="grass", opportunity_type="DEPIN_NODE", slug="grass-official", label="Open Grass", official_url="https://www.grass.io/"),
     _destination(opportunity_id="illuvium", opportunity_type="GAME", slug="illuvium-official", label="Open Illuvium", official_url="https://illuvium.io/"),
     _destination(opportunity_id="kaisar-network", opportunity_type="DEPIN_NODE", slug="kaisar-network-official", label="Open Kaisar Network", official_url="https://kaisar.io/"),
-    _destination(opportunity_id="kaito-yaps", opportunity_type="POINTS", slug="kaito-yaps-official", label="Open Kaito Yaps", official_url="https://yaps.kaito.ai/"),
+    _destination(opportunity_id="kaito-yaps", opportunity_type="POINTS", slug="kaito-yaps-official", label="Open Kaito Yaps", official_url="https://yaps.kaito.ai/", reviewed_at=GROWTH_REVIEWED_AT),
+    _destination(opportunity_id="timpi", opportunity_type="DEPIN_NODE", slug="timpi-official", label="Open Timpi Node Overview", official_url="https://timpi.io/depin", reviewed_at=GROWTH_REVIEWED_AT),
     _destination(opportunity_id="layer3", opportunity_type="POINTS", slug="layer3-official", label="Open Layer3", official_url="https://layer3.xyz/"),
     _destination(opportunity_id="nexus", opportunity_type="DEPIN_NODE", slug="nexus-official", label="Open Nexus", official_url="https://nexus.xyz/"),
     _destination(opportunity_id="nifty-island", opportunity_type="GAME", slug="nifty-island-official", label="Open Nifty Island", official_url="https://niftyisland.com/"),

@@ -32,7 +32,7 @@ from app.search.canonical import (
     published_curated_ranking_pages,
 )
 from app.storage.monetization import MonetizationRepository, normalize_acquisition_channel
-from app.strategies.catalog import CATALOG_REVIEWED_AT
+from app.strategies.catalog import CATALOG_REVIEWED_AT, GUIDE_ONLY_INDEXABLE_OPPORTUNITY_IDS
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 FRONTEND_ASSETS = PROJECT_ROOT / "frontend" / "assets"
@@ -409,7 +409,11 @@ def opportunity_page(
             if fresh_strategies
             else snapshot.calculated_at if snapshot is not None else _max_opportunity_lastmod([opportunity])
         ),
-        robots="index,follow" if fresh_strategies else "noindex,follow",
+        robots=(
+            "index,follow"
+            if fresh_strategies or opportunity.opportunity_id in GUIDE_ONLY_INDEXABLE_OPPORTUNITY_IDS
+            else "noindex,follow"
+        ),
     )
 
 
