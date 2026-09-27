@@ -10,6 +10,7 @@ Updated: 2026-09-27 (Europe/Istanbul)
 - Updated the catalog to link the current official Yaps FAQs and added source-based practical guidance: relevance/originality and reputation-weighted engagement matter; scoring windows roll; Yaps are non-transferable points without a fixed cash conversion; partner rewards may be distributed to selected wallets but are conditional and not Yaps cash value.
 - Kept financial ROI unavailable. This should improve answer quality and source trust for a narrow search landing page; it is not evidence that clicks or acquisition will rise. Verify the deployed route after release and compare Search Console clicks/impressions once Google refreshes the page.
 - Source checked: https://faq.yaps.kaito.ai/yap-faqs
+- Render web deploy `dep-dasfq9t9fdbs73d8i740` successfully made `14e0416` live. Fresh public-route verification returned the page and the guidance sections, and the source link now resolves to the current FAQ. No Cron or key setting was changed. `git diff --check` and Python syntax compilation passed; no tests were run.
 
 ### Search Console recrawl and acquisition baseline — 2026-09-27 08:07 UTC
 
