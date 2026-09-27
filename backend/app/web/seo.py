@@ -359,7 +359,12 @@ def opportunity_page(
     settings: Settings,
     request: Request,
 ) -> SeoPage:
-    strategy = opportunity.strategies[0] if opportunity.strategies else None
+    fresh_strategies = [
+        item
+        for item in opportunity.strategies
+        if item.latest_snapshot is not None and item.latest_snapshot.freshness.overall_status == "fresh"
+    ]
+    strategy = (fresh_strategies or opportunity.strategies or [None])[0]
     snapshot = strategy.latest_snapshot if strategy else None
     answer = _opportunity_answer(opportunity, strategy, snapshot)
     title = f"{opportunity.name} ROI, Risk & Evidence | GamCryp"
@@ -399,12 +404,22 @@ def opportunity_page(
                 [("/", "Home"), ("/opportunities", "Opportunities"), (f"/opportunities/{opportunity.opportunity_id}", opportunity.name)],
             ),
         ),
-        lastmod=snapshot.calculated_at if snapshot is not None else _max_opportunity_lastmod([opportunity]),
+        lastmod=(
+            max(item.latest_snapshot.calculated_at for item in fresh_strategies)
+            if fresh_strategies
+            else snapshot.calculated_at if snapshot is not None else _max_opportunity_lastmod([opportunity])
+        ),
+        robots="index,follow" if fresh_strategies else "noindex,follow",
     )
 
 
 def game_page(game, *, settings: Settings, request: Request) -> SeoPage:
-    first_strategy = game.strategies[0] if game.strategies else None
+    fresh_strategies = [
+        item
+        for item in game.strategies
+        if item.latest_snapshot is not None and item.latest_snapshot.freshness.overall_status == "fresh"
+    ]
+    first_strategy = (fresh_strategies or game.strategies or [None])[0]
     snapshot = first_strategy.latest_snapshot if first_strategy else None
     description = (
         _ranking_answer(snapshot, first_strategy)
@@ -437,6 +452,11 @@ def game_page(game, *, settings: Settings, request: Request) -> SeoPage:
             _breadcrumb_json(settings, [("/", "Home"), ("/opportunities", "Opportunities"), (f"/games/{game.game_id}", game.name)]),
         ),
         lastmod=snapshot.calculated_at if snapshot is not None else None,
+        robots=(
+            "index,follow"
+            if fresh_strategies
+            else "noindex,follow"
+        ),
     )
 
 
@@ -493,6 +513,11 @@ def strategy_page(
             ),
         ),
         lastmod=snapshot.calculated_at if snapshot is not None else None,
+        robots=(
+            "index,follow"
+            if snapshot is not None and snapshot.freshness.overall_status == "fresh"
+            else "noindex,follow"
+        ),
     )
 
 

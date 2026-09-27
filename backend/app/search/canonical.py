@@ -12,7 +12,7 @@ from sqlalchemy import Engine
 from app.api.v1.service import ApiDataService
 from app.config.settings import Settings
 from app.storage.history import HistoryRepository
-from app.strategies.catalog import CATALOG_REVIEWED_AT, get_opportunity, list_games, list_opportunities, list_strategies
+from app.strategies.catalog import CATALOG_REVIEWED_AT, get_opportunity, list_games, list_opportunities
 
 CURATED_RANKING_MIN_RESULTS = 2
 
@@ -38,7 +38,7 @@ class CanonicalPage:
     path: str
     lastmod: datetime
     priority: str = "0.6"
-    changefreq: str = "hourly"
+    changefreq: str = "daily"
 
     def absolute_url(self, settings: Settings) -> str:
         return canonical_url(settings, self.path)
@@ -204,11 +204,20 @@ def canonical_page_inventory(engine: Engine) -> list[CanonicalPage]:
         CanonicalPage("/methodology", CATALOG_REVIEWED_AT, priority="0.7", changefreq="weekly"),
     ]
 
+    service = ApiDataService(engine)
+    strategies, _ = service.strategies_page(limit=1000, offset=0)
+    current_strategy_times = {
+        strategy.strategy_id: strategy.latest_snapshot.calculated_at
+        for strategy in strategies
+        if strategy.latest_snapshot is not None
+        and strategy.latest_snapshot.freshness.overall_status == "fresh"
+    }
+
     for opportunity in list_opportunities():
         strategy_times = [
-            latest_by_strategy[strategy_id].calculated_at
+            current_strategy_times[strategy_id]
             for strategy_id in opportunity.strategy_ids
-            if strategy_id in latest_by_strategy
+            if strategy_id in current_strategy_times
         ]
         # Keep the sitemap focused on opportunity pages backed by at least one
         # persisted strategy model. The full catalog remains browsable, but
@@ -224,19 +233,18 @@ def canonical_page_inventory(engine: Engine) -> list[CanonicalPage]:
             )
         )
 
-    for strategy in list_strategies():
-        snapshot = latest_by_strategy.get(strategy.strategy_id)
-        if snapshot is None:
+    for strategy in strategies:
+        snapshot = strategy.latest_snapshot
+        if snapshot is None or snapshot.freshness.overall_status != "fresh":
             continue
         pages.append(
             CanonicalPage(
                 f"/strategies/{strategy.strategy_id}",
-                snapshot.calculated_at if snapshot is not None else CATALOG_REVIEWED_AT,
+                snapshot.calculated_at,
                 priority="0.75",
             )
         )
 
-    service = ApiDataService(engine)
     for page in CURATED_RANKING_PAGES:
         rankings = curated_rankings_for_page(service, page)
         if is_curated_ranking_page_publishable(page, rankings):

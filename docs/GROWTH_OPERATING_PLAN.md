@@ -4,6 +4,14 @@ Status: IN PROGRESS — homepage and catalog freshness wording are live. Eligibl
 
 Updated: 2026-09-27 (Europe/Istanbul)
 
+### Cron failure diagnosis and freshness-aware SEO patch — 2026-09-27 07:57 UTC
+
+- Render Cron log search for `provider_failure` confirms CoinGecko `get_token_prices` requests returned both HTTP 401 and HTTP 429 in scheduled runs from 03:47 through 10:47 Europe/Istanbul (00:47–07:47 UTC). The exact logs identify authentication and rate-limit responses; because both occur, do not reduce the diagnosis to only one cause. The user explicitly declined changing the Render CoinGecko key; no secret was read or modified.
+- GitHub Actions scheduled workflow `36300672548` (06:38 UTC) and `36283152098` (00:39 UTC) completed successfully against the same production database. Latest direct ops read at 07:57 UTC reports last success 06:38:26Z; seven of seven refresh-eligible models still fresh; eight strategies stale/outside the current refresh set; 14 unresolved historical failures; overall `degraded`. The scheduled GH gaps mean this is not yet proof of dependable hourly recovery.
+- Live Search Console / sitemap audit had found 8 old strategy pages included among 34 sitemap URLs, plus 7 overlapping curated ranking pages; 33 entries advertised `hourly` change frequency although `lastmod` has date-level precision. This weakens crawl focus and keeps old modeled claims discoverable.
+- Patched crawl publication: sitemap strategy/opportunity URLs now require a currently fresh snapshot; strategy/opportunity/game detail pages without a fresh strategy snapshot emit `noindex,follow`; opportunity/game answer selection prefers a fresh strategy if one exists; default sitemap `changefreq` is now `daily` (methodology remains weekly). Stale pages remain reachable for historical context. This does not fabricate fresher calculations or suppress negative fresh models.
+- Code is prepared for release; production sitemap/meta verification remains pending deployment. `git diff --check` passed; no tests were run.
+
 ### Production deployment and Cron status — 2026-09-27 00:13 UTC
 
 - Render manual deploy `dep-das5trnpn0mc73ev6lm0` completed successfully from commit `5a24980` (“fix: show activity assumptions in rendered pages”). The primary production URL is live.
