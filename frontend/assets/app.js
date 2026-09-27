@@ -734,7 +734,7 @@ export function renderRankingsPage(rankings, options = {}) {
         <p class="lede">Ranked by modeled 30-day ROI, then confidence, risk, and recency. Brand or referral metadata never changes this order.</p>
       </section>
       ${renderRankingsAnswerBlock(rankings, { title })}
-      ${renderRankingsTable(rankings)}
+      ${renderRankingsTable(rankings, { enableComparison: true })}
       ${renderCuratedRankingLinks()}
       ${renderRecordedModels(options.recordedModels || [])}
       ${renderSponsoredPlacements(rankings.sponsored_placements || [])}
@@ -1024,17 +1024,116 @@ export function renderRankingsTable(rankings, options = {}) {
   const countLabel = groups
     ? `${groups.length} opportunities · ${items.length} strategies`
     : `${rankings.page?.total ?? items.length} strategies`;
+  const compareMarkup = options.enableComparison && !groups
+    ? `
+      <section class="ranking-compare-panel" data-strategy-comparison hidden aria-live="polite">
+        <div class="ranking-compare-head">
+          <div><h3>Compare selected strategies</h3><p class="muted" data-compare-status>Select at least two strategies to compare.</p></div>
+          <button class="secondary-button" type="button" data-compare-clear>Clear selection</button>
+        </div>
+        <div class="table-wrap ranking-compare-table" data-compare-table></div>
+        <p class="muted ranking-context">Source-backed model values are shown as recorded. Missing activity-time measurements remain labeled.</p>
+      </section>
+    `
+    : "";
+  const finalCardMarkup = groups
+    ? cardMarkup
+    : items.map((item) => renderRankingCard(item, { ...options, showCompare: Boolean(options.enableComparison) })).join("");
   return `
     <section class="section-panel ranking-section">
       <div class="section-header">
         <h2>${escapeHtml(options.heading || (options.compact ? "Current matches" : "Ranked strategies"))}</h2>
         <span class="badge info">${escapeHtml(countLabel)}</span>
       </div>
+      ${compareMarkup}
       <div class="ranking-card-grid">
-        ${cardMarkup}
+        ${finalCardMarkup}
       </div>
     </section>
   `;
+}
+
+export function bindStrategyComparison(root) {
+  const panel = root?.querySelector("[data-strategy-comparison]");
+  if (!panel || panel.dataset.bound === "true") return false;
+  const status = panel.querySelector("[data-compare-status]");
+  const table = panel.querySelector("[data-compare-table]");
+  const toggles = root.querySelectorAll("[data-compare-toggle]");
+  const selectedStrategies = () => Array.from(toggles)
+    .filter((toggle) => toggle.checked)
+    .map((toggle) => {
+      try {
+        return JSON.parse(toggle.closest("[data-compare-metrics]")?.dataset.compareMetrics || "null");
+      } catch {
+        return null;
+      }
+    })
+    .filter(Boolean);
+
+  const render = (limitReached = false) => {
+    const selected = selectedStrategies();
+    panel.hidden = selected.length === 0;
+    for (const toggle of toggles) {
+      toggle.disabled = selected.length >= 3 && !toggle.checked;
+      toggle.closest(".compare-choice")?.classList.toggle("compare-disabled", toggle.disabled);
+    }
+    if (!selected.length) {
+      table.innerHTML = "";
+      return;
+    }
+    status.textContent = limitReached
+      ? "Compare up to three strategies at a time."
+      : selected.length < 2
+        ? "Select one more strategy to compare the models side by side."
+        : `${selected.length} strategies selected · compare the same recorded metrics below.`;
+    const rows = [
+      ["Opportunity", (item) => item.opportunity],
+      ["Starting capital", (item) => item.capital],
+      ["Modeled net/day", (item) => item.netPerDay],
+      ["Modeled 30-day ROI", (item) => item.roi30d],
+      ["Modeled break-even", (item) => item.breakEven],
+      ["Economic risk", (item) => item.risk],
+      ["Model confidence", (item) => item.confidence],
+      ["Activity / effort", (item) => item.effort],
+      ["Last calculated", (item) => item.updated],
+    ];
+    table.innerHTML = `
+      <table>
+        <thead><tr><th scope="col">Metric</th>${selected.map((item) => `<th scope="col"><span class="compare-rank">#${escapeHtml(String(item.rank))}</span><a class="strategy-link" href="/strategies/${encodeURIComponent(item.strategyId)}" data-link>${escapeHtml(item.name)}</a></th>`).join("")}</tr></thead>
+        <tbody>${rows.map(([label, getValue]) => `<tr><th scope="row">${escapeHtml(label)}</th>${selected.map((item) => `<td>${escapeHtml(getValue(item) || "Unavailable")}</td>`).join("")}</tr>`).join("")}</tbody>
+      </table>
+    `;
+  };
+
+  panel.dataset.bound = "true";
+  root.addEventListener("change", (event) => {
+    if (!event.target.matches("[data-compare-toggle]")) return;
+    let limitReached = false;
+    if (event.target.checked && selectedStrategies().length > 3) {
+      event.target.checked = false;
+      limitReached = true;
+    }
+    if (event.target.checked) {
+      const selected = selectedStrategies();
+      const latestSelected = selected[selected.length - 1];
+      if (latestSelected) {
+        trackProductAnalyticsEvent("internal_compare_or_next_click", {
+          strategy_id: latestSelected.strategyId,
+          ranking_slug: "rankings",
+          source_page: "rankings",
+          placement: "strategy_comparison",
+          target_url_kind: "strategy_comparison",
+          page_path: window.location.pathname,
+        });
+      }
+    }
+    render(limitReached);
+  });
+  panel.querySelector("[data-compare-clear]")?.addEventListener("click", () => {
+    for (const toggle of toggles) toggle.checked = false;
+    render();
+  });
+  return true;
 }
 
 function groupRankingItemsByOpportunity(items) {
@@ -1098,8 +1197,22 @@ export function renderRankingCard(item, options = {}) {
     sourcePage: rankingSlug,
     placement: "strategy_card",
   });
+  const compareMetrics = options.showCompare ? {
+    strategyId: strategy.strategy_id,
+    name: strategy.name,
+    opportunity: snapshot.game_name,
+    rank: item.rank,
+    capital: textFromHtml(formatMoney(snapshot.capital.total_capital)),
+    netPerDay: textFromHtml(formatMoney(snapshot.earnings.net_earnings_day, { perDay: true })),
+    roi30d: textFromHtml(formatRatio(snapshot.roi.roi_total_30d)),
+    breakEven: textFromHtml(formatBreakEven(snapshot.roi.break_even)),
+    risk: scoreText(snapshot.risk),
+    confidence: scoreText(snapshot.confidence),
+    effort: strategy.effort_summary || "Required time and active effort are not quantified for this strategy.",
+    updated: formatUpdatedAge(snapshot.calculated_at),
+  } : null;
   return `
-    <article class="ranking-card">
+    <article class="ranking-card" ${compareMetrics ? `data-compare-metrics="${escapeHtml(JSON.stringify(compareMetrics))}"` : ""}>
       <div class="ranking-card-head">
         <span class="rank-chip">#${escapeHtml(String(item.rank))}</span>
         <div>
@@ -1107,6 +1220,7 @@ export function renderRankingCard(item, options = {}) {
           <h3><a class="strategy-link" href="/strategies/${encodeURIComponent(strategy.strategy_id)}" data-link${strategyClickAnalytics}>${escapeHtml(strategy.name)}</a></h3>
         </div>
       </div>
+      ${compareMetrics ? `<label class="compare-choice"><input type="checkbox" data-compare-toggle aria-label="Compare ${escapeHtml(strategy.name)}"><span>Compare this strategy</span></label>` : ""}
       <div class="card-metrics">
         ${metricItem("Starting capital", formatMoney(snapshot.capital.total_capital))}
         ${metricItem("Net earning/day", formatMoney(snapshot.earnings.net_earnings_day, { perDay: true }))}
@@ -3131,6 +3245,7 @@ async function renderCurrentRoute() {
         ? []
         : await loadRecordedModelsIfNoCurrentRankings(rankings);
       root.innerHTML = renderRankingsPage(rankings, { recordedModels });
+      bindStrategyComparison(root);
       routeAnalyticsContext = rankingAnalyticsContext(rankings, "rankings");
     } else if (CURATED_RANKING_FILTERS[path]) {
       const query = curatedRankingQuery(path, window.location.search);
@@ -3148,6 +3263,7 @@ async function renderCurrentRoute() {
         title: CURATED_RANKING_TITLES[path] || "Curated organic rankings",
         filters: CURATED_RANKING_FILTERS[path],
       });
+      bindStrategyComparison(root);
       routeAnalyticsContext = rankingAnalyticsContext(visibleRankings, rankingSlugForPath(path));
     } else if (path === "/opportunities") {
       const [opportunities, rankings] = await Promise.all([loadOpportunityCatalog(), apiGet("/rankings")]);

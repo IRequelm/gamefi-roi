@@ -794,6 +794,76 @@ tr:last-child td {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 430px), 1fr));
 }
 
+.ranking-compare-panel {
+  margin: 0 0 18px;
+  border: 1px solid rgba(32, 246, 255, 0.24);
+  border-radius: 12px;
+  background: rgba(7, 17, 31, 0.78);
+  padding: 14px;
+}
+
+.ranking-compare-panel[hidden] {
+  display: none;
+}
+
+.ranking-compare-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.ranking-compare-head h3 {
+  margin: 0;
+}
+
+.ranking-compare-head p {
+  margin: 4px 0 0;
+}
+
+.ranking-compare-table table {
+  min-width: 640px;
+}
+
+.ranking-compare-table th:first-child {
+  min-width: 150px;
+}
+
+.compare-rank {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--cyan);
+}
+
+.compare-choice {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  margin: 0 0 10px;
+  border: 1px solid rgba(32, 246, 255, 0.2);
+  border-radius: 8px;
+  background: rgba(32, 246, 255, 0.06);
+  color: var(--muted-strong);
+  cursor: pointer;
+  padding: 7px 10px;
+  font-size: 0.82rem;
+  font-weight: 750;
+}
+
+.compare-choice input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--cyan);
+}
+
+.compare-choice.compare-disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .opportunity-grid {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
 }
