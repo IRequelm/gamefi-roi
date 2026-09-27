@@ -19,3 +19,7 @@ Keep `akash-provider` as the highest-priority research candidate, but do not add
 ## Admission outcome
 
 No new `MODELED` opportunity is admitted in this pass. This is an intentional evidence gate, not a provider failure. Akash remains eligible for guide content and research queue priority. Promotion requires a reproducible observation set for entry/operating costs, contribution or utilization, reward quantity, and executable/realizable exit value.
+
+## Akash feasibility recheck — 2026-09-27
+
+The official [Providers API](https://akash.network/docs/api-documentation/rest-api/providers-api/) offers a public provider directory with `isOnline` and `lastCheckDate`; it does not provide the provider's actual lease utilization, costs, or earnings. Akash's [provider-console Earnings API announcement](https://akash.network/blog/provider-console-earnings-api/) describes provider-specific earnings data and requires an API key scoped to provider-specific actions. Public marketplace bids and advertised pricing cannot establish any one operator's realized lease fill or operating costs. Akash therefore remains a research/guide candidate rather than a reproducible generic ROI model. Do not add a speculative earning rate or require a private provider key for the public product; revisit only with an authorized operator data source or reproducible public aggregate inputs plus explicit scenario assumptions.
