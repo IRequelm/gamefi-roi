@@ -6,7 +6,7 @@ import hashlib
 import json
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict
 
@@ -34,7 +34,8 @@ class YouTubeQueueItem(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     content_id: str
-    channel: str = "YOUTUBE_SHORT"
+    channel: Literal["YOUTUBE_SHORT", "YOUTUBE_LONG_FORM"] = "YOUTUBE_SHORT"
+    youtube_format: Literal["short", "long_form"] = "short"
     project: str
     title: str
     description: str
@@ -98,6 +99,8 @@ def youtube_package_checksum(pack: ContentPackLite) -> str:
         "source_snapshot_hash": pack.source.source_snapshot_hash,
         "title": pack.editorial.youtube_title,
     }
+    if pack.editorial.youtube_format != "short":
+        payload["youtube_format"] = pack.editorial.youtube_format
     # Preserve the checksum of legacy packs that predate the narration policy;
     # explicit quality metadata is included once a producer records it.
     if (
@@ -185,6 +188,8 @@ def _queue_item(pack: ContentPackLite, order: int, generated_at: str) -> YouTube
     }[status]
     return YouTubeQueueItem(
         content_id=pack.content_id,
+        channel="YOUTUBE_LONG_FORM" if pack.editorial.youtube_format == "long_form" else "YOUTUBE_SHORT",
+        youtube_format=pack.editorial.youtube_format,
         project=pack.facts.project_name,
         title=pack.editorial.youtube_title or "",
         description=_final_description(pack),

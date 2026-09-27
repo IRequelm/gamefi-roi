@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Callable, Literal
+from urllib.parse import parse_qs, urlparse
 
 from pydantic import BaseModel, ConfigDict
 
@@ -59,8 +60,10 @@ class YouTubePackagePreview(BaseModel):
 
     content_id: str
     project: str
+    channel: Literal["YOUTUBE_SHORT", "YOUTUBE_LONG_FORM"]
     readiness: ContentReadiness
     approval_state: str
+    youtube_format: Literal["short", "long_form"]
     title: str
     description: str
     short_script: str
@@ -205,8 +208,10 @@ class YouTubeDistributionPublisher:
         return YouTubePackagePreview(
             content_id=item.content_id,
             project=item.project,
+            channel=item.channel,
             readiness=item.status,
             approval_state=approval_state,
+            youtube_format=item.youtube_format,
             title=item.title,
             description=item.description,
             short_script=item.short_script,
@@ -329,9 +334,9 @@ class YouTubeDistributionPublisher:
             made_for_kids=made_for_kids,
             source_snapshot_id=preview.source_snapshot_id,
             source_snapshot_timestamp=timestamp,
-            campaign_source="youtube",
-            campaign_medium="short",
-            campaign_campaign="distribution-mvp",
+            campaign_source=_utm_parameter(preview.attribution_url, "utm_source") or "youtube",
+            campaign_medium=_utm_parameter(preview.attribution_url, "utm_medium") or ("video" if preview.youtube_format == "long_form" else "short"),
+            campaign_campaign=_utm_parameter(preview.attribution_url, "utm_campaign") or "distribution-mvp",
         )
 
     def _load_context(self) -> tuple[YouTubePublishQueue, tuple[ContentPackLite, ...]]:
@@ -364,6 +369,11 @@ def _find_item(queue: YouTubePublishQueue, content_id: str) -> YouTubeQueueItem:
         return queue.find(content_id)
     except KeyError as exc:
         raise YouTubeDistributionError(f"Unknown YouTube content_id: {content_id}") from exc
+
+
+def _utm_parameter(url: str, name: str) -> str | None:
+    values = parse_qs(urlparse(url).query).get(name)
+    return values[0] if values else None
 
 
 def _find_pack(packs: tuple[ContentPackLite, ...], content_id: str) -> ContentPackLite:

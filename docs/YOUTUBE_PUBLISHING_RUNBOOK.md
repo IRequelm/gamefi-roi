@@ -111,6 +111,10 @@ Changing the Content Pack, title, description, script, attribution URL, source s
 
 The queue records title, final description, script, attribution URL, snapshot/provenance references, refreshability, asset state, approval state, package checksum, and upload state. Actual rendered videos and thumbnails are not committed.
 
+Editorial Content Packs declare `youtube_format` as `short` (default for legacy packs) or `long_form`. Queue items preserve this distinction and use channel `YOUTUBE_SHORT` or `YOUTUBE_LONG_FORM`; package preview exposes both fields. Package checksums retain their prior value for legacy Short packs and include the format when a pack explicitly declares `long_form`.
+
+For either format, manifest attribution uses the source, medium, and campaign in the package's tagged landing URL when present. Defaults are `youtube`, `short` or `video`, and `distribution-mvp`. This keeps a long-form video from being attributed to the Shorts campaign. A `long_form` label is metadata only: it does not waive readiness, exact-asset creative approval, or verification requirements. The autonomous worker remains the quality-gated Short path; long-form publication is an operator action through the explicit publisher flow.
+
 ## Queue And Preview
 
 Rebuild only from the canonical accepted Content Pack artifact:

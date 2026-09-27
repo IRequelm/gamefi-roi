@@ -136,6 +136,7 @@ class EditorialContent(BaseModel):
     youtube_title: str | None = None
     youtube_short_script: str | None = None
     youtube_description: str | None = None
+    youtube_format: Literal["short", "long_form"] = "short"
     visual_plan: list[str] = Field(default_factory=list)
     thumbnail_text: str | None = None
     disclosure: str

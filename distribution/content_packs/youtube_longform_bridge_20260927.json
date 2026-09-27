@@ -1,0 +1,103 @@
+{
+  "batch_id": "youtube-acurast-longform-bridge-20260927",
+  "content_pack_version": "content-pack-lite-v1",
+  "generated_at": "2026-09-27T13:06:19.333532Z",
+  "packs": [
+    {
+      "claims": [],
+      "content_id": "youtube-acurast-three-checks-longform-20260927",
+      "content_pack_version": "content-pack-lite-v1",
+      "created_at": "2026-09-27T13:06:19.333532Z",
+      "distribution": {
+        "canonical_site_url": "https://gamcryp.com/opportunities/acurast-compute-provider",
+        "content_id": "youtube-acurast-three-checks-longform-20260927",
+        "x_utm_url": "https://gamcryp.com/opportunities/acurast-compute-provider?utm_source=x&utm_medium=social&utm_campaign=acurast_short_bridge_20260927&utm_content=longform_description",
+        "youtube_utm_url": "https://gamcryp.com/opportunities/acurast-compute-provider?utm_source=youtube&utm_medium=video&utm_campaign=acurast_short_bridge_20260927&utm_content=longform_description"
+      },
+      "editorial": {
+        "content_angle": "Evidence-led Acurast device and reward explainer",
+        "core_message": "Acurast documents device paths and network reward pools, but those pool totals do not establish a personal payout. GamCryp keeps ROI unavailable until provider-level earnings, costs, and exit value can be reproduced.",
+        "disclosure": "Educational evidence summary. No guaranteed income or investment advice. Verify current official requirements and assumptions.",
+        "hook": "Can your phone earn ACU? Check the device path, reward allocation, and net value evidence first.",
+        "narration_mode": "music_only",
+        "narration_quality_status": "unknown",
+        "readiness": "YELLOW",
+        "thumbnail_text": "CAN YOUR PHONE EARN ACU?",
+        "visual_plan": [
+          "Opening: three checks before setup; distinguish a reward pool from personal earnings.",
+          "Device: compare Processor Lite and Processor Core using official requirements.",
+          "Rewards: identify Base Benchmark and Staked Compute pools as shared network allocations.",
+          "Net value: list operating costs, realized reward history, and token exit route.",
+          "Closing: show GamCryp guide-only and ROI not measurable state with a tagged site route."
+        ],
+        "voice_model": null,
+        "voice_provider": null,
+        "x_post": "Acurast has documented phone-provider paths and network-wide reward pools. Those pool totals are not a personal payout. Check device requirements, operating costs, and exit evidence before estimating net value.",
+        "youtube_description": "Can a phone earn ACU on Acurast? Check device requirements, how the official reward pools are allocated, and what must be known before estimating take-home value.\n\nReview the current GamCryp evidence and model status:\nhttps://gamcryp.com/opportunities/acurast-compute-provider?utm_source=youtube&utm_medium=video&utm_campaign=acurast_short_bridge_20260927&utm_content=longform_description\n\nOfficial Acurast sources:\nhttps://docs.acurast.com/processors/become-compute-provider/\nhttps://docs.acurast.com/processors/rewards/\n\nThis text-led explainer uses on-screen text and original instrumental music; it has no voiceover. Network pool amounts are not individual payout estimates. GamCryp reports evidence limitations, not guaranteed returns or investment advice. Check current official terms before acting.",
+        "youtube_format": "long_form",
+        "youtube_short_script": "Before setup, check the device path, reward allocation, and net value. Lite runs on Android or iOS in edge-times on an everyday phone; Core is Android-only and requires a dedicated, factory-reset device. Official docs describe shared Base Benchmark and Staked Compute pools; these are network-wide amounts, not a provider payout. Device score, matching, uptime, stake, costs, liquidity, and exit fees affect realizable value. GamCryp currently marks Acurast ROI not measurable because per-provider earnings and complete cost/exit assumptions are not verified. Review the evidence page and official sources below. No guaranteed income or investment advice.",
+        "youtube_title": "Can Your Phone Earn ACU? 3 Checks Before Setup"
+      },
+      "facts": {
+        "break_even": null,
+        "capital": null,
+        "confidence": null,
+        "freshness": {
+          "display": "Guide-only; ROI not measurable",
+          "reason": null,
+          "source_path": "opportunity.data_feasibility_status",
+          "status": "available",
+          "unit": null,
+          "value": "PARTIAL"
+        },
+        "major_catch": "Provider-specific realized rewards, power/device costs, and executable exit assumptions are not verified for an individual setup.",
+        "modeled_return": {
+          "display": "Not measurable",
+          "reason": "No verified per-provider earning rate, complete cost basis, or reproducible exit value for a defined device scenario.",
+          "source_path": "opportunity.data_feasibility_status",
+          "status": "unavailable",
+          "unit": null,
+          "value": null
+        },
+        "net_earnings": null,
+        "opportunity_type": "DEPIN_NODE",
+        "project_name": "Acurast Compute Provider",
+        "reward_source": "Official Acurast Processor reward rules; epoch amounts are network-wide pools, not an individual payout.",
+        "risk": null
+      },
+      "source": {
+        "adapter_contract_version": null,
+        "model_version": null,
+        "official_source_refs": [
+          {
+            "label": "Acurast Compute Provider setup",
+            "url": "https://docs.acurast.com/processors/become-compute-provider/"
+          },
+          {
+            "label": "Acurast Processor rewards",
+            "url": "https://docs.acurast.com/processors/rewards/"
+          },
+          {
+            "label": "GamCryp Acurast evidence page",
+            "url": "https://gamcryp.com/opportunities/acurast-compute-provider"
+          }
+        ],
+        "opportunity_id": "acurast-compute-provider",
+        "refreshability": null,
+        "scoring_methodology_version": null,
+        "snapshot_id": null,
+        "snapshot_timestamp": null,
+        "source_snapshot_hash": "366271e6606c6aedccdae2cbcdeccec71818033c6d226bb173353f4dda0b2be2",
+        "strategy_id": null,
+        "strategy_version": null
+      }
+    }
+  ],
+  "readiness_counts": {
+    "GREEN": 0,
+    "RED": 0,
+    "YELLOW": 1
+  },
+  "source_dataset": "current Acurast opportunity metadata and dated official Acurast documentation"
+}
+

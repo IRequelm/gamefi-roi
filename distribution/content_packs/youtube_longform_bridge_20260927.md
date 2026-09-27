@@ -1,12 +1,12 @@
 # YouTube long-form bridge experiment
 
-**State:** Rendered locally (90.048 s, 1920×1080); awaiting human creative review before any upload.
+**State:** Published publicly after exact creative review. Video ID `ve5GT3A6jj8`; Studio later confirmed processing-available selection and saved the related-video assignment on Short `nw04V-8NAtI`.
 **Channel:** YouTube, English.
 **Goal:** Test whether the channel's strongest recent setup Short can send viewers through a useful, clickable related video to an attributable site visit.
 **Format:** 90-second landscape, text-led explainer with animated evidence cards and a quiet, locally generated instrumental bed. It has no spoken narration; no paid narration was generated. The MP4 is `video/remotion/out/gamcryp-acurast-bridge-longform.mp4`.
 **Working title:** Can Your Phone Earn ACU? 3 Checks Before Setup
-**Related Short candidate:** “Acurast Compute Provider: Depin Setup” (`nw04V-8NAtI`), the highest-view returned video in the 2026-09-27 28-day YouTube report (60 views, 14 engaged views). Verify its latest related-video assignment in Studio before changing it.
-**Landing URL:** `https://gamcryp.com/opportunities/acurast-compute-provider?utm_source=youtube&utm_medium=video&utm_campaign=acurast_short_bridge_20260927&utm_content=three_checks_longform`
+**Related Short:** “Acurast Compute Provider: Depin Setup” (`nw04V-8NAtI`), now linked to this video as its related video. Studio showed “All changes saved.”
+**Landing URL:** `https://gamcryp.com/opportunities/acurast-compute-provider?utm_source=youtube&utm_medium=video&utm_campaign=acurast_short_bridge_20260927&utm_content=longform_description`
 **Primary sources:** [Acurast Compute Provider setup](https://docs.acurast.com/processors/become-compute-provider/), [Acurast Processor rewards](https://docs.acurast.com/processors/rewards/), and the [GamCryp Acurast evidence page](https://gamcryp.com/opportunities/acurast-compute-provider).
 
 ## Approved editorial script
@@ -66,15 +66,15 @@ Video format: on-screen text and original instrumental music; no voiceover.
 - **Description:** Use the description draft above with the tagged landing URL and the two official Acurast documentation links. Keep the no-guaranteed-income/no-investment-advice disclosure.
 - **Category:** Education.
 - **Audience:** Not made for kids.
-- **Thumbnail:** use the rendered opening frame only after the exact video/creative review.
-- **Upload state:** not uploaded; require a validated long-form package and checksum-bound review before publication.
+- **Thumbnail:** custom thumbnail uploaded after exact video/creative review.
+- **Upload state:** public (`ve5GT3A6jj8`), category Education, not made for kids. The initial API verification reported processing in progress; Studio subsequently listed the upload in the related-video picker. Recheck final processing/thumbnail through `youtube-publisher verify --video-id ve5GT3A6jj8 --thumbnail` before claiming processing is complete.
 
 ## Release checks
 
 - Confirm the exact landing URL returns the intended Acurast evidence page and retains its UTM parameters without counting the QA visit as organic acquisition.
 - Confirm advanced-feature access makes the long-form description link clickable.
 - Confirm current production data, page copy, disclosures, and any on-screen values at recording time; avoid stale financial claims.
-- Upload the long-form video, verify its public description link, then set the candidate Short's related video to this upload.
+- Verify the public description and related-video link. Studio save is confirmed; public playback-link rendering remains to be checked.
 - In GA4, look for the exact `acurast_short_bridge_20260927` campaign and compare qualified landing, opportunity-view, and outbound events after a sufficient window. Exclude operator/test sessions.
 - Do not treat video views, description URLs in Shorts, or raw event counts as site users or conversions.
-- Review the exact rendered MP4 and its checksum before any publication. The repository's YouTube workflow is designed for validated Short packages; this long-form bridge must not bypass that packaging and creative-review policy.
+- The exact rendered MP4 was reviewed and its checksum approved in ignored local publisher state before upload. Preserve the distinction between public publication and verified completion of processing/attribution measurement.
