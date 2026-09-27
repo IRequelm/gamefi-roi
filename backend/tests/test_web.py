@@ -3,7 +3,7 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 from app.strategies.defi_kingdoms import DFK_CJEWEL_MAX_LOCK_V1
-from app.web.seo import _diversify_ranking_items, plain_unavailable_reason, value_status_label
+from app.web.seo import _ordered_ranking_items, plain_unavailable_reason, value_status_label
 from test_api_v1 import _seeded_client
 from sqlalchemy.exc import OperationalError
 
@@ -64,7 +64,7 @@ def test_homepage_omits_internal_audit_blocks(monkeypatch, tmp_path) -> None:
     assert "Rankings include only strategies with current source data." in html
 
 
-def test_rankings_omits_empty_filter_label_and_spreads_duplicate_opportunities(monkeypatch, tmp_path) -> None:
+def test_rankings_omits_empty_filter_label_and_preserves_organic_rank_order(monkeypatch, tmp_path) -> None:
     client, _engine = _seeded_client(monkeypatch, tmp_path, "web-ranking-presentation.db")
 
     html = client.get("/rankings").text
@@ -76,15 +76,10 @@ def test_rankings_omits_empty_filter_label_and_spreads_duplicate_opportunities(m
             strategy=SimpleNamespace(opportunity_id=opportunity_id, game_id=opportunity_id),
         )
 
-    ordered = _diversify_ranking_items(
-        [item("defi-kingdoms", 1), item("defi-kingdoms", 2), item("defi-kingdoms", 3), item("geodnet", 4)]
+    ordered = _ordered_ranking_items(
+        [item("defi-kingdoms", 1), item("defi-kingdoms", 5), item("geodnet", 3), item("defi-kingdoms", 2)]
     )
-    assert [row.strategy.opportunity_id for row in ordered] == [
-        "defi-kingdoms",
-        "geodnet",
-        "defi-kingdoms",
-        "defi-kingdoms",
-    ]
+    assert [row.rank for row in ordered] == [1, 2, 3, 5]
 
 
 def test_unavailable_reason_does_not_claim_priced_rewards_have_no_price() -> None:

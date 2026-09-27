@@ -1064,7 +1064,7 @@ def _destination_status_text(destination) -> str:
 def _render_ranking_cards(items: list[RankingItem], *, heading: str) -> str:
     if not items:
         return _empty("No current matches", "No successful modeled result currently matches this view.")
-    items = _diversify_ranking_items(items)
+    items = _ordered_ranking_items(items)
     cards = []
     for item in items:
         snapshot = item.latest_snapshot
@@ -1109,27 +1109,9 @@ def _render_ranking_cards(items: list[RankingItem], *, heading: str) -> str:
     """
 
 
-def _diversify_ranking_items(items: list[RankingItem]) -> list[RankingItem]:
-    """Spread repeated opportunities through the visual list without changing ranks."""
-    if len(items) < 2:
-        return items
-    groups: dict[str, list[RankingItem]] = {}
-    group_order: list[str] = []
-    for item in items:
-        opportunity_id = item.strategy.opportunity_id or item.strategy.game_id
-        if opportunity_id not in groups:
-            groups[opportunity_id] = []
-            group_order.append(opportunity_id)
-        groups[opportunity_id].append(item)
-    if len(groups) == len(items):
-        return items
-    diversified: list[RankingItem] = []
-    while len(diversified) < len(items):
-        for opportunity_id in group_order:
-            group = groups[opportunity_id]
-            if group:
-                diversified.append(group.pop(0))
-    return diversified
+def _ordered_ranking_items(items: list[RankingItem]) -> list[RankingItem]:
+    """Keep visual card order consistent with the organic rank shown on each card."""
+    return sorted(items, key=lambda item: item.rank)
 
 
 def _distinct_opportunity_items(items: list[RankingItem], *, limit: int) -> list[RankingItem]:
@@ -1798,7 +1780,7 @@ def _ranking_json_ld(
     items: list[RankingItem],
     breadcrumbs: list[tuple[str, str]],
 ) -> tuple[dict, ...]:
-    items = _diversify_ranking_items(items)
+    items = _ordered_ranking_items(items)
     payloads = (
         _webpage_json(settings, path, name, description),
         _breadcrumb_json(settings, breadcrumbs),
