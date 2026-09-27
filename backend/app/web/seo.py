@@ -366,6 +366,7 @@ def opportunity_page(
     ]
     strategy = (fresh_strategies or opportunity.strategies or [None])[0]
     snapshot = strategy.latest_snapshot if strategy else None
+    has_current_strategy = bool(fresh_strategies)
     answer = _opportunity_answer(opportunity, strategy, snapshot)
     title = f"{opportunity.name} ROI, Risk & Evidence | GamCryp"
     description = _truncate_text(answer, 155)
@@ -375,19 +376,18 @@ def opportunity_page(
           <p class="eyebrow">{escape(opportunity_type_label(opportunity.opportunity_type))}</p>
           <div class="identity-heading">{_render_logo(opportunity.logo, opportunity.name)}<h1>{escape(opportunity.name)} ROI status and evidence</h1></div>
           <p class="lede">{escape(answer)}</p>
-          <div class="button-row">
-            {_destination_button(opportunity.primary_destination, "Open official link")}
-          </div>
+          {f'<div class="button-row">{_destination_button(opportunity.primary_destination, "Open official link")}</div>' if has_current_strategy else ''}
         </section>
         {_render_opportunity_answer_block(opportunity, strategy, snapshot)}
         {_render_opportunity_human_summary(opportunity, strategy, snapshot)}
         {_render_depin_setup_summary(opportunity)}
         {_render_opportunity_guidance(opportunity)}
         {_render_opportunity_status(opportunity)}
-        {_render_strategy_cards(opportunity.strategies, heading="Strategies in this opportunity")}
+        {_render_strategy_cards(opportunity.strategies, heading="Strategies in this opportunity") if opportunity.strategies else ""}
         {_render_unavailable_roi(opportunity) if not opportunity.strategies else ""}
+        {_render_unavailable_next_steps(has_strategies=bool(opportunity.strategies)) if not has_current_strategy else ""}
         {_render_sources(opportunity)}
-        {_render_related_opportunities(opportunity)}
+        {_render_related_opportunities(opportunity) if has_current_strategy else ""}
       </div>
     """
     return _page(
@@ -1411,6 +1411,25 @@ def _render_sources(opportunity: OpportunityDetail) -> str:
         <div class="section-body contributor-list">{references}{destinations}</div>
       </section>
     """
+
+
+def _render_unavailable_next_steps(*, has_strategies: bool) -> str:
+    if has_strategies:
+        explanation = "This opportunity has no current strategy estimate. Check freshness and assumptions before acting."
+    else:
+        explanation = "No reproducible financial ROI model is available for this opportunity today. Current rankings cover other opportunities and may include very small or negative results."
+    return f'''
+      <section class="section-panel" aria-labelledby="evidence-next-steps-heading">
+        <div class="section-header"><h2 id="evidence-next-steps-heading">Continue with evidence</h2></div>
+        <div class="section-body">
+          <p>{escape(explanation)}</p>
+          <div class="button-row">
+            <a class="secondary-button" href="/rankings">See current modeled strategies</a>
+            <a class="secondary-button" href="/opportunities">Explore all opportunities</a>
+          </div>
+        </div>
+      </section>
+    '''
 
 
 def _render_related_opportunities(opportunity: OpportunityDetail) -> str:

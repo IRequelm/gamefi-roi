@@ -780,15 +780,16 @@ export function renderOpportunitiesPage(opportunitiesPage = { items: [], page: {
 
 export function renderOpportunityDetail(opportunity) {
   const hasStrategies = (opportunity.strategies || []).length > 0;
+  const hasCurrentStrategy = (opportunity.strategies || []).some(
+    (strategy) => strategy.latest_snapshot?.freshness?.overall_status === "fresh",
+  );
   return `
     <div class="page-shell">
       <section class="page-head">
         <p class="eyebrow">${escapeHtml(opportunityTypeLabel(opportunity.opportunity_type))}</p>
         <div class="identity-heading">${renderOpportunityLogo(opportunity.logo, opportunity.name)}<h1>${escapeHtml(opportunity.name)}</h1></div>
         <p class="lede">${escapeHtml(opportunityIntro(opportunity))}</p>
-        <div class="button-row">
-          ${renderDestinationButton(opportunity.primary_destination, opportunity.opportunity_type === "GAME" ? "Start" : "Open", { sourcePage: "opportunity_detail", placement: "primary_cta" })}
-        </div>
+        ${hasCurrentStrategy ? `<div class="button-row">${renderDestinationButton(opportunity.primary_destination, opportunity.opportunity_type === "GAME" ? "Start" : "Open", { sourcePage: "opportunity_detail", placement: "primary_cta" })}</div>` : ""}
       </section>
       ${renderOpportunityAnswerBlock(opportunity)}
       ${renderOpportunityHumanSummary(opportunity)}
@@ -818,6 +819,7 @@ export function renderOpportunityDetail(opportunity) {
           ? renderStrategyList(opportunity.strategies, { clickEvent: "opportunity_to_strategy_click", rankingSlug: "opportunity_detail", heading: "Strategies in this opportunity" })
           : renderUnavailableRoiExplanation(opportunity)
       }
+      ${hasCurrentStrategy ? "" : renderUnavailableNextSteps(hasStrategies)}
       <section class="section-panel">
         <div class="section-header"><h2>Sources and Outbound Links</h2></div>
         <div class="section-body contributor-list">
@@ -827,6 +829,13 @@ export function renderOpportunityDetail(opportunity) {
       </section>
     </div>
   `;
+}
+
+function renderUnavailableNextSteps(hasStrategies) {
+  const explanation = hasStrategies
+    ? "This opportunity has no current strategy estimate. Check freshness and assumptions before acting."
+    : "No reproducible financial ROI model is available for this opportunity today. Current rankings cover other opportunities and may include very small or negative results.";
+  return `<section class="section-panel" aria-labelledby="evidence-next-steps-heading"><div class="section-header"><h2 id="evidence-next-steps-heading">Continue with evidence</h2></div><div class="section-body"><p>${escapeHtml(explanation)}</p><div class="button-row"><a class="secondary-button" href="/rankings">See current modeled strategies</a><a class="secondary-button" href="/opportunities">Explore all opportunities</a></div></div></section>`;
 }
 
 export function renderUnavailableRoiExplanation(opportunity) {
