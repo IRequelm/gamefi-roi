@@ -535,3 +535,13 @@ The core user job to validate is: “Before I spend money or time on a Web3 game
 5. **Measure before scaling.** Judge tagged visits by progression to strategy detail and official outbound intent, separating unknown/direct traffic from confirmed human visits. Do not buy reach or increase publishing volume based on views or raw event totals alone.
 
 The SSR CoinGecko attribution fix is now live and browser-verified on ranking and strategy pages. It improves transparency, not data reliability or underlying economics. No external post was published in this checkpoint.
+
+### PostHog funnel verification after consented-session release — 2026-09-27 11:17 UTC
+
+Connected PostHog project `260916` was confirmed by its project listing (UTC project timezone). Read-data-schema confirms the product events, `$session_id` column on `events`, and UTM fields on the `sessions` table. The event/session query was a one-off noncanonical diagnostic: the governed catalog exposes no acquisition/funnel metric row, and metric-list is unavailable to the connected tool scope.
+
+Across the trailing 28 days, PostHog reports 67 `$pageview` events / 3 distinct persons, 18 `strategy_view` / 2 persons, 7 `ranking_to_strategy_click` / 2 persons, and 7 `opportunity_view` / 1 person. Every row for these events is classified `$virt_traffic_type=Automation`. `uniqIf($session_id, $session_id != '')` returns zero sessions for every queried event. The `sessions` table returned no rows at all for the same period, including no tagged UTM sessions. Thus this read cannot prove a qualified human funnel, and the absence of session rows means the deployed consented-browser join is still unverified in live PostHog.
+
+The same query returned 997 `outbound_go_click` and 863 `official_fallback_outbound_click` events with no `event_origin`/`traffic_class`; another 53 / 45 respectively are `server_redirect` and `human_or_unknown`, plus 17 / 17 are declared automated. All variants are still classified as Automation by PostHog. `human_or_unknown` is not proof of a human; `/go` requests may also come from crawlers or link previews. These are event/person counts, not site visitors, sessions, or partner conversions. No new consent preference or analytics event was created during this check.
+
+This resolves an important implementation question: the consent/session code is deployed, but its real-visitor operation cannot be validated from current production data. Keep external growth rates unreported until consented pageview → strategy detail → outbound activity appears with a session and tagged source. Avoid generating synthetic production traffic merely to make the metric nonzero.
