@@ -433,7 +433,9 @@ export function renderRankingsAnswerBlock(rankings = { items: [], page: { total:
   if (filterText) {
     fields.splice(3, 0, ["View criteria", escapeHtml(filterText)]);
   }
-  return renderAnswerBlock("Quick comparison", rankingsSummary(rankings), fields);
+  return renderAnswerBlock("Quick comparison", rankingsSummary(rankings), fields, {
+    collapsedPreview: `${rankings.page?.total ?? (rankings.items || []).length} matching strategies · updated ${latestSnapshotTime(rankings)}`,
+  });
 }
 
 export function renderOpportunityAnswerBlock(opportunity) {
@@ -602,7 +604,25 @@ function strategyAnswerFields(strategy, snapshot) {
   ];
 }
 
-function renderAnswerBlock(title, summary, fields) {
+function renderAnswerBlock(title, summary, fields, options = {}) {
+  if (options.collapsedPreview) {
+    return `
+      <details class="answer-card answer-card-collapsible" data-ai-answer-block="true">
+        <summary class="answer-collapsed-summary">
+          <span class="answer-collapsed-title">${escapeHtml(title)}</span>
+          <span class="answer-collapsed-preview">${escapeHtml(options.collapsedPreview)}</span>
+          <span class="badge info">Details</span>
+        </summary>
+        <div class="section-body">
+          <div class="section-header"><h2>${escapeHtml(title)}</h2><span class="badge info">Evidence-linked</span></div>
+          <p class="answer-summary">${escapeHtml(summary)}</p>
+          <dl class="answer-grid">
+            ${fields.map(([label, value]) => `<div class="answer-item"><dt>${escapeHtml(label)}</dt><dd>${value}</dd></div>`).join("")}
+          </dl>
+        </div>
+      </details>
+    `;
+  }
   return `
     <section class="answer-card" data-ai-answer-block="true">
       <div class="section-header"><h2>${escapeHtml(title)}</h2><span class="badge info">Evidence-linked</span></div>
@@ -714,8 +734,8 @@ export function renderRankingsPage(rankings, options = {}) {
         <p class="lede">Ranked by modeled 30-day ROI, then confidence, risk, and recency. Brand or referral metadata never changes this order.</p>
       </section>
       ${renderRankingsAnswerBlock(rankings, { title })}
-      ${renderCuratedRankingLinks()}
       ${renderRankingsTable(rankings, { groupByOpportunity: true })}
+      ${renderCuratedRankingLinks()}
       ${renderRecordedModels(options.recordedModels || [])}
       ${renderSponsoredPlacements(rankings.sponsored_placements || [])}
     </div>

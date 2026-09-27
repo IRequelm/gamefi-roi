@@ -199,8 +199,8 @@ def rankings_page(service: ApiDataService, *, settings: Settings, request: Reque
           <p class="muted">Ranked by modeled 30-day ROI, then confidence, risk, and recency. Commercial metadata is separate.</p>
         </section>
         {_render_rankings_answer_block(rankings, "Web3 ROI strategy rankings")}
-        {_render_curated_links(service)}
         {_render_ranking_cards(rankings.items, heading="Ranked strategies")}
+        {_render_curated_links(service)}
         {_render_recorded_models(recorded_models)}
       </div>
     """
@@ -714,6 +714,10 @@ def _render_rankings_answer_block(
         "Quick comparison",
         _rankings_summary(rankings),
         fields,
+        collapsed_preview=(
+            f"{rankings.page.total} matching strategies · updated "
+            f"{format_datetime(_rankings_lastmod(rankings))}"
+        ),
     )
 
 
@@ -796,11 +800,32 @@ def _strategy_answer_fields(strategy: StrategySummary, snapshot: StrategySnapsho
     ]
 
 
-def _render_answer_block(title: str, summary: str, fields: list[tuple[str, str]]) -> str:
+def _render_answer_block(
+    title: str,
+    summary: str,
+    fields: list[tuple[str, str]],
+    *,
+    collapsed_preview: str | None = None,
+) -> str:
     items = "".join(
         f'<div class="answer-item"><dt>{escape(label)}</dt><dd>{value}</dd></div>'
         for label, value in fields
     )
+    if collapsed_preview is not None:
+        return f"""
+      <details class="answer-card answer-card-collapsible" data-ai-answer-block="true">
+        <summary class="answer-collapsed-summary">
+          <span class="answer-collapsed-title">{escape(title)}</span>
+          <span class="answer-collapsed-preview">{escape(collapsed_preview)}</span>
+          <span class="badge info">Details</span>
+        </summary>
+        <div class="section-body">
+          <div class="section-header"><h2>{escape(title)}</h2><span class="badge info">Evidence-linked</span></div>
+          <p class="answer-summary">{escape(summary)}</p>
+          <dl class="answer-grid">{items}</dl>
+        </div>
+      </details>
+    """
     return f"""
       <section class="answer-card" data-ai-answer-block="true">
         <div class="section-header"><h2>{escape(title)}</h2><span class="badge info">Evidence-linked</span></div>
