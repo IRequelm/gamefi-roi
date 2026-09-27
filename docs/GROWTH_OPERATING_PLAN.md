@@ -4,6 +4,10 @@ Status: IN PROGRESS — homepage and catalog freshness wording are live. Eligibl
 
 Updated: 2026-09-27 (Europe/Istanbul)
 
+### Setup-fit catalog filter prepared — 2026-09-27 16:01 UTC
+
+Commit `bb05d91` adds a setup-requirement filter to the Opportunities catalog for PC/laptop, browser/web, mobile, node software/server, and dedicated hardware. Matching uses the catalog's recorded platform tags, and explanatory copy says this does not guarantee compatibility, eligibility, or earnings. A consented `opportunity_search_used` event records the selected setup category so expressed setup intent can be measured. Server-rendered and client-rendered catalog markup both include the filter and platform tags. `node --check frontend/assets/app.js`, `python -m py_compile backend/app/web/seo.py`, and `git diff --check` passed; no tests were run. GitHub has the commit, but the public `/opportunities` route still serves the prior version; Render auto-deploy is off and deployment is pending an action-time UI confirmation. No API key or Render setting has been opened or changed.
+
 ### Acquisition diagnosis and latest production read — 2026-09-27 15:45 UTC
 
 **Diagnosis:** the lack of growth is not primarily a missing button or an unclear homepage. The live first-screen now explains the product and offers budget, catalog, and evidence paths before the model cards. The remaining issue is that the site has little differentiated, current value to attract or retain a searcher: it has 52 reviewed opportunities, but only seven fresh strategy rows across Splinterlands and Farmers World, while 44 are guide-only and six additional opportunities have stale prior models. The top example is roughly $0.0019/day from $10, 0.57% modeled 30-day ROI, about 5,289 modeled break-even days, risk 100/100 and confidence 40/100. These are transparent estimates, but they do not form a compelling earning proposition. More generic content, more catalog entries, louder CTAs, or paid traffic would amplify the weak offer rather than fix it.
