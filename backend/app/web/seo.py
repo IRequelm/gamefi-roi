@@ -874,7 +874,12 @@ def _render_opportunity_human_summary(
         ),
         (
             "Cash-out",
-            "Realizable value is modeled inside the strategy snapshot where market data supports it."
+            (
+                "The USD estimate converts token/WAX quotes using CoinGecko’s WAX/USD reference price. "
+                "That is not an executable USD sell quote; treat proceeds and ROI as indicative, not confirmed cash-out."
+                if modeled and snapshot is not None and snapshot.game_name.strip().lower() == "farmers world"
+                else "Realizable value is modeled inside the strategy snapshot where market data supports it."
+            )
             if modeled
             else escape("A payout route is not modeled yet; do not treat the reward as cash."),
         ),
@@ -983,7 +988,12 @@ def _render_opportunity_guidance(opportunity: OpportunityDetail) -> str:
             ("How you earn", f"{rewards}. The catalog does not establish a guaranteed earning rate or fixed time to first reward."),
             (
                 "How to claim or exit",
-                "A value route is marked as realizable, but current payout and withdrawal conditions must be checked in the official references below."
+                (
+                    "The Farmers World USD estimate uses a WAX/USD reference conversion, not an executable USD sell quote. "
+                    "Confirm the payout, withdrawal, and USD exit route in the official references below."
+                    if any(strategy.game_name.strip().lower() == "farmers world" for strategy in opportunity.strategies)
+                    else "A value route is marked as realizable, but current payout and withdrawal conditions must be checked in the official references below."
+                )
                 if realizable
                 else "A reproducible payout or claim route is not verified yet. Do not treat points or future claims as cash.",
             ),
