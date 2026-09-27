@@ -487,6 +487,7 @@ def strategy_page(
         </section>
         {_render_strategy_answer_block(strategy, snapshot)}
         {_render_strategy_human_summary(strategy, snapshot)}
+        {_market_price_attribution(snapshot) if snapshot is not None else ""}
         {_render_snapshot_detail(snapshot) if snapshot is not None else _empty("No stored snapshot", "This strategy has not produced a valid stored calculation yet.")}
         {_render_history_context(history_items)}
         <section class="section-panel">
@@ -1061,6 +1062,17 @@ def _destination_status_text(destination) -> str:
     return f"{destination.label}; {destination.verification_status}; reviewed {format_datetime(destination.reviewed_at)}."
 
 
+def _market_price_attribution(snapshot: StrategySnapshotPayload) -> str:
+    metrics = snapshot.classification_summary.metrics
+    has_live_usd_price = any(
+        classification == "LIVE" and "price" in name.lower() and "usd" in name.lower()
+        for name, classification in metrics.items()
+    )
+    if not has_live_usd_price:
+        return ""
+    return '<p class="muted source-attribution">Price data provided by <a href="https://www.coingecko.com/en/api" rel="noopener noreferrer" target="_blank">CoinGecko API</a>.</p>'
+
+
 def _render_ranking_cards(items: list[RankingItem], *, heading: str) -> str:
     if not items:
         return _empty("No current matches", "No successful modeled result currently matches this view.")
@@ -1088,6 +1100,7 @@ def _render_ranking_cards(items: list[RankingItem], *, heading: str) -> str:
                 {_metric("30-day ROI", format_ratio_html(snapshot.roi.roi_total_30d))}
                 {_metric("Modeled break-even", format_break_even_html(snapshot.roi.break_even))}
               </div>
+              {_market_price_attribution(snapshot)}
               <div class="card-badges">
                 {_badge(f"Confidence {score_text(snapshot.confidence)}", score_class(snapshot.confidence, "confidence"))}
                 {_badge(f"Risk {score_text(snapshot.risk)}", score_class(snapshot.risk, "risk"))}
