@@ -411,6 +411,12 @@ This supersedes the earlier assumption that adding UTM-tagged URLs to Short desc
 
 Scheduled-refresh follow-up (2026-09-26 20:19 UTC): the workflow's `17 * * * *` schedule did not create a GitHub Actions scheduled run at 20:17 UTC; the latest schedule event remains 13:08:35Z. Production still reports its previous 18:40:11Z refresh, 240-minute cadence, and 7/7 eligible strategies fresh. This does not yet make the strategies stale, but it leaves the hourly recovery unverified and shows the schedule trigger is currently unreliable. Manual dispatches remain excluded as proof of scheduler health.
 
+### Render Cron failure diagnosis deployed — 2026-09-27 09:49 UTC
+
+The sanitized diagnostic patch (`187a4f4`) and its operations note (`9c528e8`) are deployed to the Render Cron service. Its first scheduled run on the deployed build completed as a job execution but failed all seven eligible strategies. The per-strategy JSON confirms CoinGecko `get_token_prices` returned HTTP 401 for two strategies and HTTP 429 for five; it contains provider, operation, status, error type, and strategy identity, with no provider response body or credential. The job produced zero new or reused snapshots. The public ops endpoint now reports 14 unresolved failures; the seven previously recovered results from 08:16:48Z remain fresh.
+
+This establishes that the failed refresh is in the Render-to-CoinGecko request path, rather than an opaque scheduler crash. It does not isolate whether 401 is due solely to the configured key or another provider-side/account condition, and 429 shows rate limiting also occurs. The user explicitly declined changing the Render key, and it was not opened or modified. Continue serving only within existing freshness policy and keep GitHub as the known-working recovery path; investigate request batching/cache and provider quota behavior before proposing any credential change. The 09:17 GitHub scheduled fallback did not appear, so its delivery also remains unproven. No public content was published.
+
 ### Scheduler implementation prepared — 2026-09-26 20:30 UTC
 
 The failure is now isolated to GitHub Actions scheduled-event delivery: the workflow is active on the default `master` branch, its production database gate is enabled, and its previous scheduled jobs ran their calculation step. No scheduled run has appeared since 13:08:35Z, while production still reports the 18:40:11Z snapshots, 240-minute cadence, and 7/7 eligible strategies fresh at 20:30Z. Manual dispatch remains healthy but is not schedule proof.
