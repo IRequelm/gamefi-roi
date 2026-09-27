@@ -4,6 +4,15 @@ Status: IN PROGRESS — homepage and catalog freshness wording are live. Eligibl
 
 Updated: 2026-09-27 (Europe/Istanbul)
 
+### Production deployment and Cron status — 2026-09-27 00:13 UTC
+
+- Render manual deploy `dep-das5trnpn0mc73ev6lm0` completed successfully from commit `5a24980` (“fix: show activity assumptions in rendered pages”). The primary production URL is live.
+- Verified public strategy page `/strategies/splinterlands-modern-ranked-sps-ev` in a browser: it shows the configured assumption “Model assumes 20 ranked battles per day; active time per battle is not measured.” The old “Not separately quantified…” copy is absent. Required time/effort is now visible with the risk, confidence, freshness, earnings, and ROI context.
+- Verified `/api/v1/rankings?limit=1` returns that same `effort_summary`; the strategy page and endpoint returned HTTP 200. The current model still has modest value (+$0.001899/day, 0.570% modeled 30-day ROI, risk 100, confidence 39); this presentation correction does not make the economics attractive.
+- Render Cron logs show the 23:47:17 UTC scheduled calculation failed (zero refreshes, seven eligible failures, eight policy skips); the process exited 1. The production ops endpoint at 00:13 UTC is `degraded`, with seven unresolved failures, last successful snapshots at 23:13:14 UTC, and 7/7 eligible snapshots still inside the six-hour freshness window. The visible structured output does not identify a definitive provider status for this latest failure, so do not attribute it solely to the credential or claim the Cron is recovered.
+- The user explicitly declined changing the CoinGecko API key. No key or environment setting was opened or edited. Continue respecting that instruction; diagnose from non-secret logs/code and use the existing GitHub refresh workflow only if recovery is required.
+- This closes the SSR/activity-assumption deployment item. Cadence/provider reliability, useful evidence-backed coverage, negligible modeled returns, and qualified user acquisition remain open. No tests were run; `git diff --check` passed before release.
+
 ### Verified recovery and release checkpoint — 2026-09-27 23:14 UTC
 
 - GitHub Actions run `36278728801` was manually dispatched at 23:12:51 UTC after the 60-minute freshness window had elapsed. It completed successfully: `auto_refreshed=7`, `refreshed_count=7`, `reused_count=0`, `failed_count=0`; four non-refreshable/partial records remain outside that refresh set.
