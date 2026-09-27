@@ -380,6 +380,7 @@ def opportunity_page(
         </section>
         {_render_opportunity_answer_block(opportunity, strategy, snapshot)}
         {_render_opportunity_human_summary(opportunity, strategy, snapshot)}
+        {_market_price_attribution(snapshot) if snapshot is not None else ""}
         {_render_depin_setup_summary(opportunity)}
         {_render_opportunity_guidance(opportunity)}
         {_render_opportunity_status(opportunity)}
@@ -1102,6 +1103,8 @@ def _market_price_attribution(snapshot: StrategySnapshotPayload) -> str:
         return ""
     if metrics.get("splinterlands.settings.sps_price_usd") == "LIVE":
         return '<p class="muted source-attribution">SPS reference price from the <a href="https://api.splinterlands.com/settings" rel="noopener noreferrer" target="_blank">official Splinterlands API</a>; this is not an executable sell quote.</p>'
+    if any(name.startswith("farmers_world.") for name in metrics):
+        return '<p class="muted source-attribution">Farmers World USD estimates convert token/WAX market quotes using CoinGecko’s WAX/USD reference price. That conversion is not an executable WAX/USD sell quote, so realized USD proceeds may differ.</p>'
     return '<p class="muted source-attribution">Price data provided by <a href="https://www.coingecko.com/en/api" rel="noopener noreferrer" target="_blank">CoinGecko API</a>.</p>'
 
 
