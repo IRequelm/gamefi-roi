@@ -162,18 +162,18 @@ def home_page(service: ApiDataService, *, settings: Settings, request: Request) 
         {_render_home_opportunity_catalog(opportunities, rankings)}
       </div>
     """
-    description = "Compare modeled GameFi and Web3 setup costs, net earnings, risk, and evidence. See what fits your budget and why unpriced rewards stay unavailable."
+    description = "Compare GameFi and DePIN costs, modeled earnings, risk, and evidence freshness. Find a setup that fits your budget; see when rewards cannot be valued."
     return _page(
         request=request,
         settings=settings,
         path="/",
-        title="GameFi ROI & Web3 Earnings Analysis | GamCryp",
+        title="GameFi & DePIN ROI Finder: Costs, Earnings, Risk | GamCryp",
         description=description,
         body_html=body,
         json_ld=(
             _organization_json(settings),
             _website_json(settings),
-            _webpage_json(settings, "/", "GameFi ROI and Web3 Earnings Analysis", description),
+            _webpage_json(settings, "/", "GameFi and DePIN ROI Finder", description),
         ),
         lastmod=_rankings_lastmod(rankings),
     )
