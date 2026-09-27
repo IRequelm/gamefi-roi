@@ -4,6 +4,10 @@ Status: IN PROGRESS — homepage and catalog freshness wording are live. Eligibl
 
 Updated: 2026-09-27 (Europe/Istanbul)
 
+### Render release and refresh reliability check — 2026-09-27 18:50 UTC
+
+Commit `7143e1c` was deployed to the Render web service as `dep-dasma3o473hc738v6big`; the service reached Live. Read-after-deploy on the public Splinterlands strategy page confirms the added user-facing capital caveat and official staking-rules link. Render Cron was reviewed in the authenticated dashboard without opening Settings or Environment and without triggering a run. Its 18:47 UTC scheduled run exited with status 1: four new snapshots were written, zero reused, eight skipped, and three Farmers World `get_token_prices` calls failed with CoinGecko HTTP 401. The result contains a 18:47:33 UTC calculation timestamp, explaining the newly visible snapshot even though the Cron run itself is failed. The run history showed repeated preceding scheduled failures as well. This confirms that publishing the caveat was successful while scheduled refresh reliability and Farmers World freshness remain unresolved. The user explicitly declined changing the Render API key, so no credential or Render environment value was edited. `node --check frontend/assets/app.js`, `python -m py_compile backend/app/adapters/splinterlands.py backend/app/web/seo.py`, and `git diff --check` passed; automated tests were not run.
+
 ### Product economics and source-use review — 2026-09-27 (UTC time not captured)
 
 A fresh production homepage and strategy-page load confirms the latest stored results still cover only Splinterlands and Farmers World: the lead is about $0.0019/day on $10 with 5,259 modeled break-even days; Farmers World is below $0.0001/day and its WAX/USD conversion is not an executable sell quote. This evidence does not support scaling general acquisition.
