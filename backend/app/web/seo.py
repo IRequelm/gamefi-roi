@@ -1095,6 +1095,8 @@ def _destination_status_text(destination) -> str:
 
 def _market_price_attribution(snapshot: StrategySnapshotPayload) -> str:
     metrics = snapshot.classification_summary.metrics
+    if snapshot.game_name.strip().lower() == "farmers world":
+        return '<p class="muted source-attribution">Farmers World USD estimates convert token/WAX market quotes using CoinGecko’s WAX/USD reference price. That conversion is not an executable WAX/USD sell quote, so realized USD proceeds may differ.</p>'
     has_live_usd_price = any(
         classification == "LIVE" and "price" in name.lower() and "usd" in name.lower()
         for name, classification in metrics.items()
@@ -1103,9 +1105,7 @@ def _market_price_attribution(snapshot: StrategySnapshotPayload) -> str:
         return ""
     if metrics.get("splinterlands.settings.sps_price_usd") == "LIVE":
         return '<p class="muted source-attribution">SPS reference price from the <a href="https://api.splinterlands.com/settings" rel="noopener noreferrer" target="_blank">official Splinterlands API</a>; this is not an executable sell quote.</p>'
-    if snapshot.game_name.strip().lower() == "farmers world" or any(
-        name.startswith("farmers_world.") for name in metrics
-    ):
+    if any(name.startswith("farmers_world.") for name in metrics):
         return '<p class="muted source-attribution">Farmers World USD estimates convert token/WAX market quotes using CoinGecko’s WAX/USD reference price. That conversion is not an executable WAX/USD sell quote, so realized USD proceeds may differ.</p>'
     return '<p class="muted source-attribution">Price data provided by <a href="https://www.coingecko.com/en/api" rel="noopener noreferrer" target="_blank">CoinGecko API</a>.</p>'
 

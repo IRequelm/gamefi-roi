@@ -1491,6 +1491,9 @@ function comparisonMetricsForRankingItem(item) {
 
 function renderMarketPriceAttribution(snapshot) {
   const metrics = snapshot?.classification_summary?.metrics || {};
+  if (snapshot?.game_name?.trim().toLowerCase() === "farmers world") {
+    return '<p class="muted source-attribution">Farmers World USD estimates convert token/WAX market quotes using CoinGecko’s WAX/USD reference price. That conversion is not an executable WAX/USD sell quote, so realized USD proceeds may differ.</p>';
+  }
   const hasLiveMarketPrice = Object.entries(metrics).some(
     ([metric, classification]) => classification === "LIVE" && /price.*usd|usd.*price/i.test(metric),
   );
@@ -1500,8 +1503,7 @@ function renderMarketPriceAttribution(snapshot) {
   if (metrics["splinterlands.settings.sps_price_usd"] === "LIVE") {
     return '<p class="muted source-attribution">SPS reference price from the <a href="https://api.splinterlands.com/settings" rel="noopener noreferrer" target="_blank">official Splinterlands API</a>; this is not an executable sell quote.</p>';
   }
-  if (snapshot?.game_name?.trim().toLowerCase() === "farmers world"
-    || Object.keys(metrics).some((metric) => metric.startsWith("farmers_world."))) {
+  if (Object.keys(metrics).some((metric) => metric.startsWith("farmers_world."))) {
     return '<p class="muted source-attribution">Farmers World USD estimates convert token/WAX market quotes using CoinGecko’s WAX/USD reference price. That conversion is not an executable WAX/USD sell quote, so realized USD proceeds may differ.</p>';
   }
   return '<p class="muted source-attribution">Price data provided by <a href="https://www.coingecko.com/en/api" rel="noopener noreferrer" target="_blank">CoinGecko API</a>.</p>';
