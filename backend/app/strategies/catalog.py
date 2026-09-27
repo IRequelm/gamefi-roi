@@ -19,9 +19,10 @@ G14_REVIEWED_AT = datetime(2026, 8, 23, tzinfo=UTC)
 G18_REVIEWED_AT = datetime(2026, 8, 24, tzinfo=UTC)
 GROWTH_REVIEWED_AT = datetime(2026, 9, 27, tzinfo=UTC)
 CATALOG_REVIEWED_AT = G18_REVIEWED_AT
-# Evidence-backed, guide-only pages with observed search intent. Keep this
-# explicit allowlist small; ordinary unmodeled opportunity pages remain noindex.
-GUIDE_ONLY_INDEXABLE_OPPORTUNITY_IDS = frozenset({"timpi"})
+# Evidence-backed, guide-only pages with observed search intent and sufficiently
+# specific official-source guidance. Keep this explicit allowlist small;
+# ordinary unmodeled opportunity pages remain noindex.
+GUIDE_ONLY_INDEXABLE_OPPORTUNITY_IDS = frozenset({"timpi", "kaito-yaps"})
 
 
 @dataclass(frozen=True)
@@ -925,7 +926,7 @@ OPPORTUNITIES = (
             ),
             what_you_need=(
                 "A web browser and an X account for initial authentication.",
-                "A public crypto account that you are comfortable associating with public participation; do not share private keys.",
+                "A wallet is optional. If you add one, Kaito says it may share the address in an anonymized wallet list with partners for their reward distributions; you can change or remove it later. Never share private keys.",
             ),
             how_you_earn=(
                 "Yaps are points for relevant, original crypto discussion and reputation-weighted engagement; posting volume alone does not guarantee points.",
