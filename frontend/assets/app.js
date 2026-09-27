@@ -1043,6 +1043,7 @@ function renderOpportunityRankingGroup(group) {
         ${metricItem("Top strategy net/day", formatMoney(snapshot.earnings.net_earnings_day, { perDay: true }))}
         ${metricItem("Top strategy ROI", formatRatio(snapshot.roi.roi_total_30d))}
       </div>
+      ${renderMarketPriceAttribution(snapshot)}
       <div class="group-strategy-list" aria-label="Strategies for ${escapeHtml(snapshot.game_name)}">
         ${group.items.map((item) => `<a class="strategy-link group-strategy-link" href="/strategies/${encodeURIComponent(item.strategy.strategy_id)}" data-link>${escapeHtml(item.strategy.name)} <span class="muted">#${escapeHtml(String(item.rank))}</span></a>`).join("")}
       </div>
@@ -1085,6 +1086,7 @@ export function renderRankingCard(item, options = {}) {
         ${metricItem("30-day ROI", formatRatio(snapshot.roi.roi_total_30d))}
         ${metricItem("Modeled break-even", formatBreakEven(snapshot.roi.break_even))}
       </div>
+      ${renderMarketPriceAttribution(snapshot)}
       ${renderNetEarningsInterpretation(snapshot)}
       <p class="muted ranking-context">${escapeHtml(strategy.effort_summary || "Required time and active effort are not quantified in this strategy configuration.")}</p>
       <p class="muted ranking-context">Organic comparison, not a recommendation.</p>
@@ -1221,6 +1223,7 @@ export function renderStrategyDetail(strategy, historyPage = { items: [] }) {
       ${renderFreshnessAlert(snapshot)}
       ${renderStrategySignals(snapshot)}
       ${renderOverviewMetrics(snapshot)}
+      ${renderMarketPriceAttribution(snapshot)}
       <section class="section-panel">
         <div class="section-header"><h2>Capital Breakdown</h2></div>
         <div class="section-body metric-grid">
@@ -1267,6 +1270,17 @@ export function renderStrategyDetail(strategy, historyPage = { items: [] }) {
       ${renderAdvancedSnapshotDetails(strategy, snapshot)}
     </div>
   `;
+}
+
+function renderMarketPriceAttribution(snapshot) {
+  const metrics = snapshot?.classification_summary?.metrics || {};
+  const hasLiveMarketPrice = Object.entries(metrics).some(
+    ([metric, classification]) => classification === "LIVE" && /price.*usd|usd.*price/i.test(metric),
+  );
+  if (!hasLiveMarketPrice) {
+    return "";
+  }
+  return '<p class="muted source-attribution">Price data provided by <a href="https://www.coingecko.com/en/api" rel="noopener noreferrer" target="_blank">CoinGecko API</a>.</p>';
 }
 
 

@@ -1682,3 +1682,8 @@ tr:last-child td {
   color: #ffd7d7;
   padding: 10px 12px;
 }
+
+.source-attribution {
+  font-size: 0.82rem;
+  margin: 8px 0;
+}
