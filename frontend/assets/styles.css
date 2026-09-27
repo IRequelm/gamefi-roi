@@ -1473,15 +1473,13 @@ tr:last-child td {
 }
 
 .analytics-consent {
-  position: fixed;
-  right: clamp(12px, 3vw, 28px);
-  bottom: clamp(12px, 3vw, 28px);
-  z-index: 30;
+  position: static;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 10px;
   align-items: center;
   width: min(720px, calc(100% - 24px));
+  margin: 12px auto;
   border: 1px solid rgba(32, 246, 255, 0.24);
   border-radius: 10px;
   background:
