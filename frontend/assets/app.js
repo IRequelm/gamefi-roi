@@ -78,6 +78,9 @@ const RANKING_FILTER_KEYS = new Set([
 const ANALYTICS_CONSENT_KEY = "gamcryp.analyticsConsent.v1";
 const PRODUCT_ANALYTICS_DISTINCT_ID_KEY = "gamcryp.productAnalyticsDistinctId.v1";
 const PRODUCT_ANALYTICS_ID_COOKIE = "gamcryp_phid";
+const PRODUCT_ANALYTICS_SESSION_STORAGE_KEY = "gamcryp.productAnalyticsSession.v1";
+const PRODUCT_ANALYTICS_SESSION_ID_COOKIE = "gamcryp_phsid";
+const PRODUCT_ANALYTICS_SESSION_TTL_MS = 30 * 60 * 1000;
 const SENTRY_BROWSER_SDK_URL = "https://browser.sentry-cdn.com/8.55.0/bundle.tracing.min.js";
 const ANALYTICS_ALLOWED_EVENTS = new Set([
   "page_view",
@@ -146,6 +149,7 @@ let initializedAnalyticsId = null;
 let initializedProductAnalyticsKey = null;
 let initializedSentryDsn = null;
 let lastTrackedPage = null;
+let ephemeralProductAnalyticsSessionId = null;
 
 export class ApiError extends Error {
   constructor(status, message) {
@@ -2450,6 +2454,7 @@ export function setAnalyticsConsent(preference, context = {}) {
     initializeProductAnalytics(context);
   } else {
     clearProductAnalyticsIdentityCookie(context);
+    clearProductAnalyticsSession(context);
   }
   return true;
 }
@@ -2490,21 +2495,25 @@ export function initializeProductAnalytics(context = {}) {
   if (!win || !key || !posthogHost(win) || analyticsConsent(storage) !== "accepted") {
     return false;
   }
-  if (!productAnalyticsDistinctId(context)) {
+  const distinctId = productAnalyticsDistinctId(context);
+  const sessionId = productAnalyticsSessionId(context);
+  if (!distinctId || !sessionId) {
     return false;
   }
-  writeProductAnalyticsIdentityCookie(productAnalyticsDistinctId(context), context);
+  writeProductAnalyticsIdentityCookie(distinctId, sessionId, context);
   initializedProductAnalyticsKey = key;
   return true;
 }
 
-function writeProductAnalyticsIdentityCookie(distinctId, context = {}) {
+function writeProductAnalyticsIdentityCookie(distinctId, sessionId, context = {}) {
   const win = context.win || globalThis.window;
   const doc = context.doc || win?.document || globalThis.document;
   if (!doc || analyticsConsent(context.storage || win?.localStorage) !== "accepted") return false;
   if (!/^visitor:[A-Za-z0-9._-]{1,120}$/.test(String(distinctId || ""))) return false;
+  if (!isUuid(sessionId)) return false;
   try {
     doc.cookie = `${PRODUCT_ANALYTICS_ID_COOKIE}=${distinctId}; Max-Age=15552000; Path=/go; SameSite=Lax; Secure`;
+    doc.cookie = `${PRODUCT_ANALYTICS_SESSION_ID_COOKIE}=${sessionId}; Max-Age=1800; Path=/go; SameSite=Lax; Secure`;
     return true;
   } catch {
     return false;
@@ -2517,10 +2526,65 @@ function clearProductAnalyticsIdentityCookie(context = {}) {
   if (!doc) return false;
   try {
     doc.cookie = `${PRODUCT_ANALYTICS_ID_COOKIE}=; Max-Age=0; Path=/go; SameSite=Lax; Secure`;
+    doc.cookie = `${PRODUCT_ANALYTICS_SESSION_ID_COOKIE}=; Max-Age=0; Path=/go; SameSite=Lax; Secure`;
     return true;
   } catch {
     return false;
   }
+}
+
+function clearProductAnalyticsSession(context = {}) {
+  const win = context.win || globalThis.window;
+  try {
+    (context.sessionStorage || win?.sessionStorage)?.removeItem(PRODUCT_ANALYTICS_SESSION_STORAGE_KEY);
+  } catch {
+    // Storage may be unavailable; cookie deletion above is still best effort.
+  }
+  ephemeralProductAnalyticsSessionId = null;
+}
+
+function productAnalyticsSessionId(context = {}) {
+  const win = context.win || globalThis.window;
+  try {
+    const storage = context.sessionStorage || win?.sessionStorage;
+    const now = typeof context.now === "function" ? context.now() : Date.now();
+    const current = JSON.parse(storage?.getItem(PRODUCT_ANALYTICS_SESSION_STORAGE_KEY) || "null");
+    if (isUuid(current?.id) && Number.isFinite(current.lastActivity) && now - current.lastActivity < PRODUCT_ANALYTICS_SESSION_TTL_MS) {
+      storage?.setItem(PRODUCT_ANALYTICS_SESSION_STORAGE_KEY, JSON.stringify({ id: current.id, lastActivity: now }));
+      ephemeralProductAnalyticsSessionId = current.id;
+      return current.id;
+    }
+    const id = createProductAnalyticsSessionId(context, win);
+    storage?.setItem(PRODUCT_ANALYTICS_SESSION_STORAGE_KEY, JSON.stringify({ id, lastActivity: now }));
+    ephemeralProductAnalyticsSessionId = id;
+    return id;
+  } catch {
+    ephemeralProductAnalyticsSessionId ||= createProductAnalyticsSessionId(context, win);
+    return ephemeralProductAnalyticsSessionId;
+  }
+}
+
+function createProductAnalyticsSessionId(context = {}, win = globalThis.window) {
+  if (typeof context.sessionIdGenerator === "function") {
+    const generated = String(context.sessionIdGenerator());
+    if (isUuid(generated)) return generated;
+  }
+  const cryptoApi = win?.crypto || globalThis.crypto;
+  if (typeof cryptoApi?.randomUUID === "function") return cryptoApi.randomUUID();
+  const bytes = new Uint8Array(16);
+  if (typeof cryptoApi?.getRandomValues === "function") {
+    cryptoApi.getRandomValues(bytes);
+  } else {
+    for (let index = 0; index < bytes.length; index += 1) bytes[index] = Math.floor(Math.random() * 256);
+  }
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = [...bytes].map((value) => value.toString(16).padStart(2, "0")).join("");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
+function isUuid(value) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || ""));
 }
 
 export function productAnalyticsDistinctId(context = {}) {
@@ -2619,6 +2683,9 @@ function safeProductAnalyticsParams(params = {}, context = {}) {
       safeParams[key] = cleaned;
     }
   }
+  safeParams["$session_id"] = productAnalyticsSessionId(context);
+  safeParams.event_origin = "consented_browser";
+  safeParams.traffic_class = "consented_browser";
   return safeParams;
 }
 

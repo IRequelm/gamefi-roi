@@ -7,7 +7,7 @@ import re
 from collections.abc import Mapping
 from datetime import UTC, datetime
 from typing import Any
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import httpx
 
@@ -59,6 +59,7 @@ POSTHOG_ALLOWED_PROPERTIES = frozenset(
         "app_version",
         "event_origin",
         "traffic_class",
+        "$session_id",
     }
 )
 _MAX_TEXT_LENGTH = 160
@@ -139,6 +140,17 @@ def _clean_distinct_id(value: str) -> str:
     if not text:
         return ""
     return text[:128]
+
+
+def clean_session_id(value: str | None) -> str | None:
+    text = str(value or "").strip()
+    if not text:
+        return None
+    try:
+        parsed = UUID(text)
+    except (ValueError, AttributeError, TypeError):
+        return None
+    return str(parsed) if str(parsed) == text.lower() else None
 
 
 def distinct_id_for_outbound_click(

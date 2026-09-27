@@ -176,12 +176,14 @@ def test_outbound_redirect_tracks_official_and_referral_product_events(monkeypat
     )
     monkeypatch.setattr(catalog, "OUTBOUND_DESTINATIONS", mutated)
     client, _engine = _seeded_client(monkeypatch, tmp_path, "observability-outbound.db")
+    client.cookies.set("gamcryp_phsid", "11111111-1111-4111-8111-111111111111")
 
     referral_response = client.get(
         "/go/defi-kingdoms-play?source_page=rankings&placement=strategy_card",
         headers={"x-gamcryp-session": "coarse-session-1"},
         follow_redirects=False,
     )
+    client.cookies.delete("gamcryp_phsid")
     official_response = client.get(
         "/go/farmers-world-play?source_page=home&placement=top_opportunity",
         follow_redirects=False,
@@ -202,9 +204,17 @@ def test_outbound_redirect_tracks_official_and_referral_product_events(monkeypat
     assert captured[0]["properties"]["is_affiliate"] is True
     assert captured[0]["properties"]["event_origin"] == "server_redirect"
     assert captured[0]["properties"]["traffic_class"] == "human_or_unknown"
+    assert captured[0]["properties"]["$session_id"] == "11111111-1111-4111-8111-111111111111"
     assert captured[2]["properties"]["target_url_kind"] == "official"
     assert captured[2]["properties"]["source_page"] == "home"
     assert captured[2]["properties"]["placement"] == "top_opportunity"
+    assert "$session_id" not in captured[2]["properties"]
+
+
+def test_clean_session_id_accepts_only_canonical_uuid() -> None:
+    assert posthog.clean_session_id("11111111-1111-4111-8111-111111111111") == "11111111-1111-4111-8111-111111111111"
+    assert posthog.clean_session_id("not-a-session") is None
+    assert posthog.clean_session_id(None) is None
 
 
 def test_outbound_product_analytics_failure_does_not_break_redirect(monkeypatch, tmp_path) -> None:

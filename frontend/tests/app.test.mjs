@@ -946,6 +946,7 @@ test("reject consent prevents GA initialization", () => {
   assert.match(renderAnalyticsConsentBanner(context.win), /Accept analytics/);
   assert.equal(setAnalyticsConsent("rejected", context), true);
   assert.match(context.doc.cookie, /gamcryp_phid=; Max-Age=0/);
+  assert.match(context.doc.cookie, /gamcryp_phsid=; Max-Age=0/);
   assert.equal(initializeAnalytics(context), false);
   assert.equal(trackAnalyticsEvent("strategy_view", { strategy_id: "dfk" }, context), false);
   assert.equal(context.doc.scripts.length, 0);
@@ -994,6 +995,8 @@ test("PostHog product analytics is consent gated, explicit, and privacy safe", (
     pathname: "/rankings/gamefi-under-50",
     search: "?utm_source=x&utm_medium=social&utm_campaign=roi_truth_probe&utm_content=points_are_not_cash",
   };
+  context.sessionIdGenerator = () => "11111111-1111-4111-8111-111111111111";
+  context.now = () => Date.parse("2026-09-27T10:00:00Z");
   context.win.navigator = { sendBeacon: (url, body) => sent.push({ url, payload: JSON.parse(body) }) > 0 };
   context.idGenerator = () => "stable-id";
 
@@ -1002,6 +1005,7 @@ test("PostHog product analytics is consent gated, explicit, and privacy safe", (
   assert.equal(setAnalyticsConsent("accepted", context), true);
   assert.equal(initializeProductAnalytics(context), true);
   assert.match(context.doc.cookie, /gamcryp_phid=visitor:stable-id/);
+  assert.match(context.doc.cookie, /gamcryp_phsid=11111111-1111-4111-8111-111111111111; Max-Age=1800/);
   assert.match(context.doc.cookie, /Path=\/go/);
   assert.match(context.doc.cookie, /SameSite=Lax; Secure/);
   assert.equal(
@@ -1033,6 +1037,9 @@ test("PostHog product analytics is consent gated, explicit, and privacy safe", (
   assert.equal(sent[0].payload.properties.raw_financial_payload, undefined);
   assert.equal(sent[0].payload.properties.wallet_address, undefined);
   assert.equal(sent[0].payload.properties.$process_person_profile, false);
+  assert.equal(sent[0].payload.properties.$session_id, "11111111-1111-4111-8111-111111111111");
+  assert.equal(sent[0].payload.properties.event_origin, "consented_browser");
+  assert.equal(sent[0].payload.properties.traffic_class, "consented_browser");
 
   assert.equal(
     trackProductAnalyticsEvent(
@@ -1282,10 +1289,14 @@ function fakeStorage() {
     setItem(key, value) {
       values.set(key, String(value));
     },
+    removeItem(key) {
+      values.delete(key);
+    },
   };
 }
 
 function fakeAnalyticsContext(measurementId, storage, configOverrides = {}) {
+  const cookieWrites = [];
   const doc = {
     scripts: [],
     head: {
@@ -1307,6 +1318,14 @@ function fakeAnalyticsContext(measurementId, storage, configOverrides = {}) {
       return null;
     },
   };
+  Object.defineProperty(doc, "cookie", {
+    get() {
+      return cookieWrites.join("; ");
+    },
+    set(value) {
+      cookieWrites.push(String(value));
+    },
+  });
   const win = {
     GAMCRYP_PUBLIC_CONFIG: {
       gaMeasurementId: measurementId,
@@ -1319,6 +1338,7 @@ function fakeAnalyticsContext(measurementId, storage, configOverrides = {}) {
       ...configOverrides,
     },
     localStorage: storage,
+    sessionStorage: fakeStorage(),
     dataLayer: [],
     location: { pathname: "/", search: "" },
   };

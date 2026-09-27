@@ -331,6 +331,7 @@ def outbound_redirect(
         source_page=request.query_params.get("source_page"),
         placement=request.query_params.get("placement"),
         user_agent_category=_user_agent_category(request.headers.get("user-agent", "")),
+        session_id=request.cookies.get("gamcryp_phsid"),
     )
 
     logger.info(
@@ -358,7 +359,9 @@ def _track_outbound_product_analytics(
     source_page: str | None,
     placement: str | None,
     user_agent_category: str,
+    session_id: str | None = None,
 ) -> None:
+    clean_session_id = product_analytics.clean_session_id(session_id)
     properties = {
         "destination_slug": destination.destination_slug,
         "opportunity_id": destination.opportunity_id,
@@ -383,6 +386,8 @@ def _track_outbound_product_analytics(
         "event_origin": "server_redirect",
         "traffic_class": "automated" if user_agent_category == "bot" else "human_or_unknown",
     }
+    if clean_session_id:
+        properties["$session_id"] = clean_session_id
     event_names = ["outbound_go_click"]
     event_names.append("referral_outbound_click" if destination.target_url_kind == "referral" else "official_fallback_outbound_click")
     for event_name in event_names:
