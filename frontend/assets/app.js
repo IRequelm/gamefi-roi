@@ -737,15 +737,18 @@ function textFromHtml(html) {
 
 export function renderRankingsPage(rankings, options = {}) {
   const title = options.title || "Strategy rankings";
+  const groupByOpportunity = Boolean(options.groupByOpportunity);
   return `
     <div class="page-shell">
       <section class="page-head">
         <p class="eyebrow">Organic rankings</p>
         <h1>${escapeHtml(title)}</h1>
-        <p class="lede">Ranked by modeled 30-day ROI, then confidence, risk, and recency. Brand or referral metadata never changes this order.</p>
+        <p class="lede">${groupByOpportunity
+          ? "One card per opportunity shows its highest-ranked current strategy; open a strategy or compare assumptions to inspect the full model set. Rankings use modeled 30-day ROI, then confidence, risk, and recency. This order is not a recommendation."
+          : "Ranked by modeled 30-day ROI, then confidence, risk, and recency. Brand or referral metadata never changes this order."}</p>
       </section>
       ${renderRankingsAnswerBlock(rankings, { title })}
-      ${renderRankingsTable(rankings, { enableComparison: true })}
+      ${renderRankingsTable(rankings, { enableComparison: true, groupByOpportunity })}
       ${renderCuratedRankingLinks()}
       ${renderRecordedModels(options.recordedModels || [])}
       ${renderSponsoredPlacements(rankings.sponsored_placements || [])}
@@ -1045,12 +1048,12 @@ export function renderRankingsTable(rankings, options = {}) {
   }
   const groups = options.groupByOpportunity ? groupRankingItemsByOpportunity(items) : null;
   const cardMarkup = groups
-    ? groups.map((group) => renderOpportunityRankingGroup(group)).join("")
+    ? groups.map((group) => renderOpportunityRankingGroup(group, options)).join("")
     : items.map((item) => renderRankingCard(item, options)).join("");
   const countLabel = groups
     ? `${groups.length} opportunities · ${items.length} strategies`
     : `${rankings.page?.total ?? items.length} strategies`;
-  const compareMarkup = options.enableComparison && !groups
+  const compareMarkup = options.enableComparison
     ? `
       <section class="ranking-compare-panel" data-strategy-comparison hidden aria-live="polite">
         <div class="ranking-compare-head">
@@ -1186,7 +1189,7 @@ function groupRankingItemsByOpportunity(items) {
   return Array.from(groups.values());
 }
 
-function renderOpportunityRankingGroup(group) {
+function renderOpportunityRankingGroup(group, options = {}) {
   const primary = group.items[0];
   const snapshot = primary.latest_snapshot;
   const strategy = primary.strategy;
@@ -1211,7 +1214,12 @@ function renderOpportunityRankingGroup(group) {
       </div>
       ${renderMarketPriceAttribution(snapshot)}
       <div class="group-strategy-list" aria-label="Strategies for ${escapeHtml(snapshot.game_name)}">
-        ${group.items.map((item) => `<a class="strategy-link group-strategy-link" href="/strategies/${encodeURIComponent(item.strategy.strategy_id)}" data-link>${escapeHtml(item.strategy.name)} <span class="muted">#${escapeHtml(String(item.rank))}</span></a>`).join("")}
+        ${group.items.map((item) => {
+          const strategyLink = `<a class="strategy-link group-strategy-link" href="/strategies/${encodeURIComponent(item.strategy.strategy_id)}" data-link>${escapeHtml(item.strategy.name)} <span class="muted">#${escapeHtml(String(item.rank))}</span></a>`;
+          if (!options.enableComparison) return strategyLink;
+          const comparisonMetrics = comparisonMetricsForRankingItem(item);
+          return `<div class="group-strategy-option" data-compare-metrics="${escapeHtml(JSON.stringify(comparisonMetrics))}"><label class="compare-choice"><input type="checkbox" data-compare-toggle aria-label="Compare ${escapeHtml(item.strategy.name)}"><span>Compare</span></label>${strategyLink}</div>`;
+        }).join("")}
       </div>
       <p class="muted ranking-context">Organic comparison, not a recommendation.</p>
       <div class="card-actions">
@@ -1235,20 +1243,7 @@ export function renderRankingCard(item, options = {}) {
     sourcePage: rankingSlug,
     placement: "strategy_card",
   });
-  const compareMetrics = options.showCompare ? {
-    strategyId: strategy.strategy_id,
-    name: strategy.name,
-    opportunity: snapshot.game_name,
-    rank: item.rank,
-    capital: textFromHtml(formatMoney(snapshot.capital.total_capital)),
-    netPerDay: textFromHtml(formatMoney(snapshot.earnings.net_earnings_day, { perDay: true })),
-    roi30d: textFromHtml(formatRatio(snapshot.roi.roi_total_30d)),
-    breakEven: textFromHtml(formatBreakEven(snapshot.roi.break_even)),
-    risk: scoreText(snapshot.risk),
-    confidence: scoreText(snapshot.confidence),
-    effort: strategy.effort_summary || "Required time and active effort are not quantified for this strategy.",
-    updated: formatUpdatedAge(snapshot.calculated_at),
-  } : null;
+  const compareMetrics = options.showCompare ? comparisonMetricsForRankingItem(item) : null;
   return `
     <article class="ranking-card" ${compareMetrics ? `data-compare-metrics="${escapeHtml(JSON.stringify(compareMetrics))}"` : ""}>
       <div class="ranking-card-head">
@@ -1451,6 +1446,25 @@ export function renderStrategyDetail(strategy, historyPage = { items: [] }) {
       ${renderAdvancedSnapshotDetails(strategy, snapshot)}
     </div>
   `;
+}
+
+function comparisonMetricsForRankingItem(item) {
+  const snapshot = item.latest_snapshot;
+  const strategy = item.strategy;
+  return {
+    strategyId: strategy.strategy_id,
+    name: strategy.name,
+    opportunity: snapshot.game_name,
+    rank: item.rank,
+    capital: textFromHtml(formatMoney(snapshot.capital.total_capital)),
+    netPerDay: textFromHtml(formatMoney(snapshot.earnings.net_earnings_day, { perDay: true })),
+    roi30d: textFromHtml(formatRatio(snapshot.roi.roi_total_30d)),
+    breakEven: textFromHtml(formatBreakEven(snapshot.roi.break_even)),
+    risk: scoreText(snapshot.risk),
+    confidence: scoreText(snapshot.confidence),
+    effort: strategy.effort_summary || "Required time and active effort are not quantified in this strategy configuration.",
+    updated: formatUpdatedAge(snapshot.calculated_at),
+  };
 }
 
 function renderMarketPriceAttribution(snapshot) {
@@ -3286,7 +3300,7 @@ async function renderCurrentRoute() {
       const recordedModels = window.location.search
         ? []
         : await loadRecordedModelsIfNoCurrentRankings(rankings);
-      root.innerHTML = renderRankingsPage(rankings, { recordedModels });
+      root.innerHTML = renderRankingsPage(rankings, { recordedModels, groupByOpportunity: true });
       bindStrategyComparison(root);
       routeAnalyticsContext = rankingAnalyticsContext(rankings, "rankings");
     } else if (CURATED_RANKING_FILTERS[path]) {

@@ -926,6 +926,18 @@ tr:last-child td {
   padding-top: 12px;
 }
 
+.group-strategy-option {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.group-strategy-option .compare-choice {
+  margin: 0;
+  padding: 6px 8px;
+}
+
 .group-strategy-link {
   display: flex;
   justify-content: space-between;
