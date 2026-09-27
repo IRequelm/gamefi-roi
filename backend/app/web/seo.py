@@ -1200,8 +1200,10 @@ def _render_opportunity_cards(
           <div class="opportunity-filters" role="search" aria-label="Filter opportunities">
             <div class="field"><label for="opportunity-search">Search by project or reward</label><input id="opportunity-search" type="search" placeholder="e.g. DIMO, SPS, storage" autocomplete="off"></div>
             <div class="field"><label for="opportunity-type-filter">Opportunity type</label><select id="opportunity-type-filter"><option value="">All types</option>{options}</select></div>
+            <div class="field"><label for="opportunity-setup-filter">Setup requirement</label><select id="opportunity-setup-filter"><option value="">Any setup</option><option value="desktop">PC or laptop</option><option value="browser">Browser or web</option><option value="mobile">Mobile device</option><option value="node">Node software or server</option><option value="hardware">Dedicated hardware</option></select></div>
             <p id="opportunity-filter-status" class="muted opportunity-filter-status" role="status" aria-live="polite">Showing {len(opportunities)} opportunities</p>
           </div>
+          <p class="muted">Setup tags reflect recorded platform requirements. They do not guarantee device compatibility, eligibility, or earnings; check each card's ROI status and evidence.</p>
           <p id="opportunity-filter-empty" class="empty-state opportunity-filter-empty" hidden>No opportunities match these filters. Try a different project name or type.</p>
         '''
     for opportunity in opportunities:
@@ -1235,7 +1237,7 @@ def _render_opportunity_cards(
         search_text = ' '.join((opportunity.name, *opportunity.reward_asset_or_points_type)).lower()
         cards.append(
             f"""
-            <article class="opportunity-card" data-opportunity-type="{escape(opportunity.opportunity_type or '')}" data-opportunity-search="{escape(search_text)}">
+            <article class="opportunity-card" data-opportunity-type="{escape(opportunity.opportunity_type or '')}" data-opportunity-search="{escape(search_text)}" data-opportunity-platforms="{escape(','.join(opportunity.platforms or []))}">
               <div class="identity-row">
                 {_badge(opportunity_type_label(opportunity.opportunity_type), "info")}
                 {_badge(feasibility_label(opportunity.data_feasibility_status), "good" if opportunity.data_feasibility_status == "GO" else "medium")}

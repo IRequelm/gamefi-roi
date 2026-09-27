@@ -1,5 +1,12 @@
 const API_BASE = "/api/v1";
 const CURATED_RANKING_MIN_RESULTS = 2;
+const OPPORTUNITY_SETUP_FILTERS = {
+  desktop: new Set(["desktop", "pc", "linux", "wsl2"]),
+  browser: new Set(["web", "browser-extension", "extension"]),
+  mobile: new Set(["mobile", "smartphone"]),
+  node: new Set(["desktop-node", "docker-node", "cli", "node", "server", "storage-node", "compute-node", "gpu-node", "cloud-provider", "edge-node"]),
+  hardware: new Set(["hardware-node", "gateway"]),
+};
 const CURATED_RANKING_FILTERS = {
   "/rankings/under-25": "capital_max=25",
   "/rankings/high-confidence": "confidence_min=80",
@@ -138,6 +145,7 @@ const PRODUCT_ANALYTICS_ALLOWED_PARAMS = new Set([
   "utm_content",
   "capital_min",
   "capital_max",
+  "setup_filter",
   "confidence_min",
   "risk_max",
   "game_id",
@@ -923,8 +931,10 @@ export function renderOpportunityList(opportunities = [], options = {}) {
         <div class="opportunity-filters" role="search" aria-label="Filter opportunities">
           <div class="field"><label for="opportunity-search">Search by project or reward</label><input id="opportunity-search" type="search" placeholder="e.g. DIMO, SPS, storage" autocomplete="off"></div>
           <div class="field"><label for="opportunity-type-filter">Opportunity type</label><select id="opportunity-type-filter"><option value="">All types</option>${types.map((type) => `<option value="${escapeHtml(type)}">${escapeHtml(opportunityTypeLabel(type))}</option>`).join("")}</select></div>
+          <div class="field"><label for="opportunity-setup-filter">Setup requirement</label><select id="opportunity-setup-filter"><option value="">Any setup</option><option value="desktop">PC or laptop</option><option value="browser">Browser or web</option><option value="mobile">Mobile device</option><option value="node">Node software or server</option><option value="hardware">Dedicated hardware</option></select></div>
           <p id="opportunity-filter-status" class="muted opportunity-filter-status" role="status" aria-live="polite">Showing ${escapeHtml(String(opportunities.length))} opportunities</p>
         </div>
+        <p class="muted">Setup tags reflect recorded platform requirements. They do not guarantee device compatibility, eligibility, or earnings; check each card's ROI status and evidence.</p>
         <p id="opportunity-filter-empty" class="empty-state opportunity-filter-empty" hidden>No opportunities match these filters. Try a different project name or type.</p>
       `}
       <div class="opportunity-grid">
@@ -951,8 +961,9 @@ export function renderOpportunityCard(opportunity, options = {}) {
   const setupLabels = depinSetupLabels(opportunity);
   const participation = opportunityParticipationLabel(opportunity);
   const searchText = [opportunity.name, ...(opportunity.reward_asset_or_points_type || [])].join(" ").toLowerCase();
+  const platforms = (opportunity.platforms || []).map((platform) => String(platform).toLowerCase());
   return `
-    <article class="opportunity-card" data-opportunity-type="${escapeHtml(String(opportunity.opportunity_type || ""))}" data-opportunity-search="${escapeHtml(searchText)}">
+    <article class="opportunity-card" data-opportunity-type="${escapeHtml(String(opportunity.opportunity_type || ""))}" data-opportunity-search="${escapeHtml(searchText)}" data-opportunity-platforms="${escapeHtml(platforms.join(","))}">
       <div class="identity-row">
         <span class="badge info">${escapeHtml(opportunityTypeLabel(opportunity.opportunity_type))}</span>
         ${renderFeasibilityStatus(opportunity.data_feasibility_status)}
@@ -984,6 +995,7 @@ export function renderOpportunityCard(opportunity, options = {}) {
 export function bindOpportunityFilters(root) {
   const search = root.querySelector("#opportunity-search");
   const typeFilter = root.querySelector("#opportunity-type-filter");
+  const setupFilter = root.querySelector("#opportunity-setup-filter");
   const status = root.querySelector("#opportunity-filter-status");
   const empty = root.querySelector("#opportunity-filter-empty");
   const cards = Array.from(root.querySelectorAll(".opportunity-card[data-opportunity-search]"));
@@ -992,10 +1004,14 @@ export function bindOpportunityFilters(root) {
   const apply = () => {
     const query = search.value.trim().toLowerCase();
     const type = typeFilter.value;
+    const requiredPlatforms = OPPORTUNITY_SETUP_FILTERS[setupFilter?.value];
     let visible = 0;
     for (const card of cards) {
+      const platforms = new Set((card.dataset.opportunityPlatforms || "").split(",").filter(Boolean));
+      const matchesSetup = !requiredPlatforms || Array.from(requiredPlatforms).some((platform) => platforms.has(platform));
       const matches = (!query || card.dataset.opportunitySearch.includes(query))
-        && (!type || card.dataset.opportunityType === type);
+        && (!type || card.dataset.opportunityType === type)
+        && matchesSetup;
       card.hidden = !matches;
       if (matches) visible += 1;
     }
@@ -1004,6 +1020,13 @@ export function bindOpportunityFilters(root) {
   };
   search.addEventListener("input", apply);
   typeFilter.addEventListener("change", apply);
+  setupFilter?.addEventListener("change", () => {
+    apply();
+    trackProductAnalyticsEvent("opportunity_search_used", {
+      setup_filter: setupFilter.value || "any",
+      page_path: window.location.pathname,
+    });
+  });
   return true;
 }
 
