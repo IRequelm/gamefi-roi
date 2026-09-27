@@ -4,6 +4,14 @@ Status: IN PROGRESS — homepage and catalog freshness wording are live. Eligibl
 
 Updated: 2026-09-27 (Europe/Istanbul)
 
+### Search Console recrawl and acquisition baseline — 2026-09-27 08:07 UTC
+
+- Resubmitted the live sitemap in the verified `gamcryp.com` Search Console property. Google confirmed “sitemap successfully submitted” and changed the submitted date to 27 Sep. Its last-read timestamp is still 26 Sep and its discovered count still says 34, so Google has not yet processed the 20-URL current sitemap; do not report crawl/index impact yet.
+- Search Console overview shows 17 indexed / 68 not indexed pages, but the page-index report was last updated 21 Sep. Its old 68-page breakdown is: 62 “Discovered - currently not indexed,” 3 redirected pages, 2 robots.txt blocked, 1 crawled but not indexed. The sample discovered URLs are broad opportunity-catalog pages and have no crawl date. This predates the freshness-aware sitemap release; the intended response is to keep weak/unmodeled opportunity URLs out of sitemap and `noindex` stale or unavailable detail pages, then reassess after Google refreshes the report.
+- The `/opportunities` landing page is already indexed. URL Inspection confirms “URL is on Google”; the Timpi node-rewards query drove all eight impressions in the 28-day Search Console report to that broad page, at average position 61.1 and zero clicks. Do not add a speculative Timpi ROI model: official Timpi material describes NTMPI rewards and an Access NFT/hardware setup but does not establish current reproducible payout economics; current token migration/liquidity changes make historical reward material especially unsuitable for a current financial estimate.
+- Last 28 complete days in Search Console (28 Aug–24 Sep): 124 impressions, 0 clicks, 0% CTR, average position 48.5. This reinforces that crawl hygiene alone is not the acquisition bottleneck; weak ranking and no query-matched useful landing content remain. The sample is small and predates the 25–27 Sep releases.
+- A manual request-indexing action was not completed; after the URL-inspection action Google exposed a reCAPTCHA-gated step. Sitemap resubmission is complete and sufficient for now; do not claim a recrawl request was queued.
+
 ### Freshness-aware SEO release verification — 2026-09-27 08:04 UTC
 
 - Render deploy `dep-dascreo473hc73fodbs0` succeeded and is live from commit `1bc8f74`.
