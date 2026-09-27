@@ -754,13 +754,35 @@ OPPORTUNITIES = (
         economy_types=("ranked-play", "card-market"),
         reward_asset_or_points_type=("GODS", "cards", "packs"),
         value_realization_status="realizable",
-        source_references=(("Official API", "https://github.com/immutable/gods-unchained-api"),),
+        source_references=(
+            ("Daily Play & Earn rules (checked 2026-09-27)", "https://portal.godsunchained.com/blog/gods-unchained-game-modes"),
+            ("Published public API reference", "https://github.com/immutable/gods-unchained-api"),
+        ),
         data_feasibility_status="PARTIAL",
-        feasibility_summary="Official API and assets exist, but reward EV and pack/card realization need a narrow model.",
+        feasibility_summary="Daily $GODS depends on player fragments relative to the whole community; the published API does not list daily reward-pool or community-fragment totals, so expected rewards are not reproducible from its public feed.",
         outbound_destination_slug="gods-unchained-official",
         logo_asset="/assets/logos/gods-unchained.ico",
         logo_alt="Gods Unchained logo",
         logo_source_reference=("Gods Unchained official website", "https://godsunchained.com/"),
+        guidance=OpportunityGuidance(
+            how_to_start=("Check the current in-game Daily Play & Earn rules and eligibility before costing a deck.",),
+            what_you_need=("A player scenario for rank, win rate, card quality, deck cost, and time spent.",),
+            how_you_earn=("Only wins from the first 10 daily ranked matches generate fragments; the first 3 wins give double fragments. Daily $GODS is allocated by your fragments divided by all community fragments, multiplied by that day's reward pool.",),
+            how_to_exit_or_claim=("Do not treat an intraday reward display as a final daily payout. Check the current in-game dashboard and executable token/card exit costs before assigning a cash value.",),
+        ),
+        roi_unavailable=RoiUnavailableExplanation(
+            reason="Expected earnings cannot be reproduced from the published public API: a player's fragment total depends on rank, wins, and card quality, while the payout also depends on the daily community-fragment denominator and reward pool.",
+            missing_evidence=(
+                "Dated daily reward-pool and community-fragment totals from an official source.",
+                "A strategy-specific player scenario for rank, wins, deck/card quality, capital, and time.",
+                "Current executable exit quotes and fees for any reward asset or marketable card.",
+            ),
+            modeling_requirements=(
+                "An official, reproducible daily reward feed or payout fixture with timestamps and provenance.",
+                "A scenario calculation that keeps player assumptions separate from observed community totals.",
+                "A cost and realizable-exit model for the selected deck and reward assets.",
+            ),
+        ),
     ),
     _opportunity(
         opportunity_id="grass",
