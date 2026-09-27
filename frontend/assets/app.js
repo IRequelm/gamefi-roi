@@ -269,8 +269,8 @@ export function renderHomeShell(games = [], rankings = { items: [], page: { tota
     <div class="page-shell">
       <section class="page-head">
         <p class="eyebrow">GamCryp opportunity intelligence</p>
-        <h1>Compare GameFi and Web3 earning strategies by cost, net earnings, and risk.</h1>
-        <p class="lede">See modeled net earnings, setup costs, and data confidence for GameFi and DePIN. When rewards cannot be valued reliably, we mark ROI unavailable and explain why instead of guessing.</p>
+        <h1>See what a Web3 earning setup costs—and whether its rewards can be realized.</h1>
+        <p class="lede">Compare modeled net earnings, setup costs, risk, and evidence for GameFi and DePIN. When rewards cannot be valued reliably, we show what is missing instead of guessing.</p>
         <div class="hero-proof-points" aria-label="GamCryp data principles">
           <span>Modeled ROI where reproducible</span>
           <span>Risk and confidence separated</span>
@@ -278,9 +278,9 @@ export function renderHomeShell(games = [], rankings = { items: [], page: { tota
         </div>
       </section>
       ${renderDegradedNotice(degradedMessages)}
-      ${renderTopRankingSummary(rankings)}
-      ${renderCatalogStats(rankings, opportunities)}
       ${renderStartPaths()}
+      ${renderCatalogStats(rankings, opportunities)}
+      ${renderTopRankingSummary(rankings)}
       ${renderRecordedModels(recordedModels)}
       <section class="finder-grid" aria-label="ROI finder">
         <div id="finder-results">
@@ -3002,13 +3002,13 @@ function trackPageView(path = globalThis.window?.location?.pathname || "", title
 export function renderStartPaths() {
   return `
     <section class="start-path-section" aria-labelledby="start-path-title">
-      <div class="section-header"><div><p class="eyebrow">Start with your situation</p><h2 id="start-path-title">What are you looking for?</h2></div><a class="text-link" href="/opportunities" data-link>Browse all opportunities</a></div>
+      <div class="section-header"><div><p class="eyebrow">Choose your next step</p><h2 id="start-path-title">What fits your budget or setup?</h2></div><a class="text-link" href="/opportunities" data-link>Browse all opportunities</a></div>
       <div class="start-path-grid">
-        <a class="start-path-card" href="/rankings?capital_max=25" data-link><span class="start-path-icon" aria-hidden="true">01</span><span><strong>Start under $25</strong><small>See modeled strategies within a smaller starting budget.</small></span><span aria-hidden="true">→</span></a>
-        <a class="start-path-card" href="/opportunities" data-link><span class="start-path-icon" aria-hidden="true">02</span><span><strong>Explore opportunities</strong><small>Browse GameFi, DePIN, and points programs, including guides without current ROI.</small></span><span aria-hidden="true">→</span></a>
+        <a class="start-path-card" href="/rankings?capital_max=25" data-link><span class="start-path-icon" aria-hidden="true">01</span><span><strong>Compare models under $25</strong><small>See only strategies with current source data and review their costs and risks.</small></span><span aria-hidden="true">→</span></a>
+        <a class="start-path-card" href="/opportunities" data-link><span class="start-path-icon" aria-hidden="true">02</span><span><strong>Browse by project and setup</strong><small>Explore games, PC and mobile nodes, and points guides—even when ROI is unavailable.</small></span><span aria-hidden="true">→</span></a>
         <a class="start-path-card" href="/methodology" data-link><span class="start-path-icon" aria-hidden="true">03</span><span><strong>Understand the evidence</strong><small>See how freshness, confidence, risk, costs, and exit assumptions are assessed.</small></span><span aria-hidden="true">→</span></a>
       </div>
-      <p class="start-path-note">Rankings include only strategies with current source data. The opportunity catalog also includes guide-only entries without a financial ROI estimate.</p>
+      <p class="start-path-note">Most strategies do not have a verified hands-on time estimate. The site shows modeled activity assumptions separately; it does not claim hourly earnings.</p>
     </section>
   `;
 }
