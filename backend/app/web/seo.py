@@ -158,7 +158,7 @@ def home_page(service: ApiDataService, *, settings: Settings, request: Request) 
           </div>
           <p class="start-path-note">Rankings include only strategies with current source data. The opportunity catalog also includes guide-only entries without a financial ROI estimate.</p>
         </section>
-        {_render_ranking_cards(_distinct_opportunity_items(rankings.items, limit=3), heading="Latest modeled results") if top is not None else _render_recorded_models(recorded_models)}
+        {_render_ranking_cards(_distinct_opportunity_items(rankings.items, limit=3), heading="Latest modeled results", review_primary=True) if top is not None else _render_recorded_models(recorded_models)}
         {_render_home_opportunity_catalog(opportunities, rankings)}
       </div>
     """
@@ -1102,7 +1102,7 @@ def _market_price_attribution(snapshot: StrategySnapshotPayload) -> str:
     return '<p class="muted source-attribution">Price data provided by <a href="https://www.coingecko.com/en/api" rel="noopener noreferrer" target="_blank">CoinGecko API</a>.</p>'
 
 
-def _render_ranking_cards(items: list[RankingItem], *, heading: str) -> str:
+def _render_ranking_cards(items: list[RankingItem], *, heading: str, review_primary: bool = False) -> str:
     if not items:
         return _empty("No current matches", "No successful modeled result currently matches this view.")
     items = _ordered_ranking_items(items)
@@ -1110,6 +1110,16 @@ def _render_ranking_cards(items: list[RankingItem], *, heading: str) -> str:
     for item in items:
         snapshot = item.latest_snapshot
         strategy = item.strategy
+        if review_primary:
+            actions = (
+                f'<a class="button" href="/strategies/{escape(strategy.strategy_id)}">Review model &amp; assumptions</a>'
+                f'{_destination_button(strategy.primary_destination, cta_label_for_snapshot(snapshot, "Start"), secondary=True)}'
+            )
+        else:
+            actions = (
+                f'<a class="secondary-button" href="/strategies/{escape(strategy.strategy_id)}">View strategy</a>'
+                f'{_destination_button(strategy.primary_destination, cta_label_for_snapshot(snapshot, "Start"))}'
+            )
         cards.append(
             f"""
             <article class="ranking-card">
@@ -1137,8 +1147,7 @@ def _render_ranking_cards(items: list[RankingItem], *, heading: str) -> str:
               </div>
               {_render_cta_risk_notice(snapshot)}
               <div class="card-actions">
-                <a class="secondary-button" href="/strategies/{escape(strategy.strategy_id)}">View strategy</a>
-                {_destination_button(strategy.primary_destination, cta_label_for_snapshot(snapshot, "Start"))}
+                {actions}
               </div>
             </article>
             """
@@ -1478,12 +1487,13 @@ def _empty(title: str, body: str) -> str:
     return f'<section class="empty-state"><h2>{escape(title)}</h2><p class="muted">{escape(body)}</p></section>'
 
 
-def _destination_button(destination, label: str) -> str:
+def _destination_button(destination, label: str, *, secondary: bool = False) -> str:
     if destination is None or destination.status != "active":
         return '<span class="badge">No reviewed link</span>'
     relationship = destination_relationship_label(destination)
     relationship_html = f"<span>{escape(relationship)}</span>" if relationship else ""
-    return f'<a class="button cta" href="{escape(destination.redirect_url)}" target="_blank" rel="noopener noreferrer"{analytics_attributes(destination)}>{escape(label)}{relationship_html}</a>'
+    button_class = "secondary-button" if secondary else "button cta"
+    return f'<a class="{button_class}" href="{escape(destination.redirect_url)}" target="_blank" rel="noopener noreferrer"{analytics_attributes(destination)}>{escape(label)}{relationship_html}</a>'
 
 
 def _render_cta_risk_notice(snapshot) -> str:

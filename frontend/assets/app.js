@@ -406,8 +406,8 @@ export function renderTopRankingSummary(rankings = { items: [] }) {
         ${summaryItem("Modeled break-even", formatBreakEven(snapshot.roi.break_even))}
       </div>
       <div class="top-opportunity-actions">
-        <a class="secondary-button" href="/strategies/${encodeURIComponent(strategy.strategy_id)}" data-link${strategyClickAnalytics}>View strategy</a>
-        ${renderDestinationButton(strategy.primary_destination, ctaLabelForSnapshot(snapshot, "Start"), { sourcePage: "home", placement: "top_opportunity" })}
+        <a class="button" href="/strategies/${encodeURIComponent(strategy.strategy_id)}" data-link${strategyClickAnalytics}>Review model &amp; assumptions</a>
+        ${renderDestinationButton(strategy.primary_destination, ctaLabelForSnapshot(snapshot, "Start"), { sourcePage: "home", placement: "top_opportunity", buttonVariant: "secondary" })}
       </div>
     </section>
   `;
@@ -2091,8 +2091,9 @@ export function renderDestinationButton(destination, label = "Open", context = {
   const relationship = destinationRelationshipLabel(destination);
   const href = redirectWithContext(destination.redirect_url, context);
   const analytics = analyticsAttributes(destination, context);
+  const buttonClass = context.buttonVariant === "secondary" ? "secondary-button" : "button cta";
   return `
-    <a class="button cta" href="${escapeHtml(href)}" title="${escapeHtml(destination.disclosure_text)}" target="_blank" rel="noopener noreferrer"${analytics}>
+    <a class="${buttonClass}" href="${escapeHtml(href)}" title="${escapeHtml(destination.disclosure_text)}" target="_blank" rel="noopener noreferrer"${analytics}>
       ${escapeHtml(label)}
       ${relationship ? `<span>${escapeHtml(relationship)}</span>` : ""}
     </a>
