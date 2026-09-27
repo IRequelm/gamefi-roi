@@ -1036,6 +1036,20 @@ tr:last-child td {
   min-width: 0;
 }
 
+.modeled-economics-note {
+  background: rgba(255, 196, 96, 0.09);
+  border: 1px solid rgba(255, 196, 96, 0.3);
+  border-radius: 10px;
+  color: var(--muted);
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 12px 14px;
+}
+
+.modeled-economics-note strong {
+  color: var(--ink);
+}
+
 .top-opportunity-actions {
   display: flex;
   flex-wrap: wrap;

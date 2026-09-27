@@ -389,6 +389,16 @@ export function renderTopRankingSummary(rankings = { items: [] }) {
   }
   const snapshot = top.latest_snapshot;
   const strategy = top.strategy;
+  const freshUsdItems = (rankings.items || []).filter((item) =>
+    item.latest_snapshot?.freshness?.overall_status === "fresh"
+    && item.latest_snapshot?.earnings?.net_earnings_day?.currency === "USD"
+    && item.latest_snapshot?.earnings?.net_earnings_day?.amount !== undefined,
+  );
+  const positiveUsdItems = freshUsdItems.filter((item) => decimalSign(item.latest_snapshot.earnings.net_earnings_day.amount) > 0);
+  const centPerDayItems = positiveUsdItems.filter((item) => compareDecimalMetric(item.latest_snapshot.earnings.net_earnings_day.amount, "0.01") >= 0);
+  const economicsNote = freshUsdItems.length && !centPerDayItems.length
+    ? `<p class="modeled-economics-note"><strong>Current results are very small:</strong> none of the ${freshUsdItems.length} fresh USD-valued models shown reaches $0.01 net per day. ${positiveUsdItems.length ? `${positiveUsdItems.length} show a positive modeled amount, all below that level.` : "No fresh model shown has positive net earnings."} These are model outputs, not promises; inspect assumptions and data dates before acting.</p>`
+    : "";
   const strategyClickAnalytics = productClickAttributes("ranking_to_strategy_click", {
     opportunityId: strategy.opportunity_id || strategy.game_id,
     opportunityType: snapshot.opportunity_type,
@@ -415,6 +425,7 @@ export function renderTopRankingSummary(rankings = { items: [] }) {
         ${summaryItem("30-day modeled ROI", formatRatio(snapshot.roi.roi_total_30d))}
         ${summaryItem("Modeled break-even", formatBreakEven(snapshot.roi.break_even))}
       </div>
+      ${economicsNote}
       <div class="top-opportunity-actions">
         <a class="button" href="/strategies/${encodeURIComponent(strategy.strategy_id)}" data-link${strategyClickAnalytics}>Review model &amp; assumptions</a>
         ${renderDestinationButton(strategy.primary_destination, ctaLabelForSnapshot(snapshot, "Start"), { sourcePage: "home", placement: "top_opportunity", buttonVariant: "secondary" })}
