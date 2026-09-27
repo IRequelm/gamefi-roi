@@ -341,23 +341,19 @@ export function renderHomeShell(games = [], rankings = { items: [], page: { tota
 
 export function renderCatalogStats(rankings = { page: { total: 0 } }, opportunities = []) {
   const opportunityCount = opportunities.length;
-  const modeledCount = opportunities.reduce((total, opportunity) => total + Number(opportunity.strategy_count || 0), 0);
+  const configuredCount = opportunities.reduce((total, opportunity) => total + Number(opportunity.strategy_count || 0), 0);
+  const configuredOpportunityCount = opportunities.filter((opportunity) => Number(opportunity.strategy_count || 0) > 0).length;
+  const currentItems = (rankings.items || []).filter((item) => item.latest_snapshot?.freshness?.overall_status === "fresh");
+  const currentOpportunityCount = new Set(currentItems.map((item) => item.strategy?.opportunity_id || item.strategy?.game_id).filter(Boolean)).size;
+  const currentCount = Number.isFinite(Number(rankings.page?.total)) ? Number(rankings.page.total) : currentItems.length;
   const unavailableCount = opportunities.filter((opportunity) => !opportunity.strategy_count).length;
-  const types = new Set();
-  for (const opportunity of opportunities) {
-    const normalized = String(opportunity.opportunity_type || "").toUpperCase();
-    if (normalized === "GAME") types.add("Games");
-    if (normalized === "DEPIN_NODE") {
-      types.add("DePIN");
-      types.add("Nodes");
-    }
-    if (normalized === "POINTS") types.add("Points");
-  }
+  const currentResultsText = `${currentCount} result${currentCount === 1 ? "" : "s"} across ${currentOpportunityCount} opportunit${currentOpportunityCount === 1 ? "y" : "ies"}`;
+  const configuredText = `${configuredCount} across ${configuredOpportunityCount} opportunit${configuredOpportunityCount === 1 ? "y" : "ies"}`;
   return `
     <section class="catalog-stat-grid" aria-label="GamCryp V1 coverage">
       ${summaryItem("Reviewed opportunities", escapeHtml(String(opportunityCount)))}
-      ${summaryItem("Modeled strategies", escapeHtml(String(modeledCount)))}
-      ${summaryItem("Opportunity coverage", escapeHtml(Array.from(types).join(" · ") || "Unavailable"))}
+      ${summaryItem("Current strategy results", escapeHtml(currentResultsText))}
+      ${summaryItem("Configured strategies", escapeHtml(configuredText))}
       ${summaryItem("Guide-only opportunities", escapeHtml(String(unavailableCount)))}
     </section>
   `;

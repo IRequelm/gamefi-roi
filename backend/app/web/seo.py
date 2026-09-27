@@ -1219,14 +1219,24 @@ def _render_catalog_stats(rankings: RankingsPage, opportunities: list[Opportunit
     modeled_count = sum(opportunity.strategy_count for opportunity in opportunities)
     modeled_opportunity_count = sum(1 for opportunity in opportunities if opportunity.strategy_count > 0)
     unavailable_count = sum(1 for opportunity in opportunities if opportunity.strategy_count == 0)
-    opportunity_types = ", ".join(
-        sorted({opportunity_type_label(opportunity.opportunity_type) for opportunity in opportunities})
+    current_opportunity_count = len({
+        item.strategy.opportunity_id or item.strategy.game_id
+        for item in rankings.items
+        if item.latest_snapshot and item.latest_snapshot.freshness.overall_status == "fresh"
+    })
+    current_results_text = (
+        f"{rankings.page.total} result{'s' if rankings.page.total != 1 else ''} across "
+        f"{current_opportunity_count} opportunit{'ies' if current_opportunity_count != 1 else 'y'}"
+    )
+    configured_text = (
+        f"{modeled_count} across {modeled_opportunity_count} opportunit"
+        f"{'ies' if modeled_opportunity_count != 1 else 'y'}"
     )
     return f"""
       <section class="catalog-stat-grid" aria-label="GamCryp V1 coverage">
         {_summary("Reviewed opportunities", escape(str(opportunity_count)))}
-        {_summary("Modeled strategies", escape(f"{modeled_count} across {modeled_opportunity_count} opportunities"))}
-        {_summary("Opportunity types", escape(opportunity_types))}
+        {_summary("Current strategy results", escape(current_results_text))}
+        {_summary("Configured strategies", escape(configured_text))}
         {_summary("Guide-only opportunities", escape(str(unavailable_count)))}
       </section>
     """

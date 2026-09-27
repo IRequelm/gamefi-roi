@@ -133,8 +133,8 @@ test("home renders results as cards before filters without table ranking markup"
   assert.match(html, /512 days/);
   assert.match(html, /mark ROI unavailable and explain why instead of guessing/);
   assert.match(html, /Reviewed opportunities/);
-  assert.match(html, /Modeled strategies/);
-  assert.match(html, /Opportunity coverage/);
+  assert.match(html, /Current strategy results/);
+  assert.match(html, /Configured strategies/);
   assert.match(html, /Games/);
   assert.match(html, /Guide-only opportunities/);
   assert.match(html, /ranking-card-grid/);
@@ -282,7 +282,8 @@ test("answer-ready blocks expose values without changing calculations", () => {
   assert.match(opportunityHtml, /Quick opportunity summary/);
   assert.match(strategyHtml, /Quick strategy summary/);
   assert.match(strategyHtml, /Estimated gross earnings\/day/);
-  assert.match(strategyHtml, /Required time\/effort/);
+  assert.match(strategyHtml, /Modelled activity/);
+  assert.match(strategyHtml, /Required time and active effort are not quantified/);
   assert.match(strategyHtml, /Major assumptions/);
   assert.match(strategyHtml, /5\.86%/);
   assert.doesNotMatch(strategyHtml, /0\.05862 30-day ROI/);
@@ -308,9 +309,10 @@ test("catalog stats summarize V1 coverage without financial recomputation", () =
 
   assert.match(html, /Reviewed opportunities/);
   assert.match(html, />3</);
-  assert.match(html, /Modeled strategies/);
+  assert.match(html, /Current strategy results/);
+  assert.match(html, /10 results across 1 opportunity/);
+  assert.match(html, /Configured strategies/);
   assert.match(html, />3</);
-  assert.match(html, /Games.*DePIN.*Nodes.*Points/);
   assert.doesNotMatch(html, /DEPIN_NODE|DEPIN NODE/);
   assert.match(html, /Guide-only opportunities/);
   assert.match(html, />2</);

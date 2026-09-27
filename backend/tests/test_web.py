@@ -62,6 +62,8 @@ def test_homepage_omits_internal_audit_blocks(monkeypatch, tmp_path) -> None:
     assert "Browse GameFi, DePIN, and points programs, including guides without current ROI." in html
     assert 'href="/methodology"' in html
     assert "Rankings include only strategies with current source data." in html
+    assert "Current strategy results" in html
+    assert "Configured strategies" in html
 
 
 def test_rankings_omits_empty_filter_label_and_preserves_organic_rank_order(monkeypatch, tmp_path) -> None:
