@@ -1098,8 +1098,6 @@ export function renderRankingCard(item, options = {}) {
           <h3><a class="strategy-link" href="/strategies/${encodeURIComponent(strategy.strategy_id)}" data-link${strategyClickAnalytics}>${escapeHtml(strategy.name)}</a></h3>
         </div>
       </div>
-      ${renderStrategySignals(snapshot)}
-      ${renderRiskContext(snapshot)}
       <div class="card-metrics">
         ${metricItem("Starting capital", formatMoney(snapshot.capital.total_capital))}
         ${metricItem("Net earning/day", formatMoney(snapshot.earnings.net_earnings_day, { perDay: true }))}
@@ -1108,6 +1106,8 @@ export function renderRankingCard(item, options = {}) {
       </div>
       ${renderMarketPriceAttribution(snapshot)}
       ${renderNetEarningsInterpretation(snapshot)}
+      ${renderStrategySignals(snapshot)}
+      ${renderRiskContext(snapshot)}
       <p class="muted ranking-context">${escapeHtml(strategy.effort_summary || "Required time and active effort are not quantified in this strategy configuration.")}</p>
       <p class="muted ranking-context">Organic comparison, not a recommendation.</p>
       <div class="card-badges">
