@@ -738,6 +738,7 @@ def _render_strategy_answer_block(strategy: StrategySummary, snapshot: StrategyS
             ("Opportunity", escape(strategy.game_name)),
             ("Opportunity type", escape(opportunity_type_label(strategy.opportunity_type))),
             ("ROI status", "No successful stored calculation yet."),
+            ("Required time/effort", escape(strategy.effort_summary)),
         ]
         return _render_answer_block("Quick strategy summary", f"{strategy.name} has no successful stored calculation yet.", fields)
     return _render_answer_block("Quick strategy summary", _ranking_answer(snapshot, strategy), _strategy_answer_fields(strategy, snapshot))
@@ -759,7 +760,7 @@ def _strategy_answer_fields(strategy: StrategySummary, snapshot: StrategySnapsho
         ("Confidence", escape(score_text(snapshot.confidence))),
         ("Data status", escape(labelize(snapshot.freshness.overall_status))),
         ("Snapshot timestamp", escape(format_datetime(snapshot.calculated_at))),
-        ("Required time/effort", "Not separately quantified in this strategy snapshot."),
+        ("Required time/effort", escape(strategy.effort_summary)),
         ("Major assumptions", escape(_major_assumptions(snapshot))),
         ("Warnings", escape(_warning_summary(snapshot.warnings))),
     ]
@@ -1055,6 +1056,7 @@ def _render_ranking_cards(items: list[RankingItem], *, heading: str) -> str:
               </div>
               <p>{escape(_ranking_answer(snapshot, strategy))}</p>
               {_risk_context(snapshot)}
+              <p class="muted ranking-context">{escape(strategy.effort_summary)}</p>
               <div class="card-metrics">
                 {_metric("Starting capital", format_money_html(snapshot.capital.total_capital))}
                 {_metric("Net earning/day", format_money_html(snapshot.earnings.net_earnings_day, per_day=True))}
