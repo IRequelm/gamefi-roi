@@ -4,6 +4,14 @@ Status: IN PROGRESS — homepage and catalog freshness wording are live. Eligibl
 
 Updated: 2026-09-27 (Europe/Istanbul)
 
+### Freshness-aware SEO release verification — 2026-09-27 08:04 UTC
+
+- Render deploy `dep-dascreo473hc73fodbs0` succeeded and is live from commit `1bc8f74`.
+- Public `https://gamcryp.com/sitemap.xml` returns HTTP 200 with 20 canonical URLs, 19 `daily` and one `weekly`; no `hourly` entries remain. It includes fresh Splinterlands strategy detail and excludes stale DIMO strategy detail.
+- Public checks returned HTTP 200 for `/strategies/dimo-software-only-compatible-car`, `/opportunities/dimo`, and `/strategies/splinterlands-modern-ranked-sps-ev`. The stale DIMO strategy and opportunity pages emit `noindex,follow`; the fresh Splinterlands strategy emits `index,follow`.
+- Live ops remains `degraded`: last successful snapshot refresh `2026-09-27T06:38:26Z`; 7/7 refresh-eligible strategies fresh, 14 unresolved failure records, and 101 historical `SourceRequestError` records. This does not invalidate the crawl correction; refresh reliability remains a separate P0.
+- Release was verified via production route output and Render deploy state. No tests were run; `git diff --check` passed before commit.
+
 ### Cron failure diagnosis and freshness-aware SEO patch — 2026-09-27 07:57 UTC
 
 - Render Cron log search for `provider_failure` confirms CoinGecko `get_token_prices` requests returned both HTTP 401 and HTTP 429 in scheduled runs from 03:47 through 10:47 Europe/Istanbul (00:47–07:47 UTC). The exact logs identify authentication and rate-limit responses; because both occur, do not reduce the diagnosis to only one cause. The user explicitly declined changing the Render CoinGecko key; no secret was read or modified.
