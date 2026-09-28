@@ -4,6 +4,12 @@ Status: IN PROGRESS — homepage and catalog freshness wording are live. Eligibl
 
 Updated: 2026-09-28 (Europe/Istanbul)
 
+### Production verification — 2026-09-28
+
+Commit `5ebba54` is Live on the Render web service and the Cron service built the same commit. The manual Cron run finished successfully with 4 new snapshots, 0 failed strategies, and 11 policy skips (7 `NOT_REFRESHABLE`, including all three Farmers World variants, and 4 `PARTIAL_REFRESH_ONLY`). Overall summary status is `degraded` because partial/stale coverage remains; this is expected and should not be described as fully current. Unlike prior runs, there were no provider failures and no Farmers World calls. No Render API key or setting was changed.
+
+Live read-after-deploy checks returned rankings 200 with no Farmers World strategy, opportunity 200 with `PARKED`/`unknown`, latest strategy 404, history 200, and sitemap 200 with no Farmers World entries. Historical evidence remains available through the history route. This release removes a misleading stale ranked estimate and a known failing provider path; it does not itself prove acquisition growth. Continue to track qualified traffic/conversion and prioritize useful current model coverage from approved, reproducible sources.
+
 ### Parked model release preparation — 2026-09-28
 
 Expanded the Farmers World PARKED boundary from rankings into the current detail/latest API and crawlable strategy inventory: no endpoint or indexed strategy page now exposes the historical snapshot as a current model; the history endpoint still preserves audit records. The visitor-facing opportunity summary explains that reward prices, required costs, and a reliable exit route are being re-verified. Alcor terms, provider authentication and WAX exit-path evidence remain internal operational context. The canonical distribution batch marks the old numeric Farmers World item RED/NOT_REFRESHABLE; X and YouTube queues have been regenerated from their canonical sources, with the numeric claim blocked. No post or video was published.
