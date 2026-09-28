@@ -129,6 +129,8 @@ test("home renders results as cards before filters without table ranking markup"
   assert.match(html, /when ROI is unavailable/);
   assert.match(html, /Risk and confidence separated/);
   assert.match(html, /hero-current-answer/);
+  assert.match(html, /Review the current model/);
+  assert.match(html, /href="\/strategies\/dfk-crystalvale-jeweler-cjewel-max-lock"/);
   assert.match(html, /GamCryp models DFK/);
   assert.doesNotMatch(html, /aria-label="Top ranked organic strategy"/);
   assert.match(html, /Top strategy net\/day/);

@@ -63,6 +63,9 @@ def test_homepage_omits_internal_audit_blocks(monkeypatch, tmp_path) -> None:
     assert "Compare GameFi and DePIN costs, modeled earnings, risk, and evidence freshness. Find a setup that fits your budget; see when rewards cannot be valued." in html
     assert 'class="hero-current-answer" role="status"' in html
     assert "GamCryp models" in html
+    assert (
+        'class="button" href="/strategies/' in html and "Review the current model" in html
+    ) or ('class="button" href="/opportunities">Browse reviewed opportunities</a>' in html)
     assert "What fits your budget or setup?" in html
     assert 'href="/rankings?capital_max=25"' in html
     assert "Browse by project and setup" in html

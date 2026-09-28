@@ -286,6 +286,11 @@ export function renderHomeShell(games = [], rankings = { items: [], page: { tota
         <h1>See what a Web3 earning setup costs—and whether its rewards can be realized.</h1>
         <p class="lede">Compare modeled net earnings, setup costs, risk, and evidence for GameFi and DePIN. When rewards cannot be valued reliably, we show what is missing instead of guessing.</p>
         <p class="hero-current-answer" role="status">${escapeHtml(currentSummary)}</p>
+        <div class="hero-actions">
+          ${currentLead
+    ? `<a class="button" href="/strategies/${encodeURIComponent(currentLead.strategy.strategy_id)}" data-link>Review the current model</a>`
+    : '<a class="button" href="/opportunities" data-link>Browse reviewed opportunities</a>'}
+        </div>
         <div class="hero-proof-points" aria-label="GamCryp data principles">
           <span>Modeled ROI where reproducible</span>
           <span>Risk and confidence separated</span>

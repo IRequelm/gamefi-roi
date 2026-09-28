@@ -142,6 +142,9 @@ def home_page(service: ApiDataService, *, settings: Settings, request: Request) 
           <h1>See what a Web3 earning setup costs—and whether its rewards can be realized.</h1>
           <p class="lede">Compare modeled net earnings, setup costs, risk, and evidence for GameFi and DePIN. When rewards cannot be valued reliably, we show what is missing instead of guessing.</p>
           <p class="hero-current-answer" role="status">{escape(answer)}</p>
+          <div class="hero-actions">
+            {f'<a class="button" href="/strategies/{escape(top.strategy.strategy_id)}">Review the current model</a>' if top is not None else '<a class="button" href="/opportunities">Browse reviewed opportunities</a>'}
+          </div>
           <div class="hero-proof-points" aria-label="GamCryp data principles">
             <span>Recent modeled results</span>
             <span>Risk and confidence separated</span>

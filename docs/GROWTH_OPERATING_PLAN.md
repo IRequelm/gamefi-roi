@@ -2,13 +2,21 @@
 
 Status: IN PROGRESS — homepage and catalog freshness wording are live. Eligible model coverage and qualified acquisition remain the main growth constraints.
 
-Updated: 2026-09-28 (Europe/Istanbul)
+Updated: 2026-09-29 (Europe/Istanbul)
 
 ### Homepage and guide activation patch — 2026-09-29 (deployed)
 
 The server-rendered homepage already put a concise current-results answer in the hero, but client hydration removed that answer and then repeated the lead strategy in a separate large card before the comparison cards. The client now preserves the current answer in the same visible, accessible hero position as the server-rendered page. The repeated lead model card is removed from the normal homepage; its dynamic small-return disclosure remains beside the finder results, and the ranked opportunity card still contains model details and links. On opportunity pages with a reviewed official destination but no current financial model, the hero now offers “View official program”; unavailable ROI remains unavailable and the button is not framed as an earning recommendation. This makes the first decision and guide-to-project path clearer, but does not improve modeled economics or prove conversion lift.
 
 Verification: full backend suite passed (571 tests); frontend suite passed (64 tests); the guide-only official CTA route regression passed; frontend syntax, Python compilation, and `git diff --check` passed. Render deployment `dep-datdabid0e5s73bl0qd0` is Live at commit `25356dc0baf6c9149232a8f5a1dcf76d2870131d`. Public homepage, guide page, and ops status each returned HTTP 200; server HTML contains the current-answer hero (`hero-current-answer`), and the Grass guide exposes “View official program” with `/go/grass-official`. No provider, credential, Render setting, social post, or video was changed. This verifies implementation and delivery only; it does not establish acquisition lift.
+
+### Current model path and channel recheck — 2026-09-29
+
+A fresh desktop browser inspection showed the live hero already states the leading current result but provides no direct action beside it; the next-step cards and model detail sit lower in the page. Added a matching server-rendered and hydrated hero CTA: “Review the current model” links directly to the fresh leading strategy; if no fresh model exists, “Browse reviewed opportunities” opens the guide catalog. This removes an unnecessary scroll/search step without changing model values, ordering, or risk language. Desktop first-fold CTA will be verified after deployment; phone-sized browser rendering remains unverified.
+
+Fresh connected-channel reads do not support scaling reach yet. GA4's trailing 28-day source rows returned 53 sessions: 32 `codex_smoke / manual` sessions tagged to `observability_activation_2` (known QA/operator traffic), 19 Direct/none sessions of unknown origin, and 2 X/social sessions. Returned event totals were 11 `opportunity_view`, 10 `strategy_view`, 1 `start_click`, and 1 `outbound_click`; these are not distinct-user funnels or revenue. Search Console's visible 15-page sample returned 99 impressions and zero clicks, not a sitewide demand count. YouTube's visible video sample returned 215 views, 61 engaged views, and zero gained subscribers; this is exposure, not website acquisition. In the seven video metadata rows returned, three descriptions still route viewers through the channel profile's first link, adding a navigation step; no video description or public post was changed.
+
+The key constraint remains decision value: production has only four fresh USD-valued strategies across one opportunity, and the best scenario is about $0.0018 modeled net/day on $10 capital with risk 100 and confidence 40. No current source evidence justifies inventing a stronger result. Backend suite and frontend suite passed after the CTA change; deployment is pending. No Render environment, API key, Cron setting, or distribution content was changed.
 
 ### Growth diagnosis — 2026-09-28
 

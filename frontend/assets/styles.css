@@ -207,6 +207,12 @@ select {
   line-height: 1.45;
 }
 
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .identity-heading,
 .card-identity {
   display: flex;
