@@ -33,6 +33,11 @@ def test_web_mvp_pages_are_served_by_fastapi(monkeypatch, tmp_path) -> None:
             assert "Search by project or reward" in response.text
             assert 'id="opportunity-type-filter"' in response.text
             assert 'data-opportunity-search=' in response.text
+            assert "Current strategy results" in response.text
+            assert "Opportunities with configured strategies" in response.text
+            assert "No current estimate" in response.text
+            assert "No strategy configured" in response.text
+            assert "Modeled opportunities" not in response.text
 
     guide_html = client.get("/opportunities/grass").text
     assert "View official program" in guide_html

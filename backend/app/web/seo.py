@@ -333,7 +333,7 @@ def opportunities_page(service: ApiDataService, *, settings: Settings, request: 
           <h1>Games, DePIN nodes, and points programs under review</h1>
           <p class="lede">GamCryp publishes financial ROI only when reward value, costs, timing, and exit route are lawful and reproducible. Points-only opportunities remain unavailable, not zero.</p>
         </section>
-        {_render_opportunity_index_answer_block(opportunities)}
+        {_render_opportunity_index_answer_block(rankings, opportunities)}
         {_render_opportunity_cards(
             opportunities,
             heading="Reviewed opportunities",
@@ -725,13 +725,33 @@ def _render_rankings_answer_block(
     )
 
 
-def _render_opportunity_index_answer_block(opportunities: list[OpportunitySummary]) -> str:
-    modeled_count = sum(1 for opportunity in opportunities if opportunity.strategy_count > 0)
-    unavailable_count = len(opportunities) - modeled_count
+def _render_opportunity_index_answer_block(
+    rankings: RankingsPage,
+    opportunities: list[OpportunitySummary],
+) -> str:
+    fresh_items = [
+        item
+        for item in rankings.items
+        if item.latest_snapshot and item.latest_snapshot.freshness.overall_status == "fresh"
+    ]
+    current_opportunity_ids = {
+        item.strategy.opportunity_id or item.strategy.game_id
+        for item in fresh_items
+        if item.strategy.opportunity_id or item.strategy.game_id
+    }
+    configured_opportunity_count = sum(1 for opportunity in opportunities if opportunity.strategy_count > 0)
+    no_strategy_count = sum(1 for opportunity in opportunities if opportunity.strategy_count == 0)
+    no_current_estimate_count = len(opportunities) - len(current_opportunity_ids)
+    current_results_text = (
+        f"{len(fresh_items)} across {len(current_opportunity_ids)} "
+        f"opportunit{'y' if len(current_opportunity_ids) == 1 else 'ies'}"
+    )
     fields = [
         ("Catalog size", escape(str(len(opportunities)))),
-        ("Modeled opportunities", escape(str(modeled_count))),
-        ("ROI unavailable opportunities", escape(str(unavailable_count))),
+        ("Current strategy results", escape(current_results_text)),
+        ("Opportunities with configured strategies", escape(str(configured_opportunity_count))),
+        ("No current estimate", escape(str(no_current_estimate_count))),
+        ("No strategy configured", escape(str(no_strategy_count))),
         ("Opportunity types", escape(", ".join(sorted({opportunity_type_label(item.opportunity_type) for item in opportunities})) or "Unavailable")),
         ("Financial ROI rule", "Only opportunities with reproducible reward value, costs, timing, and exit route receive ROI."),
         ("Points rule", "Points and future claims are shown as unavailable unless a lawful realizable value route exists."),

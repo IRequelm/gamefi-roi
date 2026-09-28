@@ -4,6 +4,14 @@ Status: IN PROGRESS — homepage and catalog freshness wording are live. Eligibl
 
 Updated: 2026-09-29 (Europe/Istanbul)
 
+### Current estimate coverage disclosure — 2026-09-29
+
+The live server-rendered `/opportunities` summary said “8 modeled opportunities” and “44 ROI unavailable opportunities.” The first number is opportunities with configured strategy definitions, not opportunities with a current estimate; the second counts entries with no configured strategy and omits seven stale/parked model sets. A reader or search crawler could mistake this for current financial coverage. The summary now distinguishes current strategy results, opportunities with configured strategies, opportunities with no current estimate, and opportunities with no configured strategy. It is derived from current fresh rankings plus the reviewed catalog, matching the status labels on the opportunity cards.
+
+At the read on 2026-09-28 22:14 UTC, production returned four fresh strategy results across one opportunity; 8 of 52 opportunities had configured strategies, 51 had no current estimate, and 44 had no configured strategy. The same read reported database/ops `ok`, with 4/4 refresh-eligible strategy snapshots fresh. This clarifies the thin live coverage; it does not increase it or establish growth.
+
+Verification: `backend/tests/test_web.py` passed (15 tests); the full backend suite passed; Python compilation and `git diff --check` passed. Production deployment and read-after-deploy checks are pending. No analytics, YouTube/X content, API key, Render setting, or Cron schedule was changed.
+
 ### DIMO model integrity correction — 2026-09-29 (live)
 
 The live DIMO opportunity page still showed an Aug 31 generic weekly-reward estimate (-99.91% 30-day ROI, -$0.30/day) as a measured model. DIMO's official support update says weekly Baseline Issuance rewards ended following DIP-12; Marketplace rewards may continue only under offer-specific terms and eligibility. The old network-wide weekly-pool scenario is no longer suitable as a current financial estimate. Sources: [Changes to DIMO Rewards](https://support.drivedimo.com/en-US/changes-to-dimo-rewards-8208483) and [Marketplace Rewards](https://support.drivedimo.com/en-US/what-are-marketplace-rewards-271566).
