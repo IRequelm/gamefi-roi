@@ -18,9 +18,9 @@ Fresh connected-channel reads do not support scaling reach yet. GA4's trailing 2
 
 The key constraint remains decision value: production has only four fresh USD-valued strategies across one opportunity, and the best scenario is about $0.0018 modeled net/day on $10 capital with risk 100 and confidence 40. No current source evidence justifies inventing a stronger result. Full backend suite and frontend suite (64 tests) passed after the CTA change. No Render environment, API key, Cron setting, or distribution content was changed.
 
-### Hero CTA measurement — 2026-09-29 (web deploy pending)
+### Hero CTA measurement — 2026-09-29 (live)
 
-The homepage hero CTA now uses the existing consent-gated `internal_compare_or_next_click` product event. The current-model CTA labels its `placement` as `hero_current_model` and includes the strategy/opportunity/snapshot identifiers; the no-model fallback uses `hero_opportunity_fallback`. This separates actual hero progression from page views and external outbound clicks without adding a tracking vendor, cookie, or consent bypass. Frontend suite passed 64 tests, web tests passed 15, JavaScript syntax and `git diff --check` passed. Deploy only the web service, then verify the event's consent gate and metadata through existing analytics rather than generating production test traffic.
+The homepage hero CTA now uses the existing consent-gated `internal_compare_or_next_click` product event. The current-model CTA labels its `placement` as `hero_current_model` and includes the strategy/opportunity/snapshot identifiers; the no-model fallback uses `hero_opportunity_fallback`. This separates actual hero progression from page views and external outbound clicks without adding a tracking vendor, cookie, or consent bypass. Frontend suite passed 64 tests, web tests passed 15, JavaScript syntax and `git diff --check` passed. Web deployment `dep-datdmppsrm7s738a9e10` from commit `c3bde23` is live; the public homepage returns 200 and contains the CTA, and `/api/v1/ops/status` returns `ok` with database `ok`. The consent gate and event metadata are covered by frontend tests; no production/synthetic click was generated. Render API key and Cron settings were not changed. Next, observe consented real-user events through existing analytics before drawing any conversion conclusion.
 
 ### Growth diagnosis — 2026-09-28
 
