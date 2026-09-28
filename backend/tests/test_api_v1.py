@@ -377,6 +377,8 @@ def test_games_endpoints_include_strategy_catalog(monkeypatch, tmp_path) -> None
     assert {item["opportunity_type"] for item in list_response.json()["items"]} == {"GAME"}
     assert detail_response.status_code == 200
     assert detail_response.json()["strategy_count"] == 4
+    assert all(strategy["active_effort_minutes_per_day"] is None for strategy in detail_response.json()["strategies"])
+    assert all(strategy["active_effort_source_url"] is None for strategy in detail_response.json()["strategies"])
     assert {strategy["strategy_id"] for strategy in detail_response.json()["strategies"]} >= {
         SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1.strategy_id
     }

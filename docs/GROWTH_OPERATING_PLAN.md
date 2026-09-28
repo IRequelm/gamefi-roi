@@ -4,13 +4,19 @@ Status: IN PROGRESS — homepage and catalog freshness wording are live. Eligibl
 
 Updated: 2026-09-29 (Europe/Istanbul)
 
+### Active-effort decision filter — 2026-09-29 (local; deploy pending)
+
+The homepage finder could filter current rankings by capital, risk, confidence, opportunity, economy, and recorded device/setup tags, but had no safe way to distinguish known player time from activity counts such as battles or claim cycles. Added optional `active_effort_minutes_per_day` and `active_effort_source_url` strategy fields to the catalog/API contract; both remain null unless an explicit non-negative integer has an HTTPS evidence reference. The homepage finder now lets visitors include unknown-time models or restrict results to strategies with measured active minutes and a source URL. Its empty state says no time-fit conclusion can be made when current data does not support one; it does not convert activity assumptions into labor time or net hourly earnings.
+
+Production currently has four fresh Splinterlands scenarios and none has measured active minutes. Thus “measured active time only” correctly returns no eligible result until source-backed time observations are added. This makes the evidence gap actionable and explicit, but does not add strategy coverage or improve ROI. Browser tests passed 66/66; full backend suite passed; targeted API/catalog and schema tests passed 12/12; JavaScript syntax, Python compilation, and `git diff --check` passed. Deployment and read-after-deploy verification remain pending. No opportunity data, source credentials, Render environment, Cron setting, or distribution post changed.
+
 ### Current estimate coverage disclosure — 2026-09-29
 
 The live server-rendered `/opportunities` summary said “8 modeled opportunities” and “44 ROI unavailable opportunities.” The first number is opportunities with configured strategy definitions, not opportunities with a current estimate; the second counts entries with no configured strategy and omits seven stale/parked model sets. A reader or search crawler could mistake this for current financial coverage. The summary now distinguishes current strategy results, opportunities with configured strategies, opportunities with no current estimate, and opportunities with no configured strategy. It is derived from current fresh rankings plus the reviewed catalog, matching the status labels on the opportunity cards.
 
 At the read on 2026-09-28 22:14 UTC, production returned four fresh strategy results across one opportunity; 8 of 52 opportunities had configured strategies, 51 had no current estimate, and 44 had no configured strategy. The same read reported database/ops `ok`, with 4/4 refresh-eligible strategy snapshots fresh. This clarifies the thin live coverage; it does not increase it or establish growth.
 
-Verification: `backend/tests/test_web.py` passed (15 tests); the full backend suite passed; Python compilation and `git diff --check` passed. Production deployment and read-after-deploy checks are pending. No analytics, YouTube/X content, API key, Render setting, or Cron schedule was changed.
+Verification: `backend/tests/test_web.py` passed (15 tests); the full backend suite passed; Python compilation and `git diff --check` passed. Commit `03a124b` was deployed to Render Web as `dep-dateonid0e5s73bq9750`; Chrome-rendered `/opportunities` and a fresh HTTP read show the new summary. Live health and database are `ok`. Search-index/crawler output can lag the live page and is not used as post-deploy UI evidence. No analytics, YouTube/X content, API key, Render setting, or Cron schedule was changed.
 
 ### DIMO model integrity correction — 2026-09-29 (live)
 

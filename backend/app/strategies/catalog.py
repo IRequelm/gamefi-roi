@@ -146,6 +146,8 @@ class StrategyCatalogEntry:
     economy_type: str
     description: str
     effort_summary: str
+    active_effort_minutes_per_day: int | None
+    active_effort_source_url: str | None
     outbound_destination_slugs: tuple[str, ...]
 
 
@@ -179,6 +181,20 @@ def _strategy_effort_summary(strategy: object) -> str:
     return "Required time and active effort are not quantified in this strategy configuration."
 
 
+def _active_effort_evidence(strategy: object) -> tuple[int | None, str | None]:
+    value = getattr(strategy, "active_effort_minutes_per_day", None)
+    source_url = getattr(strategy, "active_effort_source_url", None)
+    if (
+        isinstance(value, int)
+        and not isinstance(value, bool)
+        and value >= 0
+        and isinstance(source_url, str)
+        and source_url.startswith("https://")
+    ):
+        return value, source_url
+    return None, None
+
+
 def _strategy_catalogs(
     strategies: Iterable[object],
     *,
@@ -202,6 +218,8 @@ def _strategy_catalogs(
             economy_type=economy_type,
             description=description,
             effort_summary=_strategy_effort_summary(strategy),
+            active_effort_minutes_per_day=_active_effort_evidence(strategy)[0],
+            active_effort_source_url=_active_effort_evidence(strategy)[1],
             outbound_destination_slugs=(outbound_destination_slug,),
         )
         for strategy in strategies
@@ -222,6 +240,8 @@ def _scenario_strategy_catalogs(strategies: Iterable[object]) -> tuple[StrategyC
             economy_type=str(strategy.economy_type),
             description=str(strategy.description),
             effort_summary=_strategy_effort_summary(strategy),
+            active_effort_minutes_per_day=_active_effort_evidence(strategy)[0],
+            active_effort_source_url=_active_effort_evidence(strategy)[1],
             outbound_destination_slugs=(f"{strategy.opportunity_id}-official",),
         )
         for strategy in strategies

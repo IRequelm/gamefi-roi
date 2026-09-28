@@ -147,6 +147,7 @@ const PRODUCT_ANALYTICS_ALLOWED_PARAMS = new Set([
   "capital_min",
   "capital_max",
   "setup_filter",
+  "effort_filter",
   "strategy_count",
   "confidence_min",
   "risk_max",
@@ -370,6 +371,14 @@ export function renderHomeShell(games = [], rankings = { items: [], page: { tota
                 <option value="node">Node software or server</option>
                 <option value="hardware">Dedicated hardware</option>
               </select>
+            </div>
+            <div class="field">
+              <label for="effort-filter">Active time evidence</label>
+              <select id="effort-filter" name="effortFilter">
+                <option value="">Include unknown active time</option>
+                <option value="measured">Only measured active time</option>
+              </select>
+              <small class="muted">Activity counts such as battles or claim cycles do not establish hands-on time.</small>
             </div>
           </div>
           <div class="button-row">
@@ -3443,6 +3452,7 @@ function bindFinder(root) {
       opportunityType: data.get("opportunityType"),
       economyType: data.get("economyType"),
       setupFilter: data.get("setupFilter"),
+      effortFilter: data.get("effortFilter"),
     };
     trackProductAnalyticsEvent("ranking_filter_used", {
       capital_max: filters.capitalMax,
@@ -3452,6 +3462,7 @@ function bindFinder(root) {
       opportunity_type: filters.opportunityType,
       economy_type: filters.economyType,
       setup_filter: filters.setupFilter,
+      effort_filter: filters.effortFilter,
       ranking_slug: "home",
       page_path: window.location.pathname,
     });
@@ -3461,12 +3472,15 @@ function bindFinder(root) {
         apiGet(buildRankingsPath(filters)),
         filters.setupFilter ? loadOpportunityCatalog() : Promise.resolve([]),
       ]);
-      const matchingRankings = filters.setupFilter
+      const setupRankings = filters.setupFilter
         ? filterRankingsBySetup(rankings, opportunities, filters.setupFilter)
         : rankings;
+      const matchingRankings = filters.effortFilter === "measured"
+        ? filterRankingsByMeasuredEffort(setupRankings)
+        : setupRankings;
       results.innerHTML = matchingRankings.items.length
         ? renderRankingsTable(matchingRankings, { compact: true, groupByOpportunity: true })
-        : renderFinderNoMatch(filters.setupFilter, (rankings.items || []).length > 0);
+        : renderFinderNoMatch(filters.setupFilter, (setupRankings.items || []).length > 0, filters.effortFilter === "measured");
     } catch (error) {
       results.innerHTML = renderError(error);
     }
@@ -3484,7 +3498,20 @@ function filterRankingsBySetup(rankings, opportunities, setupFilter) {
   return { ...rankings, items, page: { ...(rankings.page || {}), total: items.length, offset: 0 } };
 }
 
-function renderFinderNoMatch(setupFilter = "", hasUnmatchedRankings = false) {
+export function filterRankingsByMeasuredEffort(rankings) {
+  const items = (rankings.items || []).filter((item) => {
+    const minutes = item.strategy?.active_effort_minutes_per_day;
+    const sourceUrl = item.strategy?.active_effort_source_url;
+    return typeof minutes === "number" && Number.isSafeInteger(minutes) && minutes >= 0
+      && typeof sourceUrl === "string" && sourceUrl.startsWith("https://");
+  });
+  return { ...rankings, items, page: { ...(rankings.page || {}), total: items.length, offset: 0 } };
+}
+
+export function renderFinderNoMatch(setupFilter = "", hasUnmatchedRankings = false, effortRequired = false) {
+  if (effortRequired) {
+    return `<div class="empty-state"><strong>No current result has verified active-time data.</strong><p>We cannot confirm which strategies fit a daily time budget yet. Activity assumptions such as battles or claim cycles are not hands-on time, so they are not used as a substitute. Review the current model and its stated effort gap, or include results with unknown active time.</p><a class="secondary-button" href="/rankings" data-link>Review current models</a></div>`;
+  }
   const labels = { desktop: "PC or laptop", browser: "browser or web", mobile: "mobile device", node: "node software or server", hardware: "dedicated hardware" };
   const label = labels[setupFilter] || "selected filters";
   const heading = hasUnmatchedRankings ? "No current modeled results match this setup." : "No current modeled results match these filters.";

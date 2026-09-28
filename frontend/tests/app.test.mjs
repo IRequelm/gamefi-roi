@@ -13,6 +13,7 @@ import {
   formatMoney,
   formatRatio,
   formatUpdatedAge,
+  filterRankingsByMeasuredEffort,
   hasConsentGatedAnalytics,
   initializeAnalytics,
   initializeErrorTracking,
@@ -28,6 +29,7 @@ import {
   renderDepinSetupSummary,
   renderRouteDegradedNotice,
   renderError,
+  renderFinderNoMatch,
   renderFreshnessAlert,
   renderGameDetail,
   renderHistory,
@@ -146,6 +148,8 @@ test("home renders results as cards before filters without table ranking markup"
   assert.match(html, /Guide-only opportunities/);
   assert.match(html, /ranking-card-grid/);
   assert.match(html, /finder-results/);
+  assert.match(html, /Active time evidence/);
+  assert.match(html, /Only measured active time/);
   assert.match(html, /filter-panel/);
   assert.doesNotMatch(html, /<table/);
 });
@@ -477,6 +481,27 @@ test("opportunity detail shows unavailable ROI in public language without invent
   assert.match(html, /\/go\/grass-official/);
   assert.doesNotMatch(html, /DEPIN_NODE|PARTIAL|Financial ROI unavailable/);
   assert.doesNotMatch(html, /\$0(?:\.00)?|>0(?:\.00)?%/);
+});
+
+test("measured-effort filter uses only explicit active minutes and explains unavailable fit", () => {
+  const rankings = {
+    items: [
+      { strategy: { strategy_id: "unknown", active_effort_minutes_per_day: null } },
+      { strategy: { strategy_id: "unreferenced", active_effort_minutes_per_day: 30 } },
+      { strategy: { strategy_id: "measured", active_effort_minutes_per_day: 0, active_effort_source_url: "https://example.com/effort" } },
+      { strategy: { strategy_id: "invalid", active_effort_minutes_per_day: -1 } },
+    ],
+    page: { total: 3, offset: 8 },
+  };
+  const filtered = filterRankingsByMeasuredEffort(rankings);
+  assert.deepEqual(filtered.items.map((item) => item.strategy.strategy_id), ["measured"]);
+  assert.equal(filtered.page.total, 1);
+  assert.equal(filtered.page.offset, 0);
+
+  const empty = renderFinderNoMatch("", true, true);
+  assert.match(empty, /No current result has verified active-time data/);
+  assert.match(empty, /not hands-on time/);
+  assert.match(empty, /Review current models/);
 });
 
 test("parked opportunity explains the missing current estimate without suggesting filter changes", () => {
@@ -1046,6 +1071,7 @@ test("PostHog product analytics is consent gated, explicit, and privacy safe", (
         ranking_slug: "gamefi-under-50",
         snapshot_id: "snapshot-1",
         snapshot_timestamp: "2026-08-16T12:00:00Z",
+        effort_filter: "measured",
         raw_financial_payload: "do-not-send",
         wallet_address: "do-not-send",
       },
@@ -1061,6 +1087,7 @@ test("PostHog product analytics is consent gated, explicit, and privacy safe", (
   assert.equal(sent[0].payload.properties.ranking_slug, "gamefi-under-50");
   assert.equal(sent[0].payload.properties.snapshot_id, "snapshot-1");
   assert.equal(sent[0].payload.properties.snapshot_timestamp, "2026-08-16T12:00:00Z");
+  assert.equal(sent[0].payload.properties.effort_filter, "measured");
   assert.equal(sent[0].payload.properties.utm_source, "x");
   assert.equal(sent[0].payload.properties.utm_medium, "social");
   assert.equal(sent[0].payload.properties.utm_campaign, "roi_truth_probe");

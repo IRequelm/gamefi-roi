@@ -261,6 +261,8 @@ class StrategySummary(BaseModel):
     economy_type: str
     description: str
     effort_summary: str = "Required time and active effort are not quantified in this strategy configuration."
+    active_effort_minutes_per_day: int | None = None
+    active_effort_source_url: str | None = None
     outbound_destinations: list[OutboundDestinationPayload] = Field(default_factory=list)
     primary_destination: OutboundDestinationPayload | None = None
     latest_snapshot: StrategySnapshotPayload | None = None

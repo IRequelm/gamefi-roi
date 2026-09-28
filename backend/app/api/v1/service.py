@@ -183,6 +183,8 @@ class ApiDataService:
             economy_type=strategy.economy_type,
             description=strategy.description,
             effort_summary=strategy.effort_summary,
+            active_effort_minutes_per_day=strategy.active_effort_minutes_per_day,
+            active_effort_source_url=strategy.active_effort_source_url,
             outbound_destinations=[
                 _outbound_destination(destination) for destination in outbound_destinations_for_strategy(strategy.strategy_id)
             ],
