@@ -396,10 +396,13 @@ OPPORTUNITIES = (
         chains=("wax",),
         economy_types=("resource-production",),
         reward_asset_or_points_type=("FWW", "FWF", "FWG"),
-        value_realization_status="realizable",
+        value_realization_status="unknown",
         source_references=(("Official site", "https://farmersworld.io/"),),
-        data_feasibility_status="GO",
-        feasibility_summary="Existing G5 adapter has deterministic production economics and marketplace realization.",
+        data_feasibility_status="PARKED",
+        feasibility_summary=(
+            "The earlier model is parked while current reward prices, required costs, and a sufficiently reliable "
+            "exit route are re-verified. Historical values are not current ROI."
+        ),
         strategy_ids=_strategy_ids(FARMERS_WORLD_AXE_STRATEGIES),
         outbound_destination_slug="farmers-world-play",
         legacy_game_id="farmers-world",
@@ -934,7 +937,7 @@ OPPORTUNITIES = (
                 "Some partners may distribute separate rewards to selected wallet lists. That is conditional and is not a cash value for Yaps.",
             ),
             how_to_exit_or_claim=(
-                "Yaps are not currently a transferable token or guaranteed cash claim, so this site does not assign them financial ROI.",
+                "Yaps currently have no transferable token status and no confirmed cash redemption path, so this site does not assign them financial ROI.",
                 "Check each partner's official eligibility and claim terms separately before spending time or money.",
             ),
         ),

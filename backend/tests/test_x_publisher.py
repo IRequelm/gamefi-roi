@@ -68,7 +68,7 @@ def _config(tmp_path: Path) -> XPublisherConfig:
     content_path = tmp_path / "learning_batch.json"
     queue_path = tmp_path / "x_queue.json"
     payload = json.loads(SOURCE_BATCH.read_text(encoding="utf-8"))
-    test_yellow = {DFK_ID, FARMERS_ID, GRASS_ID, SPLINTERLANDS_ID}
+    test_yellow = {DFK_ID, GRASS_ID, SPLINTERLANDS_ID}
     test_red = {DIMO_ID, "x-geodnet-red-fixture-20260831", "x-mysterium-red-fixture-20260831", "x-storj-red-fixture-20260831", "x-weatherxm-red-fixture-20260831"}
     current = [ContentPackLite.model_validate(raw) for raw in payload["packs"]]
     by_id = {pack.content_id: pack for pack in current}
@@ -118,7 +118,6 @@ def _config(tmp_path: Path) -> XPublisherConfig:
 
     for content_id, readiness, project in (
         (DFK_ID, ContentReadiness.YELLOW, "DeFi Kingdoms"),
-        (FARMERS_ID, ContentReadiness.YELLOW, "Farmers World"),
         (SPLINTERLANDS_ID, ContentReadiness.YELLOW, "Splinterlands"),
     ):
         by_id.setdefault(content_id, fixture_pack(content_id, readiness=readiness, project_name=project))
@@ -451,7 +450,7 @@ def test_all_committed_red_projects_are_hard_blocked(tmp_path: Path) -> None:
     service, _ = _service(tmp_path)
     queue = load_x_queue(service.config.queue_file)
 
-    assert len(queue.blocked) == 5
+    assert len(queue.blocked) == 6
     for item in queue.blocked:
         preview = service.preview(item.content_id)
         assert preview.would_publish is False
@@ -752,9 +751,9 @@ def test_current_yellow_and_red_inventory_remains_fail_closed(tmp_path: Path) ->
 
     assert {item.content_id for item in queue.awaiting_human_approval} == {
         DFK_ID,
-        FARMERS_ID,
         GRASS_ID,
         SPLINTERLANDS_ID,
     }
+    assert FARMERS_ID in {item.content_id for item in queue.blocked}
     assert all(not service.preview(item.content_id).would_publish for item in queue.awaiting_human_approval)
     assert all(not service.preview(item.content_id).would_publish for item in queue.blocked)

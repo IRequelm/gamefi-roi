@@ -1113,7 +1113,7 @@ def _destination_status_text(destination) -> str:
 
 def _market_price_attribution(snapshot: StrategySnapshotPayload) -> str:
     metrics = snapshot.classification_summary.metrics
-    if snapshot.game_name.strip().lower() == "farmers world":
+    if str(getattr(snapshot, "game_name", "") or "").strip().lower() == "farmers world":
         return '<p class="muted source-attribution">Farmers World USD estimates convert token/WAX market quotes using CoinGecko’s WAX/USD reference price. That conversion is not an executable WAX/USD sell quote, so realized USD proceeds may differ.</p>'
     has_live_usd_price = any(
         classification == "LIVE" and "price" in name.lower() and "usd" in name.lower()

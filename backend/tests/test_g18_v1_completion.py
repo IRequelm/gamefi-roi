@@ -19,6 +19,7 @@ from app.search.canonical import canonical_page_inventory
 from app.storage.monetization import MonetizationRepository
 from app.strategies.catalog import (
     CATALOG_REVIEWED_AT,
+    GUIDE_ONLY_INDEXABLE_OPPORTUNITY_IDS,
     list_games,
     list_opportunities,
     list_outbound_destinations,
@@ -63,7 +64,7 @@ def test_v1_catalog_targets_identity_and_outbound_coverage_are_complete() -> Non
             assert destination.referral_status == "NONE"
             assert destination.commercial_relationship == "none"
             assert destination.is_affiliate is False
-            assert destination.reviewed_at == CATALOG_REVIEWED_AT
+            assert destination.reviewed_at >= CATALOG_REVIEWED_AT
 
 
 def test_v1_all_modeled_strategies_match_manual_golden_fixture() -> None:
@@ -110,34 +111,46 @@ def test_v1_api_history_and_search_surfaces_cover_all_modeled_strategies(monkeyp
     client = TestClient(create_app())
 
     rankings = client.get("/api/v1/rankings").json()
-    assert rankings["page"]["total"] == len(list_strategies())
+    current_strategy_ids = {
+        strategy.strategy_id
+        for strategy in list_strategies()
+        if next(item for item in list_opportunities() if item.opportunity_id == strategy.opportunity_id).data_feasibility_status
+        not in {"PARKED", "REJECTED"}
+    }
+    assert rankings["page"]["total"] == len(current_strategy_ids)
     assert {item["strategy"]["strategy_id"] for item in rankings["items"]} == {
-        strategy.strategy_id for strategy in list_strategies()
+        *current_strategy_ids
     }
 
     for strategy in list_strategies():
         latest = client.get(f"/api/v1/strategies/{strategy.strategy_id}/latest")
         history = client.get(f"/api/v1/strategies/{strategy.strategy_id}/history")
-        assert latest.status_code == 200
+        is_parked = next(item for item in list_opportunities() if item.opportunity_id == strategy.opportunity_id).data_feasibility_status in {"PARKED", "REJECTED"}
+        assert latest.status_code == (404 if is_parked else 200)
         assert history.status_code == 200
         assert history.json()["page"]["total"] == 1
-        assert latest.json()["confidence"]["available"] is True
-        assert latest.json()["risk"]["available"] is True
+        if not is_parked:
+            assert latest.json()["confidence"]["available"] is True
+            assert latest.json()["risk"]["available"] is True
 
     sitemap = client.get("/sitemap.xml").text
     inventory_paths = {page.path for page in canonical_page_inventory(engine)}
     modeled_opportunity_ids = {
         opportunity.opportunity_id
         for opportunity in list_opportunities()
-        if opportunity.strategy_ids
+        if opportunity.strategy_ids and opportunity.data_feasibility_status not in {"PARKED", "REJECTED"}
     }
     assert {f"/opportunities/{opportunity_id}" for opportunity_id in modeled_opportunity_ids} <= inventory_paths
     assert not any(
         f"/opportunities/{opportunity.opportunity_id}" in inventory_paths
         for opportunity in list_opportunities()
-        if not opportunity.strategy_ids
+        if not opportunity.strategy_ids and opportunity.opportunity_id not in GUIDE_ONLY_INDEXABLE_OPPORTUNITY_IDS
     )
-    assert {f"/strategies/{strategy.strategy_id}" for strategy in list_strategies()} <= inventory_paths
+    assert {
+        f"/strategies/{strategy.strategy_id}"
+        for strategy in list_strategies()
+        if strategy.opportunity_id != "farmers-world"
+    } <= inventory_paths
     assert all("/api/" not in path and "/go/" not in path and "/operator/" not in path for path in inventory_paths)
     assert "2026-08-24" in sitemap
 

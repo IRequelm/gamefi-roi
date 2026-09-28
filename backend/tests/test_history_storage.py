@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 
@@ -221,6 +222,11 @@ def _migrated_engine(monkeypatch, tmp_path, name: str):
     monkeypatch.setenv("GAMEFI_ENVIRONMENT", "test")
     monkeypatch.setenv("GAMEFI_ALLOW_SQLITE_FOR_TESTS", "true")
     monkeypatch.setenv("GAMEFI_DATABASE_URL", database_url)
+    if not os.environ.get("GAMEFI_PUBLIC_BASE_URL"):
+        monkeypatch.setenv("GAMEFI_PUBLIC_BASE_URL", "https://gamcryp.com")
+    from app.config.settings import clear_settings_cache
+
+    clear_settings_cache()
     settings = get_settings()
     command.upgrade(build_alembic_config(settings), "head")
     return create_engine(database_url)

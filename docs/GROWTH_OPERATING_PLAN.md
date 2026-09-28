@@ -2,7 +2,21 @@
 
 Status: IN PROGRESS — homepage and catalog freshness wording are live. Eligible model coverage and qualified acquisition remain the main growth constraints.
 
-Updated: 2026-09-27 (Europe/Istanbul)
+Updated: 2026-09-28 (Europe/Istanbul)
+
+### Parked model release preparation — 2026-09-28
+
+Expanded the Farmers World PARKED boundary from rankings into the current detail/latest API and crawlable strategy inventory: no endpoint or indexed strategy page now exposes the historical snapshot as a current model; the history endpoint still preserves audit records. The visitor-facing opportunity summary explains that reward prices, required costs, and a reliable exit route are being re-verified. Alcor terms, provider authentication and WAX exit-path evidence remain internal operational context. The canonical distribution batch marks the old numeric Farmers World item RED/NOT_REFRESHABLE; X and YouTube queues have been regenerated from their canonical sources, with the numeric claim blocked. No post or video was published.
+
+The complete `backend/tests` suite passed after updating mismatched legacy expectations and repairing validation's reference to the current Splinterlands SPS price input. Final static checks, publishing queue verification, web/Cron deployments, and live read-after-write remain pending. The Render key and other environment settings were not changed.
+
+### Farmers World source and cash-out decision — 2026-09-27
+
+Current investigation supports **PARKED**, not a live ROI claim. The latest Render Cron record repeatedly fails with CoinGecko HTTP 401 on all three Farmers World variants. Per the current [Alcor Terms of Use](https://alcor.com/terms-of-use/), Alcor services/data are not cleared for this competing analytics use; no Alcor API calls or refreshes were made. A permitted public WAX-chain RPC read confirms the FWW/WAX orderbook is directly observable, but raw market rows alone do not reproduce an execution quote or supply an acceptable USD conversion. Gate's official [API terms](https://www.gate.com/en-us/legal/user-agreement) allow displaying API content inside an application subject to compliance; its [public market API](https://www.gate.com/docs/developers/apiv4/en/) currently reports WAXP/USDT `tradable`, with a 3 USDT minimum quote. Gate's WAXP metadata lists WAX-chain deposits enabled and withdrawals disabled, so it does not establish a universal two-way route. WAX's [official token documentation](https://docs.wax.io/learn/about-wax/what-is-waxp-token) identifies WAXP as native to the WAX chain. The provider path still needs source attribution, applicable regional/API-term review, network/transfer fee treatment, and a verified amount-specific sell quote; no Gate feed was integrated.
+
+Accordingly, Farmers World Axe strategies are now classified `NOT_REFRESHABLE`; the opportunity is `PARKED` and `value_realization_status=unknown`. Current rankings exclude all `PARKED` and `REJECTED` opportunities even if an old stored snapshot remains inside its former freshness window. Historical rows are retained for audit, never relabeled current. Once deployed, the hourly Render job will stop calling Alcor/CoinGecko for these strategies and continue the other approved eligible strategy tasks. The objective is to preserve honest current results and stable refresh for the remaining coverage while the source path is resolved; this does not improve catalog breadth or earnings and does not count as acquisition growth.
+
+Reopen Farmers World only with a permitted and reproducible source route, fixture-backed token/NFT inputs, exact trade-depth and minimum-size execution quotes, an authorized cash-out path, verified fees, and current official game-production rules. No key or Render environment setting was changed. The stored learning batch now marks the historical numeric post RED/NOT_REFRESHABLE; the X handoff removed it from human approval and lists it as blocked, while the autonomous X queue also reports it blocked. No post was sent. Targeted `test_snapshot_refresh.py`, `test_api_v1.py`, `test_distribution_content_pack.py`, and `test_x_publisher.py` all pass using an isolated workspace temp directory. Web and Cron production deployments and a post-deploy scheduled run remain pending.
 
 ### Render release and refresh reliability check — 2026-09-27 18:50 UTC
 

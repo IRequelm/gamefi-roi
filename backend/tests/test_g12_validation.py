@@ -95,15 +95,21 @@ def test_g12_snapshot_api_values_match_independent_snapshot_references(monkeypat
     repository = HistoryRepository(engine)
     expected_scores = {
         DFK_CJEWEL_MAX_LOCK_V1.strategy_id: (82, "HIGH", 79, "VERY HIGH"),
-        FARMERS_WORLD_AXE_WOOD_V1.strategy_id: (77, "MODERATE", 31, "MEDIUM"),
+        FARMERS_WORLD_AXE_WOOD_V1.strategy_id: (77, "MODERATE", 19, "LOW"),
         SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1.strategy_id: (39, "LOW", 100, "VERY HIGH"),
     }
 
     for strategy_id in STRATEGY_IDS:
         snapshot = repository.latest_snapshot(strategy_id)
         assert snapshot is not None
-        manual = manual_from_snapshot_references(strategy_id, snapshot.input_observation_references).metrics
         response = client.get(f"/api/v1/strategies/{strategy_id}/latest")
+        if strategy_id == FARMERS_WORLD_AXE_WOOD_V1.strategy_id:
+            assert response.status_code == 404
+            history = client.get(f"/api/v1/strategies/{strategy_id}/history")
+            assert history.status_code == 200
+            assert history.json()["page"]["total"] == 1
+            continue
+        manual = manual_from_snapshot_references(strategy_id, snapshot.input_observation_references).metrics
         assert response.status_code == 200
         payload = response.json()
 
@@ -278,7 +284,7 @@ def test_g12_frontend_source_does_not_recompute_financial_metrics() -> None:
 
     assert "parseFloat" not in text
     number_casts = re.findall(r"\bNumber\s*\(([^()]*)\)", text)
-    assert number_casts == ["opportunity.strategy_count || 0"]
+    assert number_casts == ["opportunity.strategy_count || 0", "opportunity.strategy_count || 0", "rankings.page?.total", "rankings.page.total"]
     assert "decimalStringToPercent" not in text
 
 

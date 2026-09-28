@@ -1,4 +1,14 @@
 {
+  "blocked": [
+    {
+      "channel": "X",
+      "content_id": "x-farmers-world-tiny-economics-20260831",
+      "current_status": "RED",
+      "project": "Farmers World",
+      "reason_for_blocking": "Opportunity is PARKED; current source eligibility and executable USD exit are unverified. Do not publish historical numerical claims.",
+      "refreshability": "NOT_REFRESHABLE"
+    }
+  ],
   "green": [
     {
       "approval_requirement": "FOUNDER_FINAL_REVIEW_BEFORE_EXTERNAL_PUBLISHING",
@@ -40,25 +50,6 @@
       "snapshot_id": "3920a38d-3ca0-525d-b77e-1f47f4c59e38",
       "snapshot_timestamp": "2026-08-31T21:33:44.128693Z",
       "x_weighted_length": 284
-    },
-    {
-      "approval_notes": [
-        "Shorten to the X 280-character weighted limit before publishing."
-      ],
-      "approval_requirement": "EXPLICIT_HUMAN_APPROVAL_REQUIRED",
-      "attribution_url": "https://gamcryp.com/strategies/farmers-world-axe-wood-production?utm_campaign=distribution-mvp&utm_content=x-farmers-world-tiny-economics-20260831&utm_medium=social&utm_source=x",
-      "channel": "X",
-      "content_id": "x-farmers-world-tiny-economics-20260831",
-      "current_status": "YELLOW",
-      "final_copy": "Farmers World is a useful reminder: cheap entry is not the same as good economics.\n\nGamCryp's axe strategy shows capital $0.0019, net/day <$0.0001/day, and 30D ROI of -0.9%.\n\nThis is why GamCryp separates modeled return from risk, liquidity, and confidence.\n\nhttps://gamcryp.com/strategies/farmers-world-axe-wood-production?utm_campaign=distribution-mvp&utm_content=x-farmers-world-tiny-economics-20260831&utm_medium=social&utm_source=x",
-      "project": "Farmers World",
-      "reason_for_inclusion": "Current AUTO-refreshable snapshot is aligned; HIGH risk, MODERATE confidence, and tiny-value wording require human approval.",
-      "recommended_order": 3,
-      "refreshability": "AUTO_REFRESHABLE",
-      "risk_caveat": "Risk is HIGH; review the strategy assumptions before acting.",
-      "snapshot_id": "6abc7a05-f616-5215-ab2b-4e07e24291c2",
-      "snapshot_timestamp": "2026-08-31T21:33:44.128693Z",
-      "x_weighted_length": 282
     },
     {
       "approval_notes": [

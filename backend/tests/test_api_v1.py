@@ -166,11 +166,9 @@ def test_rankings_order_and_tie_breaking_policy(monkeypatch, tmp_path) -> None:
     assert response.status_code == 200
     payload = response.json()
     assert payload["ordering"] == RANKING_ORDERING
-    assert [item["rank"] for item in payload["items"]] == list(range(1, len(catalog.list_strategies()) + 1))
+    assert [item["rank"] for item in payload["items"]] == list(range(1, len(payload["items"]) + 1))
+    assert len(payload["items"]) == len(catalog.list_strategies()) - 3
     assert [item["strategy"]["strategy_id"] for item in payload["items"]] == [
-        FARMERS_WORLD_AXE_WOOD_V1.strategy_id,
-        "farmers-world-axe-wood-production-10x",
-        "farmers-world-axe-wood-production-3x",
         "splinterlands-modern-ranked-active-sps-ev",
         "geodnet-empty-hex-triple-band-base-station",
         "dfk-crystalvale-jeweler-cjewel-5000-max-lock",
@@ -189,30 +187,15 @@ def test_rankings_order_and_tie_breaking_policy(monkeypatch, tmp_path) -> None:
 def test_rankings_filters_use_only_modeled_fields(monkeypatch, tmp_path) -> None:
     client, _engine = _seeded_client(monkeypatch, tmp_path, "filters.db")
 
-    assert _ranking_ids(client, "/api/v1/rankings?risk_max=50") == [
-        FARMERS_WORLD_AXE_WOOD_V1.strategy_id,
-        "farmers-world-axe-wood-production-10x",
-        "farmers-world-axe-wood-production-3x",
-    ]
+    assert _ranking_ids(client, "/api/v1/rankings?risk_max=50") == []
     assert _ranking_ids(client, "/api/v1/rankings?confidence_min=80") == [
         "dfk-crystalvale-jeweler-cjewel-5000-max-lock",
         DFK_CJEWEL_MAX_LOCK_V1.strategy_id,
         "dfk-crystalvale-jeweler-cjewel-100-max-lock",
     ]
-    assert _ranking_ids(client, "/api/v1/rankings?game_id=farmers-world") == [
-        FARMERS_WORLD_AXE_WOOD_V1.strategy_id,
-        "farmers-world-axe-wood-production-10x",
-        "farmers-world-axe-wood-production-3x",
-    ]
-    assert _ranking_ids(client, "/api/v1/rankings?opportunity_id=farmers-world") == [
-        FARMERS_WORLD_AXE_WOOD_V1.strategy_id,
-        "farmers-world-axe-wood-production-10x",
-        "farmers-world-axe-wood-production-3x",
-    ]
+    assert _ranking_ids(client, "/api/v1/rankings?game_id=farmers-world") == []
+    assert _ranking_ids(client, "/api/v1/rankings?opportunity_id=farmers-world") == []
     assert _ranking_ids(client, "/api/v1/rankings?opportunity_type=GAME") == [
-        FARMERS_WORLD_AXE_WOOD_V1.strategy_id,
-        "farmers-world-axe-wood-production-10x",
-        "farmers-world-axe-wood-production-3x",
         "splinterlands-modern-ranked-active-sps-ev",
         "dfk-crystalvale-jeweler-cjewel-5000-max-lock",
         DFK_CJEWEL_MAX_LOCK_V1.strategy_id,
@@ -228,19 +211,9 @@ def test_rankings_filters_use_only_modeled_fields(monkeypatch, tmp_path) -> None
         "storj-existing-hardware-storage-node",
         "dimo-software-only-compatible-car",
     ]
-    assert _ranking_ids(client, "/api/v1/rankings?chain=wax") == [
-        FARMERS_WORLD_AXE_WOOD_V1.strategy_id,
-        "farmers-world-axe-wood-production-10x",
-        "farmers-world-axe-wood-production-3x",
-    ]
-    assert _ranking_ids(client, "/api/v1/rankings?economy_type=resource-production") == [
-        FARMERS_WORLD_AXE_WOOD_V1.strategy_id,
-        "farmers-world-axe-wood-production-10x",
-        "farmers-world-axe-wood-production-3x",
-    ]
+    assert _ranking_ids(client, "/api/v1/rankings?chain=wax") == []
+    assert _ranking_ids(client, "/api/v1/rankings?economy_type=resource-production") == []
     assert _ranking_ids(client, "/api/v1/rankings?capital_min=2&capital_max=20") == [
-        "farmers-world-axe-wood-production-10x",
-        "farmers-world-axe-wood-production-3x",
         "splinterlands-modern-ranked-active-sps-ev",
         SPLINTERLANDS_MODERN_RANKED_SPS_EV_V1.strategy_id,
         "splinterlands-modern-ranked-grinder-sps-ev",
@@ -420,6 +393,7 @@ def test_opportunities_catalog_includes_non_game_candidates_without_financial_sn
     grass_response = client.get("/api/v1/opportunities/grass")
     teneo_response = client.get("/api/v1/opportunities/teneo")
     aro_response = client.get("/api/v1/opportunities/aro-network")
+    farmers_world_response = client.get("/api/v1/opportunities/farmers-world")
 
     assert list_response.status_code == 200
     payload = list_response.json()
@@ -440,6 +414,14 @@ def test_opportunities_catalog_includes_non_game_candidates_without_financial_sn
     assert grass["strategies"] == []
     assert teneo_response.json()["data_feasibility_status"] == "PARTIAL"
     assert aro_response.json()["value_realization_status"] == "future_airdrop_claim"
+    assert farmers_world_response.json()["data_feasibility_status"] == "PARKED"
+    assert farmers_world_response.json()["value_realization_status"] == "unknown"
+    assert farmers_world_response.json()["strategy_count"] == 3
+    assert all(item["latest_snapshot"] is None for item in farmers_world_response.json()["strategies"])
+
+    parked_strategy_id = FARMERS_WORLD_AXE_WOOD_V1.strategy_id
+    assert client.get(f"/api/v1/strategies/{parked_strategy_id}/latest").status_code == 404
+    assert client.get(f"/api/v1/strategies/{parked_strategy_id}/history").status_code == 200
 
 
 def test_referral_metadata_cannot_change_rankings_or_scores(monkeypatch, tmp_path) -> None:

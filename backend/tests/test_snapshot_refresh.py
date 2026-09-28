@@ -55,13 +55,13 @@ def test_dry_run_classifies_existing_production_tasks_without_provider_calls(mon
     assert result.mode == "dry-run"
     assert result.refreshed_count == 0
     assert result.failed_count == 0
-    assert result.skipped_count == 5
+    assert result.skipped_count == 8
     assert result.partial_skipped == 4
-    assert result.not_refreshable_skipped == 1
+    assert result.not_refreshable_skipped == 4
     assert len(result.refreshability) == len(tasks)
-    assert sum(entry.refreshability == Refreshability.AUTO_REFRESHABLE for entry in result.refreshability) == 10
+    assert sum(entry.refreshability == Refreshability.AUTO_REFRESHABLE for entry in result.refreshability) == 7
     assert sum(entry.refreshability == Refreshability.PARTIAL_REFRESH_ONLY for entry in result.refreshability) == 4
-    assert sum(entry.refreshability == Refreshability.NOT_REFRESHABLE for entry in result.refreshability) == 1
+    assert sum(entry.refreshability == Refreshability.NOT_REFRESHABLE for entry in result.refreshability) == 4
 
 
 def test_dry_run_can_quarantine_unavailable_dfk_jeweler_refresh() -> None:
@@ -73,9 +73,9 @@ def test_dry_run_can_quarantine_unavailable_dfk_jeweler_refresh() -> None:
         dry_run=True,
     )
 
-    assert result.eligible_count == 7
-    assert result.skipped_count == 8
-    assert result.not_refreshable_skipped == 4
+    assert result.eligible_count == 4
+    assert result.skipped_count == 11
+    assert result.not_refreshable_skipped == 7
     by_id = {entry.strategy_id: entry for entry in result.refreshability}
     assert by_id["dfk-crystalvale-jeweler-cjewel-max-lock"].refreshability is Refreshability.NOT_REFRESHABLE
     assert "positive current cJEWEL balance" in by_id["dfk-crystalvale-jeweler-cjewel-max-lock"].reason
@@ -107,6 +107,8 @@ def test_partial_and_not_refreshable_strategies_are_never_eligible_for_refresh(m
     by_id = {entry.strategy_id: entry for entry in plan}
     assert by_id["geodnet-empty-hex-triple-band-base-station"].refreshability is Refreshability.PARTIAL_REFRESH_ONLY
     assert by_id["storj-existing-hardware-storage-node"].refreshability is Refreshability.NOT_REFRESHABLE
+    assert by_id["farmers-world-axe-wood-production"].refreshability is Refreshability.NOT_REFRESHABLE
+    assert "parked" in by_id["farmers-world-axe-wood-production"].reason
 
 
 def test_recalculation_time_cannot_renew_stale_config_evidence() -> None:
@@ -146,7 +148,7 @@ def test_refresh_summary_separates_refresh_and_skip_categories(monkeypatch) -> N
     assert result.auto_refreshed == 1
     assert result.reused_count == 0
     assert result.partial_skipped == 4
-    assert result.not_refreshable_skipped == 1
+    assert result.not_refreshable_skipped == 4
     assert result.failed == 0
 
 

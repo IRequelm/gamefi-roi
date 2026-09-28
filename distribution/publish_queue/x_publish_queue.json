@@ -3,6 +3,25 @@
     {
       "approval_required": true,
       "approval_state": "awaiting_human_approval",
+      "attribution_url": "https://gamcryp.com/strategies/splinterlands-modern-ranked-sps-ev?utm_campaign=distribution-mvp&utm_content=x-splinterlands-expected-value-20260831&utm_medium=social&utm_source=x",
+      "attribution_url_required": false,
+      "channel": "X",
+      "content_checksum": "c66d4244e2b68187f962cca5d2b31058786e66afd79167512ade9bd99186c21c",
+      "content_id": "x-splinterlands-expected-value-20260831",
+      "final_copy": "Splinterlands is modeled as expected value, not guaranteed income.\n\nGamCryp's Modern Ranked SPS strategy uses $10 capital, $0.0019/day net, and 0.57% 30D ROI.\n\nThe catch: win rate and SPS per win are assumptions, so confidence stays LOW and uncertainty is explicit.",
+      "generated_at": "2026-08-31T18:00:00Z",
+      "project": "Splinterlands",
+      "recommended_order": 4,
+      "refreshability": "AUTO_REFRESHABLE",
+      "risk_caveat": "Performance-dependent SPS rewards are modeled as expected value, not guaranteed earnings.",
+      "snapshot_id": "f9de6d66-de9a-526e-9b88-ca99a03cba83",
+      "snapshot_timestamp": "2026-09-27T17:47:16.160125Z",
+      "source_pack_version": "content-pack-lite-v1",
+      "status": "YELLOW"
+    },
+    {
+      "approval_required": true,
+      "approval_state": "awaiting_human_approval",
       "attribution_url": "https://gamcryp.com/opportunities/grass?utm_campaign=distribution-mvp&utm_content=x-grass-roi-unavailable-20260831&utm_medium=social&utm_source=x",
       "attribution_url_required": false,
       "channel": "X",
@@ -20,7 +39,27 @@
       "status": "YELLOW"
     }
   ],
-  "blocked": [],
+  "blocked": [
+    {
+      "approval_required": false,
+      "approval_state": "blocked",
+      "attribution_url": "https://gamcryp.com/strategies/farmers-world-axe-wood-production?utm_campaign=distribution-mvp&utm_content=x-farmers-world-tiny-economics-20260831&utm_medium=social&utm_source=x",
+      "attribution_url_required": true,
+      "channel": "X",
+      "content_checksum": "b7eaec3328af1ba1ef49e56557b74d19d63e30e7486ac6d8bb342bb9cfcaf27d",
+      "content_id": "x-farmers-world-tiny-economics-20260831",
+      "final_copy": "Farmers World ROI is parked while current source data and an executable USD exit are verified. Historical estimates stay out of current rankings.\n\nhttps://gamcryp.com/strategies/farmers-world-axe-wood-production?utm_campaign=distribution-mvp&utm_content=x-farmers-world-tiny-economics-20260831&utm_medium=social&utm_source=x",
+      "generated_at": "2026-08-31T18:00:00Z",
+      "project": "Farmers World",
+      "recommended_order": 6,
+      "refreshability": "NOT_REFRESHABLE",
+      "risk_caveat": "Parked: current source eligibility and executable cash-out are not verified.",
+      "snapshot_id": "6bb215bc-259d-57d5-a962-d4a35bc8a6e0",
+      "snapshot_timestamp": "2026-09-27T17:47:31.820907Z",
+      "source_pack_version": "content-pack-lite-v1",
+      "status": "RED"
+    }
+  ],
   "generated_at": "2026-08-31T18:00:00Z",
   "publishable": [
     {
@@ -44,6 +83,6 @@
     }
   ],
   "queue_version": "x-publish-queue-v1",
-  "source_batch_hash": "4958f74d92bb98ad10f261e83688cae94d6ee51db71b3848c93627838df17e32",
+  "source_batch_hash": "0680d1ee57409a123f194591333dc143824770e2b4cd9c5befb2b8031f3374c2",
   "source_batch_id": "distribution-learning-batch-001"
 }

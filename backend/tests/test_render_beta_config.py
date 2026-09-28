@@ -5,15 +5,17 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def test_default_render_blueprint_uses_free_beta_resources_without_cron() -> None:
+def test_default_render_blueprint_uses_free_web_and_hourly_starter_cron() -> None:
     blueprint = (ROOT / "render.yaml").read_text(encoding="utf-8")
 
     assert "plan: free" in blueprint
     assert "name: gamefi-roi-web" in blueprint
     assert "name: gamefi-roi-db" in blueprint
     assert 'name: gamefi-roi-db\n    plan: basic-256mb' in blueprint
-    assert "type: cron" not in blueprint
-    assert "name: gamefi-roi-recalculation" not in blueprint
+    assert "type: cron" in blueprint
+    assert "name: gamefi-roi-recalculation" in blueprint
+    assert "plan: starter" in blueprint
+    assert 'schedule: "47 * * * *"' in blueprint
     assert "preDeployCommand" not in blueprint
     assert "python -m alembic -c backend/alembic.ini upgrade head && python -m uvicorn app.main:app" in blueprint
     assert "GAMEFI_COINGECKO_API_KEY" in blueprint
@@ -54,7 +56,7 @@ def test_beta_scheduler_workflow_uses_policy_aware_snapshot_refresh_with_overlap
     assert 'GAMEFI_WAX_MARKET_OBSERVATION_FRESHNESS_SECONDS: "21600"' in workflow
     assert 'GAMEFI_DFK_CHAIN_OBSERVATION_FRESHNESS_SECONDS: "21600"' in workflow
     assert 'GAMEFI_SPLINTERLANDS_OBSERVATION_FRESHNESS_SECONDS: "21600"' in workflow
-    assert 'key: GAMEFI_SCHEDULER_CADENCE_MINUTES\n        value: "240"' in beta_blueprint
+    assert 'key: GAMEFI_SCHEDULER_CADENCE_MINUTES\n        value: "60"' in beta_blueprint
     assert 'key: GAMEFI_PRODUCTION_HARD_STALE_SECONDS\n        value: "28800"' in beta_blueprint
     assert 'key: GAMEFI_MARKET_DATA_PRICE_FRESHNESS_SECONDS\n        value: "21600"' in beta_blueprint
     assert 'key: GAMEFI_WAX_MARKET_OBSERVATION_FRESHNESS_SECONDS\n        value: "21600"' in beta_blueprint

@@ -23,9 +23,6 @@ _AUTO_STRATEGY_IDS = frozenset(
         "dfk-crystalvale-jeweler-cjewel-max-lock",
         "dfk-crystalvale-jeweler-cjewel-100-max-lock",
         "dfk-crystalvale-jeweler-cjewel-5000-max-lock",
-        "farmers-world-axe-wood-production",
-        "farmers-world-axe-wood-production-3x",
-        "farmers-world-axe-wood-production-10x",
         "splinterlands-modern-ranked-sps-ev",
         "splinterlands-modern-ranked-casual-sps-ev",
         "splinterlands-modern-ranked-active-sps-ev",
@@ -42,7 +39,17 @@ _PARTIAL_STRATEGY_IDS = frozenset(
 )
 _NOT_REFRESHABLE_STRATEGY_IDS = frozenset(
     {
+        "farmers-world-axe-wood-production",
+        "farmers-world-axe-wood-production-3x",
+        "farmers-world-axe-wood-production-10x",
         "storj-existing-hardware-storage-node",
+    }
+)
+_FARMERS_WORLD_STRATEGY_IDS = frozenset(
+    {
+        "farmers-world-axe-wood-production",
+        "farmers-world-axe-wood-production-3x",
+        "farmers-world-axe-wood-production-10x",
     }
 )
 _DFK_JEWELER_STRATEGY_IDS = frozenset(
@@ -61,6 +68,16 @@ def classify_refreshability(strategy_id: str, *, dfk_jeweler_refresh_enabled: bo
             reason=(
                 "DFK Jeweler refresh is temporarily quarantined because the live chain source is not returning "
                 "a positive current cJEWEL balance; stale stored snapshots remain visible until the flag is restored."
+            ),
+        )
+    if strategy_id in _FARMERS_WORLD_STRATEGY_IDS:
+        return RefreshabilityDecision(
+            refreshability=Refreshability.NOT_REFRESHABLE,
+            reason=(
+                "Farmers World ROI is parked: the configured Alcor API source is not approved for this competing "
+                "analytics use, CoinGecko WAX/USD currently fails authentication, and a reproducible executable "
+                "USD exit path has not been established. Historical snapshots are retained but must not be "
+                "presented as current."
             ),
         )
     if strategy_id in _AUTO_STRATEGY_IDS:

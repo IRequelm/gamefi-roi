@@ -33,8 +33,8 @@ def test_final_catalog_batch_is_source_backed_and_has_no_models() -> None:
 def test_final_catalog_batch_crosses_fifty_without_changing_modeled_strategy_count() -> None:
     opportunities = list_opportunities()
 
-    assert len(opportunities) == 51
+    assert len(opportunities) == 52
     assert sum(item.admission_mode == "MODELED" for item in opportunities) == 8
-    assert sum(item.admission_mode == "GUIDE_ONLY" for item in opportunities) == 43
+    assert sum(item.admission_mode == "GUIDE_ONLY" for item in opportunities) == 44
     assert len(list_strategies()) == 15
     assert get_opportunity("fluxnode").status == "watchlist"

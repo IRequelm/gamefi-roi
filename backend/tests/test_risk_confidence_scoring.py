@@ -231,7 +231,7 @@ def test_existing_three_adapters_score_distinct_risk_and_confidence(monkeypatch,
     assert dfk.confidence.label == ConfidenceLabel.HIGH
     assert dfk.risk.label == RiskLabel.VERY_HIGH
     assert farmers.confidence.score < dfk.confidence.score
-    assert farmers.risk.label == RiskLabel.MEDIUM
+    assert farmers.risk.label == RiskLabel.LOW
     assert splinterlands.confidence.score < dfk.confidence.score
     assert splinterlands.risk.label == RiskLabel.VERY_HIGH
     assert _contribution(splinterlands.risk.contributions, "probabilistic_uncertainty").points > 0

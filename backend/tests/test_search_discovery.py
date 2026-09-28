@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 import pytest
 
 from app.search.canonical import canonical_page_inventory
+from app.strategies.catalog import GUIDE_ONLY_INDEXABLE_OPPORTUNITY_IDS
 from app.search.indexnow import INDEXNOW_ENDPOINT, IndexNowClient, IndexNowError
 from app.storage.models import StrategySnapshotRecord
 from app.storage.monetization import MonetizationRepository
@@ -507,7 +508,7 @@ def test_canonical_inventory_has_no_api_go_or_query_urls(monkeypatch, tmp_path) 
     assert not any(
         f"/opportunities/{opportunity.opportunity_id}" in paths
         for opportunity in list_opportunities()
-        if not opportunity.strategy_ids
+        if not opportunity.strategy_ids and opportunity.opportunity_id not in GUIDE_ONLY_INDEXABLE_OPPORTUNITY_IDS
     )
     assert all(not path.startswith(("/api", "/go")) and "?" not in path for path in paths)
 

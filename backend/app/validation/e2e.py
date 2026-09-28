@@ -98,7 +98,7 @@ def manual_from_snapshot_references(strategy_id: str, references: Mapping[str, A
                 "win_probability_low": _required(values, "splinterlands.modern_ranked.win_probability_low"),
                 "win_probability_high": _required(values, "splinterlands.modern_ranked.win_probability_high"),
                 "sps_reward_per_win": _required(values, "splinterlands.modern_ranked.sps_reward_per_win"),
-                "sps_reference_price_usd": _required(values, "splinterlands.modern_ranked.sps_reference_price_usd"),
+                "sps_reference_price_usd": _required(values, "splinterlands.settings.sps_price_usd"),
                 "realization_haircut_bps": _required(values, "splinterlands.modern_ranked.realization_haircut_bps"),
                 "card_rental_cost_day_usd": _required(values, "splinterlands.modern_ranked.card_rental_cost_day_usd"),
                 "transaction_cost_day_usd": _required(values, "splinterlands.modern_ranked.transaction_cost_day_usd"),

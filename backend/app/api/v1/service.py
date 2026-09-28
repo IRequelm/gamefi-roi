@@ -164,7 +164,9 @@ class ApiDataService:
         include_latest: bool = False,
     ) -> StrategySummary:
         latest = None
-        if include_latest:
+        opportunity = get_opportunity(strategy.opportunity_id)
+        is_parked = opportunity is not None and opportunity.data_feasibility_status in {"PARKED", "REJECTED"}
+        if include_latest and not is_parked:
             snapshot = self.history.latest_snapshot(strategy.strategy_id, strategy_version=strategy.strategy_version)
             if snapshot is not None:
                 score = self.scoring.get_score(snapshot.snapshot_id)
@@ -198,6 +200,9 @@ class ApiDataService:
     def latest_snapshot(self, strategy_id: str) -> StrategySnapshotPayload | None:
         strategy = get_strategy(strategy_id)
         if strategy is None:
+            return None
+        opportunity = get_opportunity(strategy.opportunity_id)
+        if opportunity is not None and opportunity.data_feasibility_status in {"PARKED", "REJECTED"}:
             return None
         snapshot = self.history.latest_snapshot(strategy.strategy_id, strategy_version=strategy.strategy_version)
         if snapshot is None:
@@ -846,9 +851,12 @@ def _passes_filters(
     chain: str | None,
     economy_type: str | None,
 ) -> bool:
+    opportunity = get_opportunity(strategy.opportunity_id)
+    if opportunity is not None and opportunity.data_feasibility_status in {"PARKED", "REJECTED"}:
+        return False
     # Public rankings are a current-data surface. Historical/detail endpoints
-    # continue to expose stale snapshots with their warnings, but stale models
-    # must not compete for the live leader position.
+    # continue to expose prior snapshots with their warnings, but stale and
+    # explicitly parked/rejected models must not compete for the live leader position.
     if _overall_freshness(
         {key: int(value) for key, value in dict(snapshot.freshness_summary.get("status_counts", {})).items()},
         snapshot=snapshot,
