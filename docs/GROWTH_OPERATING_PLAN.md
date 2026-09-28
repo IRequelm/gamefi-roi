@@ -4,11 +4,11 @@ Status: IN PROGRESS — homepage and catalog freshness wording are live. Eligibl
 
 Updated: 2026-09-28 (Europe/Istanbul)
 
-### Homepage and guide activation patch — 2026-09-28 (deploy pending)
+### Homepage and guide activation patch — 2026-09-29 (deployed)
 
 The server-rendered homepage already put a concise current-results answer in the hero, but client hydration removed that answer and then repeated the lead strategy in a separate large card before the comparison cards. The client now preserves the current answer in the same visible, accessible hero position as the server-rendered page. The repeated lead model card is removed from the normal homepage; its dynamic small-return disclosure remains beside the finder results, and the ranked opportunity card still contains model details and links. On opportunity pages with a reviewed official destination but no current financial model, the hero now offers “View official program”; unavailable ROI remains unavailable and the button is not framed as an earning recommendation. This makes the first decision and guide-to-project path clearer, but does not improve modeled economics or prove conversion lift.
 
-Verification before deployment: full backend suite passed (571 tests); frontend suite passed (64 tests); the guide-only official CTA route regression passed; frontend syntax, Python compilation, and `git diff --check` passed. Render deployment and live desktop/browser read-after-deploy are pending. No provider, credential, Render setting, social post, or video was changed.
+Verification: full backend suite passed (571 tests); frontend suite passed (64 tests); the guide-only official CTA route regression passed; frontend syntax, Python compilation, and `git diff --check` passed. Render deployment `dep-datdabid0e5s73bl0qd0` is Live at commit `25356dc0baf6c9149232a8f5a1dcf76d2870131d`. Public homepage, guide page, and ops status each returned HTTP 200; server HTML contains the current-answer hero (`hero-current-answer`), and the Grass guide exposes “View official program” with `/go/grass-official`. No provider, credential, Render setting, social post, or video was changed. This verifies implementation and delivery only; it does not establish acquisition lift.
 
 ### Growth diagnosis — 2026-09-28
 
