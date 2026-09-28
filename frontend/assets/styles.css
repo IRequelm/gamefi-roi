@@ -195,6 +195,18 @@ select {
   padding: clamp(18px, 3vw, 28px);
 }
 
+.hero-current-answer {
+  max-width: 78ch;
+  margin: 2px 0 0;
+  padding: 9px 12px;
+  border-left: 3px solid var(--cyan);
+  border-radius: 0 8px 8px 0;
+  background: rgba(15, 33, 55, 0.52);
+  color: var(--muted-strong);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
 .identity-heading,
 .card-identity {
   display: flex;
@@ -1675,6 +1687,11 @@ tr:last-child td {
   .page-head {
     gap: 7px;
     padding: 16px;
+  }
+
+  .hero-current-answer {
+    padding: 8px 10px;
+    font-size: 0.84rem;
   }
 
   .identity-heading {

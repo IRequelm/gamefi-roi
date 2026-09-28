@@ -275,12 +275,17 @@ export function applyCuratedRankingConstraints(rankings, opportunities = [], pat
 export function renderHomeShell(games = [], rankings = { items: [], page: { total: 0 } }, opportunities = [], degradedMessages = [], recordedModels = []) {
   const economyOptions = Array.from(new Set(games.flatMap((game) => game.economy_types || []))).sort();
   const opportunityTypeOptions = Array.from(new Set(opportunities.map((opportunity) => opportunity.opportunity_type))).sort();
+  const currentLead = (rankings.items || []).find((item) => item.latest_snapshot?.freshness?.overall_status === "fresh");
+  const currentSummary = currentLead
+    ? rankingAnswer(currentLead.latest_snapshot, currentLead.strategy)
+    : "No current modeled results are available for comparison right now. Historical estimates stay separate from current opportunities.";
   return `
     <div class="page-shell">
       <section class="page-head">
         <p class="eyebrow">GamCryp opportunity intelligence</p>
         <h1>See what a Web3 earning setup costs—and whether its rewards can be realized.</h1>
         <p class="lede">Compare modeled net earnings, setup costs, risk, and evidence for GameFi and DePIN. When rewards cannot be valued reliably, we show what is missing instead of guessing.</p>
+        <p class="hero-current-answer" role="status">${escapeHtml(currentSummary)}</p>
         <div class="hero-proof-points" aria-label="GamCryp data principles">
           <span>Modeled ROI where reproducible</span>
           <span>Risk and confidence separated</span>
@@ -290,7 +295,7 @@ export function renderHomeShell(games = [], rankings = { items: [], page: { tota
       ${renderDegradedNotice(degradedMessages)}
       ${renderStartPaths()}
       ${renderCatalogStats(rankings, opportunities)}
-      ${renderTopRankingSummary(rankings)}
+      ${currentLead ? renderHomeEconomicsNote(rankings) : renderTopRankingSummary(rankings)}
       ${renderRecordedModels(recordedModels)}
       <section class="finder-grid" aria-label="ROI finder">
         <div id="finder-results">
@@ -400,16 +405,6 @@ export function renderTopRankingSummary(rankings = { items: [] }) {
   }
   const snapshot = top.latest_snapshot;
   const strategy = top.strategy;
-  const freshUsdItems = (rankings.items || []).filter((item) =>
-    item.latest_snapshot?.freshness?.overall_status === "fresh"
-    && item.latest_snapshot?.earnings?.net_earnings_day?.currency === "USD"
-    && item.latest_snapshot?.earnings?.net_earnings_day?.amount !== undefined,
-  );
-  const positiveUsdItems = freshUsdItems.filter((item) => decimalSign(item.latest_snapshot.earnings.net_earnings_day.amount) > 0);
-  const centPerDayItems = positiveUsdItems.filter((item) => compareDecimalMetric(item.latest_snapshot.earnings.net_earnings_day.amount, "0.01") >= 0);
-  const economicsNote = freshUsdItems.length && !centPerDayItems.length
-    ? `<p class="modeled-economics-note"><strong>Current results are very small:</strong> none of the ${freshUsdItems.length} fresh USD-valued models shown reaches $0.01 net per day. ${positiveUsdItems.length ? `${positiveUsdItems.length} show a positive modeled amount, all below that level.` : "No fresh model shown has positive net earnings."} These are model outputs, not promises; inspect assumptions and data dates before acting.</p>`
-    : "";
   const strategyClickAnalytics = productClickAttributes("ranking_to_strategy_click", {
     opportunityId: strategy.opportunity_id || strategy.game_id,
     opportunityType: snapshot.opportunity_type,
@@ -436,7 +431,6 @@ export function renderTopRankingSummary(rankings = { items: [] }) {
         ${summaryItem("30-day modeled ROI", formatRatio(snapshot.roi.roi_total_30d))}
         ${summaryItem("Modeled break-even", formatBreakEven(snapshot.roi.break_even))}
       </div>
-      ${economicsNote}
       <div class="top-opportunity-actions">
         <a class="button" href="/strategies/${encodeURIComponent(strategy.strategy_id)}" data-link${strategyClickAnalytics}>Review model &amp; assumptions</a>
         ${renderDestinationButton(strategy.primary_destination, ctaLabelForSnapshot(snapshot, "Start"), { sourcePage: "home", placement: "top_opportunity", buttonVariant: "secondary" })}
@@ -743,6 +737,18 @@ export function renderHomeOpportunityCatalog(opportunities = [], rankings = { it
   `;
 }
 
+export function renderHomeEconomicsNote(rankings = { items: [] }) {
+  const freshUsdItems = (rankings.items || []).filter((item) =>
+    item.latest_snapshot?.freshness?.overall_status === "fresh"
+    && item.latest_snapshot?.earnings?.net_earnings_day?.currency === "USD"
+    && item.latest_snapshot?.earnings?.net_earnings_day?.amount !== undefined,
+  );
+  const positiveUsdItems = freshUsdItems.filter((item) => decimalSign(item.latest_snapshot.earnings.net_earnings_day.amount) > 0);
+  const centPerDayItems = positiveUsdItems.filter((item) => compareDecimalMetric(item.latest_snapshot.earnings.net_earnings_day.amount, "0.01") >= 0);
+  if (!freshUsdItems.length || centPerDayItems.length) return "";
+  return `<p class="modeled-economics-note"><strong>Current results are very small:</strong> none of the ${freshUsdItems.length} fresh USD-valued models shown reaches $0.01 net per day. ${positiveUsdItems.length ? `${positiveUsdItems.length} show a positive modeled amount, all below that level.` : "No fresh model shown has positive net earnings."} These are model outputs, not promises; inspect assumptions and data dates before acting.</p>`;
+}
+
 function warningSummary(warnings = []) {
   if (!warnings.length) {
     return "No warnings attached.";
@@ -828,7 +834,7 @@ export function renderOpportunityDetail(opportunity) {
         <p class="eyebrow">${escapeHtml(opportunityTypeLabel(opportunity.opportunity_type))}</p>
         <div class="identity-heading">${renderOpportunityLogo(opportunity.logo, opportunity.name)}<h1>${escapeHtml(opportunity.name)}</h1></div>
         <p class="lede">${escapeHtml(opportunityIntro(opportunity))}</p>
-        ${hasCurrentStrategy ? `<div class="button-row">${renderDestinationButton(opportunity.primary_destination, opportunity.opportunity_type === "GAME" ? "Start" : "Open", { sourcePage: "opportunity_detail", placement: "primary_cta" })}</div>` : ""}
+        ${opportunity.primary_destination ? `<div class="button-row">${renderDestinationButton(opportunity.primary_destination, hasCurrentStrategy ? (opportunity.opportunity_type === "GAME" ? "Start" : "Open") : "View official program", { sourcePage: "opportunity_detail", placement: "primary_cta" })}</div>` : ""}
       </section>
       ${renderOpportunityAnswerBlock(opportunity)}
       ${renderOpportunityHumanSummary(opportunity)}

@@ -32,6 +32,7 @@ import {
   renderGameDetail,
   renderHistory,
   renderHomeShell,
+  renderHomeEconomicsNote,
   renderOpportunityAnswerBlock,
   renderOpportunityCard,
   renderOpportunityDetail,
@@ -109,7 +110,7 @@ test("rankings page groups repeated strategies by opportunity", () => {
       name: "DFK Jeweler 100 JEWEL Max Lock",
     },
   };
-  const html = renderRankingsPage({ ...payload, items: [payload.items[0], second], page: { ...payload.page, total: 2 } });
+  const html = renderRankingsPage({ ...payload, items: [payload.items[0], second], page: { ...payload.page, total: 2 } }, { groupByOpportunity: true });
 
   assert.equal((html.match(/opportunity-group-card/g) || []).length, 1);
   assert.match(html, /1 opportunities · 2 strategies/);
@@ -120,22 +121,23 @@ test("home renders results as cards before filters without table ranking markup"
   ]);
 
   assert.match(html, /GamCryp opportunity intelligence/);
-  assert.match(html, /Compare GameFi and Web3 earning strategies by cost, net earnings, and risk/);
+  assert.match(html, /Compare modeled net earnings, setup costs, risk, and evidence for GameFi and DePIN/);
   assert.match(html, /start-path-grid/);
-  assert.match(html, /Start under \$25/);
-  assert.match(html, /Explore opportunities/);
+  assert.match(html, /Compare models under \$25/);
+  assert.match(html, /Browse by project and setup/);
   assert.match(html, /href="\/methodology"/);
-  assert.match(html, /guide-only entries without a financial ROI estimate/);
+  assert.match(html, /when ROI is unavailable/);
   assert.match(html, /Risk and confidence separated/);
-  assert.match(html, /Top modeled opportunity/);
-  assert.match(html, /Ranked by modeled 30D ROI, then confidence, risk, and recency/);
-  assert.match(html, /Modeled break-even/);
-  assert.match(html, /512 days/);
-  assert.match(html, /mark ROI unavailable and explain why instead of guessing/);
+  assert.match(html, /hero-current-answer/);
+  assert.match(html, /GamCryp models DFK/);
+  assert.doesNotMatch(html, /aria-label="Top ranked organic strategy"/);
+  assert.match(html, /Top strategy net\/day/);
+  assert.match(html, /\$0\.49\/day/);
+  assert.match(html, /ROI not measurable yet/);
   assert.match(html, /Reviewed opportunities/);
   assert.match(html, /Current strategy results/);
   assert.match(html, /Configured strategies/);
-  assert.match(html, /Games/);
+  assert.match(html, /DePIN \/ Nodes/);
   assert.match(html, /Guide-only opportunities/);
   assert.match(html, /ranking-card-grid/);
   assert.match(html, /finder-results/);
@@ -492,6 +494,14 @@ test("strategy and ranking surfaces inherit the parent opportunity logo without 
   assert.match(strategyHtml, /DFK Jeweler cJEWEL Max Lock/);
 });
 
+test("homepage keeps the small-return disclosure without repeating the lead model card", () => {
+  const rankings = rankingPayload();
+  rankings.items[0].latest_snapshot.earnings.net_earnings_day.amount = "0.001";
+  assert.match(renderHomeEconomicsNote(rankings), /Current results are very small/);
+  rankings.items[0].latest_snapshot.earnings.net_earnings_day.amount = "0.02";
+  assert.equal(renderHomeEconomicsNote(rankings), "");
+});
+
 test("homepage opportunity radar distinguishes a stale model from a fresh strategy", () => {
   const modeled = {
     ...opportunityPayload(),
@@ -538,7 +548,8 @@ test("DePIN setup cues map platform evidence without leaking enums", () => {
   assert.match(detail, /Setup at a glance/);
   assert.match(detail, /Browser \/ extension; Existing PC; Dedicated hardware/);
   assert.match(card, /Setup: Browser \/ extension; Existing PC/);
-  assert.doesNotMatch(detail + card, /browser-extension|hardware-node|desktop/);
+  const visibleCopy = (detail + card).replace(/<[^>]*>/g, " ");
+  assert.doesNotMatch(visibleCopy, /browser-extension|hardware-node|desktop/);
   assert.doesNotMatch(detail + card, /null|undefined|None/);
   assert.equal(renderDepinSetupSummary({ ...opportunity, opportunity_type: "GAME" }), "");
 });

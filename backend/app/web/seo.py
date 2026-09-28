@@ -141,7 +141,7 @@ def home_page(service: ApiDataService, *, settings: Settings, request: Request) 
           <p class="eyebrow">GamCryp opportunity intelligence</p>
           <h1>See what a Web3 earning setup costs—and whether its rewards can be realized.</h1>
           <p class="lede">Compare modeled net earnings, setup costs, risk, and evidence for GameFi and DePIN. When rewards cannot be valued reliably, we show what is missing instead of guessing.</p>
-          <p class="muted">{escape(answer)}</p>
+          <p class="hero-current-answer" role="status">{escape(answer)}</p>
           <div class="hero-proof-points" aria-label="GamCryp data principles">
             <span>Recent modeled results</span>
             <span>Risk and confidence separated</span>
@@ -376,7 +376,7 @@ def opportunity_page(
           <p class="eyebrow">{escape(opportunity_type_label(opportunity.opportunity_type))}</p>
           <div class="identity-heading">{_render_logo(opportunity.logo, opportunity.name)}<h1>{escape(opportunity.name)} ROI status and evidence</h1></div>
           <p class="lede">{escape(answer)}</p>
-          {f'<div class="button-row">{_destination_button(opportunity.primary_destination, "Open official link")}</div>' if has_current_strategy else ''}
+          {f'<div class="button-row">{_destination_button(opportunity.primary_destination, "Open official link" if has_current_strategy else "View official program")}</div>' if opportunity.primary_destination is not None else ''}
         </section>
         {_render_opportunity_answer_block(opportunity, strategy, snapshot)}
         {_render_opportunity_human_summary(opportunity, strategy, snapshot)}

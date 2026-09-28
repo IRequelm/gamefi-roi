@@ -34,6 +34,10 @@ def test_web_mvp_pages_are_served_by_fastapi(monkeypatch, tmp_path) -> None:
             assert 'id="opportunity-type-filter"' in response.text
             assert 'data-opportunity-search=' in response.text
 
+    guide_html = client.get("/opportunities/grass").text
+    assert "View official program" in guide_html
+    assert "/go/grass-official" in guide_html
+
 
 def test_legacy_game_route_permanently_redirects_to_canonical_opportunity(monkeypatch, tmp_path) -> None:
     client, _engine = _seeded_client(monkeypatch, tmp_path, "web-legacy-game-redirect.db")
@@ -57,6 +61,8 @@ def test_homepage_omits_internal_audit_blocks(monkeypatch, tmp_path) -> None:
     assert "page requests do not call live providers" not in html
     assert "GameFi &amp; DePIN ROI Finder: Costs, Earnings, Risk" in html
     assert "Compare GameFi and DePIN costs, modeled earnings, risk, and evidence freshness. Find a setup that fits your budget; see when rewards cannot be valued." in html
+    assert 'class="hero-current-answer" role="status"' in html
+    assert "GamCryp models" in html
     assert "What fits your budget or setup?" in html
     assert 'href="/rankings?capital_max=25"' in html
     assert "Browse by project and setup" in html
