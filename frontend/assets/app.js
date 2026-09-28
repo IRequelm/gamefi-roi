@@ -875,7 +875,12 @@ export function renderOpportunityDetail(opportunity) {
       </section>
       ${
         hasStrategies
-          ? renderStrategyList(opportunity.strategies, { clickEvent: "opportunity_to_strategy_click", rankingSlug: "opportunity_detail", heading: "Strategies in this opportunity" })
+          ? renderStrategyList(opportunity.strategies, {
+            clickEvent: "opportunity_to_strategy_click",
+            rankingSlug: "opportunity_detail",
+            heading: "Strategies in this opportunity",
+            unavailableMessage: opportunity.roi_unavailable?.reason,
+          })
           : renderUnavailableRoiExplanation(opportunity)
       }
       ${hasCurrentStrategy ? "" : renderUnavailableNextSteps(hasStrategies)}
@@ -1390,6 +1395,14 @@ export function renderStrategyList(strategies, options = {}) {
       <section class="empty-state">
         <h2>No strategies available</h2>
         <p class="muted">This game is in the catalog, but no strategy snapshots are currently available.</p>
+      </section>
+    `;
+  }
+  if (!strategies.some((strategy) => strategy.latest_snapshot)) {
+    return `
+      <section class="empty-state">
+        <h2>No current estimate is available</h2>
+        <p class="muted">${escapeHtml(options.unavailableMessage || "This opportunity has no current strategy estimate. Check freshness and assumptions before acting.")}</p>
       </section>
     `;
   }

@@ -479,6 +479,21 @@ test("opportunity detail shows unavailable ROI in public language without invent
   assert.doesNotMatch(html, /\$0(?:\.00)?|>0(?:\.00)?%/);
 });
 
+test("parked opportunity explains the missing current estimate without suggesting filter changes", () => {
+  const html = renderOpportunityDetail({
+    ...opportunityPayload(),
+    name: "DIMO",
+    data_feasibility_status: "PARKED",
+    strategy_count: 1,
+    roi_unavailable: { reason: "The former weekly program ended; current offers need verification." },
+    strategies: [{ ...strategyPayload(), latest_snapshot: null }],
+  });
+
+  assert.match(html, /No current estimate is available/);
+  assert.match(html, /The former weekly program ended; current offers need verification/);
+  assert.doesNotMatch(html, /Try relaxing filters/);
+});
+
 test("opportunity logos render from optional API metadata and fall back cleanly", () => {
   const logo = { asset: "/assets/logos/grass.png", alt: "Grass logo" };
   const withLogo = renderOpportunityDetail({ ...opportunityPayload(), logo });
