@@ -279,6 +279,19 @@ export function renderHomeShell(games = [], rankings = { items: [], page: { tota
   const currentSummary = currentLead
     ? rankingAnswer(currentLead.latest_snapshot, currentLead.strategy)
     : "No current modeled results are available for comparison right now. Historical estimates stay separate from current opportunities.";
+  const heroAction = currentLead
+    ? `<a class="button" href="/strategies/${encodeURIComponent(currentLead.strategy.strategy_id)}" data-link${productClickAttributes("internal_compare_or_next_click", {
+      opportunityId: currentLead.strategy.opportunity_id || currentLead.strategy.game_id,
+      opportunityType: currentLead.latest_snapshot?.opportunity_type,
+      strategyId: currentLead.strategy.strategy_id,
+      snapshot: currentLead.latest_snapshot,
+      sourcePage: "home",
+      placement: "hero_current_model",
+    })}>Review the current model</a>`
+    : `<a class="button" href="/opportunities" data-link${productClickAttributes("internal_compare_or_next_click", {
+      sourcePage: "home",
+      placement: "hero_opportunity_fallback",
+    })}>Browse reviewed opportunities</a>`;
   return `
     <div class="page-shell">
       <section class="page-head">
@@ -286,11 +299,7 @@ export function renderHomeShell(games = [], rankings = { items: [], page: { tota
         <h1>See what a Web3 earning setup costs—and whether its rewards can be realized.</h1>
         <p class="lede">Compare modeled net earnings, setup costs, risk, and evidence for GameFi and DePIN. When rewards cannot be valued reliably, we show what is missing instead of guessing.</p>
         <p class="hero-current-answer" role="status">${escapeHtml(currentSummary)}</p>
-        <div class="hero-actions">
-          ${currentLead
-    ? `<a class="button" href="/strategies/${encodeURIComponent(currentLead.strategy.strategy_id)}" data-link>Review the current model</a>`
-    : '<a class="button" href="/opportunities" data-link>Browse reviewed opportunities</a>'}
-        </div>
+        <div class="hero-actions">${heroAction}</div>
         <div class="hero-proof-points" aria-label="GamCryp data principles">
           <span>Modeled ROI where reproducible</span>
           <span>Risk and confidence separated</span>
