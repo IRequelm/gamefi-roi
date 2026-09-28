@@ -4,13 +4,13 @@ Status: IN PROGRESS — homepage and catalog freshness wording are live. Eligibl
 
 Updated: 2026-09-29 (Europe/Istanbul)
 
-### DIMO model integrity correction — 2026-09-29 (release pending)
+### DIMO model integrity correction — 2026-09-29 (live)
 
 The live DIMO opportunity page still showed an Aug 31 generic weekly-reward estimate (-99.91% 30-day ROI, -$0.30/day) as a measured model. DIMO's official support update says weekly Baseline Issuance rewards ended following DIP-12; Marketplace rewards may continue only under offer-specific terms and eligibility. The old network-wide weekly-pool scenario is no longer suitable as a current financial estimate. Sources: [Changes to DIMO Rewards](https://support.drivedimo.com/en-US/changes-to-dimo-rewards-8208483) and [Marketplace Rewards](https://support.drivedimo.com/en-US/what-are-marketplace-rewards-271566).
 
 Classified the DIMO generic strategy `NOT_REFRESHABLE`; the DIMO opportunity is now `PARKED` with unknown value realization until a named active offer, its eligibility and complete costs, payout, and reproducible exit are verified. This removes its old snapshot from current results and new refresh plans while preserving history. The guide page and watchlist now explain why ROI is unavailable. The canonical distribution inventory no longer treats the old numerical DIMO claim as a usable draft. This reduces apparent coverage (and may reduce clicks to DIMO), but avoids directing visitors using a discontinued reward basis. Do not publish the old DIMO ROI claim.
 
-Verification before release: full backend suite completed without failures; frontend suite passed 64/64; the DIMO page route regression passed; Python compile, JavaScript syntax, and `git diff --check` passed. Production still needs Web/Cron deployment and read-after-deploy checks for rankings, DIMO detail, latest/history APIs, sitemap, and ops/database status. No CoinGecko key, Render setting, Cron configuration, or public distribution was changed. This fixes model integrity; it does not create additional valid live models or prove acquisition growth.
+Verification: full backend suite completed without failures; frontend suite passed 65/65; the DIMO page regression passed; Python compile, JavaScript syntax, and `git diff --check` passed. Web commit `4cfac38` is live as `dep-date818u01pc73e9soug`; follow-up commit `76f0cb5` is live as `dep-dateajad0e5s73bolu6g`. Cron built the matching backend code from `4cfac38` as `bld-date8h0u01pc73e9uhng`. Read-after-deploy checks returned DIMO opportunity 200/PARKED, rankings without DIMO, current-latest 404, preserved history 200, sitemap without its strategy route, and ops/database `ok`; a fresh Chrome load shows the reason-specific unavailable state after client hydration. The Cron's next scheduled execution remains to be observed; no manual refresh was triggered. No CoinGecko key, Render environment/configuration, Cron schedule, or public distribution was changed. This corrects model integrity and a misleading empty state; it does not add more valid current models or prove acquisition growth.
 
 ### Homepage and guide activation patch — 2026-09-29 (deployed)
 
