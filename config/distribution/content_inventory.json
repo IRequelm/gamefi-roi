@@ -133,6 +133,32 @@
     },
     {
       "content_family": "DEPIN_SETUP",
+      "content_id": "inventory-depin_setup-dimo",
+      "destination_status": "VALIDATED",
+      "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 64,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 160."
+      ],
+      "long_form_word_count": 160,
+      "missing_evidence": [],
+      "opportunity_id": "dimo",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "DePIN platform, setup, and hardware or account requirements."
+      ],
+      "short_form_eligible": true,
+      "source_reference_fingerprint": "645ae890e47b6336f8406bdec56cdf649c0fd13ca530bb25f8ff61906bc90851",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/dimo",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "DEPIN_SETUP",
       "content_id": "inventory-depin_setup-earnapp",
       "destination_status": "VALIDATED",
       "evidence_status": "READY",
@@ -367,6 +393,32 @@
     },
     {
       "content_family": "DEPIN_SETUP",
+      "content_id": "inventory-depin_setup-mysterium-network-node",
+      "destination_status": "VALIDATED",
+      "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 74,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 185."
+      ],
+      "long_form_word_count": 185,
+      "missing_evidence": [],
+      "opportunity_id": "mysterium-network-node",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "DePIN platform, setup, and hardware or account requirements."
+      ],
+      "short_form_eligible": true,
+      "source_reference_fingerprint": "673ebbd577b356b861d77aa7748a2f45ffb2556d0592d2da2ad54509e7ea1047",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/mysterium-network-node",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "DEPIN_SETUP",
       "content_id": "inventory-depin_setup-nosana-gpu-host",
       "destination_status": "VALIDATED",
       "evidence_status": "READY",
@@ -518,6 +570,32 @@
       "source_reference_fingerprint": "9d442a0425d9cd594358b1b6d30bff1f62f1e8e2ca85acccc73b7bfe815e5e7f",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/theta-edge-node",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "DEPIN_SETUP",
+      "content_id": "inventory-depin_setup-timpi",
+      "destination_status": "VALIDATED",
+      "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 122,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 307."
+      ],
+      "long_form_word_count": 307,
+      "missing_evidence": [],
+      "opportunity_id": "timpi",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "DePIN platform, setup, and hardware or account requirements."
+      ],
+      "short_form_eligible": true,
+      "source_reference_fingerprint": "bd3e4936af2c88ce2b0518a72d13207f1eac46da41b092fa239a711ae3e540dc",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/timpi",
       "strategy_id": null,
       "strategy_ids": []
     },
@@ -705,6 +783,32 @@
     },
     {
       "content_family": "FINANCIAL_ROI",
+      "content_id": "inventory-financial_roi-dimo",
+      "destination_status": "NOT_APPLICABLE",
+      "evidence_status": "BLOCKED",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 0,
+      "long_form_missing_evidence": [],
+      "long_form_word_count": 0,
+      "missing_evidence": [
+        "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
+      ],
+      "opportunity_id": "dimo",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "A modeled opportunity with reproducible financial evidence."
+      ],
+      "short_form_eligible": false,
+      "source_reference_fingerprint": "cd83d5326da450841e2888dfad94d59db532f95c8df11dfcb38750b8240cebca",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/dimo",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "FINANCIAL_ROI",
       "content_id": "inventory-financial_roi-earnapp",
       "destination_status": "NOT_APPLICABLE",
       "evidence_status": "BLOCKED",
@@ -778,6 +882,32 @@
       "source_reference_fingerprint": "5a8b7c8b19ba73545ec2caddc4a5da15c92b1aa9b5f708f0bd7220f61587d810",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/fluxnode",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "FINANCIAL_ROI",
+      "content_id": "inventory-financial_roi-gods-unchained",
+      "destination_status": "NOT_APPLICABLE",
+      "evidence_status": "BLOCKED",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 0,
+      "long_form_missing_evidence": [],
+      "long_form_word_count": 0,
+      "missing_evidence": [
+        "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
+      ],
+      "opportunity_id": "gods-unchained",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "A modeled opportunity with reproducible financial evidence."
+      ],
+      "short_form_eligible": false,
+      "source_reference_fingerprint": "c5c7231a24445886b2f0e2ae6179e129647360a125235649be07b27db7755dcc",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/gods-unchained",
       "strategy_id": null,
       "strategy_ids": []
     },
@@ -1094,6 +1224,32 @@
       "strategy_ids": []
     },
     {
+      "content_family": "FINANCIAL_ROI",
+      "content_id": "inventory-financial_roi-timpi",
+      "destination_status": "NOT_APPLICABLE",
+      "evidence_status": "BLOCKED",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 0,
+      "long_form_missing_evidence": [],
+      "long_form_word_count": 0,
+      "missing_evidence": [
+        "GUIDE_ONLY opportunities cannot produce financial ROI claims without a validated strategy model."
+      ],
+      "opportunity_id": "timpi",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "A modeled opportunity with reproducible financial evidence."
+      ],
+      "short_form_eligible": false,
+      "source_reference_fingerprint": "e00a05278db5dbef6e5e910f6c7459fa8912e72da66f06c2093a8cb16d75c342",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/timpi",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
       "content_family": "HOW_TO_CLAIM_OR_EXIT",
       "content_id": "inventory-how_to_claim_or_exit-acurast-compute-provider",
       "destination_status": "VALIDATED",
@@ -1257,6 +1413,33 @@
     },
     {
       "content_family": "HOW_TO_CLAIM_OR_EXIT",
+      "content_id": "inventory-how_to_claim_or_exit-dimo",
+      "destination_status": "VALIDATED",
+      "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 64,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 160."
+      ],
+      "long_form_word_count": 160,
+      "missing_evidence": [],
+      "opportunity_id": "dimo",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "Documented claim or exit path.",
+        "At least one official source reference."
+      ],
+      "short_form_eligible": true,
+      "source_reference_fingerprint": "cb4cffa1f2a54a715fc60a22d323179166747801b9ccc7da87181634586daae6",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/dimo",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "HOW_TO_CLAIM_OR_EXIT",
       "content_id": "inventory-how_to_claim_or_exit-earnapp",
       "destination_status": "VALIDATED",
       "evidence_status": "READY",
@@ -1333,6 +1516,33 @@
       "source_reference_fingerprint": "76325fa588ebe612d3ed0ee48faf879035e58752a34f43bc04c7a0870d3c7b3d",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/fluxnode",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "HOW_TO_CLAIM_OR_EXIT",
+      "content_id": "inventory-how_to_claim_or_exit-gods-unchained",
+      "destination_status": "VALIDATED",
+      "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 78,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 195."
+      ],
+      "long_form_word_count": 195,
+      "missing_evidence": [],
+      "opportunity_id": "gods-unchained",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "Documented claim or exit path.",
+        "At least one official source reference."
+      ],
+      "short_form_eligible": true,
+      "source_reference_fingerprint": "516d8c1dcfd32b907f0bac70efbba375472cbc8bca2c2f7b5e1272d9ff466b26",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/gods-unchained",
       "strategy_id": null,
       "strategy_ids": []
     },
@@ -1473,6 +1683,34 @@
     },
     {
       "content_family": "HOW_TO_CLAIM_OR_EXIT",
+      "content_id": "inventory-how_to_claim_or_exit-kaito-yaps",
+      "destination_status": "VALIDATED",
+      "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 77,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 194.",
+        "At least 6 substantive supported sections; available 5."
+      ],
+      "long_form_word_count": 194,
+      "missing_evidence": [],
+      "opportunity_id": "kaito-yaps",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "Documented claim or exit path.",
+        "At least one official source reference."
+      ],
+      "short_form_eligible": true,
+      "source_reference_fingerprint": "07fbaf966bffb22c8d1791ec09f17dad0bb94f10f6215dcd2915a8fa96be3a6d",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/kaito-yaps",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "HOW_TO_CLAIM_OR_EXIT",
       "content_id": "inventory-how_to_claim_or_exit-livepeer-orchestrator",
       "destination_status": "VALIDATED",
       "evidence_status": "READY",
@@ -1495,6 +1733,33 @@
       "source_reference_fingerprint": "e14ecec863a9e6ff13757d4e6795eb9e22a2a65702fd4c510f8af36b9a296ef1",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/livepeer-orchestrator",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "HOW_TO_CLAIM_OR_EXIT",
+      "content_id": "inventory-how_to_claim_or_exit-mysterium-network-node",
+      "destination_status": "VALIDATED",
+      "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 74,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 185."
+      ],
+      "long_form_word_count": 185,
+      "missing_evidence": [],
+      "opportunity_id": "mysterium-network-node",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "Documented claim or exit path.",
+        "At least one official source reference."
+      ],
+      "short_form_eligible": true,
+      "source_reference_fingerprint": "5f8e008e24595e3211d52f38a29b5e64237cdecdd9653890136522fb1337d2a9",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/mysterium-network-node",
       "strategy_id": null,
       "strategy_ids": []
     },
@@ -1657,6 +1922,33 @@
       "source_reference_fingerprint": "cc00ec4b0e9619eba97bdd43d9c5bda356bfe3619df89562c8ae9c7e14a564fa",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/theta-edge-node",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "HOW_TO_CLAIM_OR_EXIT",
+      "content_id": "inventory-how_to_claim_or_exit-timpi",
+      "destination_status": "VALIDATED",
+      "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 122,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 307."
+      ],
+      "long_form_word_count": 307,
+      "missing_evidence": [],
+      "opportunity_id": "timpi",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "Documented claim or exit path.",
+        "At least one official source reference."
+      ],
+      "short_form_eligible": true,
+      "source_reference_fingerprint": "13b5f008955f29f1d1cd3e73159647e63256a0181ab4a4bfefd472734cd2f511",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/timpi",
       "strategy_id": null,
       "strategy_ids": []
     },
@@ -1824,6 +2116,33 @@
     },
     {
       "content_family": "HOW_TO_START",
+      "content_id": "inventory-how_to_start-dimo",
+      "destination_status": "VALIDATED",
+      "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 64,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 160."
+      ],
+      "long_form_word_count": 160,
+      "missing_evidence": [],
+      "opportunity_id": "dimo",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "How to start instructions.",
+        "At least one official source reference."
+      ],
+      "short_form_eligible": true,
+      "source_reference_fingerprint": "69d84d10e8d642fb9254d675c264809ff8d871923a41a27e9cabe0dd4878e01b",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/dimo",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "HOW_TO_START",
       "content_id": "inventory-how_to_start-earnapp",
       "destination_status": "VALIDATED",
       "evidence_status": "READY",
@@ -1900,6 +2219,33 @@
       "source_reference_fingerprint": "78baae4c7f12030e755d61c3af29cd43fdf792f303254c5d2754945c42172918",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/fluxnode",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "HOW_TO_START",
+      "content_id": "inventory-how_to_start-gods-unchained",
+      "destination_status": "VALIDATED",
+      "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 78,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 195."
+      ],
+      "long_form_word_count": 195,
+      "missing_evidence": [],
+      "opportunity_id": "gods-unchained",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "How to start instructions.",
+        "At least one official source reference."
+      ],
+      "short_form_eligible": true,
+      "source_reference_fingerprint": "704c50f3fd2b96254bf3c687f691e29853ed88d1ead7c7c5c3c6c2f9206b31e9",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/gods-unchained",
       "strategy_id": null,
       "strategy_ids": []
     },
@@ -2040,6 +2386,34 @@
     },
     {
       "content_family": "HOW_TO_START",
+      "content_id": "inventory-how_to_start-kaito-yaps",
+      "destination_status": "VALIDATED",
+      "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 77,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 194.",
+        "At least 6 substantive supported sections; available 5."
+      ],
+      "long_form_word_count": 194,
+      "missing_evidence": [],
+      "opportunity_id": "kaito-yaps",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "How to start instructions.",
+        "At least one official source reference."
+      ],
+      "short_form_eligible": true,
+      "source_reference_fingerprint": "9deb704656877a00524bf9ee8aa9c5a540c150758e83564366d4e6b8ac8aa337",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/kaito-yaps",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "HOW_TO_START",
       "content_id": "inventory-how_to_start-livepeer-orchestrator",
       "destination_status": "VALIDATED",
       "evidence_status": "READY",
@@ -2062,6 +2436,33 @@
       "source_reference_fingerprint": "308c0bfc5b6926bfcc1308517d0c36fde296a9b581c3eac2a47c5a380a0b82f8",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/livepeer-orchestrator",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "HOW_TO_START",
+      "content_id": "inventory-how_to_start-mysterium-network-node",
+      "destination_status": "VALIDATED",
+      "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 74,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 185."
+      ],
+      "long_form_word_count": 185,
+      "missing_evidence": [],
+      "opportunity_id": "mysterium-network-node",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "How to start instructions.",
+        "At least one official source reference."
+      ],
+      "short_form_eligible": true,
+      "source_reference_fingerprint": "5290985e230faa5a3a9df5f0739d97ef856bd09cee844a1d4a0bbe241fd4371e",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/mysterium-network-node",
       "strategy_id": null,
       "strategy_ids": []
     },
@@ -2224,6 +2625,33 @@
       "source_reference_fingerprint": "a478a13aad092e8c808a1f8d979b687bf065dba1a379fc91ebf2073a165c7a48",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/theta-edge-node",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "HOW_TO_START",
+      "content_id": "inventory-how_to_start-timpi",
+      "destination_status": "VALIDATED",
+      "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 122,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 307."
+      ],
+      "long_form_word_count": 307,
+      "missing_evidence": [],
+      "opportunity_id": "timpi",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "How to start instructions.",
+        "At least one official source reference."
+      ],
+      "short_form_eligible": true,
+      "source_reference_fingerprint": "58b981bf0eb0bc346e04dad6b369a86f786caed53944af4316fe969e1c6b48ef",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/timpi",
       "strategy_id": null,
       "strategy_ids": []
     },
@@ -2415,6 +2843,33 @@
     },
     {
       "content_family": "HOW_YOU_EARN",
+      "content_id": "inventory-how_you_earn-dimo",
+      "destination_status": "VALIDATED",
+      "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 64,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 160."
+      ],
+      "long_form_word_count": 160,
+      "missing_evidence": [],
+      "opportunity_id": "dimo",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "Documented earning mechanism.",
+        "At least one official source reference."
+      ],
+      "short_form_eligible": true,
+      "source_reference_fingerprint": "73785bee3a4ee78034684144894926917b7c93d14d51473f2c47ba8b516ad7c2",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/dimo",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "HOW_YOU_EARN",
       "content_id": "inventory-how_you_earn-earnapp",
       "destination_status": "VALIDATED",
       "evidence_status": "READY",
@@ -2491,6 +2946,33 @@
       "source_reference_fingerprint": "f1e1885998f1faeddae5d927d702a86eb68b43a5b8a12dbfa33b257f8767bc41",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/fluxnode",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "HOW_YOU_EARN",
+      "content_id": "inventory-how_you_earn-gods-unchained",
+      "destination_status": "VALIDATED",
+      "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 78,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 195."
+      ],
+      "long_form_word_count": 195,
+      "missing_evidence": [],
+      "opportunity_id": "gods-unchained",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "Documented earning mechanism.",
+        "At least one official source reference."
+      ],
+      "short_form_eligible": true,
+      "source_reference_fingerprint": "b287a1739f8f06c93667b446cce2e17a31feba3fa3942f3f2e0a67872e1f034e",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/gods-unchained",
       "strategy_id": null,
       "strategy_ids": []
     },
@@ -2631,6 +3113,34 @@
     },
     {
       "content_family": "HOW_YOU_EARN",
+      "content_id": "inventory-how_you_earn-kaito-yaps",
+      "destination_status": "VALIDATED",
+      "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 77,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 194.",
+        "At least 6 substantive supported sections; available 5."
+      ],
+      "long_form_word_count": 194,
+      "missing_evidence": [],
+      "opportunity_id": "kaito-yaps",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "Documented earning mechanism.",
+        "At least one official source reference."
+      ],
+      "short_form_eligible": true,
+      "source_reference_fingerprint": "a6f4b6ed4a3ef659732598317ac9a995183539e850d62a1ff66b070d54530285",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/kaito-yaps",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "HOW_YOU_EARN",
       "content_id": "inventory-how_you_earn-livepeer-orchestrator",
       "destination_status": "VALIDATED",
       "evidence_status": "READY",
@@ -2653,6 +3163,33 @@
       "source_reference_fingerprint": "5c1b45656fdfc7c69e6a7d36e91b0434bdf27f858ac2d75145abe254bbcc8d60",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/livepeer-orchestrator",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "HOW_YOU_EARN",
+      "content_id": "inventory-how_you_earn-mysterium-network-node",
+      "destination_status": "VALIDATED",
+      "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 74,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 185."
+      ],
+      "long_form_word_count": 185,
+      "missing_evidence": [],
+      "opportunity_id": "mysterium-network-node",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "Documented earning mechanism.",
+        "At least one official source reference."
+      ],
+      "short_form_eligible": true,
+      "source_reference_fingerprint": "6867855821e1507b8f9140325707c19530a75ef1be25c78c10dd95d3200c6c33",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/mysterium-network-node",
       "strategy_id": null,
       "strategy_ids": []
     },
@@ -2815,6 +3352,33 @@
       "source_reference_fingerprint": "cadb4d18dabc130b311a85e2f6e0a2e8cd6e12ae288ba711cba3e12aa3b1d73c",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/theta-edge-node",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "HOW_YOU_EARN",
+      "content_id": "inventory-how_you_earn-timpi",
+      "destination_status": "VALIDATED",
+      "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 122,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 307."
+      ],
+      "long_form_word_count": 307,
+      "missing_evidence": [],
+      "opportunity_id": "timpi",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "Documented earning mechanism.",
+        "At least one official source reference."
+      ],
+      "short_form_eligible": true,
+      "source_reference_fingerprint": "a43502075c038ef5fcaeff3c4c4ba107f58257e8d68a974b9fdc43880909c85a",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/timpi",
       "strategy_id": null,
       "strategy_ids": []
     },
@@ -3023,6 +3587,150 @@
       "strategy_ids": []
     },
     {
+      "content_family": "SITE_DATA_FRESHNESS",
+      "content_id": "inventory-site_data_freshness-methodology",
+      "destination_status": "NOT_APPLICABLE",
+      "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 0,
+      "long_form_missing_evidence": [],
+      "long_form_word_count": 0,
+      "missing_evidence": [],
+      "opportunity_id": null,
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "Freshness, provenance, and recorded calculation methodology."
+      ],
+      "short_form_eligible": true,
+      "source_reference_fingerprint": "b35e9d076c314819aa6e43ff508c93f14391313cbbf8291effaf3a9ca376f2ff",
+      "source_type": "SITE_PAGE",
+      "source_url": "/methodology",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "SITE_FULL_COSTS",
+      "content_id": "inventory-site_full_costs-methodology",
+      "destination_status": "NOT_APPLICABLE",
+      "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 0,
+      "long_form_missing_evidence": [],
+      "long_form_word_count": 0,
+      "missing_evidence": [],
+      "opportunity_id": null,
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "Net earnings and modeled cost methodology."
+      ],
+      "short_form_eligible": true,
+      "source_reference_fingerprint": "2b02c772c90cbe5f1650b138b0620ea7fd6728496080a84bca7f4eff1c3c4319",
+      "source_type": "SITE_PAGE",
+      "source_url": "/methodology",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "SITE_POINTS_VALUE",
+      "content_id": "inventory-site_points_value-methodology",
+      "destination_status": "NOT_APPLICABLE",
+      "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 0,
+      "long_form_missing_evidence": [],
+      "long_form_word_count": 0,
+      "missing_evidence": [],
+      "opportunity_id": null,
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "Rules for points and non-realizable rewards."
+      ],
+      "short_form_eligible": true,
+      "source_reference_fingerprint": "21fa50242196b9d950e0c7d32b420bbc59da4b78fac8c1a16eea882c8c6f4f4f",
+      "source_type": "SITE_PAGE",
+      "source_url": "/methodology",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "SITE_PRODUCT_WALKTHROUGH",
+      "content_id": "inventory-site_product_walkthrough-home",
+      "destination_status": "NOT_APPLICABLE",
+      "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 0,
+      "long_form_missing_evidence": [],
+      "long_form_word_count": 0,
+      "missing_evidence": [],
+      "opportunity_id": null,
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "Published product navigation and opportunity-status explanations."
+      ],
+      "short_form_eligible": true,
+      "source_reference_fingerprint": "0c98d420abc3b226bd2b6ad1b1c27c14348ca9be11bd60b66547158d8d106489",
+      "source_type": "SITE_PAGE",
+      "source_url": "/",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "SITE_REALIZABLE_EXIT",
+      "content_id": "inventory-site_realizable_exit-methodology",
+      "destination_status": "NOT_APPLICABLE",
+      "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 0,
+      "long_form_missing_evidence": [],
+      "long_form_word_count": 0,
+      "missing_evidence": [],
+      "opportunity_id": null,
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "Realizable reward value and exit-route methodology."
+      ],
+      "short_form_eligible": true,
+      "source_reference_fingerprint": "b4a126f215feafa20621e07ed672873f2e8b0bc82988a1b5a48054b24b020427",
+      "source_type": "SITE_PAGE",
+      "source_url": "/methodology",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "SITE_STRATEGY_ROI",
+      "content_id": "inventory-site_strategy_roi-methodology",
+      "destination_status": "NOT_APPLICABLE",
+      "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 0,
+      "long_form_missing_evidence": [],
+      "long_form_word_count": 0,
+      "missing_evidence": [],
+      "opportunity_id": null,
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "Strategy-specific ROI methodology."
+      ],
+      "short_form_eligible": true,
+      "source_reference_fingerprint": "33dd19ce1c91455a88c495e0cdb0be33ce62a04a729931aec868bd117dc6fe06",
+      "source_type": "SITE_PAGE",
+      "source_url": "/methodology",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
       "content_family": "STRATEGY_COMPARISON",
       "content_id": "inventory-strategy_comparison-defi-kingdoms",
       "destination_status": "VALIDATED",
@@ -3060,12 +3768,12 @@
       "freshness_status": "CATALOG_REVIEWED",
       "generation_status": "NOT_STARTED",
       "long_form_eligible": false,
-      "long_form_estimated_seconds": 6,
+      "long_form_estimated_seconds": 12,
       "long_form_missing_evidence": [
-        "At least 1200 evidence-backed narration words; available 15.",
+        "At least 1200 evidence-backed narration words; available 30.",
         "At least 6 substantive supported sections; available 2."
       ],
-      "long_form_word_count": 15,
+      "long_form_word_count": 30,
       "missing_evidence": [],
       "opportunity_id": "farmers-world",
       "publication_status": "CANONICAL_CATALOG_ROUTE",
@@ -3279,6 +3987,33 @@
     },
     {
       "content_family": "WHAT_YOU_NEED",
+      "content_id": "inventory-what_you_need-dimo",
+      "destination_status": "VALIDATED",
+      "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 64,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 160."
+      ],
+      "long_form_word_count": 160,
+      "missing_evidence": [],
+      "opportunity_id": "dimo",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "Setup or purchase requirements.",
+        "At least one official source reference."
+      ],
+      "short_form_eligible": true,
+      "source_reference_fingerprint": "82f02d769a08fc092f520108ec091aef9b0133ddb5b43e7e9a64e182540a3d2f",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/dimo",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "WHAT_YOU_NEED",
       "content_id": "inventory-what_you_need-earnapp",
       "destination_status": "VALIDATED",
       "evidence_status": "READY",
@@ -3355,6 +4090,33 @@
       "source_reference_fingerprint": "240e937f98e6a87f1f80603de25b81c4fb313828be41307c569be7033048fe65",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/fluxnode",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "WHAT_YOU_NEED",
+      "content_id": "inventory-what_you_need-gods-unchained",
+      "destination_status": "VALIDATED",
+      "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 78,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 195."
+      ],
+      "long_form_word_count": 195,
+      "missing_evidence": [],
+      "opportunity_id": "gods-unchained",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "Setup or purchase requirements.",
+        "At least one official source reference."
+      ],
+      "short_form_eligible": true,
+      "source_reference_fingerprint": "77a7c59b07248a0f86d84fcb06a4185b5c286511233926324e30171741705c2e",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/gods-unchained",
       "strategy_id": null,
       "strategy_ids": []
     },
@@ -3495,6 +4257,34 @@
     },
     {
       "content_family": "WHAT_YOU_NEED",
+      "content_id": "inventory-what_you_need-kaito-yaps",
+      "destination_status": "VALIDATED",
+      "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 77,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 194.",
+        "At least 6 substantive supported sections; available 5."
+      ],
+      "long_form_word_count": 194,
+      "missing_evidence": [],
+      "opportunity_id": "kaito-yaps",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "Setup or purchase requirements.",
+        "At least one official source reference."
+      ],
+      "short_form_eligible": true,
+      "source_reference_fingerprint": "a8d40817ed944ce2e9c0eb733181192c393179863c6d860aa2cbab1af143ae3d",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/kaito-yaps",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "WHAT_YOU_NEED",
       "content_id": "inventory-what_you_need-livepeer-orchestrator",
       "destination_status": "VALIDATED",
       "evidence_status": "READY",
@@ -3517,6 +4307,33 @@
       "source_reference_fingerprint": "321f5491c97724f3508910d5f2d0c754c8d152eb01c4a42a45461b8fc75f616f",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/livepeer-orchestrator",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "WHAT_YOU_NEED",
+      "content_id": "inventory-what_you_need-mysterium-network-node",
+      "destination_status": "VALIDATED",
+      "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 74,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 185."
+      ],
+      "long_form_word_count": 185,
+      "missing_evidence": [],
+      "opportunity_id": "mysterium-network-node",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "Setup or purchase requirements.",
+        "At least one official source reference."
+      ],
+      "short_form_eligible": true,
+      "source_reference_fingerprint": "cb76f670416876741649bb61ba9c350d3aba6a5084142aa767f7b1aad84cdb9c",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/mysterium-network-node",
       "strategy_id": null,
       "strategy_ids": []
     },
@@ -3679,6 +4496,33 @@
       "source_reference_fingerprint": "b275c0de458ea501bddb756548fe546bf90ce0393d8c8374526efeae53377b0c",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/theta-edge-node",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "WHAT_YOU_NEED",
+      "content_id": "inventory-what_you_need-timpi",
+      "destination_status": "VALIDATED",
+      "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 122,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 307."
+      ],
+      "long_form_word_count": 307,
+      "missing_evidence": [],
+      "opportunity_id": "timpi",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "Setup or purchase requirements.",
+        "At least one official source reference."
+      ],
+      "short_form_eligible": true,
+      "source_reference_fingerprint": "aac92c0c611deb24de1fdce14db99ca8a6bbb01252d424719776bc6926612f38",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/timpi",
       "strategy_id": null,
       "strategy_ids": []
     },
@@ -3868,6 +4712,32 @@
     },
     {
       "content_family": "WHY_ROI_UNAVAILABLE",
+      "content_id": "inventory-why_roi_unavailable-dimo",
+      "destination_status": "VALIDATED",
+      "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 64,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 160."
+      ],
+      "long_form_word_count": 160,
+      "missing_evidence": [],
+      "opportunity_id": "dimo",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "Structured ROI-unavailable reason and missing evidence."
+      ],
+      "short_form_eligible": true,
+      "source_reference_fingerprint": "573154a061ca243db4439015ae4305ee4ccb56989eb1be4480762dc94b989356",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/dimo",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "WHY_ROI_UNAVAILABLE",
       "content_id": "inventory-why_roi_unavailable-earnapp",
       "destination_status": "VALIDATED",
       "evidence_status": "READY",
@@ -3941,6 +4811,32 @@
       "source_reference_fingerprint": "d42b7ce4a0f84eddc31fcbe4a50dc2c14c4aaff71158ec67a155ed342abb5db3",
       "source_type": "OPPORTUNITY_CATALOG",
       "source_url": "/opportunities/fluxnode",
+      "strategy_id": null,
+      "strategy_ids": []
+    },
+    {
+      "content_family": "WHY_ROI_UNAVAILABLE",
+      "content_id": "inventory-why_roi_unavailable-gods-unchained",
+      "destination_status": "VALIDATED",
+      "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 78,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 195."
+      ],
+      "long_form_word_count": 195,
+      "missing_evidence": [],
+      "opportunity_id": "gods-unchained",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "Structured ROI-unavailable reason and missing evidence."
+      ],
+      "short_form_eligible": true,
+      "source_reference_fingerprint": "1f0aeebf81a58c4ceb82be0bee80ec9d28a306f44b40b3bafd809311a1bbde35",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/gods-unchained",
       "strategy_id": null,
       "strategy_ids": []
     },
@@ -4256,29 +5152,61 @@
       "source_url": "/opportunities/theta-edge-node",
       "strategy_id": null,
       "strategy_ids": []
+    },
+    {
+      "content_family": "WHY_ROI_UNAVAILABLE",
+      "content_id": "inventory-why_roi_unavailable-timpi",
+      "destination_status": "VALIDATED",
+      "evidence_status": "READY",
+      "freshness_status": "CATALOG_REVIEWED",
+      "generation_status": "NOT_STARTED",
+      "long_form_eligible": false,
+      "long_form_estimated_seconds": 122,
+      "long_form_missing_evidence": [
+        "At least 1200 evidence-backed narration words; available 307."
+      ],
+      "long_form_word_count": 307,
+      "missing_evidence": [],
+      "opportunity_id": "timpi",
+      "publication_status": "CANONICAL_CATALOG_ROUTE",
+      "required_evidence": [
+        "Structured ROI-unavailable reason and missing evidence."
+      ],
+      "short_form_eligible": true,
+      "source_reference_fingerprint": "225f28f5b2ad1e33d8ee5ec70c275589c4202363d7e08ff5c404a3d8f9331e05",
+      "source_type": "OPPORTUNITY_CATALOG",
+      "source_url": "/opportunities/timpi",
+      "strategy_id": null,
+      "strategy_ids": []
     }
   ],
   "schema_version": "content-inventory-v1",
   "summary": {
-    "blocked_count": 22,
+    "blocked_count": 25,
     "by_content_family": {
-      "DEPIN_SETUP": 20,
-      "FINANCIAL_ROI": 22,
-      "HOW_TO_CLAIM_OR_EXIT": 21,
-      "HOW_TO_START": 21,
+      "DEPIN_SETUP": 23,
+      "FINANCIAL_ROI": 25,
+      "HOW_TO_CLAIM_OR_EXIT": 26,
+      "HOW_TO_START": 26,
       "HOW_TO_USE_GAMCRYP": 1,
-      "HOW_YOU_EARN": 21,
+      "HOW_YOU_EARN": 26,
       "LOW_COST_RANKING": 6,
       "METHODOLOGY_EXPLAINER": 1,
       "RISK_VS_CONFIDENCE": 1,
+      "SITE_DATA_FRESHNESS": 1,
+      "SITE_FULL_COSTS": 1,
+      "SITE_POINTS_VALUE": 1,
+      "SITE_PRODUCT_WALKTHROUGH": 1,
+      "SITE_REALIZABLE_EXIT": 1,
+      "SITE_STRATEGY_ROI": 1,
       "STRATEGY_COMPARISON": 3,
-      "WHAT_YOU_NEED": 21,
-      "WHY_ROI_UNAVAILABLE": 22
+      "WHAT_YOU_NEED": 26,
+      "WHY_ROI_UNAVAILABLE": 25
     },
     "partial_count": 6,
     "ready_long_form_count": 0,
-    "ready_short_form_count": 132,
-    "ready_short_only_count": 132,
-    "total_topic_candidates": 160
+    "ready_short_form_count": 164,
+    "ready_short_only_count": 164,
+    "total_topic_candidates": 195
   }
 }

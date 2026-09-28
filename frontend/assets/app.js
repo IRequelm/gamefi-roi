@@ -1029,7 +1029,7 @@ export function renderOpportunityCard(opportunity, options = {}) {
         ${metricItem("Reward type", escapeHtml(rewardTypes))}
         ${metricItem("ROI status", roiText)}
       </div>
-      <p class="muted watchlist-note">${hasFreshEstimate === false ? "A prior model exists, but its data is stale or unavailable; it is excluded from current rankings." : opportunity.strategy_count > 0 ? "Review the modeled strategy for assumptions and current freshness." : escapeHtml(conciseUnavailableRoiReason(opportunity))}</p>
+      <p class="muted watchlist-note">${opportunity.data_feasibility_status === "PARKED" ? escapeHtml(conciseUnavailableRoiReason(opportunity)) : hasFreshEstimate === false ? "A prior model exists, but its data is stale or unavailable; it is excluded from current rankings." : opportunity.strategy_count > 0 ? "Review the modeled strategy for assumptions and current freshness." : escapeHtml(conciseUnavailableRoiReason(opportunity))}</p>
       <div class="card-actions">
         <a class="secondary-button" href="/opportunities/${encodeURIComponent(opportunity.opportunity_id)}" data-link${productClickAttributes("internal_compare_or_next_click", {
           opportunityId: opportunity.opportunity_id,

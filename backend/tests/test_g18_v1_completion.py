@@ -149,7 +149,7 @@ def test_v1_api_history_and_search_surfaces_cover_all_modeled_strategies(monkeyp
     assert {
         f"/strategies/{strategy.strategy_id}"
         for strategy in list_strategies()
-        if strategy.opportunity_id != "farmers-world"
+        if strategy.opportunity_id not in {"farmers-world", "dimo"}
     } <= inventory_paths
     assert all("/api/" not in path and "/go/" not in path and "/operator/" not in path for path in inventory_paths)
     assert "2026-08-24" in sitemap

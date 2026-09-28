@@ -38,6 +38,11 @@ def test_web_mvp_pages_are_served_by_fastapi(monkeypatch, tmp_path) -> None:
     assert "View official program" in guide_html
     assert "/go/grass-official" in guide_html
 
+    dimo_html = client.get("/opportunities/dimo").text
+    assert "Weekly Baseline Issuance has ended" in dimo_html
+    assert "no current offer has verified eligibility, costs, payout, and exit evidence" in dimo_html
+    assert "0.315714285714285714" not in dimo_html
+
 
 def test_legacy_game_route_permanently_redirects_to_canonical_opportunity(monkeypatch, tmp_path) -> None:
     client, _engine = _seeded_client(monkeypatch, tmp_path, "web-legacy-game-redirect.db")

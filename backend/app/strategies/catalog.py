@@ -511,19 +511,46 @@ OPPORTUNITIES = (
         chains=("polygon",),
         economy_types=("vehicle-data",),
         reward_asset_or_points_type=("DIMO",),
-        value_realization_status="realizable",
+        value_realization_status="unknown",
         source_references=(
-            ("DIMO support", "https://support.dimo.org/"),
+            ("Changes to DIMO Rewards", "https://support.drivedimo.com/en-US/changes-to-dimo-rewards-8208483"),
+            ("Marketplace Rewards", "https://support.drivedimo.com/en-US/what-are-marketplace-rewards-271566"),
             ("User rewards API", "https://github.com/DIMO-Network/user-rewards-api"),
             ("DIMO shop", "https://shop.dimo.org/"),
         ),
-        data_feasibility_status="GO",
-        feasibility_summary="Official reward logic, vehicle requirements, subscription costs, and DIMO market pricing support a narrow software-only compatible-car strategy with explicit network-share assumptions.",
+        data_feasibility_status="PARKED",
+        feasibility_summary=(
+            "DIMO's weekly Baseline Issuance for connecting a vehicle ended following DIP-12. Marketplace rewards "
+            "may still exist, but terms and eligibility vary by app or offer. The older generic weekly-baseline "
+            "model is historical; no current offer-specific ROI is verified."
+        ),
         strategy_ids=("dimo-software-only-compatible-car",),
         outbound_destination_slug="dimo-official",
         logo_asset="/assets/logos/dimo.svg",
         logo_alt="DIMO logo",
         logo_source_reference=("DIMO official website", "https://drivedimo.com/"),
+        guidance=OpportunityGuidance(
+            how_to_start=("Review DIMO's current Marketplace offers and their individual terms before connecting a vehicle for rewards.",),
+            what_you_need=("Eligibility, supported vehicle connection, region, subscription, and reward terms depend on the specific offer.",),
+            how_you_earn=("Weekly Baseline Issuance has ended. Authorized Marketplace apps may offer separate incentives with offer-specific rules.",),
+            how_to_exit_or_claim=("Check the selected offer's current payout, claim, and token exit terms; these are not established by the retired baseline model.",),
+        ),
+        roi_unavailable=RoiUnavailableExplanation(
+            reason=(
+                "The former weekly vehicle-connection reward program ended. Current Marketplace incentives are "
+                "offer-specific, and no current offer has verified eligibility, costs, payout, and exit evidence here."
+            ),
+            missing_evidence=(
+                "A currently active DIMO Marketplace offer with published reward terms and eligibility.",
+                "Offer-specific subscription/device costs and payout/claim terms.",
+                "A reproducible value route for the selected reward, if monetary ROI is claimed.",
+            ),
+            modeling_requirements=(
+                "A named active offer with current official terms.",
+                "A representative offer-specific reward observation and complete costs.",
+                "A reproducible realizable exit route for any token-denominated reward.",
+            ),
+        ),
     ),
     _opportunity(
         opportunity_id="mysterium-network-node",

@@ -418,180 +418,200 @@
       "word_budget_estimate": 100
     },
     {
-      "admission_mode": "MODELED",
+      "admission_mode": "GUIDE_ONLY",
       "canonical_source_set": [
+        {
+          "label": "Changes to DIMO Rewards",
+          "source_role": "OFFICIAL_PROJECT",
+          "url": "https://support.drivedimo.com/en-US/changes-to-dimo-rewards-8208483"
+        },
+        {
+          "label": "Marketplace Rewards",
+          "source_role": "OFFICIAL_PROJECT",
+          "url": "https://support.drivedimo.com/en-US/what-are-marketplace-rewards-271566"
+        },
         {
           "label": "DIMO support",
           "source_role": "OFFICIAL_PROJECT",
           "url": "https://support.dimo.org/"
-        },
-        {
-          "label": "User rewards API",
-          "source_role": "OFFICIAL_PROJECT",
-          "url": "https://github.com/DIMO-Network/user-rewards-api"
-        },
-        {
-          "label": "DIMO shop",
-          "source_role": "OFFICIAL_PROJECT",
-          "url": "https://shop.dimo.org/"
         }
       ],
-      "data_feasibility_status": "GO",
+      "data_feasibility_status": "PARKED",
       "eligibility_reasons": [
-        "At least 1200 evidence-backed narration words; available 57.",
-        "At least 6 substantive supported sections; available 3.",
-        "Unresolved evidence remains; do not pad or invent content."
+        "Guide only: weekly Baseline Issuance ended following DIP-12.",
+        "Current Marketplace rewards are offer-specific; no active offer was verified for a current financial model.",
+        "Do not use historical weekly reward assumptions in new financial content."
       ],
       "estimated_duration_seconds": 22,
       "long_form_eligible": false,
       "opportunity_id": "dimo",
       "opportunity_name": "DIMO",
       "opportunity_type": "DEPIN_NODE",
-      "reviewed_at": "2026-08-24T00:00:00+00:00",
+      "reviewed_at": "2026-09-29T00:00:00+03:00",
       "sections": [
         {
+          "section_id": "what_it_is",
           "evidence_paths": [
             "opportunity.feasibility_summary"
           ],
-          "section_id": "what_it_is",
           "source_references": [
             {
-              "label": "DIMO support",
+              "label": "Changes to DIMO Rewards",
               "source_role": "OFFICIAL_PROJECT",
-              "url": "https://support.dimo.org/"
+              "url": "https://support.drivedimo.com/en-US/changes-to-dimo-rewards-8208483"
             },
             {
-              "label": "User rewards API",
+              "label": "Marketplace Rewards",
               "source_role": "OFFICIAL_PROJECT",
-              "url": "https://github.com/DIMO-Network/user-rewards-api"
-            },
-            {
-              "label": "DIMO shop",
-              "source_role": "OFFICIAL_PROJECT",
-              "url": "https://shop.dimo.org/"
+              "url": "https://support.drivedimo.com/en-US/what-are-marketplace-rewards-271566"
             }
           ],
           "supported_claims": [
-            "Official reward logic, vehicle requirements, subscription costs, and DIMO market pricing support a narrow software-only compatible-car strategy with explicit network-share assumptions."
+            "DIMO ended the weekly Baseline Issuance for vehicle connection and data sharing following DIP-12.",
+            "Marketplace partners may offer separate incentives with their own eligibility and terms."
           ],
           "unresolved_evidence": [],
-          "word_budget_estimate": 21
+          "word_budget_estimate": 35
         },
         {
-          "evidence_paths": [],
           "section_id": "how_to_start",
-          "source_references": [],
-          "supported_claims": [],
-          "unresolved_evidence": [
-            "how to start evidence is not present in the catalog."
-          ],
-          "word_budget_estimate": 0
-        },
-        {
-          "evidence_paths": [],
-          "section_id": "what_you_need",
-          "source_references": [],
-          "supported_claims": [],
-          "unresolved_evidence": [
-            "what you need evidence is not present in the catalog."
-          ],
-          "word_budget_estimate": 0
-        },
-        {
-          "evidence_paths": [],
-          "section_id": "how_you_earn",
-          "source_references": [],
-          "supported_claims": [],
-          "unresolved_evidence": [
-            "how you earn evidence is not present in the catalog."
-          ],
-          "word_budget_estimate": 0
-        },
-        {
-          "evidence_paths": [],
-          "section_id": "claim_or_exit",
-          "source_references": [],
-          "supported_claims": [],
-          "unresolved_evidence": [
-            "how to exit or claim evidence is not present in the catalog."
-          ],
-          "word_budget_estimate": 0
-        },
-        {
           "evidence_paths": [
-            "strategy.dimo-software-only-compatible-car"
+            "opportunity.guidance.how_to_start"
           ],
-          "section_id": "modeled_economics",
           "source_references": [
             {
-              "label": "DIMO support",
+              "label": "Marketplace Rewards",
               "source_role": "OFFICIAL_PROJECT",
-              "url": "https://support.dimo.org/"
-            },
-            {
-              "label": "User rewards API",
-              "source_role": "OFFICIAL_PROJECT",
-              "url": "https://github.com/DIMO-Network/user-rewards-api"
-            },
-            {
-              "label": "DIMO shop",
-              "source_role": "OFFICIAL_PROJECT",
-              "url": "https://shop.dimo.org/"
+              "url": "https://support.drivedimo.com/en-US/what-are-marketplace-rewards-271566"
             }
           ],
           "supported_claims": [
-            "DIMO Software-Only Compatible Car: Software-only compatible-car scenario using official DIMO reward points logic, weekly issuance, Pro subscription cost, and a configured network-point denominator."
+            "Review current Marketplace offers and their individual terms before connecting a vehicle for rewards."
           ],
           "unresolved_evidence": [],
-          "word_budget_estimate": 23
+          "word_budget_estimate": 15
         },
         {
+          "section_id": "what_you_need",
+          "evidence_paths": [
+            "opportunity.guidance.what_you_need"
+          ],
+          "source_references": [
+            {
+              "label": "Marketplace Rewards",
+              "source_role": "OFFICIAL_PROJECT",
+              "url": "https://support.drivedimo.com/en-US/what-are-marketplace-rewards-271566"
+            }
+          ],
+          "supported_claims": [
+            "Vehicle, region, subscription, and reward eligibility depend on the selected offer."
+          ],
+          "unresolved_evidence": [],
+          "word_budget_estimate": 15
+        },
+        {
+          "section_id": "how_you_earn",
+          "evidence_paths": [
+            "opportunity.guidance.how_you_earn"
+          ],
+          "source_references": [
+            {
+              "label": "Changes to DIMO Rewards",
+              "source_role": "OFFICIAL_PROJECT",
+              "url": "https://support.drivedimo.com/en-US/changes-to-dimo-rewards-8208483"
+            },
+            {
+              "label": "Marketplace Rewards",
+              "source_role": "OFFICIAL_PROJECT",
+              "url": "https://support.drivedimo.com/en-US/what-are-marketplace-rewards-271566"
+            }
+          ],
+          "supported_claims": [
+            "Weekly Baseline Issuance has ended; marketplace incentives are separate and offer-specific."
+          ],
+          "unresolved_evidence": [],
+          "word_budget_estimate": 15
+        },
+        {
+          "section_id": "claim_or_exit",
+          "evidence_paths": [
+            "opportunity.guidance.how_to_exit_or_claim"
+          ],
+          "source_references": [
+            {
+              "label": "Marketplace Rewards",
+              "source_role": "OFFICIAL_PROJECT",
+              "url": "https://support.drivedimo.com/en-US/what-are-marketplace-rewards-271566"
+            }
+          ],
+          "supported_claims": [],
+          "unresolved_evidence": [
+            "No current offer-specific payout, claim, and token exit route has been verified."
+          ],
+          "word_budget_estimate": 0
+        },
+        {
+          "section_id": "modeled_economics",
+          "evidence_paths": [
+            "opportunity.roi_unavailable"
+          ],
+          "source_references": [
+            {
+              "label": "Changes to DIMO Rewards",
+              "source_role": "OFFICIAL_PROJECT",
+              "url": "https://support.drivedimo.com/en-US/changes-to-dimo-rewards-8208483"
+            },
+            {
+              "label": "Marketplace Rewards",
+              "source_role": "OFFICIAL_PROJECT",
+              "url": "https://support.drivedimo.com/en-US/what-are-marketplace-rewards-271566"
+            }
+          ],
+          "supported_claims": [
+            "No current financial ROI is published for the historical generic weekly-baseline strategy."
+          ],
+          "unresolved_evidence": [
+            "A named active offer, eligible reward amount, complete costs, and realizable payout route."
+          ],
+          "word_budget_estimate": 12
+        },
+        {
+          "section_id": "risk_confidence_freshness",
           "evidence_paths": [
             "opportunity.data_feasibility_status",
-            "opportunity.value_realization_status",
-            "catalog.reviewed_at"
+            "opportunity.value_realization_status"
           ],
-          "section_id": "risk_confidence_freshness",
           "source_references": [
             {
-              "label": "DIMO support",
+              "label": "Changes to DIMO Rewards",
               "source_role": "OFFICIAL_PROJECT",
-              "url": "https://support.dimo.org/"
+              "url": "https://support.drivedimo.com/en-US/changes-to-dimo-rewards-8208483"
             },
             {
-              "label": "User rewards API",
+              "label": "Marketplace Rewards",
               "source_role": "OFFICIAL_PROJECT",
-              "url": "https://github.com/DIMO-Network/user-rewards-api"
-            },
-            {
-              "label": "DIMO shop",
-              "source_role": "OFFICIAL_PROJECT",
-              "url": "https://shop.dimo.org/"
+              "url": "https://support.drivedimo.com/en-US/what-are-marketplace-rewards-271566"
             }
           ],
           "supported_claims": [
-            "Data feasibility status: GO.",
-            "Value realization status: realizable.",
-            "Catalog review date: 2026-08-24 UTC."
+            "Data feasibility status: PARKED.",
+            "Value realization status: unknown."
           ],
           "unresolved_evidence": [],
-          "word_budget_estimate": 13
+          "word_budget_estimate": 8
         }
       ],
       "supported_claims": [
-        "Official reward logic, vehicle requirements, subscription costs, and DIMO market pricing support a narrow software-only compatible-car strategy with explicit network-share assumptions.",
-        "DIMO Software-Only Compatible Car: Software-only compatible-car scenario using official DIMO reward points logic, weekly issuance, Pro subscription cost, and a configured network-point denominator.",
-        "Data feasibility status: GO.",
-        "Value realization status: realizable.",
-        "Catalog review date: 2026-08-24 UTC."
+        "DIMO ended the weekly Baseline Issuance for vehicle connection and data sharing following DIP-12.",
+        "Marketplace partners may offer separate incentives with their own eligibility and terms.",
+        "Data feasibility status: PARKED.",
+        "Value realization status: unknown."
       ],
       "unresolved_evidence": [
-        "how to start evidence is not present in the catalog.",
-        "what you need evidence is not present in the catalog.",
-        "how you earn evidence is not present in the catalog.",
-        "how to exit or claim evidence is not present in the catalog."
+        "A named active offer and its current official terms.",
+        "Offer-specific eligibility, reward, costs, payout, and exit evidence."
       ],
-      "word_budget_estimate": 57
+      "word_budget_estimate": 100
     },
     {
       "admission_mode": "MODELED",

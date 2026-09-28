@@ -167,7 +167,7 @@ def test_rankings_order_and_tie_breaking_policy(monkeypatch, tmp_path) -> None:
     payload = response.json()
     assert payload["ordering"] == RANKING_ORDERING
     assert [item["rank"] for item in payload["items"]] == list(range(1, len(payload["items"]) + 1))
-    assert len(payload["items"]) == len(catalog.list_strategies()) - 3
+    assert len(payload["items"]) == len(catalog.list_strategies()) - 4
     assert [item["strategy"]["strategy_id"] for item in payload["items"]] == [
         "splinterlands-modern-ranked-active-sps-ev",
         "geodnet-empty-hex-triple-band-base-station",
@@ -180,7 +180,6 @@ def test_rankings_order_and_tie_breaking_policy(monkeypatch, tmp_path) -> None:
         "mysterium-b2b-existing-device",
         "splinterlands-modern-ranked-casual-sps-ev",
         "storj-existing-hardware-storage-node",
-        "dimo-software-only-compatible-car",
     ]
 
 
@@ -209,7 +208,6 @@ def test_rankings_filters_use_only_modeled_fields(monkeypatch, tmp_path) -> None
         "weatherxm-d1-wifi-station",
         "mysterium-b2b-existing-device",
         "storj-existing-hardware-storage-node",
-        "dimo-software-only-compatible-car",
     ]
     assert _ranking_ids(client, "/api/v1/rankings?chain=wax") == []
     assert _ranking_ids(client, "/api/v1/rankings?economy_type=resource-production") == []
@@ -219,7 +217,6 @@ def test_rankings_filters_use_only_modeled_fields(monkeypatch, tmp_path) -> None
         "splinterlands-modern-ranked-grinder-sps-ev",
         "mysterium-b2b-existing-device",
         "splinterlands-modern-ranked-casual-sps-ev",
-        "dimo-software-only-compatible-car",
     ]
 
 

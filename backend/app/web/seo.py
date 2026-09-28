@@ -1260,7 +1260,9 @@ def _render_opportunity_cards(
             else value_status_label(opportunity.value_realization_status, opportunity.strategy_count)
         )
         freshness_note = (
-            '<p class="muted watchlist-note">A prior model exists, but its data is stale or unavailable; it is excluded from current rankings.</p>'
+            f'<p class="muted watchlist-note">{escape(plain_unavailable_reason(opportunity))}</p>'
+            if opportunity.data_feasibility_status == "PARKED" and opportunity.roi_unavailable
+            else '<p class="muted watchlist-note">A prior model exists, but its data is stale or unavailable; it is excluded from current rankings.</p>'
             if freshness_is_scoped and opportunity.strategy_count and not has_fresh_estimate
             else ""
         )
@@ -1823,6 +1825,9 @@ def plain_unavailable_reason(opportunity) -> str:
     value_status = str(opportunity.value_realization_status or "").lower()
     feasibility = str(opportunity.data_feasibility_status or "").upper()
     summary = str(getattr(opportunity, "feasibility_summary", "") or "").lower()
+    structured = getattr(opportunity, "roi_unavailable", None)
+    if feasibility == "PARKED" and structured and structured.reason:
+        return str(structured.reason)
     if "non_transferable_points" in value_status or "points are not" in summary or "no monetary value" in summary:
         return "Points cannot currently be converted to cash reliably."
     if "future_airdrop" in value_status or "future" in summary or "airdrop" in summary:

@@ -33,7 +33,6 @@ _PARTIAL_STRATEGY_IDS = frozenset(
     {
         "geodnet-empty-hex-triple-band-base-station",
         "weatherxm-d1-wifi-station",
-        "dimo-software-only-compatible-car",
         "mysterium-b2b-existing-device",
     }
 )
@@ -43,6 +42,7 @@ _NOT_REFRESHABLE_STRATEGY_IDS = frozenset(
         "farmers-world-axe-wood-production-3x",
         "farmers-world-axe-wood-production-10x",
         "storj-existing-hardware-storage-node",
+        "dimo-software-only-compatible-car",
     }
 )
 _FARMERS_WORLD_STRATEGY_IDS = frozenset(
@@ -78,6 +78,15 @@ def classify_refreshability(strategy_id: str, *, dfk_jeweler_refresh_enabled: bo
                 "analytics use, CoinGecko WAX/USD currently fails authentication, and a reproducible executable "
                 "USD exit path has not been established. Historical snapshots are retained but must not be "
                 "presented as current."
+            ),
+        )
+    if strategy_id == "dimo-software-only-compatible-car":
+        return RefreshabilityDecision(
+            refreshability=Refreshability.NOT_REFRESHABLE,
+            reason=(
+                "The modeled weekly DIMO Baseline Issuance ended following DIP-12. Current Marketplace rewards "
+                "are offer-specific and require a verified active offer, eligibility, costs, and payout route; "
+                "the historical generic weekly-baseline scenario must not be refreshed or presented as current."
             ),
         )
     if strategy_id in _AUTO_STRATEGY_IDS:
