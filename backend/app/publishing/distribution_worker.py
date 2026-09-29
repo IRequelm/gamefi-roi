@@ -307,7 +307,11 @@ class DistributionWorker:
             "pid": os.getpid(),
             "updated_at": now.astimezone(UTC).isoformat(),
             "platform_statuses": [
-                {"platform": item.get("platform"), "status": item.get("status")}
+                {
+                    key: item[key]
+                    for key in ("platform", "status", "error_category")
+                    if item.get(key) is not None
+                }
                 for item in results
             ],
         }

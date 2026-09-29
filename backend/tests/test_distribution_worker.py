@@ -117,6 +117,20 @@ def test_worker_writes_success_heartbeat_after_cycle(tmp_path):
     assert any(item["platform"] == "YouTubeLegacyQueue" for item in heartbeat["platform_statuses"])
 
 
+def test_worker_heartbeat_preserves_safe_error_categories(tmp_path):
+    instance = worker(tmp_path)
+    instance._write_heartbeat(
+        status="degraded",
+        now=NOW,
+        results=[{"platform": "X", "status": "failed", "error_category": "XAuthError"}],
+    )
+
+    heartbeat = json.loads((tmp_path / "heartbeat.json").read_text(encoding="utf-8"))
+    assert heartbeat["platform_statuses"] == [
+        {"platform": "X", "status": "failed", "error_category": "XAuthError"}
+    ]
+
+
 def test_dynamic_catalog_unavailability_marks_worker_degraded(tmp_path, monkeypatch):
     short_queue = tmp_path / "short-handoff.json"
     short_queue.write_text(json.dumps({"version": "youtube-short-handoff-v1", "items": [], "blocked": {}}), encoding="utf-8")
