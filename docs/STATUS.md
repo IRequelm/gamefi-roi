@@ -1,7 +1,9 @@
 # GameFi ROI — Project Status
 
-Updated: 2026-09-29
+Updated: 2026-09-30
 Project version: 0.1
+
+2026-09-30 acquisition and automation checkpoint: trailing-28-day GA4 has 57 sessions, including 37 `codex_smoke` test sessions; after excluding those, 20 remain (17 Direct/unknown, 2 X-tagged, 1 not set) and there are no YouTube-attributed sessions. Current YouTube channel read for the same window has 224 views, 59 comparable engaged views, and 0 gained subscribers across the returned videos. Search Console query sample remains tiny (about 20 impressions, 0 clicks), with relevant non-brand queries mostly ranking beyond page 4. Windows shows Discovery Worker enabled and scheduled every 6 hours (last result 0); Distribution Worker is enabled but its last scheduled-task result is `2147943467`, while two distribution-worker processes remain alive and the heartbeat is fresh/degraded. X delivery fails, YouTube handoff is at its daily cap, and this does not mean content was published successfully. The worker task/process discrepancy and ambiguous ownership of the two live processes need a controlled operator review; no process was stopped or restarted. Current master UI is live, but its only fresh current-value strategy is a very-low-earnings Splinterlands scenario. Monthly 400–500k traffic is not achieved or evidenced. No public post was sent, no X credits were spent, and no referral URLs were invented or harvested.
 
 2026-09-29 current-coverage disclosure correction is live: commit `03a124b` deployed to Render Web as `dep-dateonid0e5s73bq9750`. Chrome-rendered catalog and live HTML show the summary distinguishes fresh strategy results, configured strategies, no-current-estimate opportunities, and no-strategy opportunities. Production `/api/v1/ops/status` and `/opportunities` returned 200; database is `ok`, with four fresh results across one opportunity. Do not use a search-crawler snapshot that predates this deploy as live UI evidence. The follow-up active-effort decision filter is being implemented locally; deploy remains pending. CoinGecko credential, Render environment, Cron settings, and distribution content were not changed.
 
