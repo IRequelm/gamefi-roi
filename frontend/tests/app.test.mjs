@@ -15,6 +15,7 @@ import {
   formatUpdatedAge,
   filterRankingsByMeasuredEffort,
   hasConsentGatedAnalytics,
+  isInternalTestTraffic,
   initializeAnalytics,
   initializeErrorTracking,
   initializeProductAnalytics,
@@ -1006,6 +1007,28 @@ test("reject consent prevents GA initialization", () => {
   assert.equal(initializeAnalytics(context), false);
   assert.equal(trackAnalyticsEvent("strategy_view", { strategy_id: "dfk" }, context), false);
   assert.equal(context.doc.scripts.length, 0);
+});
+
+test("known internal test campaigns do not initialize or send third-party analytics", () => {
+  resetAnalyticsForTests();
+  const storage = fakeStorage();
+  const sent = [];
+  const context = fakeAnalyticsContext("G-TEST1234", storage, {
+    posthogProjectApiKey: "phc_test_key",
+  });
+  context.win.location = { pathname: "/", search: "?utm_source=CoDeX_sMoKe" };
+  context.win.navigator = { sendBeacon: (...args) => sent.push(args) > 0 };
+
+  assert.equal(isInternalTestTraffic(context.win), true);
+  assert.equal(hasConsentGatedAnalytics(context.win), false);
+  assert.equal(renderAnalyticsConsentBanner(context.win), "");
+  assert.equal(setAnalyticsConsent("accepted", context), true);
+  assert.equal(initializeAnalytics(context), false);
+  assert.equal(initializeProductAnalytics(context), false);
+  assert.equal(trackAnalyticsEvent("page_view", { page_path: "/" }, context), false);
+  assert.equal(trackProductAnalyticsEvent("ranking_view", { ranking_slug: "home" }, context), false);
+  assert.equal(context.doc.scripts.length, 0);
+  assert.equal(sent.length, 0);
 });
 
 test("accept consent initializes GA once and sends safe engagement events", () => {

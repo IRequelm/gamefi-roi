@@ -156,6 +156,7 @@ const PRODUCT_ANALYTICS_ALLOWED_PARAMS = new Set([
   "economy_type",
 ]);
 const SENSITIVE_ANALYTICS_KEY_PATTERN = /(authorization|cookie|password|passwd|secret|token|api[_-]?key|credential|wallet|private|signature|body|payload)/i;
+const INTERNAL_TEST_TRAFFIC_TAGS = new Set(["codex_smoke", "codex-test", "gamcryp-test"]);
 let initializedAnalyticsId = null;
 let initializedProductAnalyticsKey = null;
 let initializedSentryDsn = null;
@@ -2696,8 +2697,19 @@ export function sentryFrontendDsn(win = globalThis.window) {
   }
 }
 
+export function isInternalTestTraffic(win = globalThis.window) {
+  try {
+    const params = new URLSearchParams(win?.location?.search || "");
+    return ["utm_source", "utm_campaign"].some((key) =>
+      INTERNAL_TEST_TRAFFIC_TAGS.has((params.get(key) || "").trim().toLowerCase()),
+    );
+  } catch {
+    return false;
+  }
+}
+
 export function hasConsentGatedAnalytics(win = globalThis.window) {
-  return Boolean(analyticsMeasurementId(win) || posthogProjectApiKey(win));
+  return !isInternalTestTraffic(win) && Boolean(analyticsMeasurementId(win) || posthogProjectApiKey(win));
 }
 
 export function analyticsConsent(storage = globalThis.window?.localStorage) {
@@ -2750,7 +2762,7 @@ export function initializeAnalytics(context = {}) {
   const doc = context.doc || win?.document || globalThis.document;
   const storage = context.storage || win?.localStorage;
   const measurementId = analyticsMeasurementId(win);
-  if (!win || !doc || !measurementId || analyticsConsent(storage) !== "accepted") {
+  if (!win || !doc || !measurementId || isInternalTestTraffic(win) || analyticsConsent(storage) !== "accepted") {
     return false;
   }
   win.dataLayer = win.dataLayer || [];
@@ -2778,7 +2790,7 @@ export function initializeProductAnalytics(context = {}) {
   const win = context.win || globalThis.window;
   const storage = context.storage || win?.localStorage;
   const key = posthogProjectApiKey(win);
-  if (!win || !key || !posthogHost(win) || analyticsConsent(storage) !== "accepted") {
+  if (!win || !key || !posthogHost(win) || isInternalTestTraffic(win) || analyticsConsent(storage) !== "accepted") {
     return false;
   }
   const distinctId = productAnalyticsDistinctId(context);
