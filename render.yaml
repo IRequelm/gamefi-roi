@@ -1,12 +1,9 @@
-# Low-cost public beta Render Blueprint.
+# Low-cost public beta Render Blueprint: Web + Postgres only.
+# No separately billed Render Cron is part of this beta. Scheduled
+# recalculation uses the four-hour GitHub Actions workflow.
 #
-# The web service remains Free. The hourly Cron Job uses Render's Starter
-# compute plan and is billed only while running (minimum $1/month).
-#
-# Scheduled recalculation runs at minute 47 UTC. GitHub Actions remains a
-# fallback until this Render schedule is provisioned and verified.
-#
-# For real production, use render.production.yaml instead.
+# render.production.yaml is an optional, paid alternative and is not active
+# unless deliberately selected and synced.
 services:
   - type: web
     name: gamefi-roi-web
@@ -61,7 +58,7 @@ services:
       - key: GAMEFI_NVIDIA_MAX_TOKENS
         value: "2048"
       - key: GAMEFI_SCHEDULER_CADENCE_MINUTES
-        value: "60"
+        value: "240"
       - key: GAMEFI_PRODUCTION_HARD_STALE_SECONDS
         value: "28800"
       - key: GAMEFI_MARKET_DATA_HTTP_TIMEOUT_SECONDS
@@ -82,79 +79,6 @@ services:
         value: "21600"
       - key: GAMEFI_DFK_CHAIN_RPC_URL
         sync: false
-      - key: GAMEFI_DFK_CHAIN_OBSERVATION_FRESHNESS_SECONDS
-        value: "21600"
-      - key: GAMEFI_DFK_JEWELER_REFRESH_ENABLED
-        value: "false"
-      - key: GAMEFI_SPLINTERLANDS_BASE_URL
-        value: https://api.splinterlands.com
-      - key: GAMEFI_SPLINTERLANDS_OBSERVATION_FRESHNESS_SECONDS
-        value: "21600"
-
-  - type: cron
-    name: gamefi-roi-recalculation
-    runtime: python
-    plan: starter
-    region: ohio
-    buildCommand: "python -m pip install --upgrade pip && python -m pip install -r requirements.txt"
-    startCommand: "python -m app.jobs.snapshot_refresh"
-    schedule: "47 * * * *"
-    autoDeployTrigger: off
-    envVars:
-      - key: GAMEFI_ENVIRONMENT
-        value: production
-      - key: GAMEFI_DATABASE_URL
-        fromDatabase:
-          name: gamefi-roi-db
-          property: connectionString
-      - key: GAMEFI_API_TITLE
-        value: GameFi ROI API
-      - key: GAMEFI_LOG_LEVEL
-        value: INFO
-      - key: GAMEFI_ALLOW_SQLITE_FOR_TESTS
-        value: "false"
-      - key: GAMEFI_DATABASE_POOL_SIZE
-        value: "1"
-      - key: GAMEFI_DATABASE_MAX_OVERFLOW
-        value: "0"
-      - key: GAMEFI_DATABASE_POOL_TIMEOUT_SECONDS
-        value: "30"
-      - key: GAMEFI_DATABASE_POOL_RECYCLE_SECONDS
-        value: "1800"
-      - key: GAMEFI_SECURITY_HEADERS_ENABLED
-        value: "true"
-      - key: GAMEFI_PUBLIC_BASE_URL
-        value: https://gamcryp.com
-      - key: GAMEFI_SCHEDULER_CADENCE_MINUTES
-        value: "60"
-      - key: GAMEFI_PRODUCTION_HARD_STALE_SECONDS
-        value: "28800"
-      - key: GAMEFI_MARKET_DATA_HTTP_TIMEOUT_SECONDS
-        value: "10"
-      - key: GAMEFI_MARKET_DATA_HTTP_MAX_RETRIES
-        value: "2"
-      - key: GAMEFI_MARKET_DATA_REQUEST_CACHE_SECONDS
-        value: "30"
-      - key: GAMEFI_MARKET_DATA_PRICE_FRESHNESS_SECONDS
-        value: "21600"
-      - key: GAMEFI_COINGECKO_BASE_URL
-        value: https://api.coingecko.com/api/v3
-      - key: GAMEFI_COINGECKO_API_KEY
-        fromService:
-          name: gamefi-roi-web
-          type: web
-          envVarKey: GAMEFI_COINGECKO_API_KEY
-      - key: GAMEFI_ALCOR_BASE_URL
-        value: https://wax.alcor.exchange/api/v2
-      - key: GAMEFI_ATOMICASSETS_BASE_URL
-        value: https://wax.api.atomicassets.io
-      - key: GAMEFI_WAX_MARKET_OBSERVATION_FRESHNESS_SECONDS
-        value: "21600"
-      - key: GAMEFI_DFK_CHAIN_RPC_URL
-        fromService:
-          name: gamefi-roi-web
-          type: web
-          envVarKey: GAMEFI_DFK_CHAIN_RPC_URL
       - key: GAMEFI_DFK_CHAIN_OBSERVATION_FRESHNESS_SECONDS
         value: "21600"
       - key: GAMEFI_DFK_JEWELER_REFRESH_ENABLED

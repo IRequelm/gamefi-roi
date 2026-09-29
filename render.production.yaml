@@ -1,8 +1,7 @@
-# Paid production Render Blueprint.
+# Optional paid production Render Blueprint; not the active beta Blueprint.
 #
-# This preserves the production-grade G13 architecture for upgrade from
-# low-cost public beta: paid web service, paid Render Postgres with backups/PITR,
-# and a Render Cron Job with platform single-run guarantee.
+# Selecting this file also provisions a separately billed Render Cron. Keep
+# the beta on GitHub Actions unless a paid Render Cron is deliberately chosen.
 services:
   - type: web
     name: gamefi-roi-web
@@ -58,15 +57,15 @@ services:
       - key: GAMEFI_NVIDIA_MAX_TOKENS
         value: "2048"
       - key: GAMEFI_SCHEDULER_CADENCE_MINUTES
-        value: "5"
+        value: "240"
       - key: GAMEFI_PRODUCTION_HARD_STALE_SECONDS
-        value: "1800"
+        value: "28800"
       - key: GAMEFI_MARKET_DATA_HTTP_TIMEOUT_SECONDS
         value: "10"
       - key: GAMEFI_MARKET_DATA_HTTP_MAX_RETRIES
         value: "2"
       - key: GAMEFI_MARKET_DATA_PRICE_FRESHNESS_SECONDS
-        value: "300"
+        value: "21600"
       - key: GAMEFI_COINGECKO_BASE_URL
         value: https://api.coingecko.com/api/v3
       - key: GAMEFI_COINGECKO_API_KEY
@@ -76,17 +75,17 @@ services:
       - key: GAMEFI_ATOMICASSETS_BASE_URL
         value: https://wax.api.atomicassets.io
       - key: GAMEFI_WAX_MARKET_OBSERVATION_FRESHNESS_SECONDS
-        value: "300"
+        value: "21600"
       - key: GAMEFI_DFK_CHAIN_RPC_URL
         sync: false
       - key: GAMEFI_DFK_CHAIN_OBSERVATION_FRESHNESS_SECONDS
-        value: "300"
+        value: "21600"
       - key: GAMEFI_DFK_JEWELER_REFRESH_ENABLED
         value: "false"
       - key: GAMEFI_SPLINTERLANDS_BASE_URL
         value: https://api.splinterlands.com
       - key: GAMEFI_SPLINTERLANDS_OBSERVATION_FRESHNESS_SECONDS
-        value: "300"
+        value: "21600"
 
   - type: cron
     name: gamefi-roi-recalculation
@@ -95,9 +94,8 @@ services:
     region: ohio
     buildCommand: "python -m pip install --upgrade pip && python -m pip install -r requirements.txt"
     startCommand: "python -m app.jobs.snapshot_refresh"
-    # Provider observations are publication-fresh for five minutes. A slower
-    # cron makes /rankings correctly go empty between successful runs.
-    schedule: "2-57/5 * * * *"
+    # Four-hour refresh with six-hour source freshness and an eight-hour stale ceiling.
+    schedule: "2 */4 * * *"
     autoDeployTrigger: off
     envVars:
       - key: GAMEFI_ENVIRONMENT
@@ -131,15 +129,15 @@ services:
       - key: GAMEFI_BING_SITE_VERIFICATION
         sync: false
       - key: GAMEFI_SCHEDULER_CADENCE_MINUTES
-        value: "5"
+        value: "240"
       - key: GAMEFI_PRODUCTION_HARD_STALE_SECONDS
-        value: "1800"
+        value: "28800"
       - key: GAMEFI_MARKET_DATA_HTTP_TIMEOUT_SECONDS
         value: "10"
       - key: GAMEFI_MARKET_DATA_HTTP_MAX_RETRIES
         value: "2"
       - key: GAMEFI_MARKET_DATA_PRICE_FRESHNESS_SECONDS
-        value: "300"
+        value: "21600"
       - key: GAMEFI_COINGECKO_BASE_URL
         value: https://api.coingecko.com/api/v3
       - key: GAMEFI_COINGECKO_API_KEY
@@ -149,15 +147,15 @@ services:
       - key: GAMEFI_ATOMICASSETS_BASE_URL
         value: https://wax.api.atomicassets.io
       - key: GAMEFI_WAX_MARKET_OBSERVATION_FRESHNESS_SECONDS
-        value: "300"
+        value: "21600"
       - key: GAMEFI_DFK_CHAIN_RPC_URL
         sync: false
       - key: GAMEFI_DFK_CHAIN_OBSERVATION_FRESHNESS_SECONDS
-        value: "300"
+        value: "21600"
       - key: GAMEFI_SPLINTERLANDS_BASE_URL
         value: https://api.splinterlands.com
       - key: GAMEFI_SPLINTERLANDS_OBSERVATION_FRESHNESS_SECONDS
-        value: "300"
+        value: "21600"
 
 databases:
   - name: gamefi-roi-db

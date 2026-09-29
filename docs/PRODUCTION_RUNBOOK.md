@@ -1,15 +1,16 @@
 # GameFi ROI Production Runbook
 
-Updated: 2026-09-25
+Updated: 2026-09-30
 Gate: G13 - Production public beta
 
-## Current operating-state reconciliation (2026-09-25)
+## Current operating-state reconciliation (2026-09-30 23:37 UTC)
 
 - All numbered gates are complete; this runbook describes the deployed beta architecture and its operating procedures, not an active implementation gate.
-- GitHub remote `master` remains at `b179e98` with a five-minute Actions cadence. Local `master` includes an unpushed four-hour cadence (`17 */4 * * *`) and six-hour input freshness; production behavior must not be inferred from the local checkout.
-- The user reports that both active Render services have paid plans. The Render Dashboard could not be rechecked from this execution environment. The checked-in `render.yaml` still contains Free plan declarations, so do not sync it until its service/database plans are reconciled with the active paid resources. No Render Cron is part of the requested four-hour beta scheduler.
-- The four-hour Actions run writes production snapshots and remains guarded by `GAMEFI_BETA_DATABASE_ENABLED=true`. Verify that setting and the external database/provider connections before relying on scheduled writes. Do not interpret local DB/report counts as production telemetry.
-- On this check, production `/api/v1/ops/status` was unreachable from the inspection environment (`ConnectError`); that does not prove that the public service itself is down. Confirm production status, fresh ranking rows, and rendered homepage results from an authorized browser before considering the release verified.
+- The authenticated Render Web service page for production `gamefi-roi-web` showed **Free**, even though the user reports upgrading both Web and Postgres to paid ~$6 plans. The repo's beta `render.yaml` historically disagreed with the dashboard; verify exact Web and DB resource plans in the same workspace before syncing any Blueprint. No billing or plan change was made.
+- The active workspace has Web and Postgres, with no separately provisioned Render Cron. The default beta Blueprint is being corrected to contain Web + Postgres only. `render.production.yaml` remains an optional separately billed alternative that includes a Render Cron; do not sync it to operate the free beta.
+- The configured GitHub Actions workflow was hourly, but the latest four observed scheduled runs were at 02:00, 08:34, 15:55, and 20:50 UTC on Sep 29 (about 5–7 hour gaps). The repo change now requests one run every four hours at minute 17, passes a 240-minute scheduler window, keeps observations fresh for six hours, and retains an eight-hour hard-stale limit. GitHub schedule delivery is best-effort; the four-hour schedule is not verified until a future scheduled run is observed.
+- Current production `/api/v1/ops/status` reported application/database `ok`, four eligible strategies fresh across only Splinterlands, 11 strategies stale or policy-skipped, zero unresolved current failures, and 464 historical failures. It also reported a 60-minute cadence from the still-running Render Web configuration; this is configured runtime metadata, not evidence that GitHub ran hourly. HEAD `ff81ae5` is pushed to GitHub but not live on Render (`autoDeployTrigger: off`); `/roi-calculator` therefore remains 404 until a manual Web deployment is completed.
+- The GitHub workflow remains guarded by `GAMEFI_BETA_DATABASE_ENABLED=true`. No workflow was manually dispatched and no Render Blueprint was synced during this check.
 
 ## Architecture
 
