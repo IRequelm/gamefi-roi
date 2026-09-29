@@ -36,6 +36,7 @@ from app.strategies.catalog import CATALOG_REVIEWED_AT, GUIDE_ONLY_INDEXABLE_OPP
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 FRONTEND_ASSETS = PROJECT_ROOT / "frontend" / "assets"
+INTERNAL_TEST_TRAFFIC_TAGS = frozenset({"codex_smoke", "codex-test", "gamcryp-test"})
 MONTH_NAMES = ("", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
 
 
@@ -604,6 +605,11 @@ def record_landing_visit(request: Request, repository: MonetizationRepository, *
     utm_medium = request.query_params.get("utm_medium")
     utm_campaign = request.query_params.get("utm_campaign")
     utm_content = request.query_params.get("utm_content")
+    if any(
+        (request.query_params.get(key) or "").strip().lower() in INTERNAL_TEST_TRAFFIC_TAGS
+        for key in ("utm_source", "utm_campaign")
+    ):
+        return
     coarse_session_id = request.headers.get("x-gamcryp-session")
     repository.record_landing_visit(
         landing_path=path,

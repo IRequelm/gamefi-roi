@@ -143,13 +143,16 @@ In all non-active states, public outbound routing uses official URL fallback.
 
 ## Current Research Baseline
 
-The local operator database currently records six official-program leads as
+An earlier local-database snapshot recorded six official-program leads as
 `APPLICATION_REQUIRED`: Acurast, DIMO, EarnApp, Grass, Honeygain, and
-Splinterlands. These records contain official evidence only; none contains a
-GamCryp referral code or active monetized link. The operator must apply or
-obtain an account-specific code, verify the current terms and disclosure, and
-then activate the link separately. Until that happens, `/go` continues to use
-the reviewed official destination.
+Splinterlands. That was not production coverage evidence. A read-only
+production-console check on 2026-09-30 found 51 published opportunities, no
+active links, 43 missing, seven needing re-verification, and a separate
+Splinterlands row in `REFERRAL_RESEARCH_REQUIRED` with an account-specific
+username stored but no verified referral URL. An attempted save/health check
+was blocked by the browser and a subsequent read showed unchanged state; no
+production update is claimed. Do not copy owner identifiers into public
+documents or infer a URL from them.
 
 The corresponding official evidence pages are:
 
@@ -159,6 +162,19 @@ The corresponding official evidence pages are:
 - Grass: `https://www.grass.io/learn/i-just-got-a-referral-to-grass-what-does-it-mean/`
 - Honeygain: `https://www.honeygain.com/refer-a-friend/`
 - Splinterlands: `https://support.splinterlands.com/hc/en-us/articles/8626548249748-Ambassador-Program-FAQ`
+
+The current official Splinterlands FAQ describes Silver and Gold ambassador
+tiers. Silver requires at least one referral; the Spellbook purchase bonus is
+500 Credits each for referrer and referred player, and the referrer may receive
+5% of the referral's end-of-season Glint. Gold requires ten referrals with at
+least $100 purchase activity each and an owned Spellbook, and offers additional
+pack/peer-market transaction rewards as described by the FAQ. The FAQ says the
+account-specific link is available on the logged-in Ambassador Status page
+and prohibits self-referral through alternate accounts. These rewards include
+in-game assets and must not be represented as USD commission or verified site
+revenue. The operator still needs to copy and test their actual link from their
+own account; do not construct a query string from a username. No link should
+be activated until that step is complete and its disclosure is recorded.
 
 Do not copy a referral code from an invitation URL, infer a parameter, or
 describe a program as active before the operator has verified the account-

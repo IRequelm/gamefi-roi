@@ -407,6 +407,23 @@ def test_inbound_acquisition_attribution_is_privacy_minimal(monkeypatch, tmp_pat
     assert visits[0].coarse_session_id == "coarse-1"
 
 
+@pytest.mark.parametrize(
+    "query",
+    [
+        "utm_source=codex_smoke",
+        "utm_campaign=codex-test",
+        "utm_source=GAMCRYP-TEST",
+    ],
+)
+def test_internal_test_traffic_is_not_persisted_as_first_party_landing(monkeypatch, tmp_path, query) -> None:
+    client, engine = _seeded_client(monkeypatch, tmp_path, f"seo-internal-{query.replace('=', '-')}.db")
+
+    response = client.get(f"/?{query}")
+
+    assert response.status_code == 200
+    assert MonetizationRepository(engine).landing_visits(landing_path="/") == []
+
+
 def test_direct_landing_visit_is_recorded_without_user_tracking(monkeypatch, tmp_path) -> None:
     client, engine = _seeded_client(monkeypatch, tmp_path, "seo-direct-attribution.db")
 
