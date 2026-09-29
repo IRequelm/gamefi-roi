@@ -49,6 +49,7 @@ import {
   renderRankingsPage,
   renderRecordedModels,
   renderRankingsTable,
+  renderStartPaths,
   renderStrategyAnswerBlock,
   renderScoreBadge,
   renderSponsoredPlacements,
@@ -62,6 +63,13 @@ import {
   trackAnalyticsEvent,
   trackProductAnalyticsEvent,
 } from "../assets/app.js";
+
+test("homepage links to the custom scenario calculator", () => {
+  const html = renderStartPaths();
+  assert.match(html, /href="\/roi-calculator"/);
+  assert.match(html, /Model your own scenario/);
+  assert.match(html, /realizable rewards/);
+});
 
 test("rankings rendering includes card metrics and stored API values", () => {
   const html = renderRankingsTable(rankingPayload());
@@ -1138,6 +1146,36 @@ test("PostHog product analytics is consent gated, explicit, and privacy safe", (
   assert.equal(sent[1].payload.event, "$pageview");
   assert.equal(sent[1].payload.properties.$pathname, "/rankings/gamefi-under-50");
   assert.equal(sent[1].payload.properties.$title, "GameFi under $50");
+});
+
+test("scenario calculator completion telemetry never records user-entered amounts", () => {
+  resetAnalyticsForTests();
+  const sent = [];
+  const context = fakeAnalyticsContext("G-TEST1234", fakeStorage(), {
+    posthogProjectApiKey: "phc_test_key",
+    posthogHost: "https://us.i.posthog.com",
+  });
+  context.win.location = { pathname: "/roi-calculator", search: "" };
+  context.win.navigator = { sendBeacon: (url, body) => sent.push({ url, payload: JSON.parse(body) }) > 0 };
+  setAnalyticsConsent("accepted", context);
+
+  const userValues = {
+    page_path: "/roi-calculator",
+    initial_outlay: "250.00",
+    daily_realizable_rewards: "1.25",
+    daily_operating_costs: "0.15",
+  };
+  assert.equal(trackAnalyticsEvent("roi_calculator_completed", userValues, context), true);
+  assert.equal(trackProductAnalyticsEvent("roi_calculator_completed", userValues, context), true);
+
+  const gaEvent = context.win.dataLayer.find((entry) => entry[0] === "event" && entry[1] === "roi_calculator_completed");
+  assert.equal(gaEvent[2].page_path, "/roi-calculator");
+  assert.equal(gaEvent[2].initial_outlay, undefined);
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0].payload.event, "roi_calculator_completed");
+  assert.equal(sent[0].payload.properties.page_path, "/roi-calculator");
+  assert.equal(sent[0].payload.properties.initial_outlay, undefined);
+  assert.equal(sent[0].payload.properties.daily_realizable_rewards, undefined);
 });
 
 test("outbound CTAs expose referral versus official fallback metadata without changing /go", () => {

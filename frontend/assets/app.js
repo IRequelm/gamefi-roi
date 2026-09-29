@@ -1,3 +1,5 @@
+import { bindRoiCalculator, renderRoiCalculatorPage } from "./roi_calculator.js";
+
 const API_BASE = "/api/v1";
 const CURATED_RANKING_MIN_RESULTS = 2;
 const OPPORTUNITY_SETUP_FILTERS = {
@@ -95,6 +97,7 @@ const ANALYTICS_ALLOWED_EVENTS = new Set([
   "strategy_view",
   "start_click",
   "outbound_click",
+  "roi_calculator_completed",
 ]);
 const ANALYTICS_ALLOWED_PARAMS = new Set([
   "opportunity_id",
@@ -119,6 +122,7 @@ const PRODUCT_ANALYTICS_ALLOWED_EVENTS = new Set([
   "opportunity_search_used",
   "ranking_filter_used",
   "strategy_comparison_view",
+  "roi_calculator_completed",
 ]);
 const PRODUCT_ANALYTICS_ALLOWED_PARAMS = new Set([
   "$current_url",
@@ -3147,6 +3151,7 @@ export function renderStartPaths() {
         <a class="start-path-card" href="/rankings?capital_max=25" data-link><span class="start-path-icon" aria-hidden="true">01</span><span><strong>Compare models under $25</strong><small>See only strategies with current source data and review their costs and risks.</small></span><span aria-hidden="true">→</span></a>
         <a class="start-path-card" href="/opportunities" data-link><span class="start-path-icon" aria-hidden="true">02</span><span><strong>Browse by project and setup</strong><small>Explore games, PC and mobile nodes, and points guides—even when ROI is unavailable.</small></span><span aria-hidden="true">→</span></a>
         <a class="start-path-card" href="/methodology" data-link><span class="start-path-icon" aria-hidden="true">03</span><span><strong>Understand the evidence</strong><small>See how freshness, confidence, risk, costs, and exit assumptions are assessed.</small></span><span aria-hidden="true">→</span></a>
+        <a class="start-path-card" href="/roi-calculator" data-link><span class="start-path-icon" aria-hidden="true">04</span><span><strong>Model your own scenario</strong><small>Estimate cash-flow return from your own costs, realizable rewards, and time.</small></span><span aria-hidden="true">→</span></a>
       </div>
       <p class="start-path-note">Most strategies do not have a verified hands-on time estimate. The site shows modeled activity assumptions separately; it does not claim hourly earnings.</p>
     </section>
@@ -3428,6 +3433,12 @@ async function renderCurrentRoute() {
       routeAnalyticsContext = strategyAnalyticsContext(strategy);
     } else if (path === "/methodology") {
       root.innerHTML = renderMethodologyPage();
+    } else if (path === "/roi-calculator") {
+      root.innerHTML = renderRoiCalculatorPage();
+      bindRoiCalculator(root, () => {
+        trackAnalyticsEvent("roi_calculator_completed", { page_path: path });
+        trackProductAnalyticsEvent("roi_calculator_completed", { page_path: path });
+      });
     } else {
       root.innerHTML = renderError(new ApiError(404, "The requested page does not exist."));
     }

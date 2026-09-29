@@ -18,6 +18,7 @@ def test_web_mvp_pages_are_served_by_fastapi(monkeypatch, tmp_path) -> None:
         "/opportunities/grass",
         f"/strategies/{DFK_CJEWEL_MAX_LOCK_V1.strategy_id}",
         "/methodology",
+        "/roi-calculator",
     ):
         response = client.get(path)
 
@@ -83,6 +84,22 @@ def test_homepage_omits_internal_audit_blocks(monkeypatch, tmp_path) -> None:
     assert "See only strategies with current source data and review their costs and risks." in html
     assert "Current strategy results" in html
     assert "Configured strategies" in html
+
+
+def test_custom_roi_calculator_is_indexable_and_keeps_assumptions_local(monkeypatch, tmp_path) -> None:
+    client, _engine = _seeded_client(monkeypatch, tmp_path, "web-roi-calculator.db")
+
+    response = client.get("/roi-calculator")
+
+    assert response.status_code == 200
+    assert '<meta name="robots" content="index,follow">' in response.text
+    assert '<link rel="canonical" href="https://gamcryp.com/roi-calculator">' in response.text
+    assert 'id="roi-scenario-form"' in response.text
+    assert "Initial outlay (USD)" in response.text
+    assert "Realizable rewards per day (USD)" in response.text
+    assert "not saved or sent to GamCryp" in response.text
+    assert "not a live quote or verified GamCryp model" in response.text
+    assert 'name="initialOutlay"' not in response.text
 
 
 def test_splinterlands_price_attribution_uses_official_reference_and_exit_caveat() -> None:

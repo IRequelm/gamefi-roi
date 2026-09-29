@@ -340,6 +340,7 @@ def test_sitemap_contains_only_absolute_canonical_public_urls(monkeypatch, tmp_p
     locs = [item.text for item in root.findall(".//sm:loc", namespace)]
     assert "https://gamcryp.com/" in locs
     assert "https://gamcryp.com/rankings" in locs
+    assert "https://gamcryp.com/roi-calculator" in locs
     assert f"https://gamcryp.com/strategies/{DFK_CJEWEL_MAX_LOCK_V1.strategy_id}" in locs
     assert all(url is not None and url.startswith("https://gamcryp.com/") for url in locs)
     assert all("/api/" not in url and "/go/" not in url and "?" not in url for url in locs if url is not None)

@@ -99,6 +99,7 @@ def render_document(page: SeoPage, *, settings: Settings) -> str:
         <a href="/" data-link>ROI Finder</a>
         <a href="/rankings" data-link>Rankings</a>
         <a href="/opportunities" data-link>Opportunities</a>
+        <a href="/roi-calculator" data-link>ROI Calculator</a>
         <a href="/methodology" data-link>Methodology</a>
       </nav>
     </header>
@@ -572,6 +573,48 @@ def methodology_page(*, settings: Settings, request: Request) -> SeoPage:
             _webpage_json(settings, "/methodology", "GamCryp ROI Methodology", description),
             _breadcrumb_json(settings, [("/", "Home"), ("/methodology", "Methodology")]),
         ),
+    )
+
+
+def roi_calculator_page(*, settings: Settings, request: Request) -> SeoPage:
+    description = "Free GameFi and DePIN ROI calculator. Estimate cash-flow return, net daily earnings, and break-even from your own costs and realizable reward assumptions."
+    body = """
+      <div class="page-shell">
+        <section class="page-head">
+          <p class="eyebrow">Free scenario tool</p>
+          <h1>GameFi &amp; DePIN ROI calculator</h1>
+          <p class="lede">Estimate cash-flow return from your own setup assumptions. Enter only rewards you believe you can realize after fees—not points or speculative token values.</p>
+        </section>
+        <section class="calculator-layout" aria-label="Custom ROI scenario calculator">
+          <form class="tool-panel" id="roi-scenario-form">
+            <div class="filter-panel-head"><h2>Your scenario</h2><p class="muted">These values stay in this browser. They are not saved or sent to GamCryp.</p></div>
+            <div class="form-grid calculator-fields">
+              <div class="field"><label for="scenario-initial-outlay">Initial outlay (USD)</label><input id="scenario-initial-outlay" type="text" inputmode="decimal" autocomplete="off" placeholder="e.g. 50.00" required><small class="muted">Include upfront capital and one-time setup costs.</small></div>
+              <div class="field"><label for="scenario-daily-rewards">Realizable rewards per day (USD)</label><input id="scenario-daily-rewards" type="text" inputmode="decimal" autocomplete="off" placeholder="e.g. 0.250000" required><small class="muted">Use a conservative amount you expect to sell or withdraw after fees.</small></div>
+              <div class="field"><label for="scenario-daily-costs">Recurring costs per day (USD)</label><input id="scenario-daily-costs" type="text" inputmode="decimal" autocomplete="off" placeholder="e.g. 0.080000" required><small class="muted">Include rentals, subscriptions, energy, claims, repairs, or other costs.</small></div>
+              <div class="field"><label for="scenario-horizon">Analysis period</label><select id="scenario-horizon"><option value="30">30 days</option><option value="90">90 days</option><option value="365">365 days</option></select></div>
+              <div class="field"><label for="scenario-active-minutes">Hands-on time per day (optional)</label><input id="scenario-active-minutes" type="text" inputmode="numeric" autocomplete="off" placeholder="e.g. 45"><small class="muted">Only enter active minutes you measured; hourly results are not a forecast.</small></div>
+            </div>
+            <div class="button-row"><button class="button" type="submit">Calculate my scenario</button><a class="secondary-button" href="/methodology" data-link>How GamCryp models ROI</a></div>
+            <p id="scenario-error" class="form-error" role="alert" hidden></p>
+          </form>
+          <div id="scenario-result" aria-live="polite" aria-atomic="true"></div>
+        </section>
+        <section class="section-panel calculator-caveat"><h2>What this estimate does—and does not—mean</h2><p class="muted">This is a cash-flow-only scenario using your inputs, not a live quote or verified GamCryp model. It assumes daily rewards and costs remain constant and does not value assets you may still own at exit. Break-even is unavailable when daily net cash flow is zero or negative. Points, unlisted rewards, and speculative token prices should not be entered as realizable earnings.</p></section>
+      </div>
+    """
+    return _page(
+        request=request,
+        settings=settings,
+        path="/roi-calculator",
+        title="Free GameFi & DePIN ROI Calculator | GamCryp",
+        description=description,
+        body_html=body,
+        json_ld=(
+            _webpage_json(settings, "/roi-calculator", "GameFi & DePIN ROI calculator", description),
+            _breadcrumb_json(settings, [("/", "Home"), ("/roi-calculator", "ROI Calculator")]),
+        ),
+        lastmod=CATALOG_REVIEWED_AT,
     )
 
 
@@ -1782,6 +1825,7 @@ def _footer_html(settings: Settings) -> str:
         <a href="{escape(settings.public_youtube_url)}" rel="noopener noreferrer" target="_blank">YouTube</a>
         <a href="mailto:{escape(settings.public_contact_email)}">{escape(settings.public_contact_email)}</a>
         <a href="/methodology" data-link>Methodology</a>
+        <a href="/roi-calculator" data-link>ROI Calculator</a>
       </nav>
       <p>Analytics only. No guaranteed returns. Not investment advice. Commercial relationships never affect ROI, Risk, Confidence, or organic rankings.</p>
     </footer>

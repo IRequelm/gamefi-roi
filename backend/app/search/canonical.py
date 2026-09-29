@@ -209,6 +209,7 @@ def canonical_page_inventory(engine: Engine) -> list[CanonicalPage]:
         CanonicalPage("/opportunities", latest_snapshot_time, priority="0.8"),
         CanonicalPage("/rankings", latest_snapshot_time, priority="0.9"),
         CanonicalPage("/methodology", CATALOG_REVIEWED_AT, priority="0.7", changefreq="weekly"),
+        CanonicalPage("/roi-calculator", CATALOG_REVIEWED_AT, priority="0.8", changefreq="weekly"),
     ]
 
     service = ApiDataService(engine)

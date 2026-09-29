@@ -40,6 +40,7 @@ from app.web.seo import (
     opportunities_page,
     opportunity_page,
     rankings_page,
+    roi_calculator_page,
     record_landing_visit,
     render_document,
     strategy_page,
@@ -191,6 +192,16 @@ def serve_methodology(
     engine: Engine = Depends(get_database_engine),
 ) -> HTMLResponse:
     page = methodology_page(settings=settings, request=request)
+    return _html_response(page, request=request, settings=settings, engine=engine)
+
+
+@router.get("/roi-calculator")
+def serve_roi_calculator(
+    request: Request,
+    settings: Settings = Depends(get_settings),
+    engine: Engine = Depends(get_database_engine),
+) -> HTMLResponse:
+    page = roi_calculator_page(settings=settings, request=request)
     return _html_response(page, request=request, settings=settings, engine=engine)
 
 
