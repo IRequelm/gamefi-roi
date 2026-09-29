@@ -28,8 +28,9 @@ try {
 }
 
 $age = ([DateTimeOffset]::UtcNow - $updatedAt).TotalMinutes
-if ($heartbeat.status -ne "ok") {
-  Write-Error "Distribution worker heartbeat status is '$($heartbeat.status)'"
+$status = [string]$heartbeat.status
+if ($status -notin @("ok", "degraded")) {
+  Write-Error "Distribution worker heartbeat status is '$status'"
   exit 4
 }
 if ($null -eq $heartbeat.pid -or -not ($heartbeat.pid -is [int] -or $heartbeat.pid -is [long]) -or $heartbeat.pid -lt 1) {
@@ -45,5 +46,10 @@ if ($age -gt $MaxAgeMinutes) {
   exit 5
 }
 
-Write-Output ("Distribution worker healthy: status=ok pid={1} age_minutes={0:N1}" -f $age, $heartbeat.pid)
+if ($status -eq "degraded") {
+  Write-Warning ("Distribution worker process is alive; channel delivery is degraded: pid={1} age_minutes={0:N1}" -f $age, $heartbeat.pid)
+  exit 0
+}
+
+Write-Output ("Distribution worker process is alive and channel status is ok: pid={1} age_minutes={0:N1}" -f $age, $heartbeat.pid)
 exit 0
