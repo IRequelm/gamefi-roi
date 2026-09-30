@@ -4,6 +4,12 @@ Status: IN PROGRESS — homepage and catalog freshness wording are live. Eligibl
 
 Updated: 2026-09-30 (Europe/Istanbul)
 
+### 2026-09-30 00:29 UTC follow-up — funnel quality and scheduler proof
+
+Read-only follow-up in the connected PostHog `GamCryp` / `Default project` (project 260916, UTC). The Sep 2–30 (partial final day) ordered, test-account-filtered funnel `$pageview → strategy_view → outbound_go_click` returned 3 people at pageview, 1 at strategy view (33.3%), and 0 at outbound click. This sample is too small to infer a stable conversion rate and does not demonstrate the intended landing-to-value-to-click journey. A separate trends query showed 992 `outbound_go_click` events in that window; 86 were `human_or_unknown`, 17 `automated`, and 889 (89.6%) had no `traffic_class`. A narrower Sep 24–30 partial-week read showed 64 events, all classified (62 `human_or_unknown`, 2 `automated`), so missing classification appears concentrated in older data. Do not use raw event totals as unique human clicks, referral conversions, or revenue. Existing GA4 (56 sessions incl. 36 tagged smoke; 20 remaining, mostly unknown Direct) and first-party lifetime counters likewise do not establish qualified acquisition. All counts above are exploratory one-off reads, not approved/canonical metrics.
+
+The GitHub Actions run list at 00:28 UTC showed no `schedule` event for the expected 00:17 UTC cadence slot; only the 00:01 manual recovery dispatch had succeeded after the four-hour workflow was deployed. Production ops API at 00:26 UTC still reported DB/app `ok`, cadence 240 minutes, 4/4 eligible snapshots fresh, zero unresolved failures, and newest snapshot ~25 minutes old. This is current freshness, not proof of scheduler reliability. Next intended schedule is 04:17 UTC; no additional manual refresh was made. The distribution heartbeat at 00:22 UTC was 4.6 minutes old while its PID was dead; status was `degraded` (`refill_failed`, X `failed`, YouTube handoff `daily_cap`). No restart was attempted because the standing handoff/refill policy could publish queued content. Treat distribution as unhealthy until an observed safe worker cycle succeeds. No post, video, referral, account credential, or X credit changed.
+
 ### Operations and acquisition reality check — 2026-09-30
 
 This checkpoint combines direct production reads, the connected GA4/Search Console/YouTube accounts, public channel pages, local Windows task/worker state, and the authenticated Render service page. It is a diagnosis, not a growth forecast.
