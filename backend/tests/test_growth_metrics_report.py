@@ -222,6 +222,11 @@ def test_distribution_summary_requires_live_process_for_fresh_ok_heartbeat(tmp_p
     assert summary["health_reason"] == "worker_process_not_running"
 
 
+def test_process_liveness_uses_windows_process_handles_for_current_and_missing_pids():
+    assert growth_metrics_report._process_is_alive(os.getpid()) is True
+    assert growth_metrics_report._process_is_alive(2**31 - 1) is False
+
+
 def test_public_runtime_measurement_labels_aggregate_counts(monkeypatch):
     response = SimpleNamespace(
         raise_for_status=lambda: None,

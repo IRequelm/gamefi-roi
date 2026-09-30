@@ -9,6 +9,7 @@ converted into a zero or an inferred revenue figure.
 from __future__ import annotations
 
 import argparse
+import ctypes
 import errno
 import json
 import os
@@ -237,16 +238,52 @@ def _distribution_summary() -> dict[str, Any]:
 def _process_is_alive(pid: Any) -> bool | None:
     """Return whether a heartbeat PID exists; None means it could not be checked."""
     try:
-        os.kill(int(pid), 0)
+        process_id = int(pid)
+    except (TypeError, ValueError, OverflowError):
+        return None
+    if process_id <= 0:
+        return None
+    if os.name == "nt":
+        return _windows_process_is_alive(process_id)
+    try:
+        os.kill(process_id, 0)
         return True
     except PermissionError:
         return None
     except OSError as exc:
-        if isinstance(exc, ProcessLookupError) or exc.errno == errno.ESRCH or getattr(exc, "winerror", None) in {87, 1168}:
+        if isinstance(exc, ProcessLookupError) or exc.errno == errno.ESRCH:
             return False
         return None
     except (TypeError, ValueError, OverflowError):
         return None
+
+
+def _windows_process_is_alive(process_id: int) -> bool | None:
+    """Use Windows process handles; ``os.kill(pid, 0)`` is not a liveness probe there."""
+    from ctypes import wintypes
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    open_process = kernel32.OpenProcess
+    open_process.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+    open_process.restype = wintypes.HANDLE
+    get_exit_code = kernel32.GetExitCodeProcess
+    get_exit_code.argtypes = [wintypes.HANDLE, ctypes.POINTER(wintypes.DWORD)]
+    get_exit_code.restype = wintypes.BOOL
+    close_handle = kernel32.CloseHandle
+    close_handle.argtypes = [wintypes.HANDLE]
+    close_handle.restype = wintypes.BOOL
+
+    # PROCESS_QUERY_LIMITED_INFORMATION; sufficient for GetExitCodeProcess.
+    handle = open_process(0x1000, False, process_id)
+    if not handle:
+        return False if ctypes.get_last_error() in {87, 1168} else None
+    try:
+        exit_code = wintypes.DWORD()
+        if not get_exit_code(handle, ctypes.byref(exit_code)):
+            return None
+        return exit_code.value == 259  # STILL_ACTIVE
+    finally:
+        close_handle(handle)
 
 
 def _database_summary() -> dict[str, Any]:
