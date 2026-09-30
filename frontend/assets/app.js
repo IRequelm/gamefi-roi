@@ -98,6 +98,7 @@ const ANALYTICS_ALLOWED_EVENTS = new Set([
   "start_click",
   "outbound_click",
   "roi_calculator_completed",
+  "roi_scenario_shared",
 ]);
 const ANALYTICS_ALLOWED_PARAMS = new Set([
   "opportunity_id",
@@ -107,6 +108,7 @@ const ANALYTICS_ALLOWED_PARAMS = new Set([
   "referral_status",
   "page_path",
   "page_title",
+  "share_method",
 ]);
 const PRODUCT_ANALYTICS_ALLOWED_EVENTS = new Set([
   "$pageview",
@@ -123,6 +125,7 @@ const PRODUCT_ANALYTICS_ALLOWED_EVENTS = new Set([
   "ranking_filter_used",
   "strategy_comparison_view",
   "roi_calculator_completed",
+  "roi_scenario_shared",
 ]);
 const PRODUCT_ANALYTICS_ALLOWED_PARAMS = new Set([
   "$current_url",
@@ -142,6 +145,7 @@ const PRODUCT_ANALYTICS_ALLOWED_PARAMS = new Set([
   "placement",
   "source_page",
   "page_path",
+  "share_method",
   "snapshot_id",
   "snapshot_timestamp",
   "utm_source",
@@ -3438,6 +3442,10 @@ async function renderCurrentRoute() {
       bindRoiCalculator(root, () => {
         trackAnalyticsEvent("roi_calculator_completed", { page_path: path });
         trackProductAnalyticsEvent("roi_calculator_completed", { page_path: path });
+      }, (shareMethod) => {
+        const properties = { page_path: path, share_method: shareMethod };
+        trackAnalyticsEvent("roi_scenario_shared", properties);
+        trackProductAnalyticsEvent("roi_scenario_shared", properties);
       });
     } else {
       root.innerHTML = renderError(new ApiError(404, "The requested page does not exist."));

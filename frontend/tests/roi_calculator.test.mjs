@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  buildRoiScenarioShareText,
   calculateRoiScenario,
   formatCalculatorPercent,
   formatCalculatorUsd,
@@ -46,6 +47,24 @@ test("negative daily net is disclosed and has no break-even claim", () => {
   assert.equal(formatCalculatorPercent(result.roiHundredthsPercent), "−3.00%");
   assert.equal(result.breakEvenDays, null);
   assert.equal(result.netPerActiveHour, null);
+});
+
+test("scenario share text is explicit and uses only a tracked calculator URL", () => {
+  const scenario = calculateRoiScenario({
+    initialOutlay: "250",
+    dailyRealizableRewards: "1.25",
+    dailyOperatingCosts: "0.15",
+    horizonDays: "30",
+  });
+  const shareUrl = "https://gamefi-roi-web.onrender.com/roi-calculator?utm_source=calculator&utm_medium=share&utm_campaign=user_scenario";
+  const text = buildRoiScenarioShareText(scenario, shareUrl);
+
+  assert.match(text, /Initial outlay: \$250\.00/);
+  assert.match(text, /Net over 30 days: \$33\.00/);
+  assert.match(text, /my assumptions; not a live or verified estimate/);
+  assert.match(text, /excludes asset resale\/exit value/);
+  assert.match(text, new RegExp(shareUrl.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  assert.doesNotMatch(shareUrl, /250|1\.25|0\.15|33\.00/);
 });
 
 test("calculator rejects invalid, negative, and over-precision money inputs", () => {

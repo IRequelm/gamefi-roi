@@ -88,6 +88,29 @@ export function formatCalculatorPercent(hundredthsPercent) {
   return `${negative ? "−" : ""}${absolute / 100n}.${(absolute % 100n).toString().padStart(2, "0")}%`;
 }
 
+/** Build an explicit, visitor-triggered share summary; values never enter a URL or analytics. */
+export function buildRoiScenarioShareText(scenario, shareUrl) {
+  const breakEven = scenario.breakEvenDays === null
+    ? "Not reached at this daily net"
+    : `${scenario.breakEvenDays} days (cash-flow only)`;
+  const activeTime = scenario.netPerActiveHour === null
+    ? "Not included"
+    : `${formatCalculatorUsd(scenario.netPerActiveHour)} per measured active hour`;
+  return [
+    "My GameFi/DePIN cash-flow scenario (my assumptions; not a live or verified estimate)",
+    `Initial outlay: ${formatCalculatorUsd(scenario.initialOutlay)}`,
+    `Realizable rewards/day: ${formatCalculatorUsd(scenario.dailyRealizableRewards)}`,
+    `Operating costs/day: ${formatCalculatorUsd(scenario.dailyOperatingCosts)}`,
+    `Net/day: ${formatCalculatorUsd(scenario.netPerDay)}`,
+    `Net over ${scenario.horizonDays} days: ${formatCalculatorUsd(scenario.totalNetCashFlow)}`,
+    `Cash-flow return on initial outlay: ${formatCalculatorPercent(scenario.roiHundredthsPercent)}`,
+    `Break-even: ${breakEven}`,
+    `Net per active hour: ${activeTime}`,
+    "Assumes daily rewards and costs remain constant; excludes asset resale/exit value. Not financial advice.",
+    `Test your own assumptions: ${shareUrl}`,
+  ].join("\n");
+}
+
 export function renderRoiCalculatorPage() {
   return `
     <div class="page-shell">
@@ -148,11 +171,44 @@ export function renderRoiCalculatorPage() {
   `;
 }
 
-export function bindRoiCalculator(root, onCalculated = () => {}) {
+export function bindRoiCalculator(root, onCalculated = () => {}, onShared = () => {}) {
   const form = root.querySelector("#roi-scenario-form");
   const output = root.querySelector("#scenario-result");
   const error = root.querySelector("#scenario-error");
   if (!form || !output || !error) return;
+
+  let lastScenario = null;
+  output.addEventListener("click", async (event) => {
+    const button = event.target?.closest?.("button[data-scenario-share]");
+    if (!button || !lastScenario) return;
+    const document = root.ownerDocument || globalThis.document;
+    const navigator = document?.defaultView?.navigator || globalThis.navigator;
+    const shareUrl = buildCalculatorShareUrl(document?.location?.href || globalThis.location?.href);
+    const text = buildRoiScenarioShareText(lastScenario, shareUrl);
+    const status = output.querySelector("[data-scenario-share-status]");
+    try {
+      if (button.dataset.scenarioShare === "native" && typeof navigator?.share === "function") {
+        await navigator.share({
+          title: "My GameFi/DePIN scenario",
+          text,
+          url: shareUrl,
+        });
+        onShared("native_share");
+        if (status) status.textContent = "Share sheet opened. Your assumptions were included only because you chose to share.";
+        return;
+      }
+      if (typeof navigator?.clipboard?.writeText !== "function") {
+        if (status) status.textContent = "Sharing is unavailable in this browser. Your scenario remains on this device.";
+        return;
+      }
+      await navigator.clipboard.writeText(text);
+      onShared("copy");
+      if (status) status.textContent = "Scenario summary copied. It leaves this browser only if you paste or share it.";
+    } catch (cause) {
+      if (cause?.name === "AbortError") return;
+      if (status) status.textContent = "Could not share this scenario. Your values remain in this browser.";
+    }
+  });
 
   form.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -167,7 +223,14 @@ export function bindRoiCalculator(root, onCalculated = () => {}) {
         horizonDays: form.querySelector("#scenario-horizon").value,
         activeMinutesPerDay: form.querySelector("#scenario-active-minutes").value,
       });
+      lastScenario = scenario;
       output.innerHTML = renderScenarioResult(scenario);
+      const nativeShareButton = output.querySelector('button[data-scenario-share="native"]');
+      const document = root.ownerDocument || globalThis.document;
+      const navigator = document?.defaultView?.navigator || globalThis.navigator;
+      if (nativeShareButton && typeof navigator?.share === "function") {
+        nativeShareButton.hidden = false;
+      }
       onCalculated();
     } catch (cause) {
       error.textContent = cause instanceof Error ? cause.message : "Check the values and try again.";
@@ -196,8 +259,27 @@ function renderScenarioResult(scenario) {
         <div><dt>Net per active hour</dt><dd>${effortValue}</dd></div>
       </dl>
       <p class="muted calculator-result-basis">Based only on the values you entered. It excludes the resale or exit value of assets.</p>
+      <div class="button-row calculator-share-actions">
+        <button class="secondary-button" type="button" data-scenario-share="copy">Copy share summary</button>
+        <button class="secondary-button" type="button" data-scenario-share="native" hidden>Share scenario</button>
+      </div>
+      <p class="muted calculator-share-privacy">The summary includes the amounts and results shown above. Nothing is shared until you choose Copy or Share; no scenario values are sent to GamCryp or analytics.</p>
+      <p class="muted" role="status" aria-live="polite" data-scenario-share-status></p>
     </section>
   `;
+}
+
+function buildCalculatorShareUrl(currentUrl) {
+  if (!currentUrl) return "/roi-calculator?utm_source=calculator&utm_medium=share&utm_campaign=user_scenario";
+  try {
+    const url = new URL("/roi-calculator", currentUrl);
+    url.searchParams.set("utm_source", "calculator");
+    url.searchParams.set("utm_medium", "share");
+    url.searchParams.set("utm_campaign", "user_scenario");
+    return url.toString();
+  } catch {
+    return "/roi-calculator?utm_source=calculator&utm_medium=share&utm_campaign=user_scenario";
+  }
 }
 
 function roundRatio(numerator, denominator) {

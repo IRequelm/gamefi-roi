@@ -1178,6 +1178,38 @@ test("scenario calculator completion telemetry never records user-entered amount
   assert.equal(sent[0].payload.properties.daily_realizable_rewards, undefined);
 });
 
+test("scenario share telemetry records the method but never scenario values", () => {
+  resetAnalyticsForTests();
+  const sent = [];
+  const context = fakeAnalyticsContext("G-TEST1234", fakeStorage(), {
+    posthogProjectApiKey: "phc_test_key",
+    posthogHost: "https://us.i.posthog.com",
+  });
+  context.win.location = { pathname: "/roi-calculator", search: "" };
+  context.win.navigator = { sendBeacon: (url, body) => sent.push({ url, payload: JSON.parse(body) }) > 0 };
+  setAnalyticsConsent("accepted", context);
+
+  const userValues = {
+    page_path: "/roi-calculator",
+    share_method: "copy",
+    initial_outlay: "250.00",
+    daily_realizable_rewards: "1.25",
+    summary: "Net/day: $1.10",
+  };
+  assert.equal(trackAnalyticsEvent("roi_scenario_shared", userValues, context), true);
+  assert.equal(trackProductAnalyticsEvent("roi_scenario_shared", userValues, context), true);
+
+  const gaEvent = context.win.dataLayer.find((entry) => entry[0] === "event" && entry[1] === "roi_scenario_shared");
+  assert.equal(gaEvent[2].page_path, "/roi-calculator");
+  assert.equal(gaEvent[2].share_method, "copy");
+  assert.equal(gaEvent[2].initial_outlay, undefined);
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0].payload.event, "roi_scenario_shared");
+  assert.equal(sent[0].payload.properties.share_method, "copy");
+  assert.equal(sent[0].payload.properties.initial_outlay, undefined);
+  assert.equal(sent[0].payload.properties.summary, undefined);
+});
+
 test("outbound CTAs expose referral versus official fallback metadata without changing /go", () => {
   const officialHtml = renderDestinationButton(destinationPayload("grass-official"), "Open", {
     sourcePage: "opportunity_watchlist",
